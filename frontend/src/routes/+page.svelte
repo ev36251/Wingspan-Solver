@@ -3,7 +3,6 @@
 	import { FOOD_ICONS } from '$lib/api/types';
 	import { createGame, updateGameState, getGoals } from '$lib/api/client';
 	import GameBoard from '$lib/components/GameBoard.svelte';
-	import StateEditor from '$lib/components/StateEditor.svelte';
 	import SolverPanel from '$lib/components/SolverPanel.svelte';
 	import ScoreSheet from '$lib/components/ScoreSheet.svelte';
 	import SetupAdvisor from '$lib/components/SetupAdvisor.svelte';
@@ -18,7 +17,6 @@
 	// New game form
 	let playerNames = ['Player 1', 'Player 2'];
 	let showNewGame = true;
-	let showEditor = false;
 	let activeTab: 'setup' | 'newgame' = 'setup';
 	let activePlayerIdx = 0;
 
@@ -56,6 +54,27 @@
 		}
 		state.round_goals = goals;
 		state = state;
+	}
+
+	// Round goal scoring tiers: points by placement (1st, 2nd, 3rd, 4th+)
+	const GOAL_SCORING_TIERS: Record<number, number[]> = {
+		1: [4, 1, 0],
+		2: [5, 2, 1, 0],
+		3: [6, 3, 2, 0],
+		4: [7, 4, 3, 0],
+	};
+
+	function setGoalScore(roundNum: number, playerName: string, points: number) {
+		if (!state) return;
+		if (!state.round_goal_scores) state.round_goal_scores = {};
+		if (!state.round_goal_scores[roundNum]) state.round_goal_scores[roundNum] = {};
+		state.round_goal_scores[roundNum][playerName] = points;
+		state = state;
+	}
+
+	function getGoalScore(roundNum: number, playerName: string): number {
+		if (!state?.round_goal_scores?.[roundNum]) return 0;
+		return state.round_goal_scores[roundNum][playerName] ?? 0;
 	}
 
 	// Birdfeeder constants
@@ -100,17 +119,12 @@
 		}
 	}
 
-	function handleStateUpdated(e: CustomEvent<GameState>) {
-		state = e.detail;
-		syncGoalSelections();
-		scoreSheet?.refresh();
-	}
+
 
 	function resetGame() {
 		gameId = '';
 		state = null;
 		showNewGame = true;
-		showEditor = false;
 		activePlayerIdx = 0;
 	}
 
@@ -120,6 +134,7 @@
 		saving = true;
 		try {
 			state = await updateGameState(gameId, state);
+			syncGoalSelections();
 			scoreSheet?.refresh();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to save';
@@ -234,7 +249,15 @@
 		<div class="game-header">
 			<div class="game-info">
 				<span class="game-id">Game: {gameId}</span>
-				<span class="round-info">Round {state.current_round}/4</span>
+<label class="round-selector">
+					Round:
+					<select bind:value={state.current_round} on:change={() => { state = state; }}>
+						{#each [1, 2, 3, 4] as r}
+							<option value={r}>{r}</option>
+						{/each}
+					</select>
+					/ 4
+				</label>
 				<span class="turn-info">
 					Current: {state.players[state.current_player_idx]?.name}
 				</span>
@@ -243,9 +266,7 @@
 				<button class="primary" on:click={saveState} disabled={saving}>
 					{saving ? 'Saving...' : 'Save State'}
 				</button>
-				<button on:click={() => showEditor = !showEditor}>
-					{showEditor ? 'Hide Editor' : 'Edit State'}
-				</button>
+
 				<button on:click={resetGame}>New Game</button>
 			</div>
 		</div>
@@ -269,15 +290,11 @@
 
 		<div class="game-layout">
 			<div class="main-column">
-				<!-- State editor (collapsible) -->
-				{#if showEditor}
-					<StateEditor {gameId} {state} editingPlayer={activePlayerIdx} on:updated={handleStateUpdated} />
-				{/if}
-
 				<!-- Active player board -->
 				<GameBoard
 					player={state.players[activePlayerIdx]}
 					isCurrentPlayer={activePlayerIdx === state.current_player_idx}
+					on:changed={() => { state = state; }}
 				/>
 
 				<!-- Card Tray + Score side by side -->
@@ -323,19 +340,59 @@
 					<h4 class="panel-title">Round Goals</h4>
 					<div class="goals-list">
 						{#each [0, 1, 2, 3] as idx}
-							<div class="goal-item" class:active-round={state.current_round === idx + 1}>
-								<span class="goal-round">R{idx + 1}</span>
-								<select
-									class="goal-select"
-									value={goalSelections[idx]}
-									on:change={(e) => setGoal(idx, e.currentTarget.value)}
-								>
-									<option value="">-- Not set --</option>
-									<option value="No Goal">No Goal (+1 action later)</option>
-									{#each allGoals as g}
-										<option value={g.description}>{g.description}</option>
-									{/each}
-								</select>
+							{@const roundNum = idx + 1}
+							{@const tiers = GOAL_SCORING_TIERS[roundNum]}
+							<div class="goal-item" class:active-round={state.current_round === roundNum}>
+								<div class="goal-header">
+									<span class="goal-round">R{roundNum}</span>
+									<select
+										class="goal-select"
+										value={goalSelections[idx]}
+										on:change={(e) => setGoal(idx, e.currentTarget.value)}
+									>
+										<option value="">-- Not set --</option>
+										<option value="No Goal">No Goal (+1 action later)</option>
+										{#each allGoals as g}
+											<option value={g.description}>{g.description}</option>
+										{/each}
+									</select>
+								</div>
+								{#if goalSelections[idx] && goalSelections[idx] !== 'No Goal'}
+									<div class="goal-scoring">
+										<span class="scoring-tiers">
+											{#each tiers as pts, ti}
+												{#if ti > 0}<span class="tier-sep">/</span>{/if}
+												<span class="tier-val">{pts}</span>
+											{/each}
+										</span>
+										<div class="goal-player-scores">
+											{#each state.players as p}
+												{@const score = getGoalScore(roundNum, p.name)}
+												<div class="goal-player-row">
+													<span class="goal-player-name">{p.name}</span>
+													<div class="goal-point-btns">
+														{#each tiers as pts}
+															<button
+																class="goal-pt-btn"
+																class:selected={score === pts}
+																on:click={() => setGoalScore(roundNum, p.name, pts)}
+															>{pts}</button>
+														{/each}
+														<button
+															class="goal-adj-btn"
+															on:click={() => setGoalScore(roundNum, p.name, Math.max(0, score - 1))}
+														>-</button>
+														<button
+															class="goal-adj-btn"
+															on:click={() => setGoalScore(roundNum, p.name, score + 1)}
+														>+</button>
+													</div>
+													<span class="goal-score-display">{score}pts</span>
+												</div>
+											{/each}
+										</div>
+									</div>
+								{/if}
 							</div>
 						{/each}
 					</div>
@@ -362,6 +419,7 @@
 							<span class="feeder-empty">Empty feeder</span>
 						{/each}
 					</div>
+					{#if state.birdfeeder.dice.length < 5}
 					<div class="feeder-add">
 						{#each FEEDER_SINGLE as ft}
 							<button class="feeder-add-btn" on:click={() => addDie(ft)} title="Add {ft}">
@@ -374,6 +432,53 @@
 							<button class="feeder-add-btn choice" on:click={() => addChoiceDie(choice.foods)} title="Add choice die">
 								{choice.label}
 							</button>
+						{/each}
+					</div>
+				{/if}
+				</div>
+
+				<!-- Nectar Spent Board -->
+				<div class="sidebar-panel card">
+					<h4 class="panel-title">Nectar Spent</h4>
+					<div class="nectar-board">
+						{#each state.players as p, pi}
+							<div class="nectar-player">
+								<span class="nectar-player-name">{p.name}</span>
+								<div class="nectar-habitats">
+									{#each [
+										{ label: 'Forest', color: '#2d5016', idx: 0 },
+										{ label: 'Grassland', color: '#8b7355', idx: 1 },
+										{ label: 'Wetland', color: '#1a5276', idx: 2 }
+									] as hab}
+										<div class="nectar-hab-row">
+											<span class="nectar-hab-label" style="color: {hab.color}">{hab.label}</span>
+											<div class="nectar-controls">
+												<button
+													class="nectar-btn"
+													on:click={() => {
+														if (state && state.players[pi].board[hab.idx]?.nectar_spent > 0) {
+															state.players[pi].board[hab.idx].nectar_spent -= 1;
+															state = state;
+														}
+													}}
+												>-</button>
+												<span class="nectar-count">
+													{p.board[hab.idx]?.nectar_spent ?? 0}
+												</span>
+												<button
+													class="nectar-btn"
+													on:click={() => {
+														if (state) {
+															state.players[pi].board[hab.idx].nectar_spent = (state.players[pi].board[hab.idx].nectar_spent || 0) + 1;
+															state = state;
+														}
+													}}
+												>+</button>
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
 						{/each}
 					</div>
 				</div>
@@ -492,14 +597,23 @@
 		font-size: 0.85rem;
 	}
 
+	.round-selector {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		font-weight: 600;
+		color: var(--accent);
+		font-size: 0.85rem;
+	}
+
+	.round-selector select {
+		font-size: 0.85rem;
+		padding: 2px 6px;
+	}
+
 	.game-id {
 		color: var(--text-muted);
 		font-family: monospace;
-	}
-
-	.round-info {
-		font-weight: 600;
-		color: var(--accent);
 	}
 
 	.turn-info {
@@ -613,9 +727,6 @@
 	}
 
 	.goal-item {
-		display: flex;
-		gap: 6px;
-		align-items: center;
 		padding: 4px 6px;
 		border-radius: 4px;
 		font-size: 0.8rem;
@@ -624,6 +735,12 @@
 	.goal-item.active-round {
 		background: #fef9f0;
 		border: 1px solid var(--accent);
+	}
+
+	.goal-header {
+		display: flex;
+		gap: 6px;
+		align-items: center;
 	}
 
 	.goal-round {
@@ -638,6 +755,108 @@
 		font-size: 0.75rem;
 		padding: 3px 6px;
 		min-width: 0;
+	}
+
+	/* Goal scoring */
+	.goal-scoring {
+		margin-top: 4px;
+		padding-left: 30px;
+	}
+
+	.scoring-tiers {
+		font-size: 0.65rem;
+		color: var(--text-muted);
+		display: block;
+		margin-bottom: 3px;
+	}
+
+	.tier-val {
+		font-weight: 600;
+	}
+
+	.tier-sep {
+		margin: 0 1px;
+	}
+
+	.goal-player-scores {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.goal-player-row {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.goal-player-name {
+		font-size: 0.7rem;
+		color: var(--text);
+		min-width: 50px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.goal-point-btns {
+		display: flex;
+		gap: 2px;
+	}
+
+	.goal-pt-btn {
+		width: 22px;
+		height: 20px;
+		padding: 0;
+		font-size: 0.7rem;
+		font-weight: 600;
+		border: 1px solid var(--border);
+		background: #faf6ef;
+		border-radius: 3px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.goal-pt-btn:hover {
+		border-color: var(--accent);
+		background: #fef9f0;
+	}
+
+	.goal-pt-btn.selected {
+		background: var(--accent);
+		color: white;
+		border-color: var(--accent);
+	}
+
+	.goal-adj-btn {
+		width: 18px;
+		height: 20px;
+		padding: 0;
+		font-size: 0.7rem;
+		font-weight: 700;
+		border: 1px solid var(--border);
+		background: #f5f5f5;
+		border-radius: 3px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--text-muted);
+	}
+
+	.goal-adj-btn:hover {
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+
+	.goal-score-display {
+		font-size: 0.7rem;
+		font-weight: 700;
+		color: var(--accent);
+		min-width: 28px;
+		text-align: right;
 	}
 
 	/* Birdfeeder */
@@ -779,6 +998,82 @@
 		background: #fee;
 		color: #c00;
 		border-color: #c00;
+	}
+
+	/* Nectar Spent Board */
+	.nectar-board {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.nectar-player {
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		padding: 6px 8px;
+		background: #fefdf8;
+	}
+
+	.nectar-player-name {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--text);
+		display: block;
+		margin-bottom: 4px;
+	}
+
+	.nectar-habitats {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.nectar-hab-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 1px 0;
+	}
+
+	.nectar-hab-label {
+		font-size: 0.75rem;
+		font-weight: 500;
+		min-width: 70px;
+	}
+
+	.nectar-controls {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.nectar-btn {
+		width: 22px;
+		height: 22px;
+		padding: 0;
+		font-size: 0.85rem;
+		font-weight: 700;
+		border: 1px solid #d4c9b8;
+		background: #faf6ef;
+		border-radius: 4px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		line-height: 1;
+	}
+
+	.nectar-btn:hover {
+		background: #f0e8d8;
+		border-color: var(--accent);
+	}
+
+	.nectar-count {
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: var(--accent);
+		min-width: 18px;
+		text-align: center;
 	}
 
 	@media (max-width: 1000px) {

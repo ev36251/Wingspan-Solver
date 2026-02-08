@@ -387,9 +387,15 @@ def evaluate_position(game: GameState, player: Player,
     value += min(player.hand_size, 5) * weights.cards_in_hand
 
     # Nectar timing: nectar is more valuable with more rounds remaining
+    # But worthless on last turn of round since it clears at round end
     nectar_count = player.food_supply.get(FoodType.NECTAR)
-    if nectar_count > 0 and rounds_remaining > 0:
-        value += nectar_count * weights.nectar_early_bonus * (rounds_remaining / ROUNDS)
+    if nectar_count > 0:
+        if player.action_cubes_remaining <= 1:
+            # Last turn of round: nectar in supply is about to be lost
+            # Only value it if it can be spent this turn (playing a bird)
+            value -= nectar_count * 0.5
+        elif rounds_remaining > 0:
+            value += nectar_count * weights.nectar_early_bonus * (rounds_remaining / ROUNDS)
 
     # Habitat diversity bonus (birds in all 3 habitats is strategically strong)
     habitats_with_birds = sum(
@@ -658,10 +664,16 @@ def _evaluate_gain_food(game: GameState, player: Player, move: Move,
         value += 0.5  # Some urgency even if can't quite afford
 
     # Nectar choice value: flexible food + contributes to nectar majority
+    # BUT nectar clears at end of round — heavily penalize on last turn
     if move.food_choices and FoodType.NECTAR in move.food_choices:
-        rounds_remaining = max(0, ROUNDS - game.current_round)
-        if rounds_remaining > 0:
-            value += weights.nectar_early_bonus * (rounds_remaining / ROUNDS)
+        nectar_in_choices = sum(1 for ft in move.food_choices if ft == FoodType.NECTAR)
+        if player.action_cubes_remaining <= 1:
+            # Last turn of round: nectar will be lost, strong penalty
+            value -= nectar_in_choices * 3.0
+        else:
+            rounds_remaining = max(0, ROUNDS - game.current_round)
+            if rounds_remaining > 0:
+                value += weights.nectar_early_bonus * (rounds_remaining / ROUNDS)
 
     # Food deficit targeting: bonus when gaining food types needed by best hand birds
     if move.food_choices and player.hand:
@@ -1061,13 +1073,16 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
         if playable > 0:
             reasons.append(f"enables playing {playable} bird{'s' if playable > 1 else ''}")
         if move.food_choices and FoodType.NECTAR in move.food_choices:
-            reasons.append("gains nectar for majority")
+            if player.action_cubes_remaining <= 1:
+                reasons.append("WARNING: nectar clears at end of round — avoid gaining nectar on last turn")
+            else:
+                reasons.append("gains nectar for majority")
         if move.bonus_count > 0 and column.bonus:
             payment = _recommend_bonus_payment(player, column.bonus.cost_options, game)
             reasons.append(f"+1 food ({payment})" if payment else "+1 food")
         if move.reset_bonus and column.reset_bonus:
             payment = _recommend_bonus_payment(player, column.reset_bonus.cost_options, game)
-            reasons.append(f"reset feeder ({payment})" if payment else "reset feeder")
+            reasons.insert(0, f"FIRST reset feeder ({payment}), then take food" if payment else "FIRST reset feeder, then take food")
         if bird_count > 0:
             reasons.append(f"activates {bird_count} forest bird{'s' if bird_count > 1 else ''}")
             reasons.extend(_activation_advice(game, player, Habitat.FOREST))
@@ -1114,7 +1129,7 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
             reasons.append(f"+1 card ({payment})" if payment else "+1 card")
         if move.reset_bonus and column.reset_bonus:
             payment = _recommend_bonus_payment(player, column.reset_bonus.cost_options, game)
-            reasons.append(f"reset tray ({payment})" if payment else "reset tray")
+            reasons.insert(0, f"FIRST reset tray ({payment}), then draw cards" if payment else "FIRST reset tray, then draw cards")
         if bird_count > 0:
             reasons.append(f"activates {bird_count} wetland bird{'s' if bird_count > 1 else ''}")
             reasons.extend(_activation_advice(game, player, Habitat.WETLAND))

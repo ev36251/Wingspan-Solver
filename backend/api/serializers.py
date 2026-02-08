@@ -72,6 +72,7 @@ def goal_to_schema(goal: Goal) -> GoalSchema:
 def bird_slot_to_schema(slot: BirdSlot) -> BirdSlotSchema:
     return BirdSlotSchema(
         bird_name=slot.bird.name if slot.bird else None,
+        egg_limit=slot.bird.egg_limit if slot.bird else 0,
         eggs=slot.eggs,
         cached_food={ft.value: c for ft, c in slot.cached_food.items()},
         tucked_cards=slot.tucked_cards,

@@ -193,10 +193,12 @@
 						<div class="rec-reasoning">
 							{#each rec.reasoning.split('; ') as part, pi}
 								{#if pi > 0}<span class="reason-sep"> · </span>{/if}
-								{#if part.startsWith('SKIP ')}
+								{#if part.startsWith('SKIP ') || part.startsWith('WARNING')}
 									<span class="skip-warning">{part}</span>
 								{:else if part.startsWith('REROLL ')}
 									<span class="reroll-hint">{part}</span>
+								{:else if part.startsWith('FIRST ')}
+									<span class="reset-order-hint">{part}</span>
 								{:else if part.startsWith('activate ')}
 									<span class="activate-hint">{part}</span>
 								{:else}
@@ -431,6 +433,11 @@
 
 	.reroll-hint {
 		color: #0369a1;
+		font-weight: 600;
+	}
+
+	.reset-order-hint {
+		color: #7c3aed;
 		font-weight: 600;
 	}
 

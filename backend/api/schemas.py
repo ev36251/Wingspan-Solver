@@ -79,6 +79,7 @@ class GoalListResponse(BaseModel):
 
 class BirdSlotSchema(BaseModel):
     bird_name: str | None = None
+    egg_limit: int = 0
     eggs: int = 0
     cached_food: dict[str, int] = Field(default_factory=dict)
     tucked_cards: int = 0

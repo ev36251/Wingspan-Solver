@@ -41,6 +41,7 @@ export interface Goal {
 
 export interface BirdSlot {
 	bird_name: string | null;
+	egg_limit: number;
 	eggs: number;
 	cached_food: Record<string, number>;
 	tucked_cards: number;

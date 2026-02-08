@@ -1,7 +1,10 @@
 """Scoring engine: calculate final and in-progress scores."""
 
+from collections import Counter
 from dataclasses import dataclass
-from backend.models.enums import Habitat
+from typing import Callable
+
+from backend.models.enums import FoodType, Habitat, NestType, PowerColor
 from backend.models.game_state import GameState
 from backend.models.player import Player
 
@@ -73,19 +76,255 @@ def score_tucked_cards(player: Player) -> int:
     )
 
 
+def _count_breeding_manager(player: Player) -> int:
+    """Birds with at least 4 eggs laid on them."""
+    return sum(
+        1 for _, _, slot in player.board.all_slots()
+        if slot.bird and slot.eggs >= 4
+    )
+
+
+def _count_ecologist(player: Player) -> int:
+    """Birds in habitat with the fewest birds."""
+    counts = [row.bird_count for row in player.board.all_rows()]
+    return min(counts) if counts else 0
+
+
+def _count_oologist(player: Player) -> int:
+    """Birds with at least 1 egg laid on them."""
+    return sum(
+        1 for _, _, slot in player.board.all_slots()
+        if slot.bird and slot.eggs >= 1
+    )
+
+
+def _count_visionary_leader(player: Player) -> int:
+    """Bird cards in hand at end of game."""
+    return len(player.hand) + player.unknown_hand_count
+
+
+def _count_behaviorist(player: Player) -> int:
+    """Columns with 3 different power colors. No-power birds count as white."""
+    count = 0
+    for col_idx in range(5):
+        colors = set()
+        for row in player.board.all_rows():
+            if col_idx < len(row.slots) and row.slots[col_idx].bird:
+                color = row.slots[col_idx].bird.color
+                if color == PowerColor.NONE:
+                    color = PowerColor.WHITE
+                colors.add(color)
+        if len(colors) >= 3:
+            count += 1
+    return count
+
+
+def _count_citizen_scientist(player: Player) -> int:
+    """Birds with tucked cards."""
+    return sum(
+        1 for _, _, slot in player.board.all_slots()
+        if slot.bird and slot.tucked_cards > 0
+    )
+
+
+def _count_ethologist(player: Player) -> int:
+    """Max distinct power colors in any one habitat. No-power counts as white."""
+    best = 0
+    for row in player.board.all_rows():
+        colors = set()
+        for slot in row.slots:
+            if slot.bird:
+                color = slot.bird.color
+                if color == PowerColor.NONE:
+                    color = PowerColor.WHITE
+                colors.add(color)
+        best = max(best, len(colors))
+    return best
+
+
+def _longest_consecutive_sequence(values: list[int | None]) -> int:
+    """Longest consecutive strictly ascending or descending run.
+
+    None values break the sequence (e.g. flightless birds with no wingspan).
+    """
+    if len(values) <= 1:
+        return len(values)
+
+    best = 1
+
+    # Ascending
+    run = 1
+    for i in range(1, len(values)):
+        if values[i] is not None and values[i - 1] is not None and values[i] > values[i - 1]:
+            run += 1
+            best = max(best, run)
+        else:
+            run = 1
+
+    # Descending
+    run = 1
+    for i in range(1, len(values)):
+        if values[i] is not None and values[i - 1] is not None and values[i] < values[i - 1]:
+            run += 1
+            best = max(best, run)
+        else:
+            run = 1
+
+    return best
+
+
+def _count_data_analyst(player: Player, habitat: Habitat) -> int:
+    """Consecutive birds with ascending or descending wingspans in a habitat."""
+    row = player.board.get_row(habitat)
+    wingspans = [bird.wingspan_cm for bird in row.birds()]
+    return _longest_consecutive_sequence(wingspans)
+
+
+def _count_ranger(player: Player, habitat: Habitat) -> int:
+    """Consecutive birds with ascending or descending VP in a habitat."""
+    row = player.board.get_row(habitat)
+    scores = [bird.victory_points for bird in row.birds()]
+    return _longest_consecutive_sequence(scores)
+
+
+def _count_population_monitor(player: Player, habitat: Habitat) -> int:
+    """Distinct nest types in a habitat. Star nests count as any type or 5th type."""
+    row = player.board.get_row(habitat)
+    non_wild = set()
+    wild_count = 0
+    for bird in row.birds():
+        if bird.nest_type == NestType.WILD:
+            wild_count += 1
+        else:
+            non_wild.add(bird.nest_type)
+    return min(5, len(non_wild) + wild_count)
+
+
+def _count_mechanical_engineer(player: Player) -> int:
+    """Complete sets of 4 nest types (bowl, cavity, ground, platform).
+
+    Star nests are wild — each can fill any one type per set.
+    """
+    nests: Counter[NestType] = Counter()
+    wild_count = 0
+    for bird in player.board.all_birds():
+        if bird.nest_type == NestType.WILD:
+            wild_count += 1
+        else:
+            nests[bird.nest_type] += 1
+
+    required = [NestType.BOWL, NestType.CAVITY, NestType.GROUND, NestType.PLATFORM]
+    max_possible = (sum(nests.values()) + wild_count) // 4
+
+    for k in range(max_possible, 0, -1):
+        deficit = sum(max(0, k - nests.get(nt, 0)) for nt in required)
+        if deficit <= wild_count:
+            return k
+    return 0
+
+
+def _score_site_selection_expert(player: Player) -> int:
+    """Score columns with matching nest pairs or trios.
+
+    Per column: 2 matching nests = 1pt, 3 matching = 3pts.
+    Star nests are wild but each counts only once.
+    """
+    total = 0
+    for col_idx in range(5):
+        nests = []
+        for row in player.board.all_rows():
+            if col_idx < len(row.slots) and row.slots[col_idx].bird:
+                nests.append(row.slots[col_idx].bird.nest_type)
+
+        if len(nests) < 2:
+            continue
+
+        wild_count = sum(1 for n in nests if n == NestType.WILD)
+        type_counts = Counter(n for n in nests if n != NestType.WILD)
+        max_freq = max(type_counts.values()) if type_counts else 0
+        best_match = max_freq + wild_count
+
+        if best_match >= 3:
+            total += 3
+        elif best_match >= 2:
+            total += 1
+
+    return total
+
+
+def _count_avian_theriogenologist(player: Player) -> int:
+    """Birds with completely full nests (eggs == egg_limit, egg_limit > 0)."""
+    return sum(
+        1 for _, _, slot in player.board.all_slots()
+        if slot.bird and slot.bird.egg_limit > 0 and slot.eggs >= slot.bird.egg_limit
+    )
+
+
+def _count_pellet_dissector(player: Player) -> int:
+    """Fish and rodent tokens cached on birds."""
+    total = 0
+    for _, _, slot in player.board.all_slots():
+        total += slot.cached_food.get(FoodType.FISH, 0)
+        total += slot.cached_food.get(FoodType.RODENT, 0)
+    return total
+
+
+def _count_winter_feeder(player: Player) -> int:
+    """Total food remaining in supply at end of game."""
+    return player.food_supply.total()
+
+
+# Custom counter: bonus name → function(Player) → qualifying count
+CUSTOM_BONUS_COUNTERS: dict[str, Callable[[Player], int]] = {
+    "Breeding Manager": _count_breeding_manager,
+    "Ecologist": _count_ecologist,
+    "Oologist": _count_oologist,
+    "Visionary Leader": _count_visionary_leader,
+    "Behaviorist": _count_behaviorist,
+    "Citizen Scientist": _count_citizen_scientist,
+    "Ethologist": _count_ethologist,
+    "Forest Data Analyst": lambda p: _count_data_analyst(p, Habitat.FOREST),
+    "Grassland Data Analyst": lambda p: _count_data_analyst(p, Habitat.GRASSLAND),
+    "Wetland Data Analyst": lambda p: _count_data_analyst(p, Habitat.WETLAND),
+    "Mechanical Engineer": _count_mechanical_engineer,
+    "Forest Population Monitor": lambda p: _count_population_monitor(p, Habitat.FOREST),
+    "Grassland Population Monitor": lambda p: _count_population_monitor(p, Habitat.GRASSLAND),
+    "Wetland Population Monitor": lambda p: _count_population_monitor(p, Habitat.WETLAND),
+    "Forest Ranger": lambda p: _count_ranger(p, Habitat.FOREST),
+    "Grassland Ranger": lambda p: _count_ranger(p, Habitat.GRASSLAND),
+    "Wetland Ranger": lambda p: _count_ranger(p, Habitat.WETLAND),
+    "Avian Theriogenologist": _count_avian_theriogenologist,
+    "Pellet Dissector": _count_pellet_dissector,
+    "Winter Feeder": _count_winter_feeder,
+}
+
+# Cards with fully custom scoring (bypass bonus.score())
+CUSTOM_BONUS_FULL_SCORERS: dict[str, Callable[[Player], int]] = {
+    "Site Selection Expert": _score_site_selection_expert,
+}
+
+
 def score_bonus_cards(player: Player) -> int:
     """Score all bonus cards based on board state.
 
-    Uses the bonus_eligibility field on each bird to count qualifying birds.
+    Uses custom scoring functions for cards that depend on game state
+    (eggs, cached food, hand size, etc.), and falls back to spreadsheet
+    eligibility columns for the remaining cards.
     """
     total = 0
     for bonus in player.bonus_cards:
-        qualifying = sum(
-            1
-            for bird in player.board.all_birds()
-            if bonus.name in bird.bonus_eligibility
-        )
-        total += bonus.score(qualifying)
+        if bonus.name in CUSTOM_BONUS_FULL_SCORERS:
+            total += CUSTOM_BONUS_FULL_SCORERS[bonus.name](player)
+        elif bonus.name in CUSTOM_BONUS_COUNTERS:
+            qualifying = CUSTOM_BONUS_COUNTERS[bonus.name](player)
+            total += bonus.score(qualifying)
+        else:
+            qualifying = sum(
+                1
+                for bird in player.board.all_birds()
+                if bonus.name in bird.bonus_eligibility
+            )
+            total += bonus.score(qualifying)
     return total
 
 
@@ -134,7 +373,16 @@ def score_nectar(game_state: GameState, player: Player) -> int:
 def _nectar_points_for_player(
     sorted_players: list[tuple[str, int]], player_name: str
 ) -> int:
-    """Calculate nectar points for a specific player given rankings."""
+    """Calculate nectar points for a specific player given rankings.
+
+    Only 1st place (5pts) and 2nd place (2pts). Ties share the pools for
+    all positions the tied group occupies, rounded down.
+
+    Examples (2 prizes: 5, 2):
+    - 2 tied for 1st: share 5+2=7, each gets floor(7/2) = 3
+    - 3 tied for 1st: share 5+2=7, each gets floor(7/3) = 2
+    - 1st clear, 2 tied for 2nd: 1st gets 5, tied 2nd share 2, each gets 1
+    """
     if not sorted_players:
         return 0
 
@@ -148,22 +396,21 @@ def _nectar_points_for_player(
         else:
             groups[-1].append(name)
 
-    # Award points: 1st group gets 5pts, 2nd group gets 2pts
-    # Ties split and round down
+    # Award points: tied groups absorb prizes for all positions they occupy
     points_pools = [5, 2]
-    for group_idx, group in enumerate(groups):
-        if group_idx >= len(points_pools):
-            break
+    position = 0  # current placement position (0-based)
+
+    for group in groups:
+        if position >= len(points_pools):
+            break  # No more prizes to award
+
         if player_name in group:
-            if group_idx == 0 and len(groups) > 1:
-                # First place group
-                return points_pools[0] // len(group)
-            elif group_idx == 0 and len(groups) == 1:
-                # Everyone tied for first — split 5+2=7
-                total_pool = sum(points_pools[:min(len(points_pools), 1)])
-                return total_pool // len(group)
-            elif group_idx == 1:
-                return points_pools[1] // len(group)
+            # Share prizes for positions [position, position + group_size - 1]
+            pool = sum(points_pools[position:position + len(group)])
+            return pool // len(group)
+
+        position += len(group)
+
     return 0
 
 

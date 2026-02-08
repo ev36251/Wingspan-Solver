@@ -368,6 +368,6 @@ class TestScoring:
 
         breakdown_a = calculate_score(game, alice)
         breakdown_b = calculate_score(game, bob)
-        # Tied for 1st: 5 // 2 = 2 each
-        assert breakdown_a.nectar == 2
-        assert breakdown_b.nectar == 2
+        # Tied for 1st: (5+2) // 2 = 3 each
+        assert breakdown_a.nectar == 3
+        assert breakdown_b.nectar == 3
