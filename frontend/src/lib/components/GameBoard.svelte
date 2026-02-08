@@ -173,6 +173,38 @@
 		dispatch('changed');
 	}
 
+	// Hand drag-and-drop reordering
+	let handDragIdx: number | null = null;
+	let handDragOverIdx: number | null = null;
+
+	function onHandDragStart(idx: number, e: DragEvent) {
+		handDragIdx = idx;
+		if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+	}
+	function onHandDragOver(idx: number, e: DragEvent) {
+		e.preventDefault();
+		handDragOverIdx = idx;
+	}
+	function onHandDrop(idx: number) {
+		if (handDragIdx === null || handDragIdx === idx) {
+			handDragIdx = null;
+			handDragOverIdx = null;
+			return;
+		}
+		const arr = [...player.hand];
+		const [moved] = arr.splice(handDragIdx, 1);
+		arr.splice(idx, 0, moved);
+		player.hand = arr;
+		player = player;
+		dispatch('changed');
+		handDragIdx = null;
+		handDragOverIdx = null;
+	}
+	function onHandDragEnd() {
+		handDragIdx = null;
+		handDragOverIdx = null;
+	}
+
 	function selectBonusCard(bc: BonusCard) {
 		if (!player.bonus_cards.includes(bc.name)) {
 			player.bonus_cards = [...player.bonus_cards, bc.name];
@@ -343,7 +375,15 @@
 		</h4>
 		<div class="hand-list">
 			{#each player.hand as birdName, i}
-				<span class="hand-card">
+				<span
+					class="hand-card"
+					draggable="true"
+					class:drag-over={handDragOverIdx === i && handDragIdx !== i}
+					on:dragstart={(e) => onHandDragStart(i, e)}
+					on:dragover={(e) => onHandDragOver(i, e)}
+					on:drop={() => onHandDrop(i)}
+					on:dragend={onHandDragEnd}
+				>
 					{birdName}
 					<button class="remove-btn" on:click={() => removeFromHand(i)}>x</button>
 				</span>
@@ -901,6 +941,18 @@
 		display: flex;
 		align-items: center;
 		gap: 4px;
+		cursor: grab;
+		border: 1px solid transparent;
+		transition: border-color 0.15s, box-shadow 0.15s;
+	}
+
+	.hand-card:active {
+		cursor: grabbing;
+	}
+
+	.hand-card.drag-over {
+		border-color: var(--accent);
+		box-shadow: 0 0 0 2px rgba(196, 139, 47, 0.3);
 	}
 
 	.no-cards {

@@ -530,8 +530,8 @@ def evaluate_position(game: GameState, player: Player,
     if nectar_count > 0:
         if player.action_cubes_remaining <= 1:
             # Last turn of round: nectar in supply is about to be lost
-            # Only value it if it can be spent this turn (playing a bird)
-            value -= nectar_count * 0.5
+            # Strong penalty — each unspent nectar is a wasted resource
+            value -= nectar_count * 2.0
         elif rounds_remaining > 0:
             value += nectar_count * weights.nectar_early_bonus * (rounds_remaining / ROUNDS)
 
@@ -796,8 +796,14 @@ def _evaluate_play_bird(game: GameState, player: Player, move: Move,
     nectar_in_payment = move.food_payment.get(FoodType.NECTAR, 0)
     non_nectar_spent = sum(v for ft, v in move.food_payment.items() if ft != FoodType.NECTAR)
     value -= non_nectar_spent * 0.15
-    # Nectar has scoring value when spent (majority), so minimal penalty
-    value -= nectar_in_payment * 0.05
+
+    if player.action_cubes_remaining <= 1:
+        # Last turn of round: nectar is FREE — it will be lost at round end anyway
+        # Strong bonus for spending nectar that would otherwise expire
+        value += nectar_in_payment * 1.5
+    else:
+        # Nectar has scoring value when spent (majority), so minimal penalty
+        value -= nectar_in_payment * 0.05
 
     # Nectar majority bonus: spending nectar in a habitat improves end-game scoring
     if nectar_in_payment > 0:
@@ -983,6 +989,17 @@ def _evaluate_gain_food(game: GameState, player: Player, move: Move,
             if deficit_filled > 0:
                 value += deficit_filled * 0.6 * (best_bird_value / 5.0) * reset_discount
 
+    # Last turn nectar strategy: prefer moves that spend nectar before round end
+    if player.action_cubes_remaining <= 1:
+        nectar = player.food_supply.get(FoodType.NECTAR)
+        if nectar > 0:
+            if move.reset_bonus:
+                # Reset feeder costs 1 food — can pay with nectar
+                value += 1.5  # Bonus for spending nectar that would expire
+            else:
+                # Gaining food without spending nectar — mild preference against
+                value -= 0.3
+
     return value
 
 
@@ -1031,6 +1048,20 @@ def _evaluate_lay_eggs(game: GameState, player: Player, move: Move,
 
     # Goal alignment: egg-related goals boost value
     value += _egg_goal_alignment(game)
+
+    # Last turn nectar strategy: prefer moves that spend nectar before round end
+    if player.action_cubes_remaining <= 1:
+        nectar = player.food_supply.get(FoodType.NECTAR)
+        if nectar > 0:
+            if move.bonus_count > 0:
+                # Grassland column bonus costs 1 food per bonus — can pay with nectar
+                value += move.bonus_count * 1.5  # Bonus for spending nectar
+            elif move.reset_bonus:
+                # Reset feeder costs 1 food — can pay with nectar
+                value += 1.5
+            else:
+                # Laying eggs without spending nectar — mild preference against
+                value -= 0.3
 
     return value
 
@@ -1135,6 +1166,20 @@ def _evaluate_draw_cards(game: GameState, player: Player, move: Move,
     # Late game penalty: drawing cards with few actions left is wasteful
     if game.current_round >= 4 and player.action_cubes_remaining <= 2:
         value -= 1.0
+
+    # Last turn nectar strategy: prefer moves that spend nectar before round end
+    if player.action_cubes_remaining <= 1:
+        nectar = player.food_supply.get(FoodType.NECTAR)
+        if nectar > 0:
+            if move.bonus_count > 0:
+                # Wetland column bonus costs 1 egg or 1 food — can pay with nectar
+                value += move.bonus_count * 1.5  # Bonus for spending nectar
+            elif move.reset_bonus:
+                # Reset tray costs 1 food — can pay with nectar
+                value += 1.5
+            else:
+                # Drawing cards without spending nectar — mild preference against
+                value -= 0.3
 
     return value
 
@@ -1401,6 +1446,8 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
         if nectar_in_payment > 0:
             my_spent = player.board.get_row(move.habitat).nectar_spent
             reasons.append(f"nectar in {move.habitat.value} -> {my_spent + nectar_in_payment} (majority scoring)")
+            if player.action_cubes_remaining <= 1:
+                reasons.append(f"SPEND NECTAR NOW — {player.food_supply.get(FoodType.NECTAR)} nectar expires at end of round")
         # Cached food that could help pay
         for row in player.board.all_rows():
             for slot in row.slots:
@@ -1445,6 +1492,8 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
             payment = _recommend_bonus_payment(player, column.reset_bonus.cost_options, game)
             reasons.insert(0, f"FIRST reset feeder ({payment}), then take food" if payment else "FIRST reset feeder, then take food")
             reasons.append("food shown is best-case after reroll — use After Reset for exact picks")
+            if player.action_cubes_remaining <= 1 and player.food_supply.get(FoodType.NECTAR) > 0:
+                reasons.append("SPEND NECTAR on feeder reset — nectar expires at end of round")
         if bird_count > 0:
             reasons.append(f"activates {bird_count} forest bird{'s' if bird_count > 1 else ''}")
             advice_player = _player_after_bonus(player, move, column.bonus)
@@ -1471,6 +1520,8 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
             payment = _recommend_bonus_payment(player, column.bonus.cost_options, game)
             label = f"+{move.bonus_count} egg{'s' if move.bonus_count > 1 else ''}"
             reasons.append(f"{label} ({payment})" if payment else label)
+            if player.action_cubes_remaining <= 1 and player.food_supply.get(FoodType.NECTAR) > 0:
+                reasons.append("SPEND NECTAR on bonus — nectar expires at end of round")
         if game.round_goals:
             idx = min(game.current_round - 1, len(game.round_goals) - 1)
             if idx >= 0 and "[egg]" in game.round_goals[idx].description.lower():
@@ -1491,9 +1542,13 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
         if move.bonus_count > 0 and column.bonus:
             payment = _recommend_bonus_payment(player, column.bonus.cost_options, game)
             reasons.append(f"+1 card ({payment})" if payment else "+1 card")
+            if player.action_cubes_remaining <= 1 and player.food_supply.get(FoodType.NECTAR) > 0:
+                reasons.append("SPEND NECTAR on bonus — nectar expires at end of round")
         if move.reset_bonus and column.reset_bonus:
             payment = _recommend_bonus_payment(player, column.reset_bonus.cost_options, game)
             reasons.insert(0, f"FIRST reset tray ({payment}), then draw cards" if payment else "FIRST reset tray, then draw cards")
+            if player.action_cubes_remaining <= 1 and player.food_supply.get(FoodType.NECTAR) > 0:
+                reasons.append("SPEND NECTAR on tray reset — nectar expires at end of round")
         if bird_count > 0:
             reasons.append(f"activates {bird_count} wetland bird{'s' if bird_count > 1 else ''}")
             advice_player = _player_after_bonus(player, move, column.bonus)

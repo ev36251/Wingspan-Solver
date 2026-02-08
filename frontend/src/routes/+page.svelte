@@ -248,6 +248,37 @@
 
 	const HABITAT_INDICES: Record<string, number> = { forest: 0, grassland: 1, wetland: 2 };
 
+	// Tray drag-and-drop reordering
+	let trayDragIdx: number | null = null;
+	let trayDragOverIdx: number | null = null;
+
+	function onTrayDragStart(idx: number, e: DragEvent) {
+		trayDragIdx = idx;
+		if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+	}
+	function onTrayDragOver(idx: number, e: DragEvent) {
+		e.preventDefault();
+		trayDragOverIdx = idx;
+	}
+	function onTrayDrop(idx: number) {
+		if (!state || trayDragIdx === null || trayDragIdx === idx) {
+			trayDragIdx = null;
+			trayDragOverIdx = null;
+			return;
+		}
+		const arr = [...state.card_tray.face_up];
+		const [moved] = arr.splice(trayDragIdx, 1);
+		arr.splice(idx, 0, moved);
+		state.card_tray.face_up = arr;
+		state = state;
+		trayDragIdx = null;
+		trayDragOverIdx = null;
+	}
+	function onTrayDragEnd() {
+		trayDragIdx = null;
+		trayDragOverIdx = null;
+	}
+
 	async function applyRecommendation(rec: SolverRecommendation) {
 		if (!state) return;
 		const player = state.players[activePlayerIdx];
@@ -488,41 +519,49 @@
 					on:changed={() => { state = state; }}
 				/>
 
-				<!-- Card Tray + Score side by side -->
-				<div class="bottom-row">
-					<div class="tray-panel card">
+				<!-- Card Tray: horizontal, right below board -->
+				<div class="tray-panel card">
+					<div class="tray-header-row">
 						<h4 class="panel-title">Card Tray ({state.card_tray.face_up.length}/3)</h4>
-						<div class="tray-cards">
-							{#each state.card_tray.face_up as birdName, i}
-								<div class="tray-card">
-									<span class="tray-bird-name">{birdName}</span>
-									<div class="tray-actions">
-										{#each state.players as p, pi}
-											<button
-												class="tray-to-hand"
-												on:click={() => trayToHand(i, pi)}
-												title="Give to {p.name}"
-											>
-												&#8594; {p.name}
-											</button>
-										{/each}
-										<button class="remove-btn" on:click={() => removeTrayCard(i)}>x</button>
-									</div>
-								</div>
-							{:else}
-								<span class="tray-empty">No face-up cards</span>
-							{/each}
-						</div>
 						{#if state.card_tray.face_up.length < 3}
-							<div style="margin-top: 6px;">
+							<div class="tray-search-inline">
 								<BirdSearch on:select={(e) => addBirdToTray(e.detail)} placeholder="Add bird to tray..." />
 							</div>
 						{/if}
 					</div>
-
-					<!-- Score Sheet -->
-					<ScoreSheet {gameId} bind:this={scoreSheet} />
+					<div class="tray-cards-horizontal">
+						{#each state.card_tray.face_up as birdName, i}
+							<div
+								class="tray-card-h"
+								draggable="true"
+								class:drag-over={trayDragOverIdx === i && trayDragIdx !== i}
+								on:dragstart={(e) => onTrayDragStart(i, e)}
+								on:dragover={(e) => onTrayDragOver(i, e)}
+								on:drop={() => onTrayDrop(i)}
+								on:dragend={onTrayDragEnd}
+							>
+								<span class="tray-bird-name">{birdName}</span>
+								<div class="tray-actions">
+									{#each state.players as p, pi}
+										<button
+											class="tray-to-hand"
+											on:click={() => trayToHand(i, pi)}
+											title="Give to {p.name}"
+										>
+											&#8594; {p.name}
+										</button>
+									{/each}
+									<button class="remove-btn" on:click={() => removeTrayCard(i)}>x</button>
+								</div>
+							</div>
+						{:else}
+							<span class="tray-empty">No face-up cards</span>
+						{/each}
+					</div>
 				</div>
+
+				<!-- Score Sheet -->
+				<ScoreSheet {gameId} bind:this={scoreSheet} />
 			</div>
 
 			<div class="side-column">
@@ -924,14 +963,55 @@
 		gap: 12px;
 	}
 
-	.bottom-row {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 12px;
-	}
-
 	.tray-panel {
 		padding: 12px 16px;
+		margin-bottom: 12px;
+	}
+
+	.tray-header-row {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin-bottom: 6px;
+	}
+
+	.tray-header-row .panel-title {
+		margin-bottom: 0;
+		white-space: nowrap;
+	}
+
+	.tray-search-inline {
+		flex: 1;
+		max-width: 280px;
+	}
+
+	.tray-cards-horizontal {
+		display: flex;
+		gap: 8px;
+	}
+
+	.tray-card-h {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 8px 10px;
+		background: #eef7ff;
+		border: 1px solid #c5ddf5;
+		border-radius: 6px;
+		font-size: 0.85rem;
+		cursor: grab;
+		transition: border-color 0.15s, box-shadow 0.15s;
+	}
+
+	.tray-card-h:active {
+		cursor: grabbing;
+	}
+
+	.tray-card-h.drag-over {
+		border-color: var(--accent);
+		box-shadow: 0 0 0 2px rgba(196, 139, 47, 0.3);
 	}
 
 	.side-column {
@@ -1204,26 +1284,8 @@
 	}
 
 	/* Card Tray */
-	.tray-cards {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-
-	.tray-card {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 6px 10px;
-		background: #eef7ff;
-		border: 1px solid #c5ddf5;
-		border-radius: 6px;
-		font-size: 0.85rem;
-	}
-
 	.tray-bird-name {
 		font-weight: 500;
-		flex: 1;
 		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -1233,7 +1295,7 @@
 	.tray-actions {
 		display: flex;
 		gap: 4px;
-		flex-shrink: 0;
+		flex-wrap: wrap;
 	}
 
 	.tray-to-hand {
