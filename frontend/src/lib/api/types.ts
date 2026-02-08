@@ -45,7 +45,18 @@ export interface BirdSlot {
 	eggs: number;
 	cached_food: Record<string, number>;
 	tucked_cards: number;
+	victory_points: number;
+	nest_type: string | null;
+	cache_spendable: boolean;
 }
+
+export const NEST_ICONS: Record<string, string> = {
+	platform: '\u2A09',   // ⨉ cross/sticks
+	bowl: '\u2B58',       // ⭘ circle/bowl
+	cavity: '\u25D1',     // ◑ half-filled circle
+	ground: '\u2B22',     // ⬢ hexagon/ground
+	wild: '\u2605',       // ★ star
+};
 
 export interface HabitatRow {
 	habitat: string;

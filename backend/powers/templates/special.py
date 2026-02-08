@@ -19,6 +19,30 @@ class RepeatPower(PowerEffect):
         # For now, estimate as average brown power value
         return PowerResult(description="Repeat another brown power (simulated)")
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        from backend.models.enums import PowerColor
+        row = ctx.player.board.get_row(ctx.habitat)
+        brown_names = [
+            s.bird.name for s in row.slots
+            if s.bird and s.bird.color == PowerColor.BROWN
+            and s.bird.name != ctx.bird.name
+        ]
+        if brown_names:
+            return f"repeat a brown power in {ctx.habitat.value} (options: {', '.join(brown_names)})"
+        return f"repeat a brown power in {ctx.habitat.value} (none available)"
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        from backend.models.enums import PowerColor
+        row = ctx.player.board.get_row(ctx.habitat)
+        brown_count = sum(
+            1 for s in row.slots
+            if s.bird and s.bird.color == PowerColor.BROWN
+            and s.bird.name != ctx.bird.name
+        )
+        if brown_count == 0:
+            return "no other brown birds in this habitat"
+        return None
+
     def estimate_value(self, ctx: PowerContext) -> float:
         # Average brown power is ~1.5
         from backend.models.enums import PowerColor
@@ -123,6 +147,33 @@ class CopyNeighborBrownPower(PowerEffect):
             best_val = max(best_val, power.estimate_value(neighbor_ctx))
         return best_val
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        target = self.best_copy_target(ctx)
+        neighbor = self._get_neighbor(ctx)
+        neighbor_name = neighbor.name if neighbor else "opponent"
+        if target:
+            from backend.powers.registry import get_power
+            bird_obj = next((b for b in self._neighbor_brown_birds(ctx) if b.name == target), None)
+            if bird_obj:
+                power = get_power(bird_obj)
+                copy_ctx = PowerContext(
+                    game_state=ctx.game_state, player=ctx.player, bird=bird_obj,
+                    slot_index=0, habitat=self.target_habitat,
+                )
+                power_desc = power.describe_activation(copy_ctx)
+                return f"copy {target} from {neighbor_name}'s {self.target_habitat.value}: {power_desc}"
+            return f"copy {target} from {neighbor_name}'s {self.target_habitat.value}"
+        return f"copy brown power from {neighbor_name}'s {self.target_habitat.value} (none available)"
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        neighbor = self._get_neighbor(ctx)
+        if not neighbor:
+            return "no neighbor"
+        brown_birds = self._neighbor_brown_birds(ctx)
+        if not brown_birds:
+            return f"no brown birds in {neighbor.name}'s {self.target_habitat.value}"
+        return None
+
     def best_copy_target(self, ctx: PowerContext) -> str | None:
         """Return the name of the best bird to copy for solver advice."""
         from backend.powers.registry import get_power
@@ -159,6 +210,9 @@ class MoveBird(PowerEffect):
     def execute(self, ctx: PowerContext) -> PowerResult:
         # Bird movement is a complex choice — handled by solver
         return PowerResult(description="May move a bird between habitats")
+
+    def describe_activation(self, ctx: PowerContext) -> str:
+        return "move 1 bird from one habitat to another"
 
     def estimate_value(self, ctx: PowerContext) -> float:
         return 1.0  # Situational
@@ -197,6 +251,23 @@ class DiscardEggForBenefit(PowerEffect):
 
         return PowerResult(executed=False, description="No eggs to discard")
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        parts = [f"discard {self.egg_cost} egg from any bird"]
+        if self.food_gain and self.food_type:
+            parts.append(f"gain {self.food_gain} {self.food_type.value}")
+        if self.card_gain:
+            parts.append(f"draw {self.card_gain} card{'s' if self.card_gain > 1 else ''}")
+        return ", then ".join(parts)
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        total_eggs = sum(
+            s.eggs for row in ctx.player.board.all_rows()
+            for s in row.slots if s.bird
+        )
+        if total_eggs < self.egg_cost:
+            return "no eggs on any bird to discard"
+        return None
+
     def estimate_value(self, ctx: PowerContext) -> float:
         gain = self.food_gain * 0.5 + self.card_gain * 0.4
         cost = self.egg_cost * 0.8
@@ -219,6 +290,14 @@ class FlockingPower(PowerEffect):
         ctx.game_state.deck_remaining -= tucked
         return PowerResult(cards_tucked=tucked,
                            description=f"Flocking: tucked {tucked}")
+
+    def describe_activation(self, ctx: PowerContext) -> str:
+        return f"tuck {self.count} from deck behind {ctx.bird.name} ({self.count} pt)"
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        if ctx.game_state.deck_remaining <= 0:
+            return "deck is empty"
+        return None
 
     def estimate_value(self, ctx: PowerContext) -> float:
         return self.count * 0.9

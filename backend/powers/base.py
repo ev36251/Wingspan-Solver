@@ -51,6 +51,19 @@ class PowerEffect(ABC):
         """Check if this power can be meaningfully executed right now."""
         return True
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        """Human-readable description of what this power does right now.
+
+        Returns a string like "tuck 1 card from hand, then lay 1 egg"
+        or "cache 1 seed from supply onto this bird".
+        """
+        return f"activate {ctx.bird.name}"
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        """Return a reason string if this power cannot meaningfully execute,
+        or None if it can. Used for SKIP warnings in solver advice."""
+        return None
+
 
 class NoPower(PowerEffect):
     """Placeholder for birds with no power (high VP birds)."""
@@ -60,6 +73,9 @@ class NoPower(PowerEffect):
 
     def estimate_value(self, ctx: PowerContext) -> float:
         return 0.0
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        return "no power"
 
 
 class FallbackPower(PowerEffect):

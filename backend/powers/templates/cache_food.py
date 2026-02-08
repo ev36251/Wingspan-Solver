@@ -24,6 +24,9 @@ class CacheFoodFromSupply(PowerEffect):
             description=f"Cached {self.count} {self.food_type.value}",
         )
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        return f"cache {self.count} {self.food_type.value} from supply onto {ctx.bird.name} ({self.count} pt)"
+
     def estimate_value(self, ctx: PowerContext) -> float:
         return self.count * 0.9  # Each cached food = 1 point
 
@@ -52,6 +55,12 @@ class CacheFoodFromFeeder(PowerEffect):
             food_cached={self.food_type: count} if count else {},
             description=f"Cached {count} {self.food_type.value} from feeder",
         )
+
+    def describe_activation(self, ctx: PowerContext) -> str:
+        feeder = ctx.game_state.birdfeeder
+        available = sum(1 for d in feeder.dice
+                        if d == self.food_type or (isinstance(d, tuple) and self.food_type in d))
+        return f"cache all {self.food_type.value} from feeder onto {ctx.bird.name} ({available} available)"
 
     def estimate_value(self, ctx: PowerContext) -> float:
         # Average ~1 matching die in feeder
@@ -100,6 +109,20 @@ class TradeFood(PowerEffect):
 
         return PowerResult(food_gained=gained, food_cached=cached,
                            description=f"Traded for {gained or cached}")
+
+    def describe_activation(self, ctx: PowerContext) -> str:
+        cost = f"{self.discard_count} egg" if self.discard_egg else f"{self.discard_count} {self.discard_type.value if self.discard_type else 'food'}"
+        gain = f"{self.gain_count} {self.gain_type.value if self.gain_type else 'food'}"
+        verb = "cache" if self.cache else "gain"
+        return f"discard {cost} from {ctx.bird.name}, {verb} {gain}"
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
+        if self.discard_egg and slot.eggs < self.discard_count:
+            return f"not enough eggs on {ctx.bird.name} ({slot.eggs})"
+        if self.discard_type and not ctx.player.food_supply.has(self.discard_type, self.discard_count):
+            return f"no {self.discard_type.value} to discard"
+        return None
 
     def estimate_value(self, ctx: PowerContext) -> float:
         return (self.gain_count - self.discard_count) * 0.5 + 0.3

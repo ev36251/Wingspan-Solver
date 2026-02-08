@@ -83,6 +83,9 @@ class BirdSlotSchema(BaseModel):
     eggs: int = 0
     cached_food: dict[str, int] = Field(default_factory=dict)
     tucked_cards: int = 0
+    victory_points: int = 0
+    nest_type: str | None = None
+    cache_spendable: bool = False
 
 
 class HabitatRowSchema(BaseModel):

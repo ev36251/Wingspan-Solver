@@ -69,6 +69,13 @@ def goal_to_schema(goal: Goal) -> GoalSchema:
     )
 
 
+# Birds whose power text explicitly allows spending cached food
+SPENDABLE_CACHE_BIRDS = {
+    "Coal Tit", "Eurasian Nuthatch", "Great Spotted Kiwi",
+    "Ivory Gull", "Pine Grosbeak", "Rock Ptarmigan",
+}
+
+
 def bird_slot_to_schema(slot: BirdSlot) -> BirdSlotSchema:
     return BirdSlotSchema(
         bird_name=slot.bird.name if slot.bird else None,
@@ -76,6 +83,9 @@ def bird_slot_to_schema(slot: BirdSlot) -> BirdSlotSchema:
         eggs=slot.eggs,
         cached_food={ft.value: c for ft, c in slot.cached_food.items()},
         tucked_cards=slot.tucked_cards,
+        victory_points=slot.bird.victory_points if slot.bird else 0,
+        nest_type=slot.bird.nest_type.value if slot.bird else None,
+        cache_spendable=slot.bird.name in SPENDABLE_CACHE_BIRDS if slot.bird else False,
     )
 
 

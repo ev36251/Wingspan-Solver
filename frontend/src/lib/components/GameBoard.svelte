@@ -1,17 +1,20 @@
 <script lang="ts">
 	import type { Player, Bird, BonusCard } from '$lib/api/types';
-	import { FOOD_ICONS, HABITAT_LABELS } from '$lib/api/types';
+	import { FOOD_ICONS, HABITAT_LABELS, NEST_ICONS } from '$lib/api/types';
 	import { getBonusCards } from '$lib/api/client';
 	import BirdSearch from './BirdSearch.svelte';
 	import { createEventDispatcher } from 'svelte';
 
 	export let player: Player;
 	export let isCurrentPlayer = false;
+	export let currentRound: number = 1;
 
 	const dispatch = createEventDispatcher<{ changed: void }>();
 
 	const CACHE_FOOD_TYPES = ['invertebrate', 'seed', 'fish', 'fruit', 'rodent'];
 	const FOOD_TYPES = ['invertebrate', 'seed', 'fish', 'fruit', 'rodent', 'nectar'];
+	// Vertical sidebar order: nectar, fruit, fish, invertebrate, rodent, seed
+	const SIDEBAR_FOOD_ORDER = ['nectar', 'fruit', 'fish', 'invertebrate', 'rodent', 'seed'];
 
 	// Board slot editing state
 	let editingSlot: { habitat: number; slot: number } | null = null;
@@ -96,6 +99,12 @@
 		player = player;
 		dispatch('changed');
 	}
+
+	// Reactive egg totals
+	$: eggCurrent = player.board.reduce((sum, row) =>
+		sum + row.slots.reduce((s, slot) => s + slot.eggs, 0), 0);
+	$: eggCapacity = player.board.reduce((sum, row) =>
+		sum + row.slots.reduce((s, slot) => s + (slot.bird_name ? slot.egg_limit : 0), 0), 0);
 
 	// Reactive food counts — Svelte tracks direct property access on player
 	$: foodCounts = {
@@ -195,19 +204,35 @@
 		</div>
 	</div>
 
-	<!-- Food Supply (editable +/-) -->
-	<div class="food-supply">
-		{#each FOOD_TYPES as ft}
-			<div class="food-token editable">
-				<button class="food-adj" on:click={() => adjustFood(ft, -1)}>-</button>
-				<span>{foodCounts[ft]}{FOOD_ICONS[ft]}</span>
-				<button class="food-adj" on:click={() => adjustFood(ft, 1)}>+</button>
+	<!-- Board area: sidebar + habitats -->
+	<div class="board-area">
+		<!-- Player Sidebar: round, eggs, food -->
+		<div class="player-sidebar">
+			<!-- Round counter -->
+			<div class="sidebar-item round-counter" title="Current round">
+				<span class="sidebar-icon">&#x1F4E6;</span>
+				<span class="sidebar-value">{currentRound}</span>
 			</div>
-		{/each}
-	</div>
+			<!-- Egg counter -->
+			<div class="sidebar-item egg-counter" title="Eggs placed / total egg capacity">
+				<span class="sidebar-icon">&#x1F95A;</span>
+				<span class="sidebar-value">{eggCurrent}<span class="sidebar-denom">/{eggCapacity}</span></span>
+			</div>
+			<!-- Food supply (vertical) -->
+			{#each SIDEBAR_FOOD_ORDER as ft}
+				<div class="sidebar-food" title={ft}>
+					<span class="sidebar-food-icon">{FOOD_ICONS[ft]}</span>
+					<span class="sidebar-food-count">{foodCounts[ft]}</span>
+					<div class="sidebar-food-btns">
+						<button class="food-adj" on:click={() => adjustFood(ft, 1)}>+</button>
+						<button class="food-adj" on:click={() => adjustFood(ft, -1)}>-</button>
+					</div>
+				</div>
+			{/each}
+		</div>
 
-	<!-- Habitats -->
-	<div class="habitats">
+		<!-- Habitats -->
+		<div class="habitats">
 		{#each player.board as row, habIdx}
 			<div class="habitat-row">
 				<div class="habitat-label habitat-{row.habitat}">
@@ -220,7 +245,12 @@
 					{#each row.slots as slot, slotIdx}
 						<div class="slot" class:occupied={slot.bird_name} class:editing={editingSlot?.habitat === habIdx && editingSlot?.slot === slotIdx}>
 							{#if slot.bird_name}
-								<div class="bird-name-row">
+								<!-- VP badge + nest icon + bird name + remove -->
+								<div class="bird-header">
+									<span class="vp-badge" title="Victory points">{slot.victory_points}</span>
+									{#if slot.nest_type}
+										<span class="nest-icon nest-{slot.nest_type}" title="{slot.nest_type} nest">{NEST_ICONS[slot.nest_type] || '?'}</span>
+									{/if}
 									<span class="bird-name" title={slot.bird_name}>{slot.bird_name}</span>
 									<button class="remove-btn" on:click={() => removeBird(habIdx, slotIdx)} title="Remove bird">x</button>
 								</div>
@@ -242,7 +272,7 @@
 									<div class="tucked-row">
 										<span class="control-label">tucked</span>
 										<button class="adj-btn" on:click={() => adjustTucked(habIdx, slotIdx, -1)}>-</button>
-										<span class="control-val">{slot.tucked_cards}</span>
+										<span class="tucked-count" class:has-tucked={slot.tucked_cards > 0}>{slot.tucked_cards}</span>
 										<button class="adj-btn" on:click={() => adjustTucked(habIdx, slotIdx, 1)}>+</button>
 									</div>
 									<!-- Cached food -->
@@ -250,6 +280,9 @@
 										<span class="control-label">cached</span>
 										{#if totalCachedFood(slot) > 0}
 											<span class="cached-display">{cachedFoodDisplay(slot.cached_food)}</span>
+											{#if slot.cache_spendable}
+												<span class="spendable-hint" title="Can be spent as food for bird costs (loses 1pt each)">spendable</span>
+											{/if}
 										{/if}
 										<div class="cache-btns">
 											{#each CACHE_FOOD_TYPES as ft}
@@ -301,6 +334,7 @@
 			</div>
 		{/each}
 	</div>
+	</div> <!-- /board-area -->
 
 	<!-- Hand -->
 	<div class="hand-section">
@@ -403,37 +437,93 @@
 		gap: 4px;
 	}
 
-	/* Food supply */
-	.food-supply {
+	/* Board area: sidebar + habitats side-by-side */
+	.board-area {
 		display: flex;
-		gap: 6px;
+		gap: 8px;
 		margin-bottom: 12px;
-		flex-wrap: wrap;
 	}
 
-	.food-token {
-		font-size: 0.85rem;
-		background: #f5f0e8;
-		padding: 2px 6px;
-		border-radius: 4px;
+	/* Player sidebar */
+	.player-sidebar {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 4px;
+		background: #f9f6f0;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 8px 6px;
+		min-width: 64px;
+	}
+
+	.sidebar-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 4px 0;
+		border-bottom: 1px solid #e0dcd4;
+		width: 100%;
+	}
+
+	.sidebar-icon {
+		font-size: 1.2rem;
+		line-height: 1;
+	}
+
+	.sidebar-value {
+		font-size: 1.1rem;
+		font-weight: 700;
+		line-height: 1.2;
+	}
+
+	.sidebar-denom {
+		font-size: 0.75rem;
+		font-weight: 400;
+		color: var(--text-muted);
+	}
+
+	.sidebar-food {
 		display: flex;
 		align-items: center;
 		gap: 2px;
+		width: 100%;
+		justify-content: center;
+	}
+
+	.sidebar-food-icon {
+		font-size: 1rem;
+		width: 20px;
+		text-align: center;
+	}
+
+	.sidebar-food-count {
+		font-size: 1rem;
+		font-weight: 700;
+		min-width: 14px;
+		text-align: center;
+	}
+
+	.sidebar-food-btns {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
 	}
 
 	.food-adj {
-		width: 18px;
-		height: 18px;
+		width: 16px;
+		height: 14px;
 		padding: 0;
-		font-size: 0.7rem;
+		font-size: 0.6rem;
 		font-weight: 700;
 		border: 1px solid var(--border);
 		background: #f5f5f5;
-		border-radius: 3px;
+		border-radius: 2px;
 		cursor: pointer;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		line-height: 1;
 	}
 
 	.food-adj:hover {
@@ -446,6 +536,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 6px;
+		flex: 1;
+		min-width: 0;
 	}
 
 	.habitat-row {
@@ -501,13 +593,39 @@
 		z-index: 10;
 	}
 
-	/* Bird name with remove button */
-	.bird-name-row {
+	/* Bird header: VP badge + nest icon + name + remove */
+	.bird-header {
 		display: flex;
-		justify-content: space-between;
 		align-items: center;
-		gap: 2px;
+		gap: 3px;
 	}
+
+	.vp-badge {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 18px;
+		height: 18px;
+		border-radius: 50%;
+		background: #1565c0;
+		color: white;
+		font-size: 0.6rem;
+		font-weight: 700;
+		flex-shrink: 0;
+		line-height: 1;
+	}
+
+	.nest-icon {
+		font-size: 0.85rem;
+		flex-shrink: 0;
+		line-height: 1;
+	}
+
+	.nest-platform { color: #8d6e63; }
+	.nest-bowl { color: #43a047; }
+	.nest-cavity { color: #5c6bc0; }
+	.nest-ground { color: #ef6c00; }
+	.nest-wild { color: #fdd835; }
 
 	.bird-name {
 		font-weight: 500;
@@ -567,6 +685,23 @@
 		min-width: 32px;
 	}
 
+	.tucked-count {
+		font-size: 0.7rem;
+		font-weight: 600;
+		min-width: 14px;
+		text-align: center;
+		color: var(--text-muted);
+	}
+
+	.tucked-count.has-tucked {
+		font-size: 0.85rem;
+		font-weight: 800;
+		color: #6a1b9a;
+		background: #f3e5f5;
+		border-radius: 4px;
+		padding: 0 4px;
+	}
+
 	.control-val {
 		font-size: 0.65rem;
 		font-weight: 600;
@@ -596,9 +731,17 @@
 
 	/* Cached food */
 	.cached-display {
-		font-size: 0.6rem;
-		font-weight: 600;
+		font-size: 0.8rem;
+		font-weight: 700;
 		color: #e65100;
+	}
+
+	.spendable-hint {
+		font-size: 0.65rem;
+		font-weight: 700;
+		font-style: italic;
+		color: #e65100;
+		cursor: help;
 	}
 
 	.cache-btns {

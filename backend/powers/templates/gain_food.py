@@ -38,6 +38,11 @@ class GainFoodFromSupply(PowerEffect):
         return PowerResult(food_gained=gained,
                            description=f"Gained {gained} from supply")
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        food_names = " + ".join(f"{self.count} {ft.value}" for ft in self.food_types)
+        prefix = "ALL PLAYERS: " if self.all_players else ""
+        return f"{prefix}gain {food_names} from supply"
+
     def estimate_value(self, ctx: PowerContext) -> float:
         base = self.count * len(self.food_types) * 0.5
         if self.all_players:
@@ -103,6 +108,16 @@ class GainFoodFromFeeder(PowerEffect):
         return PowerResult(food_gained=gained, food_cached=cached,
                            description=f"Gained {gained} from feeder")
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        if self.food_types:
+            food_names = "/".join(ft.value for ft in self.food_types)
+            base = f"gain {self.count} {food_names} from feeder (if available)"
+        else:
+            base = f"gain {self.count} food from feeder"
+        if self.may_cache:
+            base += f", may cache onto {ctx.bird.name}"
+        return base
+
     def estimate_value(self, ctx: PowerContext) -> float:
         base = self.count * 0.6
         if self.may_cache:
@@ -139,6 +154,10 @@ class GainFoodFromSupplyOrCache(PowerEffect):
         return PowerResult(food_gained=gained, food_cached=cached,
                            description=f"Gained and cached {cached}")
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        food_names = " + ".join(f"{self.count} {ft.value}" for ft in self.food_types)
+        return f"gain and cache {food_names} onto {ctx.bird.name}"
+
     def estimate_value(self, ctx: PowerContext) -> float:
         return self.count * len(self.food_types) * 0.8
 
@@ -173,6 +192,14 @@ class ResetFeederGainFood(PowerEffect):
 
         return PowerResult(food_gained=gained,
                            description=f"Reset feeder, gained {gained}")
+
+    def describe_activation(self, ctx: PowerContext) -> str:
+        base = "reset birdfeeder"
+        if self.food_type:
+            base += f", gain all {self.food_type.value}"
+            if self.cache:
+                base += f", cache onto {ctx.bird.name}"
+        return base
 
     def estimate_value(self, ctx: PowerContext) -> float:
         return 1.5  # Depends heavily on dice rolls

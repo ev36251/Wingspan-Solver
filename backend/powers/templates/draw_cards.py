@@ -37,6 +37,12 @@ class DrawCards(PowerEffect):
         return PowerResult(cards_drawn=drawn,
                            description=f"Drew {drawn} cards")
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        prefix = "ALL PLAYERS: " if self.all_players else ""
+        if self.keep < self.draw:
+            return f"{prefix}draw {self.draw}, keep {self.keep} card{'s' if self.keep > 1 else ''}"
+        return f"{prefix}draw {self.draw} card{'s' if self.draw > 1 else ''}"
+
     def estimate_value(self, ctx: PowerContext) -> float:
         base = self.keep * 0.4  # Cards are potential, not points
         if self.all_players:
@@ -73,6 +79,11 @@ class DrawFromTray(PowerEffect):
         return PowerResult(cards_drawn=drawn,
                            description=f"Drew {drawn} from tray")
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        if self.food_filter:
+            return f"draw {self.count} from tray (matching {self.food_filter.value} cost)"
+        return f"draw {self.count} from tray"
+
     def estimate_value(self, ctx: PowerContext) -> float:
         return self.count * 0.35
 
@@ -92,6 +103,11 @@ class DrawBonusCards(PowerEffect):
         # For simulation, we just note it happened
         return PowerResult(cards_drawn=self.keep,
                            description=f"Drew {self.draw} bonus cards, kept {self.keep}")
+
+    def describe_activation(self, ctx: PowerContext) -> str:
+        if self.keep < self.draw:
+            return f"draw {self.draw} bonus cards, keep {self.keep}"
+        return f"draw {self.draw} bonus card{'s' if self.draw > 1 else ''}"
 
     def estimate_value(self, ctx: PowerContext) -> float:
         return self.keep * 1.5  # Bonus cards are high value

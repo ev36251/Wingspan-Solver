@@ -233,19 +233,21 @@ def generate_gain_food_moves(game: GameState, player: Player) -> list[Move]:
 
     def _make_food_moves(count: int, bonus: int = 0,
                          use_reset: bool = False) -> list[Move]:
-        parts = []
-        if bonus:
-            parts.append("+1 food")
-        if use_reset:
-            parts.append("reset feeder")
-        suffix = f" ({', '.join(parts)})" if parts else ""
-
         # After a reset, dice are rerolled — use all possible types
         counts = reroll_type_counts if use_reset else type_counts
         combos = _generate_food_combos(counts, count)
         result = []
         for combo in combos:
-            desc = f"Gain {_food_combo_description(combo)}{suffix}"
+            combo_desc = _food_combo_description(combo)
+            if use_reset:
+                # Make it clear these are best-case picks after reroll
+                desc = f"Reset feeder, then gain {count} food (best: {combo_desc})"
+                if bonus:
+                    desc = f"Reset feeder + extra, then gain {count} food (best: {combo_desc})"
+            elif bonus:
+                desc = f"Gain {combo_desc} (+1 food)"
+            else:
+                desc = f"Gain {combo_desc}"
             result.append(Move(
                 action_type=ActionType.GAIN_FOOD,
                 description=desc,

@@ -57,6 +57,21 @@ class TuckFromHand(PowerEffect):
         result.description = f"Tucked {tucked} cards"
         return result
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        parts = [f"tuck {self.tuck_count} card from hand behind {ctx.bird.name}"]
+        if self.draw_count:
+            parts.append(f"draw {self.draw_count} card{'s' if self.draw_count > 1 else ''}")
+        if self.lay_count:
+            parts.append(f"lay {self.lay_count} egg on {ctx.bird.name}")
+        if self.food_count and self.food_type:
+            parts.append(f"gain {self.food_count} {self.food_type.value}")
+        return ", then ".join(parts)
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        if len(ctx.player.hand) < self.tuck_count:
+            return "no cards in hand to tuck"
+        return None
+
     def estimate_value(self, ctx: PowerContext) -> float:
         # Tucked card = 1 point, but costs a card from hand
         base = self.tuck_count * 0.5  # Net ~0.5 after losing the card
@@ -83,6 +98,14 @@ class TuckFromDeck(PowerEffect):
 
         return PowerResult(cards_tucked=tucked,
                            description=f"Tucked {tucked} from deck")
+
+    def describe_activation(self, ctx: PowerContext) -> str:
+        return f"tuck {self.count} from deck behind {ctx.bird.name} ({self.count} pt)"
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        if ctx.game_state.deck_remaining <= 0:
+            return "deck is empty"
+        return None
 
     def estimate_value(self, ctx: PowerContext) -> float:
         return self.count * 0.9  # Pure point gain, no hand cost
@@ -121,6 +144,13 @@ class DiscardToTuck(PowerEffect):
 
         result.description = f"Drew {self.draw_count}, tucked {tucked}"
         return result
+
+    def describe_activation(self, ctx: PowerContext) -> str:
+        prob_pct = int(self.tuck_probability * 100)
+        base = f"draw {self.draw_count} from deck, tuck if match (~{prob_pct}%)"
+        if self.food_type and self.food_on_success:
+            base += f", gain {self.food_on_success} {self.food_type.value} if tucked"
+        return base
 
     def estimate_value(self, ctx: PowerContext) -> float:
         expected_tucks = self.draw_count * self.tuck_probability

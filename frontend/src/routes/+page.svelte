@@ -357,6 +357,7 @@
 				<GameBoard
 					player={state.players[activePlayerIdx]}
 					isCurrentPlayer={activePlayerIdx === state.current_player_idx}
+					currentRound={state.current_round}
 					on:changed={() => { state = state; }}
 				/>
 

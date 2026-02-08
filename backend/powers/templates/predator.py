@@ -44,6 +44,17 @@ class PredatorDice(PowerEffect):
         return PowerResult(food_cached=cached,
                            description=f"Predator {'hit' if hit else 'miss'}")
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        from backend.models.birdfeeder import NUM_DICE
+        dice_out = NUM_DICE - ctx.game_state.birdfeeder.count
+        return f"roll {dice_out} dice outside feeder; if {self.target_food.value}, cache {self.cache_count} on {ctx.bird.name}"
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        from backend.models.birdfeeder import NUM_DICE
+        if NUM_DICE - ctx.game_state.birdfeeder.count <= 0:
+            return "no dice outside feeder"
+        return None
+
     def estimate_value(self, ctx: PowerContext) -> float:
         # Probability depends on dice out and target food frequency
         # Each die has ~1/6 to 2/6 chance of matching
@@ -89,10 +100,21 @@ class PredatorLookAt(PowerEffect):
         return PowerResult(cards_tucked=tucked,
                            description=f"Predator look: {'tucked' if tucked else 'discarded'}")
 
-    def estimate_value(self, ctx: PowerContext) -> float:
-        success_prob = 0.5
+    def describe_activation(self, ctx: PowerContext) -> str:
+        prob_pct = int(self._success_prob() * 100)
+        return f"look at top card; tuck behind {ctx.bird.name} if wingspan < {self.wingspan_threshold}cm (~{prob_pct}%)"
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        if ctx.game_state.deck_remaining <= 0:
+            return "deck is empty"
+        return None
+
+    def _success_prob(self) -> float:
         if self.wingspan_threshold >= 100:
-            success_prob = 0.7
+            return 0.7
         elif self.wingspan_threshold <= 50:
-            success_prob = 0.3
-        return success_prob * 0.9
+            return 0.3
+        return 0.5
+
+    def estimate_value(self, ctx: PowerContext) -> float:
+        return self._success_prob() * 0.9

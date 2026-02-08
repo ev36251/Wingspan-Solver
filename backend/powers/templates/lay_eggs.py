@@ -83,6 +83,26 @@ class LayEggs(PowerEffect):
 
         return laid
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        target_desc = {
+            "self": f"on {ctx.bird.name}",
+            "any": "on any bird with space",
+            "this_row": f"on a bird in {ctx.habitat.value}",
+        }.get(self.target, "on any bird")
+        if self.nest_filter:
+            target_desc = f"on a {self.nest_filter.value} nest bird"
+        if self.habitat_filter:
+            target_desc = f"on a bird in {self.habitat_filter.value}"
+        prefix = "ALL PLAYERS: " if self.all_players else ""
+        return f"{prefix}lay {self.count} egg{'s' if self.count > 1 else ''} {target_desc}"
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        if self.target == "self":
+            slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
+            if slot.bird and not slot.can_hold_more_eggs():
+                return f"{ctx.bird.name} is full ({slot.eggs}/{slot.bird.egg_limit} eggs)"
+        return None
+
     def estimate_value(self, ctx: PowerContext) -> float:
         # Each egg = 1 point
         if self.target == "self":
@@ -125,6 +145,11 @@ class LayEggsEachBirdInRow(PowerEffect):
 
         return PowerResult(eggs_laid=laid,
                            description=f"Laid {laid} eggs across row/column")
+
+    def describe_activation(self, ctx: PowerContext) -> str:
+        row = ctx.player.board.get_row(ctx.habitat)
+        with_space = sum(1 for s in row.slots if s.bird and s.can_hold_more_eggs())
+        return f"lay 1 egg on each bird in {ctx.habitat.value} ({with_space} with space)"
 
     def estimate_value(self, ctx: PowerContext) -> float:
         row = ctx.player.board.get_row(ctx.habitat)
