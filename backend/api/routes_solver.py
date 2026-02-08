@@ -348,6 +348,17 @@ async def solve_after_reset(game_id: str, req: AfterResetRequest) -> AfterResetR
         type_counts = _feeder_type_counts(temp_game.birdfeeder)
         combos = _generate_food_combos(type_counts, food_count)
 
+        # Filter out combos that exceed actual dice availability
+        # (the generator includes single-type fallbacks for mid-action rerolls,
+        # but after a reset the dice are fixed)
+        from collections import Counter
+        valid_combos = []
+        for combo in combos:
+            combo_counts = Counter(combo)
+            if all(combo_counts[ft] <= type_counts.get(ft, 0) for ft in combo_counts):
+                valid_combos.append(combo)
+        combos = valid_combos if valid_combos else combos[:1]
+
         # Score each combo using the heuristic evaluator
         from backend.solver.heuristics import _evaluate_gain_food, dynamic_weights
         weights = dynamic_weights(temp_game)
