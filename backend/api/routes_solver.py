@@ -6,6 +6,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from backend.models.enums import FoodType
+from backend.config import EGG_COST_BY_COLUMN
+from backend.data.registries import get_bird_registry
 from backend.solver.heuristics import rank_moves
 from backend.solver.monte_carlo import monte_carlo_evaluate, MCConfig
 from backend.solver.max_score import calculate_max_score
@@ -112,19 +114,42 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
 
     elapsed_ms = (time.perf_counter() - start) * 1000
 
+    bird_reg = get_bird_registry()
+
     recommendations = []
     for la in la_results:
         details = {}
         if la.move.bird_name:
             details["bird_name"] = la.move.bird_name
+            bird = bird_reg.get(la.move.bird_name)
+            if bird:
+                details["bird_vp"] = bird.victory_points
+                details["bird_nest_type"] = bird.nest_type.value if bird.nest_type else None
+                details["bird_egg_limit"] = bird.egg_limit
         if la.move.habitat:
             details["habitat"] = la.move.habitat.value
+            # Include egg column cost for play-bird moves
+            if la.move.action_type.value == "play_bird":
+                row = player.board.get_row(la.move.habitat)
+                col = row.bird_count
+                egg_cost = EGG_COST_BY_COLUMN[col] if col < len(EGG_COST_BY_COLUMN) else 0
+                details["egg_cost"] = egg_cost
         if la.move.food_payment:
             details["food_payment"] = {
                 ft.value: c for ft, c in la.move.food_payment.items()
             }
         if la.move.food_choices:
             details["food_choices"] = [ft.value for ft in la.move.food_choices]
+        if la.move.egg_distribution:
+            details["egg_distribution"] = {
+                hab.value: {str(slot_idx): count}
+                for (hab, slot_idx), count in la.move.egg_distribution.items()
+            }
+        if la.move.tray_indices:
+            details["tray_indices"] = la.move.tray_indices
+        details["deck_draws"] = la.move.deck_draws
+        details["bonus_count"] = la.move.bonus_count
+        details["reset_bonus"] = la.move.reset_bonus
         if la.best_sequence and len(la.best_sequence) > 1:
             details["best_sequence"] = la.best_sequence
 

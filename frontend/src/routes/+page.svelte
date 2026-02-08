@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { GameState, Bird, Goal } from '$lib/api/types';
+	import type { GameState, Bird, Goal, SolverRecommendation } from '$lib/api/types';
 	import { FOOD_ICONS } from '$lib/api/types';
 	import { createGame, updateGameState, getGoals } from '$lib/api/client';
 	import GameBoard from '$lib/components/GameBoard.svelte';
@@ -245,6 +245,125 @@
 		state.players[playerIndex].hand.push(birdName);
 		state = state;
 	}
+
+	const HABITAT_INDICES: Record<string, number> = { forest: 0, grassland: 1, wetland: 2 };
+
+	async function applyRecommendation(rec: SolverRecommendation) {
+		if (!state) return;
+		const player = state.players[activePlayerIdx];
+		const details = rec.details as Record<string, any>;
+
+		if (rec.action_type === 'gain_food') {
+			const foodChoices: string[] = details.food_choices || [];
+			for (const ft of foodChoices) {
+				const key = ft as keyof typeof player.food_supply;
+				if (key in player.food_supply) {
+					(player.food_supply as any)[key] += 1;
+				}
+				// Remove matching die from birdfeeder
+				const dieIdx = state.birdfeeder.dice.findIndex(d => {
+					if (Array.isArray(d)) return d.includes(ft);
+					return d === ft;
+				});
+				if (dieIdx >= 0) {
+					state.birdfeeder.dice = state.birdfeeder.dice.filter((_, i) => i !== dieIdx);
+				}
+			}
+			player.action_cubes_remaining -= 1;
+
+		} else if (rec.action_type === 'play_bird') {
+			const birdName: string = details.bird_name;
+			const habitat: string = details.habitat;
+			const foodPayment: Record<string, number> = details.food_payment || {};
+			const eggCost: number = details.egg_cost || 0;
+
+			// Remove bird from hand
+			const handIdx = player.hand.indexOf(birdName);
+			if (handIdx >= 0) {
+				player.hand = player.hand.filter((_, i) => i !== handIdx);
+			}
+
+			// Place bird in first empty slot of the habitat row
+			const habIdx = HABITAT_INDICES[habitat];
+			if (habIdx !== undefined) {
+				const row = player.board[habIdx];
+				const emptySlot = row.slots.find(s => !s.bird_name);
+				if (emptySlot) {
+					emptySlot.bird_name = birdName;
+					emptySlot.victory_points = details.bird_vp ?? 0;
+					emptySlot.nest_type = details.bird_nest_type ?? null;
+					emptySlot.egg_limit = details.bird_egg_limit ?? 0;
+					emptySlot.eggs = 0;
+					emptySlot.cached_food = {};
+					emptySlot.tucked_cards = 0;
+				}
+			}
+
+			// Deduct food payment
+			for (const [ft, count] of Object.entries(foodPayment)) {
+				const key = ft as keyof typeof player.food_supply;
+				if (key in player.food_supply) {
+					(player.food_supply as any)[key] = Math.max(0, (player.food_supply as any)[key] - (count as number));
+				}
+			}
+
+			// Deduct egg cost from birds that have eggs
+			let eggsToRemove = eggCost;
+			if (eggsToRemove > 0) {
+				for (const row of player.board) {
+					for (const slot of row.slots) {
+						if (eggsToRemove <= 0) break;
+						if (slot.bird_name && slot.eggs > 0) {
+							const take = Math.min(slot.eggs, eggsToRemove);
+							slot.eggs -= take;
+							eggsToRemove -= take;
+						}
+					}
+				}
+			}
+
+			player.action_cubes_remaining -= 1;
+
+		} else if (rec.action_type === 'lay_eggs') {
+			const eggDist: Record<string, Record<string, number>> = details.egg_distribution || {};
+			for (const [habitat, slots] of Object.entries(eggDist)) {
+				const habIdx = HABITAT_INDICES[habitat];
+				if (habIdx === undefined) continue;
+				const row = player.board[habIdx];
+				for (const [slotIdxStr, count] of Object.entries(slots)) {
+					const slotIdx = parseInt(slotIdxStr);
+					if (row.slots[slotIdx]) {
+						row.slots[slotIdx].eggs += count;
+					}
+				}
+			}
+			player.action_cubes_remaining -= 1;
+
+		} else if (rec.action_type === 'draw_cards') {
+			const trayIndices: number[] = details.tray_indices || [];
+			const deckDraws: number = details.deck_draws || 0;
+
+			// Take tray cards (remove in reverse order to preserve indices)
+			const sortedIndices = [...trayIndices].sort((a, b) => b - a);
+			for (const idx of sortedIndices) {
+				if (idx < state.card_tray.face_up.length) {
+					const birdName = state.card_tray.face_up[idx];
+					player.hand.push(birdName);
+					state.card_tray.face_up = state.card_tray.face_up.filter((_, i) => i !== idx);
+				}
+			}
+
+			// Deck draws go to unknown hand count
+			if (deckDraws > 0) {
+				player.unknown_hand_count += deckDraws;
+			}
+
+			player.action_cubes_remaining -= 1;
+		}
+
+		state = state;
+		await saveState();
+	}
 </script>
 
 {#if showNewGame}
@@ -407,68 +526,15 @@
 			</div>
 
 			<div class="side-column">
-				<!-- Round Goals (editable) -->
-				<div class="sidebar-panel card">
-					<h4 class="panel-title">Round Goals</h4>
-					<div class="goals-list">
-						{#each [0, 1, 2, 3] as idx}
-							{@const roundNum = idx + 1}
-							{@const tiers = GOAL_SCORING_TIERS[roundNum]}
-							<div class="goal-item" class:active-round={state.current_round === roundNum}>
-								<div class="goal-header">
-									<span class="goal-round">R{roundNum}</span>
-									<select
-										class="goal-select"
-										value={goalSelections[idx]}
-										on:change={(e) => setGoal(idx, e.currentTarget.value)}
-									>
-										<option value="">-- Not set --</option>
-										<option value="No Goal">No Goal (+1 action later)</option>
-										{#each allGoals as g}
-											<option value={g.description}>{g.description}</option>
-										{/each}
-									</select>
-								</div>
-								{#if goalSelections[idx] && goalSelections[idx] !== 'No Goal'}
-									<div class="goal-scoring">
-										<span class="scoring-tiers">
-											{#each tiers as pts, ti}
-												{#if ti > 0}<span class="tier-sep">/</span>{/if}
-												<span class="tier-val">{pts}</span>
-											{/each}
-										</span>
-										<div class="goal-player-scores">
-											{#each state.players as p}
-												{@const score = getGoalScore(roundNum, p.name)}
-												<div class="goal-player-row">
-													<span class="goal-player-name">{p.name}</span>
-													<div class="goal-point-btns">
-														{#each tiers as pts}
-															<button
-																class="goal-pt-btn"
-																class:selected={score === pts}
-																on:click={() => setGoalScore(roundNum, p.name, pts)}
-															>{pts}</button>
-														{/each}
-														<button
-															class="goal-adj-btn"
-															on:click={() => setGoalScore(roundNum, p.name, Math.max(0, score - 1))}
-														>-</button>
-														<button
-															class="goal-adj-btn"
-															on:click={() => setGoalScore(roundNum, p.name, score + 1)}
-														>+</button>
-													</div>
-													<span class="goal-score-display">{score}pts</span>
-												</div>
-											{/each}
-										</div>
-									</div>
-								{/if}
-							</div>
-						{/each}
-					</div>
-				</div>
+				<!-- Solver (top for easy access) -->
+				<SolverPanel
+					{gameId}
+					disabled={state.current_round > 4}
+					playerIdx={activePlayerIdx}
+					playerName={state.players[activePlayerIdx]?.name || ''}
+					bind:this={solverPanel}
+					on:apply={(e) => applyRecommendation(e.detail)}
+				/>
 
 				<!-- Birdfeeder -->
 				<div class="sidebar-panel card">
@@ -566,14 +632,68 @@
 					</div>
 				</div>
 
-				<!-- Solver -->
-				<SolverPanel
-					{gameId}
-					disabled={state.current_round > 4}
-					playerIdx={activePlayerIdx}
-					playerName={state.players[activePlayerIdx]?.name || ''}
-					bind:this={solverPanel}
-				/>
+				<!-- Round Goals (editable) -->
+				<div class="sidebar-panel card">
+					<h4 class="panel-title">Round Goals</h4>
+					<div class="goals-list">
+						{#each [0, 1, 2, 3] as idx}
+							{@const roundNum = idx + 1}
+							{@const tiers = GOAL_SCORING_TIERS[roundNum]}
+							<div class="goal-item" class:active-round={state.current_round === roundNum}>
+								<div class="goal-header">
+									<span class="goal-round">R{roundNum}</span>
+									<select
+										class="goal-select"
+										value={goalSelections[idx]}
+										on:change={(e) => setGoal(idx, e.currentTarget.value)}
+									>
+										<option value="">-- Not set --</option>
+										<option value="No Goal">No Goal (+1 action later)</option>
+										{#each allGoals as g}
+											<option value={g.description}>{g.description}</option>
+										{/each}
+									</select>
+								</div>
+								{#if goalSelections[idx] && goalSelections[idx] !== 'No Goal'}
+									<div class="goal-scoring">
+										<span class="scoring-tiers">
+											{#each tiers as pts, ti}
+												{#if ti > 0}<span class="tier-sep">/</span>{/if}
+												<span class="tier-val">{pts}</span>
+											{/each}
+										</span>
+										<div class="goal-player-scores">
+											{#each state.players as p}
+												{@const score = getGoalScore(roundNum, p.name)}
+												<div class="goal-player-row">
+													<span class="goal-player-name">{p.name}</span>
+													<div class="goal-point-btns">
+														{#each tiers as pts}
+															<button
+																class="goal-pt-btn"
+																class:selected={score === pts}
+																on:click={() => setGoalScore(roundNum, p.name, pts)}
+															>{pts}</button>
+														{/each}
+														<button
+															class="goal-adj-btn"
+															on:click={() => setGoalScore(roundNum, p.name, Math.max(0, score - 1))}
+														>-</button>
+														<button
+															class="goal-adj-btn"
+															on:click={() => setGoalScore(roundNum, p.name, score + 1)}
+														>+</button>
+													</div>
+													<span class="goal-score-display">{score}pts</span>
+												</div>
+											{/each}
+										</div>
+									</div>
+								{/if}
+							</div>
+						{/each}
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>

@@ -1,12 +1,17 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import { solveHeuristic, solveAfterReset, searchBirds } from '$lib/api/client';
 	import type { SolverRecommendation, AfterResetRecommendation } from '$lib/api/types';
 	import { FOOD_ICONS } from '$lib/api/types';
+
+	const dispatch = createEventDispatcher();
 
 	export let gameId: string;
 	export let disabled = false;
 	export let playerIdx: number = 0;
 	export let playerName: string = '';
+
+	let appliedRank: number | null = null;
 
 	let recommendations: SolverRecommendation[] = [];
 	let evaluationTime = 0;
@@ -192,11 +197,24 @@
 
 		<div class="recommendations">
 			{#each recommendations as rec}
-				<div class="rec" class:top-pick={rec.rank === 1}>
+				<div
+					class="rec clickable"
+					class:top-pick={rec.rank === 1}
+					class:applied={appliedRank === rec.rank}
+					on:click={() => {
+						dispatch('apply', rec);
+						appliedRank = rec.rank;
+						setTimeout(() => { appliedRank = null; }, 2000);
+					}}
+					title="Click to apply this move"
+				>
 					<div class="rec-header">
 						<span class="rank">#{rec.rank}</span>
 						<span class="action-icon">{ACTION_ICONS[rec.action_type] || '?'}</span>
 						<span class="action-type">{ACTION_LABELS[rec.action_type] || rec.action_type}</span>
+						{#if appliedRank === rec.rank}
+							<span class="applied-badge">Applied!</span>
+						{/if}
 						<span class="score">{rec.score.toFixed(1)} pts</span>
 					</div>
 					<div class="rec-desc">{rec.description}</div>
@@ -221,7 +239,7 @@
 					{#if hasResetOption(rec)}
 						<button
 							class="reset-btn"
-							on:click={() => startResetInput(rec)}
+							on:click|stopPropagation={() => startResetInput(rec)}
 						>
 							After Reset: Input New {hasResetOption(rec) === 'feeder' ? 'Dice' : 'Cards'}
 						</button>
@@ -381,6 +399,31 @@
 		border: 1px solid var(--border);
 		border-radius: 6px;
 		background: #fefdf8;
+	}
+
+	.rec.clickable {
+		cursor: pointer;
+		transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+	}
+
+	.rec.clickable:hover {
+		border-color: var(--accent);
+		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+		background: #fef9f0;
+	}
+
+	.rec.applied {
+		border-color: #16a34a;
+		background: #f0fdf4;
+	}
+
+	.applied-badge {
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: #16a34a;
+		background: #dcfce7;
+		padding: 1px 6px;
+		border-radius: 4px;
 	}
 
 	.rec.top-pick {
