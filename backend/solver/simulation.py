@@ -24,13 +24,16 @@ def deep_copy_game(game: GameState) -> GameState:
 
 
 def pick_weighted_random_move(moves: list[Move], game: GameState,
-                               player: Player) -> Move:
+                               player: Player,
+                               base_weights=None) -> Move:
     """Pick a move using epsilon-greedy heuristic selection.
 
     70% of the time: pick the best move according to the full heuristic evaluator.
     30% of the time: pick from top moves weighted by heuristic score.
     This produces more realistic playouts than uniform random while preserving
     some exploration.
+
+    If base_weights is provided, it's passed to dynamic_weights() for training.
     """
     if not moves:
         raise ValueError("No moves to pick from")
@@ -39,18 +42,18 @@ def pick_weighted_random_move(moves: list[Move], game: GameState,
 
     from backend.solver.heuristics import _estimate_move_value, dynamic_weights
 
-    weights = dynamic_weights(game)
+    weights = dynamic_weights(game, base_weights)
 
     # Score all moves with the full heuristic
     scored = [(m, _estimate_move_value(game, player, m, weights)) for m in moves]
     scored.sort(key=lambda x: -x[1])
 
-    # Epsilon-greedy: 70% best move, 30% weighted random from top candidates
-    if random.random() < 0.7:
+    # Epsilon-greedy: 90% best move, 10% weighted random from top candidates
+    if random.random() < 0.9:
         return scored[0][0]
 
-    # Weighted random from top 5 candidates (softmax-style)
-    top_n = scored[:min(5, len(scored))]
+    # Weighted random from top 3 candidates (softmax-style)
+    top_n = scored[:min(3, len(scored))]
     min_score = min(s for _, s in top_n)
     selection_weights = [max(s - min_score + 0.5, 0.1) for _, s in top_n]
     return random.choices([m for m, _ in top_n], weights=selection_weights, k=1)[0]
@@ -96,10 +99,12 @@ def execute_move_on_sim(game: GameState, player: Player, move: Move) -> bool:
     return False
 
 
-def simulate_playout(game: GameState, max_turns: int = 200) -> dict[str, int]:
+def simulate_playout(game: GameState, max_turns: int = 200,
+                     base_weights=None) -> dict[str, int]:
     """Run a single random playout from the current state to game end.
 
     Returns a dict of {player_name: final_score}.
+    If base_weights is provided, it's used for move evaluation during playout.
     """
     sim = deep_copy_game(game)
     turns = 0
@@ -121,7 +126,7 @@ def simulate_playout(game: GameState, max_turns: int = 200) -> dict[str, int]:
             sim.current_player_idx = (sim.current_player_idx + 1) % sim.num_players
             continue
 
-        move = pick_weighted_random_move(moves, sim, player)
+        move = pick_weighted_random_move(moves, sim, player, base_weights)
         success = execute_move_on_sim(sim, player, move)
 
         if success:

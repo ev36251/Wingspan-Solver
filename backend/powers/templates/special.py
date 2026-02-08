@@ -104,7 +104,7 @@ class CopyNeighborBrownPower(PowerEffect):
         best_val = -1.0
         for bird in brown_birds:
             power = get_power(bird)
-            if isinstance(power, NoPower):
+            if isinstance(power, (NoPower, CopyNeighborBrownPower)):
                 continue
             # Create a context as if we are the neighbor's bird
             neighbor_ctx = PowerContext(
@@ -138,7 +138,7 @@ class CopyNeighborBrownPower(PowerEffect):
         best_val = 0.0
         for bird in brown_birds:
             power = get_power(bird)
-            if isinstance(power, NoPower):
+            if isinstance(power, (NoPower, CopyNeighborBrownPower)):
                 continue
             neighbor_ctx = PowerContext(
                 game_state=ctx.game_state, player=ctx.player, bird=bird,

@@ -6,6 +6,7 @@
 	import SolverPanel from '$lib/components/SolverPanel.svelte';
 	import ScoreSheet from '$lib/components/ScoreSheet.svelte';
 	import SetupAdvisor from '$lib/components/SetupAdvisor.svelte';
+	import MaxScoreBar from '$lib/components/MaxScoreBar.svelte';
 	import BirdSearch from '$lib/components/BirdSearch.svelte';
 
 	let gameId = '';
@@ -14,6 +15,7 @@
 	let loading = false;
 	let saving = false;
 	let saveSuccess = false;
+	let saveCounter = 0;
 
 	// New game form
 	let playerNames = ['Player 1', 'Player 2'];
@@ -189,6 +191,7 @@
 			syncGoalSelections();
 			scoreSheet?.refresh();
 			saveSuccess = true;
+			saveCounter += 1;
 			setTimeout(() => saveSuccess = false, 2000);
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to save';
@@ -316,6 +319,11 @@
 					Current: {state.players[state.current_player_idx]?.name}
 				</span>
 			</div>
+			<MaxScoreBar
+				{gameId}
+				playerName={state.players[activePlayerIdx]?.name || ''}
+				triggerRefresh={saveCounter}
+			/>
 			<div class="game-actions">
 				<button class="solve-btn" on:click={() => solverPanel?.solve()} disabled={state.current_round > 4}>
 					Recommend for {state.players[activePlayerIdx]?.name || 'Player'}
@@ -667,6 +675,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		gap: 12px;
 		margin-bottom: 12px;
 		padding-bottom: 12px;
 		border-bottom: 1px solid var(--border);

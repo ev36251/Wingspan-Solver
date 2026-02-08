@@ -138,6 +138,14 @@ export async function solveHeuristic(gameId: string, playerIdx?: number) {
 	}>(`/games/${gameId}/solve/heuristic${params}`, { method: 'POST' });
 }
 
+export async function getMaxScore(gameId: string, playerName?: string) {
+	const params = playerName ? `?player_name=${encodeURIComponent(playerName)}` : '';
+	return request<import('./types').MaxScoreResponse>(
+		`/games/${gameId}/solve/max-score${params}`,
+		{ method: 'POST' }
+	);
+}
+
 export async function solveAfterReset(
 	gameId: string,
 	resetType: 'feeder' | 'tray',

@@ -103,29 +103,37 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
         player = game.current_player
 
     start = time.perf_counter()
-    ranked = rank_moves(game, player=player)
+
+    # Use depth-1 lookahead on top 5 candidates for better multi-turn decisions
+    la_results = lookahead_search(game, player=player, depth=1, beam_width=5)
+    # Also get heuristic reasoning for display
+    heuristic_ranked = rank_moves(game, player=player)
+    reasoning_map = {rm.move.description: rm.reasoning for rm in heuristic_ranked}
+
     elapsed_ms = (time.perf_counter() - start) * 1000
 
     recommendations = []
-    for rm in ranked:
+    for la in la_results:
         details = {}
-        if rm.move.bird_name:
-            details["bird_name"] = rm.move.bird_name
-        if rm.move.habitat:
-            details["habitat"] = rm.move.habitat.value
-        if rm.move.food_payment:
+        if la.move.bird_name:
+            details["bird_name"] = la.move.bird_name
+        if la.move.habitat:
+            details["habitat"] = la.move.habitat.value
+        if la.move.food_payment:
             details["food_payment"] = {
-                ft.value: c for ft, c in rm.move.food_payment.items()
+                ft.value: c for ft, c in la.move.food_payment.items()
             }
-        if rm.move.food_choices:
-            details["food_choices"] = [ft.value for ft in rm.move.food_choices]
+        if la.move.food_choices:
+            details["food_choices"] = [ft.value for ft in la.move.food_choices]
+        if la.best_sequence and len(la.best_sequence) > 1:
+            details["best_sequence"] = la.best_sequence
 
         recommendations.append(SolverMoveRecommendation(
-            rank=rm.rank,
-            action_type=rm.move.action_type.value,
-            description=rm.move.description,
-            score=round(rm.score, 2),
-            reasoning=rm.reasoning,
+            rank=la.rank,
+            action_type=la.move.action_type.value,
+            description=la.move.description,
+            score=round(la.score, 2),
+            reasoning=reasoning_map.get(la.move.description, ""),
             details=details,
         ))
 

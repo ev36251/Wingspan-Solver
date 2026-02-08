@@ -155,6 +155,13 @@ export interface AfterResetResponse {
 	total_to_gain: number;
 }
 
+export interface MaxScoreResponse {
+	max_possible_score: number;
+	current_score: number;
+	efficiency_pct: number;
+	breakdown: Record<string, number>;
+}
+
 // UI display helpers
 export const HABITAT_COLORS: Record<string, string> = {
 	forest: '#2d5016',
