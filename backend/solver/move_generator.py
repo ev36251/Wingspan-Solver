@@ -5,7 +5,7 @@ from backend.config import (
     EGG_COST_BY_COLUMN,
     get_action_column,
 )
-from backend.models.enums import ActionType, FoodType, Habitat
+from backend.models.enums import ActionType, BoardType, FoodType, Habitat
 from backend.models.game_state import GameState
 from backend.models.player import Player
 from backend.engine.rules import (
@@ -128,10 +128,12 @@ def _generate_food_combos(available_counts: dict[FoodType, int],
 
     total_available = sum(available_counts.values())
 
-    # Always include single-type moves (feeder rerolls can provide more of same type)
+    # Single-type moves: only include when enough dice of that type exist,
+    # OR when a mid-action reroll is expected (food_count > physical dice)
     combos: list[list[FoodType]] = []
     for ft in types:
-        combos.append([ft] * food_count)
+        if available_counts[ft] >= food_count or food_count > total_available:
+            combos.append([ft] * food_count)
 
     # Generate mixed combos up to what's actually available
     effective_count = min(food_count, total_available)
@@ -221,6 +223,14 @@ def generate_gain_food_moves(game: GameState, player: Player) -> list[Move]:
 
     type_counts = _feeder_type_counts(feeder)
 
+    # Post-reroll type counts: all food types that can appear on the dice
+    # Each type gets count=2 (typical for 5 dice), so combos reflect what's plausible
+    base_food_types = [FoodType.INVERTEBRATE, FoodType.SEED, FoodType.FISH,
+                       FoodType.FRUIT, FoodType.RODENT]
+    if game.board_type == BoardType.OCEANIA:
+        base_food_types.append(FoodType.NECTAR)
+    reroll_type_counts = {ft: 2 for ft in base_food_types}
+
     def _make_food_moves(count: int, bonus: int = 0,
                          use_reset: bool = False) -> list[Move]:
         parts = []
@@ -230,7 +240,9 @@ def generate_gain_food_moves(game: GameState, player: Player) -> list[Move]:
             parts.append("reset feeder")
         suffix = f" ({', '.join(parts)})" if parts else ""
 
-        combos = _generate_food_combos(type_counts, count)
+        # After a reset, dice are rerolled — use all possible types
+        counts = reroll_type_counts if use_reset else type_counts
+        combos = _generate_food_combos(counts, count)
         result = []
         for combo in combos:
             desc = f"Gain {_food_combo_description(combo)}{suffix}"

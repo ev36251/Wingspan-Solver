@@ -663,17 +663,21 @@ def _evaluate_gain_food(game: GameState, player: Player, move: Move,
     elif player.hand_size > 0 and player.food_supply.total_non_nectar() < 2:
         value += 0.5  # Some urgency even if can't quite afford
 
+    # Reset moves: food choices are speculative (dice will be rerolled),
+    # so discount food-specific bonuses/penalties
+    reset_discount = 0.3 if move.reset_bonus else 1.0
+
     # Nectar choice value: flexible food + contributes to nectar majority
     # BUT nectar clears at end of round — heavily penalize on last turn
     if move.food_choices and FoodType.NECTAR in move.food_choices:
         nectar_in_choices = sum(1 for ft in move.food_choices if ft == FoodType.NECTAR)
         if player.action_cubes_remaining <= 1:
             # Last turn of round: nectar will be lost, strong penalty
-            value -= nectar_in_choices * 3.0
+            value -= nectar_in_choices * 3.0 * reset_discount
         else:
             rounds_remaining = max(0, ROUNDS - game.current_round)
             if rounds_remaining > 0:
-                value += weights.nectar_early_bonus * (rounds_remaining / ROUNDS)
+                value += weights.nectar_early_bonus * (rounds_remaining / ROUNDS) * reset_discount
 
     # Food deficit targeting: bonus when gaining food types needed by best hand birds
     if move.food_choices and player.hand:
@@ -708,7 +712,7 @@ def _evaluate_gain_food(game: GameState, player: Player, move: Move,
                 1 for ft in move.food_choices if ft in best_bird_needs
             )
             if deficit_filled > 0:
-                value += deficit_filled * 0.6 * (best_bird_value / 5.0)
+                value += deficit_filled * 0.6 * (best_bird_value / 5.0) * reset_discount
 
     return value
 
