@@ -121,6 +121,9 @@
 		const row = player.board[editingSlot.habitat];
 		row.slots[editingSlot.slot].bird_name = bird.name;
 		row.slots[editingSlot.slot].egg_limit = bird.egg_limit;
+		if (player.unknown_hand_count > 0) {
+			player.unknown_hand_count -= 1;
+		}
 		player = player;
 		dispatch('changed');
 		editingSlot = null;

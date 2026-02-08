@@ -965,7 +965,7 @@ def _recommend_bonus_payment(player: Player, cost_options: tuple[str, ...],
 
             if best_ft:
                 return f"spend 1 {best_ft.value}"
-            return "spend 1 food"
+            # No food available — try next cost option
         elif cost == "egg":
             # Find the bird with least strategic value to remove an egg from
             candidates = []
@@ -978,7 +978,7 @@ def _recommend_bonus_payment(player: Player, cost_options: tuple[str, ...],
                 candidates.sort(key=lambda x: -x[1])
                 name, eggs, _, _ = candidates[0]
                 return f"remove egg from {name} ({eggs} eggs)"
-            return "spend 1 egg"
+            # No eggs available — try next cost option (e.g. nectar)
         elif cost == "nectar":
             if player.food_supply.get(FoodType.NECTAR) > 0:
                 return "spend 1 nectar"
