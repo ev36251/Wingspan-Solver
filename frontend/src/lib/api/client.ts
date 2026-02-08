@@ -129,11 +129,13 @@ export async function analyzeSetup(
 
 // --- Solver endpoints ---
 
-export async function solveHeuristic(gameId: string) {
+export async function solveHeuristic(gameId: string, playerIdx?: number) {
+	const params = playerIdx !== undefined ? `?player_idx=${playerIdx}` : '';
 	return request<{
 		recommendations: import('./types').SolverRecommendation[];
 		evaluation_time_ms: number;
-	}>(`/games/${gameId}/solve/heuristic`, { method: 'POST' });
+		player_name: string;
+	}>(`/games/${gameId}/solve/heuristic${params}`, { method: 'POST' });
 }
 
 export async function solveAfterReset(

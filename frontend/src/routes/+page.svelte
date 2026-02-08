@@ -318,7 +318,7 @@
 			</div>
 			<div class="game-actions">
 				<button class="solve-btn" on:click={() => solverPanel?.solve()} disabled={state.current_round > 4}>
-					Get Recommendations
+					Recommend for {state.players[activePlayerIdx]?.name || 'Player'}
 				</button>
 				<button class="primary" on:click={saveState} disabled={saving} class:saved={saveSuccess}>
 					{saving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save State'}
@@ -558,7 +558,13 @@
 				</div>
 
 				<!-- Solver -->
-				<SolverPanel {gameId} disabled={state.current_round > 4} bind:this={solverPanel} />
+				<SolverPanel
+					{gameId}
+					disabled={state.current_round > 4}
+					playerIdx={activePlayerIdx}
+					playerName={state.players[activePlayerIdx]?.name || ''}
+					bind:this={solverPanel}
+				/>
 			</div>
 		</div>
 	</div>

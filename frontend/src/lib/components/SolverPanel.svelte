@@ -5,12 +5,15 @@
 
 	export let gameId: string;
 	export let disabled = false;
+	export let playerIdx: number = 0;
+	export let playerName: string = '';
 
 	let recommendations: SolverRecommendation[] = [];
 	let evaluationTime = 0;
 	let loading = false;
 	let error = '';
 	let feederRerollAvailable = false;
+	let solvedForPlayer = '';
 
 	// After-reset flow state
 	let showResetInput = false;
@@ -37,16 +40,25 @@
 		showResetInput = false;
 		afterResetRecs = [];
 		try {
-			const data = await solveHeuristic(gameId);
+			const data = await solveHeuristic(gameId, playerIdx);
 			recommendations = data.recommendations;
 			evaluationTime = data.evaluation_time_ms;
 			feederRerollAvailable = data.feeder_reroll_available || false;
+			solvedForPlayer = data.player_name || playerName;
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to get recommendations';
 			recommendations = [];
 		} finally {
 			loading = false;
 		}
+	}
+
+	// Clear recommendations when player tab changes
+	$: if (playerName !== solvedForPlayer && recommendations.length > 0) {
+		recommendations = [];
+		solvedForPlayer = '';
+		showResetInput = false;
+		afterResetRecs = [];
 	}
 
 	function hasResetOption(rec: SolverRecommendation): 'feeder' | 'tray' | null {
@@ -166,10 +178,7 @@
 
 <div class="solver-panel card">
 	<div class="panel-header">
-		<h3>Solver Recommendations</h3>
-		<button class="primary" on:click={solve} disabled={disabled || loading}>
-			{loading ? 'Thinking...' : 'Get Recommendations'}
-		</button>
+		<h3>Recommendations{playerName ? ` for ${playerName}` : ''}</h3>
 	</div>
 
 	{#if error}
@@ -177,7 +186,9 @@
 	{/if}
 
 	{#if recommendations.length > 0}
-		<div class="timing">Evaluated in {evaluationTime.toFixed(1)}ms</div>
+		<div class="timing">
+			Best moves for <strong>{solvedForPlayer}</strong> &middot; {evaluationTime.toFixed(1)}ms
+		</div>
 
 		<div class="recommendations">
 			{#each recommendations as rec}
@@ -219,7 +230,7 @@
 			{/each}
 		</div>
 	{:else if !loading && !error}
-		<div class="empty">Click "Get Recommendations" to analyze the current position.</div>
+		<div class="empty">Click "Get Recommendations" to analyze {playerName ? playerName + "'s" : 'the current'} position.</div>
 	{/if}
 
 	<!-- After-reset input panel -->

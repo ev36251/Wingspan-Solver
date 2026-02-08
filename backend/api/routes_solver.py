@@ -31,6 +31,7 @@ class HeuristicResponse(BaseModel):
     recommendations: list[SolverMoveRecommendation]
     evaluation_time_ms: float = 0
     feeder_reroll_available: bool = False
+    player_name: str = ""
 
 
 class MonteCarloRequest(BaseModel):
@@ -82,15 +83,27 @@ class AnalysisResponse(BaseModel):
 
 
 @router.post("/{game_id}/solve/heuristic", response_model=HeuristicResponse)
-async def solve_heuristic(game_id: str) -> HeuristicResponse:
-    """Quick move ranking using static evaluation."""
+async def solve_heuristic(game_id: str, player_idx: int | None = None) -> HeuristicResponse:
+    """Quick move ranking using static evaluation.
+
+    Pass player_idx to evaluate for a specific player (0-based).
+    Defaults to the game's current_player_idx.
+    """
     game = _get_game(game_id)
 
     if game.is_game_over:
         raise HTTPException(400, "Game is already over")
 
+    # Resolve target player
+    if player_idx is not None:
+        if player_idx < 0 or player_idx >= len(game.players):
+            raise HTTPException(400, f"Invalid player_idx: {player_idx}")
+        player = game.players[player_idx]
+    else:
+        player = game.current_player
+
     start = time.perf_counter()
-    ranked = rank_moves(game)
+    ranked = rank_moves(game, player=player)
     elapsed_ms = (time.perf_counter() - start) * 1000
 
     recommendations = []
@@ -124,6 +137,7 @@ async def solve_heuristic(game_id: str) -> HeuristicResponse:
         recommendations=recommendations[:3],
         evaluation_time_ms=round(elapsed_ms, 1),
         feeder_reroll_available=reroll_available,
+        player_name=player.name,
     )
 
 
