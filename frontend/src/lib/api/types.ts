@@ -1,0 +1,162 @@
+// API types matching backend schemas
+
+export interface FoodCost {
+	items: string[];
+	is_or: boolean;
+	total: number;
+}
+
+export interface Bird {
+	name: string;
+	scientific_name: string;
+	game_set: string;
+	color: string;
+	power_text: string;
+	victory_points: number;
+	nest_type: string;
+	egg_limit: number;
+	wingspan_cm: number | null;
+	habitats: string[];
+	food_cost: FoodCost;
+	beak_direction: string;
+	is_predator: boolean;
+	is_flocking: boolean;
+}
+
+export interface BonusCard {
+	name: string;
+	game_sets: string[];
+	condition_text: string;
+	explanation_text: string | null;
+	scoring_tiers: { min_count: number; max_count: number | null; points: number }[];
+	is_per_bird: boolean;
+}
+
+export interface Goal {
+	description: string;
+	game_set: string;
+	scoring: number[];
+	reverse_description: string;
+}
+
+export interface BirdSlot {
+	bird_name: string | null;
+	eggs: number;
+	cached_food: Record<string, number>;
+	tucked_cards: number;
+}
+
+export interface HabitatRow {
+	habitat: string;
+	slots: BirdSlot[];
+	nectar_spent: number;
+}
+
+export interface FoodSupply {
+	invertebrate: number;
+	seed: number;
+	fish: number;
+	fruit: number;
+	rodent: number;
+	nectar: number;
+}
+
+export interface Player {
+	name: string;
+	board: HabitatRow[];
+	food_supply: FoodSupply;
+	hand: string[];
+	bonus_cards: string[];
+	action_cubes_remaining: number;
+	unknown_hand_count: number;
+	unknown_bonus_count: number;
+}
+
+export interface GameState {
+	players: Player[];
+	current_player_idx: number;
+	current_round: number;
+	turn_in_round: number;
+	birdfeeder: { dice: (string | string[])[] };
+	card_tray: { face_up: string[] };
+	round_goals: string[];
+	round_goal_scores: Record<number, Record<string, number>>;
+	deck_remaining: number;
+}
+
+export interface ScoreBreakdown {
+	bird_vp: number;
+	eggs: number;
+	cached_food: number;
+	tucked_cards: number;
+	bonus_cards: number;
+	round_goals: number;
+	nectar: number;
+	total: number;
+}
+
+export interface LegalMove {
+	action_type: string;
+	description: string;
+	details: Record<string, unknown>;
+}
+
+export interface SolverRecommendation {
+	rank: number;
+	action_type: string;
+	description: string;
+	score: number;
+	reasoning: string;
+	details: Record<string, unknown>;
+}
+
+export interface ActionResult {
+	success: boolean;
+	action_type: string;
+	message: string;
+	food_gained: Record<string, number>;
+	eggs_laid: number;
+	cards_drawn: number;
+	bird_played: string | null;
+}
+
+export interface SetupRecommendation {
+	rank: number;
+	score: number;
+	birds_to_keep: string[];
+	food_to_keep: Record<string, number>;
+	bonus_card: string;
+	reasoning: string;
+}
+
+// UI display helpers
+export const HABITAT_COLORS: Record<string, string> = {
+	forest: '#2d5016',
+	grassland: '#8b7355',
+	wetland: '#1a5276'
+};
+
+export const HABITAT_LABELS: Record<string, string> = {
+	forest: 'Forest',
+	grassland: 'Grassland',
+	wetland: 'Wetland'
+};
+
+export const FOOD_ICONS: Record<string, string> = {
+	invertebrate: '🪱',
+	seed: '🌾',
+	fish: '🐟',
+	fruit: '🍒',
+	rodent: '🐀',
+	nectar: '🌺',
+	wild: '⭐'
+};
+
+export const POWER_COLOR_STYLES: Record<string, string> = {
+	white: 'bg-white text-gray-800 border-gray-300',
+	brown: 'bg-amber-700 text-white',
+	pink: 'bg-pink-300 text-gray-800',
+	teal: 'bg-teal-400 text-gray-800',
+	yellow: 'bg-yellow-300 text-gray-800',
+	none: 'bg-gray-200 text-gray-600'
+};
