@@ -52,9 +52,9 @@ def alice(game) -> Player:
 class TestRules:
     def test_egg_cost_by_column(self):
         assert egg_cost_for_slot(0) == 0
-        assert egg_cost_for_slot(1) == 0
+        assert egg_cost_for_slot(1) == 1
         assert egg_cost_for_slot(2) == 1
-        assert egg_cost_for_slot(3) == 1
+        assert egg_cost_for_slot(3) == 2
         assert egg_cost_for_slot(4) == 2
 
     def test_can_play_bird_no_food(self, bird_reg, game, alice):

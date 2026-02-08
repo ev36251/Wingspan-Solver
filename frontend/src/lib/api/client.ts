@@ -135,3 +135,24 @@ export async function solveHeuristic(gameId: string) {
 		evaluation_time_ms: number;
 	}>(`/games/${gameId}/solve/heuristic`, { method: 'POST' });
 }
+
+export async function solveAfterReset(
+	gameId: string,
+	resetType: 'feeder' | 'tray',
+	newFeederDice?: (string | string[])[],
+	newTrayCards?: string[],
+	totalToGain?: number
+) {
+	return request<import('./types').AfterResetResponse>(
+		`/games/${gameId}/solve/after-reset`,
+		{
+			method: 'POST',
+			body: JSON.stringify({
+				reset_type: resetType,
+				new_feeder_dice: newFeederDice || [],
+				new_tray_cards: newTrayCards || [],
+				total_to_gain: totalToGain || 0
+			})
+		}
+	);
+}

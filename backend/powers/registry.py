@@ -189,13 +189,27 @@ def parse_power(bird: Bird) -> PowerEffect:
         return DrawBonusCards(draw=draw_count, keep=max(1, keep))
 
     # --- Play additional bird (white powers) ---
-    if "play" in t and ("second bird" in t or "additional bird" in t or "a bird" in t):
+    if "play" in t and ("second bird" in t or "additional bird" in t
+                        or "another bird" in t or "a bird" in t):
         if bird.color == PowerColor.WHITE:
             hab = _extract_habitat(text)
-            discount = 0
-            if "1 less" in t or "discount" in t:
-                discount = 1
-            return PlayAdditionalBird(habitat_filter=hab, food_discount=discount)
+            food_discount = 0
+            egg_discount = 0
+            # Oceania "1 [egg] discount" pattern — egg cost only
+            if "egg" in t and "discount" in t:
+                egg_discount = 1
+            # Asia "ignore 1 [food] or 1 [egg]" pattern — both food and egg
+            elif "ignore" in t and "egg" in t:
+                egg_discount = 1
+                for ft_name in ["invertebrate", "seed", "fruit", "fish", "rodent"]:
+                    if ft_name in t:
+                        food_discount = 1
+                        break
+            # Generic food discount ("1 less food" type patterns)
+            elif "1 less" in t:
+                food_discount = 1
+            return PlayAdditionalBird(habitat_filter=hab, food_discount=food_discount,
+                                     egg_discount=egg_discount)
 
     # --- Tuck from hand + draw ---
     if "tuck" in t and "from your hand" in t:

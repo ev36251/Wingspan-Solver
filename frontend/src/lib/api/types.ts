@@ -129,6 +129,20 @@ export interface SetupRecommendation {
 	reasoning: string;
 }
 
+export interface AfterResetRecommendation {
+	rank: number;
+	description: string;
+	score: number;
+	reasoning: string;
+	details: Record<string, unknown>;
+}
+
+export interface AfterResetResponse {
+	recommendations: AfterResetRecommendation[];
+	reset_type: string;
+	total_to_gain: number;
+}
+
 // UI display helpers
 export const HABITAT_COLORS: Record<string, string> = {
 	forest: '#2d5016',

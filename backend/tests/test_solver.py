@@ -376,3 +376,126 @@ class TestSolverAPI:
 
         resp = client.post(f"/api/games/{game_id}/solve/heuristic")
         assert resp.status_code == 400
+
+    def test_after_reset_feeder(self, client):
+        """After-reset endpoint should recommend food from new feeder dice."""
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.post(f"/api/games/{game_id}/solve/after-reset", json={
+            "reset_type": "feeder",
+            "new_feeder_dice": ["seed", "invertebrate", "fish", "fruit", "rodent"],
+            "total_to_gain": 2,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["reset_type"] == "feeder"
+        assert data["total_to_gain"] == 2
+        assert len(data["recommendations"]) > 0
+        # Top recommendation should have a description
+        rec = data["recommendations"][0]
+        assert rec["rank"] == 1
+        assert rec["description"]
+        assert rec["score"] > 0
+
+    def test_after_reset_feeder_choice_dice(self, client):
+        """After-reset with choice dice (e.g., nectar/fruit)."""
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"],
+            "board_type": "oceania",
+        })
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.post(f"/api/games/{game_id}/solve/after-reset", json={
+            "reset_type": "feeder",
+            "new_feeder_dice": [
+                "seed", "invertebrate", ["nectar", "fruit"], "fish", "rodent"
+            ],
+            "total_to_gain": 2,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["recommendations"]) > 0
+
+    def test_after_reset_tray(self, client, bird_reg):
+        """After-reset endpoint should recommend cards from new tray."""
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+
+        # Pick 3 real bird names for the new tray
+        birds = list(bird_reg.all_birds)[:3]
+        bird_names = [b.name for b in birds]
+
+        resp = client.post(f"/api/games/{game_id}/solve/after-reset", json={
+            "reset_type": "tray",
+            "new_tray_cards": bird_names,
+            "total_to_gain": 2,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["reset_type"] == "tray"
+        assert data["total_to_gain"] == 2
+        assert len(data["recommendations"]) > 0
+        rec = data["recommendations"][0]
+        assert rec["rank"] == 1
+        assert rec["description"]
+        assert "details" in rec
+
+    def test_after_reset_auto_count(self, client):
+        """When total_to_gain is 0, should auto-calculate from column."""
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.post(f"/api/games/{game_id}/solve/after-reset", json={
+            "reset_type": "feeder",
+            "new_feeder_dice": ["seed", "invertebrate", "fish", "fruit", "rodent"],
+            "total_to_gain": 0,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        # Should auto-calculate from the forest column
+        assert data["total_to_gain"] > 0
+
+    def test_after_reset_invalid_type(self, client):
+        """Should reject invalid reset_type."""
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.post(f"/api/games/{game_id}/solve/after-reset", json={
+            "reset_type": "invalid",
+        })
+        assert resp.status_code == 400
+
+    def test_after_reset_feeder_missing_dice(self, client):
+        """Should reject feeder reset without dice."""
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.post(f"/api/games/{game_id}/solve/after-reset", json={
+            "reset_type": "feeder",
+            "new_feeder_dice": [],
+        })
+        assert resp.status_code == 400
+
+    def test_after_reset_tray_invalid_bird(self, client):
+        """Should reject unknown bird names in tray cards."""
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.post(f"/api/games/{game_id}/solve/after-reset", json={
+            "reset_type": "tray",
+            "new_tray_cards": ["Not A Real Bird"],
+        })
+        assert resp.status_code == 400

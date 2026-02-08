@@ -22,8 +22,9 @@ ACTIONS_PER_ROUND = (8, 7, 6, 5)  # Round 1-4
 HABITAT_SLOTS = 5
 BIRDFEEDER_DICE = 5
 
-# Egg cost per column position (0-indexed, left to right)
-EGG_COST_BY_COLUMN = (0, 0, 1, 1, 2)
+# Egg cost per column position (0-indexed, 5 columns per habitat, 15 birds max)
+# Column 1: free, Columns 2-3: 1 egg, Columns 4-5: 2 eggs
+EGG_COST_BY_COLUMN = (0, 1, 1, 2, 2)
 
 # Legacy constants — still used as fallback when no board type is set
 FOREST_FOOD_GAIN = (1, 1, 1, 2, 2)

@@ -519,22 +519,44 @@ def _evaluate_play_bird(game: GameState, player: Player, move: Move,
         power_val = power.estimate_value(ctx) * 0.8
         # Play-another-bird: compute value of the best follow-up bird from hand
         if _is_play_bird_power(bird):
+            from backend.powers.templates.play_bird import PlayAdditionalBird
+            play_power = get_power(bird)
+            egg_disc = play_power.egg_discount if isinstance(play_power, PlayAdditionalBird) else 0
+            food_disc = play_power.food_discount if isinstance(play_power, PlayAdditionalBird) else 0
+            hab_filter = play_power.habitat_filter if isinstance(play_power, PlayAdditionalBird) else None
+
             remaining_hand = [b for b in player.hand if b.name != bird.name]
             food_after = player.food_supply.total_non_nectar() - sum(move.food_payment.values())
             nectar_after = player.food_supply.get(FoodType.NECTAR)
+            eggs_after = player.board.total_eggs() - (EGG_COST_BY_COLUMN[slot_idx] if slot_idx is not None else 0)
             best_followup = 0.0
             for candidate in remaining_hand:
-                if candidate.food_cost.total <= food_after + nectar_after:
-                    # Quick estimate: VP + egg capacity + power value
-                    fv = candidate.victory_points
-                    fv += min(candidate.egg_limit, rounds_remaining) * 0.4
-                    if candidate.color == PowerColor.BROWN:
-                        fv += rounds_remaining * 0.5  # rough engine value
-                    best_followup = max(best_followup, fv)
+                # Check habitat restriction
+                if hab_filter and hab_filter not in candidate.habitats:
+                    continue
+                # Check food affordability (with discount)
+                effective_food_cost = max(0, candidate.food_cost.total - food_disc)
+                if effective_food_cost > food_after + nectar_after:
+                    continue
+                # Check egg affordability for the target slot
+                target_hab = hab_filter or (list(candidate.habitats)[0] if candidate.habitats else None)
+                if target_hab:
+                    target_row = player.board.get_row(target_hab)
+                    # +1 because we're placing the first bird in move.habitat
+                    target_slot = target_row.bird_count + (1 if target_hab == move.habitat else 0)
+                    if target_slot < len(EGG_COST_BY_COLUMN):
+                        followup_egg_cost = max(0, EGG_COST_BY_COLUMN[target_slot] - egg_disc)
+                        if eggs_after < followup_egg_cost:
+                            continue
+                # Quick estimate: VP + egg capacity + power value
+                fv = candidate.victory_points
+                fv += min(candidate.egg_limit, rounds_remaining) * 0.4
+                if candidate.color == PowerColor.BROWN:
+                    fv += rounds_remaining * 0.5
+                best_followup = max(best_followup, fv)
             if best_followup > 0:
-                power_val += best_followup * 0.8  # discount slightly for uncertainty
+                power_val += best_followup * 0.8
             else:
-                # No immediate followup, but still saves an action cube
                 power_val += weights.play_another_bird_bonus * min(rounds_remaining, 2)
         value += power_val
 
@@ -897,6 +919,60 @@ def _activation_advice(game: GameState, player: Player, habitat: Habitat) -> lis
     return advice
 
 
+def _recommend_bonus_payment(player: Player, cost_options: tuple[str, ...],
+                             game: GameState) -> str:
+    """Recommend which specific resource to discard for a bonus cost.
+
+    Returns a string like 'discard your lowest bird' or 'spend 1 fruit'.
+    """
+    for cost in cost_options:
+        if cost == "card" and player.hand:
+            # Find the lowest-value card to discard
+            worst = min(player.hand, key=lambda b: b.victory_points)
+            return f"discard {worst.name} ({worst.victory_points}VP)"
+        elif cost == "food":
+            # Pick the food type you have the most surplus of
+            # (least needed for birds in hand)
+            needed: dict[FoodType, int] = {}
+            for b in player.hand:
+                if not b.food_cost.is_or:
+                    for ft in b.food_cost.items:
+                        needed[ft] = needed.get(ft, 0) + 1
+
+            best_ft = None
+            best_surplus = -999
+            for ft in [FoodType.SEED, FoodType.INVERTEBRATE, FoodType.FRUIT,
+                        FoodType.FISH, FoodType.RODENT]:
+                have = player.food_supply.get(ft)
+                if have <= 0:
+                    continue
+                surplus = have - needed.get(ft, 0)
+                if surplus > best_surplus:
+                    best_surplus = surplus
+                    best_ft = ft
+
+            if best_ft:
+                return f"spend 1 {best_ft.value}"
+            return "spend 1 food"
+        elif cost == "egg":
+            # Find the bird with least strategic value to remove an egg from
+            candidates = []
+            for row in player.board.all_rows():
+                for i, slot in enumerate(row.slots):
+                    if slot.bird and slot.eggs > 0:
+                        candidates.append((slot.bird.name, slot.eggs, row.habitat, i))
+            if candidates:
+                # Pick bird with most eggs (removing one hurts least proportionally)
+                candidates.sort(key=lambda x: -x[1])
+                name, eggs, _, _ = candidates[0]
+                return f"remove egg from {name} ({eggs} eggs)"
+            return "spend 1 egg"
+        elif cost == "nectar":
+            if player.food_supply.get(FoodType.NECTAR) > 0:
+                return "spend 1 nectar"
+    return ""
+
+
 def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str:
     """Generate a brief reasoning string explaining why a move is recommended."""
     reasons: list[str] = []
@@ -911,11 +987,39 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
             reasons.append(f"high VP ({bird.victory_points})")
         elif bird.victory_points > 0:
             reasons.append(f"{bird.victory_points}VP")
+        # Column egg cost info
+        row = player.board.get_row(move.habitat)
+        slot_idx = row.next_empty_slot()
+        if slot_idx is not None and slot_idx < len(EGG_COST_BY_COLUMN):
+            egg_cost = EGG_COST_BY_COLUMN[slot_idx]
+            if egg_cost > 0:
+                # Recommend which eggs to remove
+                egg_sources = []
+                for r in player.board.all_rows():
+                    for i, s in enumerate(r.slots):
+                        if s.bird and s.eggs > 0:
+                            egg_sources.append((s.eggs, s.bird.name))
+                egg_sources.sort(key=lambda x: -x[0])
+                if egg_sources:
+                    source_names = [f"{n} ({e} eggs)" for e, n in egg_sources[:egg_cost]]
+                    reasons.append(f"costs {egg_cost} egg — remove from {', '.join(source_names)}")
+                else:
+                    reasons.append(f"costs {egg_cost} egg")
+
         if bird.color == PowerColor.BROWN and rounds_remaining > 0:
             reasons.append("brown engine power")
         elif bird.color == PowerColor.WHITE:
             if _is_play_bird_power(bird):
-                reasons.append("play-another-bird power")
+                from backend.powers.templates.play_bird import PlayAdditionalBird
+                play_power = get_power(bird)
+                disc_parts = []
+                if isinstance(play_power, PlayAdditionalBird):
+                    if play_power.egg_discount:
+                        disc_parts.append(f"-{play_power.egg_discount} egg cost")
+                    if play_power.food_discount:
+                        disc_parts.append(f"-{play_power.food_discount} food cost")
+                disc_str = f" ({', '.join(disc_parts)})" if disc_parts else ""
+                reasons.append(f"play-another-bird power{disc_str}")
             else:
                 reasons.append("when-played power")
         elif bird.color == PowerColor.PINK:
@@ -941,6 +1045,12 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
         nectar = player.food_supply.get(FoodType.NECTAR)
         if food_total < 2:
             reasons.append("low on food")
+        # Detect free reroll opportunity (all dice show same face)
+        feeder = game.birdfeeder
+        if feeder.all_same_face() and feeder.count > 0:
+            face = feeder.dice[0]
+            face_name = face.value if not isinstance(face, tuple) else "/".join(f.value for f in face)
+            reasons.append(f"REROLL AVAILABLE — all {feeder.count} dice show {face_name}")
         bird_count = player.board.forest.bird_count
         column = get_action_column(game.board_type, Habitat.FOREST, bird_count)
         gain = column.base_gain + move.bonus_count
@@ -952,10 +1062,12 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
             reasons.append(f"enables playing {playable} bird{'s' if playable > 1 else ''}")
         if move.food_choices and FoodType.NECTAR in move.food_choices:
             reasons.append("gains nectar for majority")
-        if move.bonus_count > 0:
-            reasons.append("discard card/food for +1 food")
-        if move.reset_bonus:
-            reasons.append("spend food to reset feeder")
+        if move.bonus_count > 0 and column.bonus:
+            payment = _recommend_bonus_payment(player, column.bonus.cost_options, game)
+            reasons.append(f"+1 food ({payment})" if payment else "+1 food")
+        if move.reset_bonus and column.reset_bonus:
+            payment = _recommend_bonus_payment(player, column.reset_bonus.cost_options, game)
+            reasons.append(f"reset feeder ({payment})" if payment else "reset feeder")
         if bird_count > 0:
             reasons.append(f"activates {bird_count} forest bird{'s' if bird_count > 1 else ''}")
             reasons.extend(_activation_advice(game, player, Habitat.FOREST))
@@ -976,8 +1088,10 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
         if bird_count > 0:
             reasons.append(f"activates {bird_count} grassland bird{'s' if bird_count > 1 else ''}")
             reasons.extend(_activation_advice(game, player, Habitat.GRASSLAND))
-        if move.bonus_count > 0:
-            reasons.append(f"discard food/card for +{move.bonus_count} egg{'s' if move.bonus_count > 1 else ''}")
+        if move.bonus_count > 0 and column.bonus:
+            payment = _recommend_bonus_payment(player, column.bonus.cost_options, game)
+            label = f"+{move.bonus_count} egg{'s' if move.bonus_count > 1 else ''}"
+            reasons.append(f"{label} ({payment})" if payment else label)
         if game.round_goals:
             idx = min(game.current_round - 1, len(game.round_goals) - 1)
             if idx >= 0 and "[egg]" in game.round_goals[idx].description.lower():
@@ -993,11 +1107,14 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
                 tray_bird = game.card_tray.face_up[idx]
                 reasons.append(f"picks {tray_bird.name}")
                 break
-        if move.bonus_count > 0:
-            reasons.append("discard egg/nectar for +1 card")
-        if move.reset_bonus:
-            reasons.append("spend food to reset tray")
         bird_count = player.board.wetland.bird_count
+        column = get_action_column(game.board_type, Habitat.WETLAND, bird_count)
+        if move.bonus_count > 0 and column.bonus:
+            payment = _recommend_bonus_payment(player, column.bonus.cost_options, game)
+            reasons.append(f"+1 card ({payment})" if payment else "+1 card")
+        if move.reset_bonus and column.reset_bonus:
+            payment = _recommend_bonus_payment(player, column.reset_bonus.cost_options, game)
+            reasons.append(f"reset tray ({payment})" if payment else "reset tray")
         if bird_count > 0:
             reasons.append(f"activates {bird_count} wetland bird{'s' if bird_count > 1 else ''}")
             reasons.extend(_activation_advice(game, player, Habitat.WETLAND))

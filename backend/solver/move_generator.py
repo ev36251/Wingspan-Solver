@@ -93,10 +93,92 @@ def _can_pay_bonus(player: Player, cost_options: tuple[str, ...]) -> bool:
     return False
 
 
+def _feeder_type_counts(feeder) -> dict[FoodType, int]:
+    """Count how many dice of each food type are available in the feeder.
+
+    Choice dice count toward both types they offer.
+    """
+    counts: dict[FoodType, int] = {}
+    for die in feeder.dice:
+        if isinstance(die, tuple):
+            for ft in die:
+                counts[ft] = counts.get(ft, 0) + 1
+        else:
+            counts[die] = counts.get(die, 0) + 1
+    return counts
+
+
+def _generate_food_combos(available_counts: dict[FoodType, int],
+                          food_count: int) -> list[list[FoodType]]:
+    """Generate all valid food-type combinations from available feeder dice.
+
+    Each combo is a sorted list of food types, respecting the count of each
+    type available. For food_count=1, this is just one of each available type.
+    For food_count>=2, generates mixed combos.
+
+    If food_count exceeds total available dice, generates combos using all
+    available dice — the feeder will reroll mid-action to provide the rest.
+    Also always includes single-type fallback moves (take N of one type)
+    for cases where the feeder will reroll to provide more.
+    """
+    types = sorted(available_counts.keys(), key=lambda f: f.value)
+
+    if food_count == 1:
+        return [[ft] for ft in types]
+
+    total_available = sum(available_counts.values())
+
+    # Always include single-type moves (feeder rerolls can provide more of same type)
+    combos: list[list[FoodType]] = []
+    for ft in types:
+        combos.append([ft] * food_count)
+
+    # Generate mixed combos up to what's actually available
+    effective_count = min(food_count, total_available)
+
+    seen = set()
+    mixed: list[list[FoodType]] = []
+
+    def _build(remaining: int, start_idx: int, current: list[FoodType]):
+        if remaining == 0:
+            key = tuple(current)
+            if key not in seen:
+                seen.add(key)
+                mixed.append(list(current))
+            return
+        for i in range(start_idx, len(types)):
+            ft = types[i]
+            already_used = current.count(ft)
+            if already_used < available_counts[ft]:
+                current.append(ft)
+                _build(remaining - 1, i, current)
+                current.pop()
+
+    _build(effective_count, 0, [])
+
+    # Add mixed combos that aren't already in the single-type list
+    for combo in mixed:
+        key = tuple(combo)
+        if key not in {tuple(c) for c in combos}:
+            combos.append(combo)
+
+    return combos
+
+
+def _food_combo_description(combo: list[FoodType]) -> str:
+    """Build a description like '1 seed + 1 invertebrate'."""
+    counts: dict[FoodType, int] = {}
+    for ft in combo:
+        counts[ft] = counts.get(ft, 0) + 1
+    parts = [f"{c} {ft.value}" for ft, c in
+             sorted(counts.items(), key=lambda x: x[0].value)]
+    return " + ".join(parts)
+
+
 def generate_gain_food_moves(game: GameState, player: Player) -> list[Move]:
     """All legal gain-food moves.
 
-    Generate one move per available food type in the feeder,
+    Generates specific food type combinations from the feeder,
     with and without bonus trade activation (extra and/or reset_feeder).
     """
     legal, _ = can_gain_food(player, game)
@@ -137,47 +219,40 @@ def generate_gain_food_moves(game: GameState, player: Player) -> list[Move]:
             ))
         return moves
 
-    # Generate one move per food type (simplified: take N of same type if available)
-    moves = []
-    for ft in sorted(available, key=lambda f: f.value):
-        moves.append(Move(
-            action_type=ActionType.GAIN_FOOD,
-            description=f"Gain {ft.value} from feeder ({food_count} total food)",
-            food_choices=[ft] * food_count,
-        ))
+    type_counts = _feeder_type_counts(feeder)
 
-    # Extra bonus variants (+1 food)
+    def _make_food_moves(count: int, bonus: int = 0,
+                         use_reset: bool = False) -> list[Move]:
+        parts = []
+        if bonus:
+            parts.append("+1 food")
+        if use_reset:
+            parts.append("reset feeder")
+        suffix = f" ({', '.join(parts)})" if parts else ""
+
+        combos = _generate_food_combos(type_counts, count)
+        result = []
+        for combo in combos:
+            desc = f"Gain {_food_combo_description(combo)}{suffix}"
+            result.append(Move(
+                action_type=ActionType.GAIN_FOOD,
+                description=desc,
+                food_choices=combo,
+                bonus_count=bonus,
+                reset_bonus=use_reset,
+            ))
+        return result
+
+    moves = _make_food_moves(food_count)
+
     if can_extra:
-        gain = food_count + 1
-        for ft in sorted(available, key=lambda f: f.value):
-            moves.append(Move(
-                action_type=ActionType.GAIN_FOOD,
-                description=f"Gain {ft.value} ({gain} food, +1 food)",
-                food_choices=[ft] * gain,
-                bonus_count=1,
-            ))
+        moves.extend(_make_food_moves(food_count + 1, bonus=1))
 
-    # Reset feeder variants
     if can_reset:
-        for ft in sorted(available, key=lambda f: f.value):
-            moves.append(Move(
-                action_type=ActionType.GAIN_FOOD,
-                description=f"Gain {ft.value} ({food_count} food, reset feeder)",
-                food_choices=[ft] * food_count,
-                reset_bonus=True,
-            ))
+        moves.extend(_make_food_moves(food_count, use_reset=True))
 
-    # Both bonuses (dual-bonus columns like Oceania Forest col 3)
     if can_extra and can_reset:
-        gain = food_count + 1
-        for ft in sorted(available, key=lambda f: f.value):
-            moves.append(Move(
-                action_type=ActionType.GAIN_FOOD,
-                description=f"Gain {ft.value} ({gain} food, reset feeder + extra)",
-                food_choices=[ft] * gain,
-                bonus_count=1,
-                reset_bonus=True,
-            ))
+        moves.extend(_make_food_moves(food_count + 1, bonus=1, use_reset=True))
 
     return moves
 

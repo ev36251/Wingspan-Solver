@@ -1,5 +1,6 @@
 """Solver endpoint routes — heuristic, Monte Carlo, max-score, and analysis."""
 
+import copy
 import time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -29,6 +30,7 @@ class SolverMoveRecommendation(BaseModel):
 class HeuristicResponse(BaseModel):
     recommendations: list[SolverMoveRecommendation]
     evaluation_time_ms: float = 0
+    feeder_reroll_available: bool = False
 
 
 class MonteCarloRequest(BaseModel):
@@ -114,9 +116,14 @@ async def solve_heuristic(game_id: str) -> HeuristicResponse:
             details=details,
         ))
 
+    # Check if the feeder has all-same-face (free reroll available)
+    feeder = game.birdfeeder
+    reroll_available = feeder.all_same_face() and feeder.count > 0
+
     return HeuristicResponse(
         recommendations=recommendations[:3],
         evaluation_time_ms=round(elapsed_ms, 1),
+        feeder_reroll_available=reroll_available,
     )
 
 
@@ -258,6 +265,285 @@ async def solve_max_score(game_id: str, player_name: str | None = None) -> MaxSc
         efficiency_pct=round(efficiency, 1),
         breakdown=max_bd.as_dict(),
     )
+
+
+class AfterResetRequest(BaseModel):
+    """Input for after-reset follow-up recommendation.
+
+    After the solver recommends a move with a reset bonus, the user
+    physically resets the feeder or tray, inputs the new state, and
+    gets a follow-up recommendation for which food/cards to take.
+    """
+    reset_type: str  # "feeder" or "tray"
+    new_feeder_dice: list[str | list[str]] = Field(default_factory=list)
+    new_tray_cards: list[str] = Field(default_factory=list)
+    total_to_gain: int = Field(default=0, ge=0, le=6)
+
+
+class AfterResetRecommendation(BaseModel):
+    rank: int
+    description: str
+    score: float
+    reasoning: str = ""
+    details: dict = Field(default_factory=dict)
+
+
+class AfterResetResponse(BaseModel):
+    recommendations: list[AfterResetRecommendation]
+    reset_type: str
+    total_to_gain: int
+
+
+@router.post("/{game_id}/solve/after-reset", response_model=AfterResetResponse)
+async def solve_after_reset(game_id: str, req: AfterResetRequest) -> AfterResetResponse:
+    """Follow-up recommendation after feeder/tray reset.
+
+    When the solver recommends "reset feeder" or "reset tray", the user
+    physically resets it, inputs the new dice/cards here, and gets a
+    specific recommendation for which food to take or which cards to draw.
+    """
+    game = _get_game(game_id)
+
+    if game.is_game_over:
+        raise HTTPException(400, "Game is already over")
+
+    if req.reset_type not in ("feeder", "tray"):
+        raise HTTPException(400, "reset_type must be 'feeder' or 'tray'")
+
+    # Create a temporary game copy with updated feeder/tray
+    temp_game = copy.deepcopy(game)
+    player = temp_game.current_player
+
+    if req.reset_type == "feeder":
+        if not req.new_feeder_dice:
+            raise HTTPException(400, "new_feeder_dice required for feeder reset")
+
+        # Parse dice faces
+        from backend.models.birdfeeder import Birdfeeder
+        dice = []
+        for d in req.new_feeder_dice:
+            if isinstance(d, list):
+                dice.append(tuple(FoodType(f) for f in d))
+            else:
+                dice.append(FoodType(d))
+        temp_game.birdfeeder.set_dice(dice)
+
+        # Determine how many food to gain
+        if req.total_to_gain > 0:
+            food_count = req.total_to_gain
+        else:
+            from backend.config import get_action_column
+            from backend.models.enums import Habitat
+            bird_count = player.board.forest.bird_count
+            column = get_action_column(temp_game.board_type, Habitat.FOREST, bird_count)
+            food_count = column.base_gain
+
+        # Generate food moves for the given count
+        from backend.solver.move_generator import (
+            _feeder_type_counts, _generate_food_combos, _food_combo_description,
+            Move, generate_gain_food_moves,
+        )
+        from backend.models.enums import ActionType
+
+        type_counts = _feeder_type_counts(temp_game.birdfeeder)
+        combos = _generate_food_combos(type_counts, food_count)
+
+        # Score each combo using the heuristic evaluator
+        from backend.solver.heuristics import _evaluate_gain_food, dynamic_weights
+        weights = dynamic_weights(temp_game)
+
+        scored_combos = []
+        for combo in combos:
+            move = Move(
+                action_type=ActionType.GAIN_FOOD,
+                description=f"Take {_food_combo_description(combo)}",
+                food_choices=combo,
+            )
+            score = _evaluate_gain_food(temp_game, player, move, weights)
+            scored_combos.append((combo, move, score))
+
+        # Sort by score descending
+        scored_combos.sort(key=lambda x: -x[2])
+
+        recommendations = []
+        for i, (combo, move, score) in enumerate(scored_combos[:5]):
+            # Generate reasoning for the top food pick
+            reasoning_parts = []
+            # Check if this combo fills food needs for hand birds
+            if player.hand:
+                for bird in player.hand:
+                    if not bird.food_cost.is_or:
+                        needed = {}
+                        for ft in bird.food_cost.items:
+                            needed[ft] = needed.get(ft, 0) + 1
+                        for ft in list(needed.keys()):
+                            have = player.food_supply.get(ft)
+                            needed[ft] = max(0, needed[ft] - have)
+                            if needed[ft] == 0:
+                                del needed[ft]
+                        if needed:
+                            filled = sum(1 for ft in combo if ft in needed)
+                            if filled > 0:
+                                reasoning_parts.append(
+                                    f"fills {filled} food need{'s' if filled > 1 else ''} for {bird.name}"
+                                )
+                                break
+                    else:
+                        # OR cost: any matching food works
+                        if any(ft in bird.food_cost.distinct_types for ft in combo):
+                            reasoning_parts.append(f"covers cost for {bird.name}")
+                            break
+
+            # Nectar value
+            if FoodType.NECTAR in combo:
+                reasoning_parts.append("gains nectar for majority")
+
+            # Food diversity
+            unique_types = len(set(combo))
+            if unique_types >= 3:
+                reasoning_parts.append("diverse food types")
+
+            recommendations.append(AfterResetRecommendation(
+                rank=i + 1,
+                description=_food_combo_description(combo),
+                score=round(score, 2),
+                reasoning="; ".join(reasoning_parts) if reasoning_parts else "general food gain",
+                details={"food_choices": [ft.value for ft in combo]},
+            ))
+
+        return AfterResetResponse(
+            recommendations=recommendations,
+            reset_type="feeder",
+            total_to_gain=food_count,
+        )
+
+    else:  # tray reset
+        if not req.new_tray_cards:
+            raise HTTPException(400, "new_tray_cards required for tray reset")
+
+        # Replace tray cards
+        from backend.data.registries import get_bird_registry
+        bird_reg = get_bird_registry()
+        temp_game.card_tray.clear()
+        for name in req.new_tray_cards:
+            bird = bird_reg.get(name)
+            if not bird:
+                raise HTTPException(400, f"Bird not found: '{name}'")
+            temp_game.card_tray.add_card(bird)
+
+        # Determine how many cards to draw
+        if req.total_to_gain > 0:
+            card_count = req.total_to_gain
+        else:
+            from backend.config import get_action_column
+            from backend.models.enums import Habitat
+            bird_count = player.board.wetland.bird_count
+            column = get_action_column(temp_game.board_type, Habitat.WETLAND, bird_count)
+            card_count = column.base_gain
+
+        # Evaluate each tray card as a pick option
+        from backend.solver.heuristics import (
+            _goal_alignment_value, dynamic_weights,
+        )
+        from backend.models.enums import ActionType
+        weights = dynamic_weights(temp_game)
+
+        card_options = []
+        for i, bird in enumerate(temp_game.card_tray.face_up):
+            score = 0.0
+            reasoning_parts = []
+
+            # VP value
+            score += bird.victory_points * 0.5
+            if bird.victory_points >= 5:
+                reasoning_parts.append(f"high VP ({bird.victory_points})")
+            elif bird.victory_points > 0:
+                reasoning_parts.append(f"{bird.victory_points}VP")
+
+            # Power value
+            from backend.models.enums import PowerColor
+            from backend.powers.registry import get_power
+            from backend.powers.base import NoPower
+            rounds_remaining = max(0, 4 - temp_game.current_round)
+            if bird.color == PowerColor.BROWN and rounds_remaining > 0:
+                power = get_power(bird)
+                if not isinstance(power, NoPower):
+                    score += rounds_remaining * 0.8
+                    reasoning_parts.append("brown engine power")
+            elif bird.color == PowerColor.WHITE:
+                reasoning_parts.append("when-played power")
+                score += 0.5
+
+            # Bonus card synergy
+            for bc in player.bonus_cards:
+                if bc.name in bird.bonus_eligibility:
+                    score += 1.2
+                    reasoning_parts.append(f"bonus: {bc.name}")
+                    break
+
+            # Goal alignment
+            best_goal_val = 0.0
+            for hab in bird.habitats:
+                gv = _goal_alignment_value(temp_game, bird, hab, weights)
+                best_goal_val = max(best_goal_val, gv)
+            if best_goal_val > 0.3:
+                score += best_goal_val
+                reasoning_parts.append("helps round goal")
+
+            # Food affordability
+            food_available = (player.food_supply.total_non_nectar() +
+                              player.food_supply.get(FoodType.NECTAR))
+            if food_available >= bird.food_cost.total:
+                score += 0.5
+                reasoning_parts.append("affordable now")
+            elif food_available + 2 >= bird.food_cost.total:
+                reasoning_parts.append("nearly affordable")
+
+            # Egg capacity
+            if bird.egg_limit >= 4:
+                score += 0.4
+                reasoning_parts.append(f"holds {bird.egg_limit} eggs")
+
+            card_options.append((bird, score, reasoning_parts, i))
+
+        # Sort by score descending
+        card_options.sort(key=lambda x: -x[1])
+
+        recommendations = []
+        for rank, (bird, score, reasoning_parts, tray_idx) in enumerate(card_options):
+            deck_draws = max(0, card_count - 1)
+            if card_count > 1:
+                desc = f"Take {bird.name} from tray + {deck_draws} from deck"
+            else:
+                desc = f"Take {bird.name} from tray"
+
+            recommendations.append(AfterResetRecommendation(
+                rank=rank + 1,
+                description=desc,
+                score=round(score, 2),
+                reasoning="; ".join(reasoning_parts) if reasoning_parts else "general card draw",
+                details={
+                    "bird_name": bird.name,
+                    "tray_index": tray_idx,
+                    "deck_draws": deck_draws,
+                },
+            ))
+
+        # Also add "all from deck" option
+        if temp_game.deck_remaining >= card_count:
+            recommendations.append(AfterResetRecommendation(
+                rank=len(recommendations) + 1,
+                description=f"Draw {card_count} from deck",
+                score=round(card_count * 0.3, 2),
+                reasoning="unknown cards, no tray picks",
+                details={"bird_name": None, "tray_index": -1, "deck_draws": card_count},
+            ))
+
+        return AfterResetResponse(
+            recommendations=recommendations,
+            reset_type="tray",
+            total_to_gain=card_count,
+        )
 
 
 @router.post("/{game_id}/analyze", response_model=AnalysisResponse)
