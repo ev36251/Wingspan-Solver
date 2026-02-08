@@ -371,3 +371,17 @@ class TestScoring:
         # Tied for 1st: (5+2) // 2 = 3 each
         assert breakdown_a.nectar == 3
         assert breakdown_b.nectar == 3
+
+    def test_nectar_zero_disqualifies(self, game):
+        """Players with 0 nectar spent don't qualify for any placement."""
+        alice = game.players[0]
+        bob = game.players[1]
+
+        # Alice spent 1 nectar, Bob spent 0
+        alice.board.forest.nectar_spent = 1
+        bob.board.forest.nectar_spent = 0
+
+        breakdown_a = calculate_score(game, alice)
+        breakdown_b = calculate_score(game, bob)
+        assert breakdown_a.nectar == 5  # 1st place (only qualifier)
+        assert breakdown_b.nectar == 0  # 0 nectar = no points

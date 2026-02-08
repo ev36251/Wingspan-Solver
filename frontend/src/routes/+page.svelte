@@ -21,6 +21,8 @@
 	let activePlayerIdx = 0;
 
 	let scoreSheet: ScoreSheet;
+	let solverPanel: SolverPanel;
+	let showFeederAdd = false;
 
 	// Goal editing
 	let allGoals: Goal[] = [];
@@ -263,10 +265,12 @@
 				</span>
 			</div>
 			<div class="game-actions">
+				<button class="solve-btn" on:click={() => solverPanel?.solve()} disabled={state.current_round > 4}>
+					Get Recommendations
+				</button>
 				<button class="primary" on:click={saveState} disabled={saving}>
 					{saving ? 'Saving...' : 'Save State'}
 				</button>
-
 				<button on:click={resetGame}>New Game</button>
 			</div>
 		</div>
@@ -402,9 +406,20 @@
 				<div class="sidebar-panel card">
 					<div class="panel-header-row">
 						<h4 class="panel-title">Birdfeeder ({state.birdfeeder.dice.length})</h4>
-						{#if state.birdfeeder.dice.length > 0}
-							<button class="clear-btn" on:click={clearFeeder}>Clear</button>
-						{/if}
+						<div class="feeder-header-actions">
+							{#if state.birdfeeder.dice.length < 5}
+								<button
+									class="toggle-add-btn"
+									class:active={showFeederAdd}
+									on:click={() => showFeederAdd = !showFeederAdd}
+								>
+									{showFeederAdd ? 'Done' : '+ Add Dice'}
+								</button>
+							{/if}
+							{#if state.birdfeeder.dice.length > 0}
+								<button class="clear-btn" on:click={clearFeeder}>Clear</button>
+							{/if}
+						</div>
 					</div>
 					<div class="feeder-dice">
 						{#each state.birdfeeder.dice as die, i}
@@ -419,7 +434,7 @@
 							<span class="feeder-empty">Empty feeder</span>
 						{/each}
 					</div>
-					{#if state.birdfeeder.dice.length < 5}
+					{#if showFeederAdd && state.birdfeeder.dice.length < 5}
 					<div class="feeder-add">
 						{#each FEEDER_SINGLE as ft}
 							<button class="feeder-add-btn" on:click={() => addDie(ft)} title="Add {ft}">
@@ -484,7 +499,7 @@
 				</div>
 
 				<!-- Solver -->
-				<SolverPanel {gameId} disabled={state.current_round > 4} />
+				<SolverPanel {gameId} disabled={state.current_round > 4} bind:this={solverPanel} />
 			</div>
 		</div>
 	</div>
@@ -623,6 +638,26 @@
 	.game-actions {
 		display: flex;
 		gap: 8px;
+	}
+
+	.solve-btn {
+		background: var(--accent);
+		color: white;
+		font-weight: 600;
+		border: none;
+		padding: 6px 16px;
+		border-radius: 6px;
+		cursor: pointer;
+		font-size: 0.85rem;
+	}
+
+	.solve-btn:hover {
+		filter: brightness(1.1);
+	}
+
+	.solve-btn:disabled {
+		opacity: 0.5;
+		cursor: default;
 	}
 
 	/* Player tabs */
@@ -912,6 +947,32 @@
 		font-size: 0.85rem;
 		padding: 3px 8px;
 		border-style: dashed;
+	}
+
+	.feeder-header-actions {
+		display: flex;
+		gap: 6px;
+		align-items: center;
+	}
+
+	.toggle-add-btn {
+		font-size: 0.65rem;
+		padding: 1px 8px;
+		border: 1px solid var(--accent);
+		background: #fef9f0;
+		color: var(--accent);
+		border-radius: 3px;
+		cursor: pointer;
+		font-weight: 600;
+	}
+
+	.toggle-add-btn:hover {
+		background: #fdf0d5;
+	}
+
+	.toggle-add-btn.active {
+		background: var(--accent);
+		color: white;
 	}
 
 	.clear-btn {

@@ -31,7 +31,7 @@
 	let traySearchResults: { name: string }[][] = [[], [], []];
 	let traySearching: boolean[] = [false, false, false];
 
-	async function solve() {
+	export async function solve() {
 		loading = true;
 		error = '';
 		showResetInput = false;

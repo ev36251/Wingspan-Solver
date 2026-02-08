@@ -358,13 +358,12 @@ def score_nectar(game_state: GameState, player: Player) -> int:
             row = p.board.get_row(habitat)
             nectar_by_player[p.name] = row.nectar_spent
 
-        # Rank players
-        sorted_players = sorted(nectar_by_player.items(), key=lambda x: -x[1])
+        # Only players who spent >= 1 nectar qualify for placement
+        qualifying = [(name, n) for name, n in nectar_by_player.items() if n > 0]
+        if not qualifying:
+            continue
 
-        if sorted_players[0][1] == 0:
-            continue  # No nectar spent in this habitat
-
-        # Determine placements with tie handling
+        sorted_players = sorted(qualifying, key=lambda x: -x[1])
         total += _nectar_points_for_player(sorted_players, player.name)
 
     return total
