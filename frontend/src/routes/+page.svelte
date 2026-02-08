@@ -13,6 +13,7 @@
 	let error = '';
 	let loading = false;
 	let saving = false;
+	let saveSuccess = false;
 
 	// New game form
 	let playerNames = ['Player 1', 'Player 2'];
@@ -134,10 +135,13 @@
 	async function saveState() {
 		if (!state) return;
 		saving = true;
+		saveSuccess = false;
 		try {
 			state = await updateGameState(gameId, state);
 			syncGoalSelections();
 			scoreSheet?.refresh();
+			saveSuccess = true;
+			setTimeout(() => saveSuccess = false, 2000);
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to save';
 		} finally {
@@ -268,8 +272,8 @@
 				<button class="solve-btn" on:click={() => solverPanel?.solve()} disabled={state.current_round > 4}>
 					Get Recommendations
 				</button>
-				<button class="primary" on:click={saveState} disabled={saving}>
-					{saving ? 'Saving...' : 'Save State'}
+				<button class="primary" on:click={saveState} disabled={saving} class:saved={saveSuccess}>
+					{saving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save State'}
 				</button>
 				<button on:click={resetGame}>New Game</button>
 			</div>
@@ -658,6 +662,11 @@
 	.solve-btn:disabled {
 		opacity: 0.5;
 		cursor: default;
+	}
+
+	button.saved {
+		background: #16a34a !important;
+		color: white !important;
 	}
 
 	/* Player tabs */

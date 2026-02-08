@@ -230,10 +230,15 @@ async def update_game_state(game_id: str, state: GameStateSchema) -> dict:
         if desc.lower() == "no goal":
             round_goals.append(NO_GOAL)
         else:
+            matched = False
             for g in goal_reg.all_goals:
                 if g.description.lower() == desc.lower():
                     round_goals.append(g)
+                    matched = True
                     break
+            if not matched:
+                # Preserve unmatched goals as NO_GOAL to maintain list length
+                round_goals.append(NO_GOAL)
 
     # Update in place
     game.players = players
