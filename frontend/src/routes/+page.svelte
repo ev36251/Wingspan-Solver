@@ -20,10 +20,56 @@
 	let showNewGame = true;
 	let activeTab: 'setup' | 'newgame' = 'setup';
 	let activePlayerIdx = 0;
+	let playerOrder: number[] = [];  // Display order of player indices
 
 	let scoreSheet: ScoreSheet;
 	let solverPanel: SolverPanel;
 	let showFeederAdd = false;
+
+	// Drag-and-drop state for player tabs
+	let dragIdx: number | null = null;
+	let dragOverIdx: number | null = null;
+
+	function initPlayerOrder() {
+		if (state) {
+			playerOrder = state.players.map((_, i) => i);
+		}
+	}
+
+	// Ensure playerOrder stays in sync if state changes player count
+	$: if (state && playerOrder.length !== state.players.length) {
+		initPlayerOrder();
+	}
+
+	function onDragStart(orderPos: number, e: DragEvent) {
+		dragIdx = orderPos;
+		if (e.dataTransfer) {
+			e.dataTransfer.effectAllowed = 'move';
+		}
+	}
+
+	function onDragOver(orderPos: number, e: DragEvent) {
+		e.preventDefault();
+		if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+		dragOverIdx = orderPos;
+	}
+
+	function onDrop(orderPos: number, e: DragEvent) {
+		e.preventDefault();
+		if (dragIdx !== null && dragIdx !== orderPos) {
+			const newOrder = [...playerOrder];
+			const [moved] = newOrder.splice(dragIdx, 1);
+			newOrder.splice(orderPos, 0, moved);
+			playerOrder = newOrder;
+		}
+		dragIdx = null;
+		dragOverIdx = null;
+	}
+
+	function onDragEnd() {
+		dragIdx = null;
+		dragOverIdx = null;
+	}
 
 	// Goal editing
 	let allGoals: Goal[] = [];
@@ -114,6 +160,7 @@
 			state = data.state;
 			showNewGame = false;
 			activePlayerIdx = 0;
+			initPlayerOrder();
 			syncGoalSelections();
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to create game';
@@ -129,6 +176,7 @@
 		state = null;
 		showNewGame = true;
 		activePlayerIdx = 0;
+		playerOrder = [];
 	}
 
 	// Save state from header (works even when editor is hidden)
@@ -279,17 +327,24 @@
 			</div>
 		</div>
 
-		<!-- Player tabs -->
+		<!-- Player tabs (draggable to reorder) -->
 		<div class="player-tabs">
-			{#each state.players as p, i}
+			{#each playerOrder as playerIdx, orderPos}
+				{@const p = state.players[playerIdx]}
 				<button
 					class="player-tab"
-					class:active={activePlayerIdx === i}
-					class:is-current={i === state.current_player_idx}
-					on:click={() => activePlayerIdx = i}
+					class:active={activePlayerIdx === playerIdx}
+					class:is-current={playerIdx === state.current_player_idx}
+					class:drag-over={dragOverIdx === orderPos && dragIdx !== orderPos}
+					draggable="true"
+					on:click={() => activePlayerIdx = playerIdx}
+					on:dragstart={(e) => onDragStart(orderPos, e)}
+					on:dragover={(e) => onDragOver(orderPos, e)}
+					on:drop={(e) => onDrop(orderPos, e)}
+					on:dragend={onDragEnd}
 				>
 					{p.name}
-					{#if i === state.current_player_idx}
+					{#if playerIdx === state.current_player_idx}
 						<span class="current-dot">&#9679;</span>
 					{/if}
 				</button>
@@ -705,6 +760,18 @@
 	.player-tab.is-current .current-dot {
 		color: #4caf50;
 		font-size: 0.7rem;
+	}
+
+	.player-tab.drag-over {
+		border-left: 2px solid var(--accent);
+	}
+
+	.player-tab[draggable="true"] {
+		cursor: grab;
+	}
+
+	.player-tab[draggable="true"]:active {
+		cursor: grabbing;
 	}
 
 	/* Game layout */
