@@ -6,8 +6,10 @@ food tokens. They also pick 1 of 2 bonus cards. This module evaluates all
 252 possible bird/food combinations x 2 bonus cards = 504 options.
 """
 
+from collections import Counter
 from dataclasses import dataclass, field
 from itertools import combinations
+from typing import Callable
 
 from backend.models.bird import Bird, FoodCost
 from backend.models.bonus_card import BonusCard
@@ -40,6 +42,195 @@ def _food_list_to_dict(food: tuple[FoodType, ...] | list[FoodType]) -> dict[str,
     for f in food:
         d[f.value] = d.get(f.value, 0) + 1
     return d
+
+
+# --- Custom Draft Synergy Functions ---
+# For the 21 bonus cards without spreadsheet eligibility columns,
+# estimate synergy from bird attributes known at draft time.
+
+
+def _draft_synergy_behaviorist(birds: list[Bird]) -> int:
+    """Behaviorist: columns with 3 different power colors.
+
+    If draft birds have 3+ distinct colors, all could contribute to
+    mixed columns. Otherwise, no meaningful synergy.
+    """
+    colors = {PowerColor.WHITE if b.color == PowerColor.NONE else b.color
+              for b in birds}
+    return len(birds) if len(colors) >= 3 else 0
+
+
+def _draft_synergy_ethologist(birds: list[Bird]) -> int:
+    """Ethologist: max distinct power colors in any one habitat.
+
+    For each habitat, count distinct colors among draft birds that can live there.
+    Return the best habitat's eligible bird count.
+    """
+    best = 0
+    for habitat in Habitat:
+        colors = set()
+        eligible = 0
+        for b in birds:
+            if habitat in b.habitats:
+                c = PowerColor.WHITE if b.color == PowerColor.NONE else b.color
+                colors.add(c)
+                eligible += 1
+        if len(colors) >= 2:
+            best = max(best, eligible)
+    return best
+
+
+def _draft_synergy_population_monitor(birds: list[Bird], habitat: Habitat) -> int:
+    """Population Monitor: distinct nest types in a specific habitat.
+
+    Count distinct nest types among birds that can live in the target habitat.
+    Wild nests add diversity.
+    """
+    nests = set()
+    for b in birds:
+        if habitat in b.habitats:
+            nests.add(b.nest_type)
+    return min(5, len(nests))
+
+
+def _draft_synergy_mechanical_engineer(birds: list[Bird]) -> int:
+    """Mechanical Engineer: sets of 4 nest types (bowl, cavity, ground, platform).
+
+    Count how many of the 4 required types are covered. Wild fills gaps.
+    """
+    non_wild = set()
+    wild_count = 0
+    for b in birds:
+        if b.nest_type == NestType.WILD:
+            wild_count += 1
+        else:
+            non_wild.add(b.nest_type)
+    return min(4, len(non_wild) + wild_count)
+
+
+def _draft_synergy_site_selection(birds: list[Bird]) -> int:
+    """Site Selection Expert: columns with matching nest pairs/trios.
+
+    Count birds that share a nest type with another draft bird (could
+    form a column pair). Wild nests always contribute.
+    """
+    type_counts: Counter[NestType] = Counter()
+    has_wild = 0
+    for b in birds:
+        if b.nest_type == NestType.WILD:
+            has_wild += 1
+        else:
+            type_counts[b.nest_type] += 1
+
+    matching = has_wild  # wild always contributes
+    for b in birds:
+        if b.nest_type != NestType.WILD:
+            if type_counts[b.nest_type] >= 2 or has_wild > 0:
+                matching += 1
+    return matching
+
+
+def _draft_synergy_data_analyst(birds: list[Bird], habitat: Habitat) -> int:
+    """Data Analyst: consecutive ascending/descending wingspans.
+
+    Count birds eligible for the habitat with non-None wingspan.
+    """
+    return sum(
+        1 for b in birds
+        if habitat in b.habitats and b.wingspan_cm is not None
+    )
+
+
+def _draft_synergy_ranger(birds: list[Bird], habitat: Habitat) -> int:
+    """Ranger: consecutive ascending/descending VP.
+
+    Count birds eligible for the habitat.
+    """
+    return sum(1 for b in birds if habitat in b.habitats)
+
+
+def _draft_synergy_ecologist(birds: list[Bird]) -> int:
+    """Ecologist: birds in habitat with fewest birds.
+
+    Multi-habitat birds give flexibility to balance habitats.
+    """
+    return sum(1 for b in birds if len(b.habitats) >= 2)
+
+
+def _draft_synergy_avian_therio(birds: list[Bird]) -> int:
+    """Avian Theriogenologist: birds with completely full nests.
+
+    Birds with small egg limits (1-3) are easier to fill.
+    """
+    return sum(1 for b in birds if 0 < b.egg_limit <= 3)
+
+
+def _draft_synergy_breeding_manager(birds: list[Bird]) -> int:
+    """Breeding Manager: birds with 4+ eggs.
+
+    Birds with egg_limit >= 4 have the potential.
+    """
+    return sum(1 for b in birds if b.egg_limit >= 4)
+
+
+def _draft_synergy_oologist(birds: list[Bird]) -> int:
+    """Oologist: birds with 1+ egg.
+
+    Nearly universal — most birds have egg capacity.
+    """
+    return sum(1 for b in birds if b.egg_limit > 0)
+
+
+def _draft_synergy_citizen_scientist(birds: list[Bird]) -> int:
+    """Citizen Scientist: birds with tucked cards.
+
+    Flocking birds or those with tuck-related powers contribute.
+    """
+    count = 0
+    for b in birds:
+        if b.is_flocking:
+            count += 1
+        elif "tuck" in b.power_text.lower():
+            count += 1
+    return count
+
+
+def _draft_synergy_pellet_dissector(birds: list[Bird]) -> int:
+    """Pellet Dissector: fish + rodent cached on birds.
+
+    Predator birds cache food from kills.
+    """
+    return sum(1 for b in birds if b.is_predator)
+
+
+def _draft_synergy_no_signal(birds: list[Bird]) -> int:
+    """Cards with no bird-specific draft signal."""
+    return 0
+
+
+CUSTOM_DRAFT_SYNERGY: dict[str, Callable[[list[Bird]], int]] = {
+    "Behaviorist": _draft_synergy_behaviorist,
+    "Ethologist": _draft_synergy_ethologist,
+    "Forest Population Monitor": lambda birds: _draft_synergy_population_monitor(birds, Habitat.FOREST),
+    "Grassland Population Monitor": lambda birds: _draft_synergy_population_monitor(birds, Habitat.GRASSLAND),
+    "Wetland Population Monitor": lambda birds: _draft_synergy_population_monitor(birds, Habitat.WETLAND),
+    "Mechanical Engineer": _draft_synergy_mechanical_engineer,
+    "Site Selection Expert": _draft_synergy_site_selection,
+    "Forest Data Analyst": lambda birds: _draft_synergy_data_analyst(birds, Habitat.FOREST),
+    "Grassland Data Analyst": lambda birds: _draft_synergy_data_analyst(birds, Habitat.GRASSLAND),
+    "Wetland Data Analyst": lambda birds: _draft_synergy_data_analyst(birds, Habitat.WETLAND),
+    "Forest Ranger": lambda birds: _draft_synergy_ranger(birds, Habitat.FOREST),
+    "Grassland Ranger": lambda birds: _draft_synergy_ranger(birds, Habitat.GRASSLAND),
+    "Wetland Ranger": lambda birds: _draft_synergy_ranger(birds, Habitat.WETLAND),
+    "Ecologist": _draft_synergy_ecologist,
+    "Avian Theriogenologist": _draft_synergy_avian_therio,
+    "Breeding Manager": _draft_synergy_breeding_manager,
+    "Oologist": _draft_synergy_oologist,
+    "Citizen Scientist": _draft_synergy_citizen_scientist,
+    "Pellet Dissector": _draft_synergy_pellet_dissector,
+    "Winter Feeder": _draft_synergy_no_signal,
+    "Visionary Leader": _draft_synergy_no_signal,
+}
 
 
 def _can_afford_bird(bird: Bird, available: dict[FoodType, int]) -> bool:
@@ -279,12 +470,19 @@ def _evaluate_option(
 
     # 7. Bonus card synergy
     matching = sum(1 for b in birds if bonus_card.name in b.bonus_eligibility)
-    score += matching * 2.5
-    # Extra bonus if multiple matches (escalating)
-    if matching >= 3:
-        score += 2.0
-    elif matching >= 2:
-        score += 1.0
+    if matching > 0:
+        score += matching * 2.5
+        if matching >= 3:
+            score += 2.0
+        elif matching >= 2:
+            score += 1.0
+    elif bonus_card.name in CUSTOM_DRAFT_SYNERGY:
+        custom_matching = CUSTOM_DRAFT_SYNERGY[bonus_card.name](birds)
+        score += custom_matching * 1.5  # Lower multiplier (less precise signal)
+        if custom_matching >= 3:
+            score += 1.5
+        elif custom_matching >= 2:
+            score += 0.7
 
     # 8. Goal alignment
     for goal in round_goals:
@@ -341,6 +539,8 @@ def _generate_reasoning(
             parts.append(f"{len(engine_birds)} engine bird{'s' if len(engine_birds) > 1 else ''}")
 
     matching = sum(1 for b in birds if bonus_card.name in b.bonus_eligibility)
+    if matching == 0 and bonus_card.name in CUSTOM_DRAFT_SYNERGY:
+        matching = CUSTOM_DRAFT_SYNERGY[bonus_card.name](birds)
     if matching:
         parts.append(f"{matching} match bonus card")
 
