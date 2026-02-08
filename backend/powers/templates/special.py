@@ -31,6 +31,122 @@ class RepeatPower(PowerEffect):
         return 1.5 if brown_count > 0 else 0.0
 
 
+class CopyNeighborBrownPower(PowerEffect):
+    """Copy a brown power from a neighbor's habitat.
+
+    Example: "Copy a brown power on one bird in the [forest] of the
+    player to your right."
+    """
+
+    def __init__(self, direction: str = "right", target_habitat: Habitat = Habitat.FOREST):
+        self.direction = direction
+        self.target_habitat = target_habitat
+
+    def _get_neighbor(self, ctx: PowerContext):
+        """Get the neighbor player based on direction."""
+        gs = ctx.game_state
+        if self.direction == "right":
+            return gs.player_to_right(ctx.player)
+        return gs.player_to_left(ctx.player)
+
+    def _neighbor_brown_birds(self, ctx: PowerContext) -> list:
+        """Get all brown-powered birds in the neighbor's target habitat."""
+        from backend.models.enums import PowerColor
+        neighbor = self._get_neighbor(ctx)
+        if not neighbor:
+            return []
+        row = neighbor.board.get_row(self.target_habitat)
+        return [
+            s.bird for s in row.slots
+            if s.bird and s.bird.color == PowerColor.BROWN
+        ]
+
+    def execute(self, ctx: PowerContext) -> PowerResult:
+        from backend.powers.registry import get_power
+        from backend.powers.base import NoPower
+        neighbor = self._get_neighbor(ctx)
+        if not neighbor:
+            return PowerResult(executed=False, description="No neighbor")
+
+        brown_birds = self._neighbor_brown_birds(ctx)
+        if not brown_birds:
+            return PowerResult(
+                executed=False,
+                description=f"No brown birds in {neighbor.name}'s {self.target_habitat.value}",
+            )
+
+        # Execute the best brown power (by estimate_value)
+        best_bird = None
+        best_val = -1.0
+        for bird in brown_birds:
+            power = get_power(bird)
+            if isinstance(power, NoPower):
+                continue
+            # Create a context as if we are the neighbor's bird
+            neighbor_ctx = PowerContext(
+                game_state=ctx.game_state, player=ctx.player, bird=bird,
+                slot_index=0, habitat=self.target_habitat,
+            )
+            val = power.estimate_value(neighbor_ctx)
+            if val > best_val:
+                best_val = val
+                best_bird = bird
+
+        if not best_bird:
+            return PowerResult(executed=False, description="No copyable brown power")
+
+        # Execute the copied power on behalf of this player
+        power = get_power(best_bird)
+        copy_ctx = PowerContext(
+            game_state=ctx.game_state, player=ctx.player, bird=best_bird,
+            slot_index=ctx.slot_index, habitat=ctx.habitat,
+        )
+        result = power.execute(copy_ctx)
+        result.description = f"Copied {best_bird.name}'s brown power from {neighbor.name}"
+        return result
+
+    def estimate_value(self, ctx: PowerContext) -> float:
+        from backend.powers.registry import get_power
+        from backend.powers.base import NoPower
+        brown_birds = self._neighbor_brown_birds(ctx)
+        if not brown_birds:
+            return 0.0
+        best_val = 0.0
+        for bird in brown_birds:
+            power = get_power(bird)
+            if isinstance(power, NoPower):
+                continue
+            neighbor_ctx = PowerContext(
+                game_state=ctx.game_state, player=ctx.player, bird=bird,
+                slot_index=0, habitat=self.target_habitat,
+            )
+            best_val = max(best_val, power.estimate_value(neighbor_ctx))
+        return best_val
+
+    def best_copy_target(self, ctx: PowerContext) -> str | None:
+        """Return the name of the best bird to copy for solver advice."""
+        from backend.powers.registry import get_power
+        from backend.powers.base import NoPower
+        brown_birds = self._neighbor_brown_birds(ctx)
+        if not brown_birds:
+            return None
+        best_bird = None
+        best_val = -1.0
+        for bird in brown_birds:
+            power = get_power(bird)
+            if isinstance(power, NoPower):
+                continue
+            neighbor_ctx = PowerContext(
+                game_state=ctx.game_state, player=ctx.player, bird=bird,
+                slot_index=0, habitat=self.target_habitat,
+            )
+            val = power.estimate_value(neighbor_ctx)
+            if val > best_val:
+                best_val = val
+                best_bird = bird
+        return best_bird.name if best_bird else None
+
+
 class MoveBird(PowerEffect):
     """Move a bird to a different habitat.
 

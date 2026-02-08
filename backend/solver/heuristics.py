@@ -849,6 +849,7 @@ def _activation_advice(game: GameState, player: Player, habitat: Habitat) -> lis
     from backend.powers.templates.gain_food import GainFoodFromSupply
     from backend.powers.templates.draw_cards import DrawCards
     from backend.powers.templates.lay_eggs import LayEggs
+    from backend.powers.templates.special import CopyNeighborBrownPower
 
     row = player.board.get_row(habitat)
     advice: list[str] = []
@@ -862,6 +863,21 @@ def _activation_advice(game: GameState, player: Player, habitat: Habitat) -> lis
             continue
         name = slot.bird.name
         is_all_players = getattr(power, 'all_players', False)
+
+        # Copy-neighbor-brown: advise which bird to copy
+        if isinstance(power, CopyNeighborBrownPower):
+            ctx = PowerContext(
+                game_state=game, player=player, bird=slot.bird,
+                slot_index=i, habitat=habitat,
+            )
+            target = power.best_copy_target(ctx)
+            if target:
+                neighbor = power._get_neighbor(ctx)
+                neighbor_name = neighbor.name if neighbor else "opponent"
+                advice.append(f"activate {name} (copy {target} from {neighbor_name})")
+            else:
+                advice.append(f"SKIP {name} (no brown birds to copy)")
+            continue
 
         if not is_all_players:
             advice.append(f"activate {name}")

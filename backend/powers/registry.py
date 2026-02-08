@@ -19,8 +19,8 @@ from backend.powers.templates.predator import PredatorDice, PredatorLookAt
 from backend.powers.templates.cache_food import CacheFoodFromSupply, CacheFoodFromFeeder, TradeFood
 from backend.powers.templates.play_bird import PlayAdditionalBird
 from backend.powers.templates.special import (
-    RepeatPower, FlockingPower, EndOfRoundLayEggs, EndOfRoundCacheFood,
-    DiscardEggForBenefit,
+    RepeatPower, CopyNeighborBrownPower, FlockingPower,
+    EndOfRoundLayEggs, EndOfRoundCacheFood, DiscardEggForBenefit,
 )
 from backend.powers.templates.unique import (
     CountsDoubleForGoal, ActivateAllPredators, GainFoodMatchingPrevious,
@@ -84,6 +84,13 @@ _MANUAL_OVERRIDES: dict[str, PowerEffect] = {
     # Brown: cache if neighbor has invertebrate
     "South Island Robin": ConditionalCacheFromNeighbor(
         direction="right", food_type=FoodType.INVERTEBRATE),
+    # Brown: copy a brown power from neighbor's habitat
+    "Superb Lyrebird": CopyNeighborBrownPower(
+        direction="right", target_habitat=Habitat.FOREST),
+    "Tūī": CopyNeighborBrownPower(
+        direction="left", target_habitat=Habitat.FOREST),
+    "Common Myna": CopyNeighborBrownPower(
+        direction="left", target_habitat=Habitat.GRASSLAND),
 }
 
 
