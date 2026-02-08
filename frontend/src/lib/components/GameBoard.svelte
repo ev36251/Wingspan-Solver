@@ -97,13 +97,21 @@
 		dispatch('changed');
 	}
 
-	function getFoodCount(ft: string): number {
-		return (player.food_supply as Record<string, number>)[ft] || 0;
-	}
+	// Reactive food counts — Svelte tracks direct property access on player
+	$: foodCounts = {
+		invertebrate: player.food_supply.invertebrate,
+		seed: player.food_supply.seed,
+		fish: player.food_supply.fish,
+		fruit: player.food_supply.fruit,
+		rodent: player.food_supply.rodent,
+		nectar: player.food_supply.nectar,
+	} as Record<string, number>;
 
 	function adjustFood(foodType: string, delta: number) {
-		const supply = player.food_supply as Record<string, number>;
-		supply[foodType] = Math.max(0, (supply[foodType] || 0) + delta);
+		const key = foodType as keyof typeof player.food_supply;
+		const current = player.food_supply[key] || 0;
+		(player.food_supply as Record<string, number>)[key] = Math.max(0, current + delta);
+		player.food_supply = { ...player.food_supply };
 		player = player;
 		dispatch('changed');
 	}
@@ -189,7 +197,7 @@
 		{#each FOOD_TYPES as ft}
 			<div class="food-token editable">
 				<button class="food-adj" on:click={() => adjustFood(ft, -1)}>-</button>
-				<span>{getFoodCount(ft)}{FOOD_ICONS[ft]}</span>
+				<span>{foodCounts[ft]}{FOOD_ICONS[ft]}</span>
 				<button class="food-adj" on:click={() => adjustFood(ft, 1)}>+</button>
 			</div>
 		{/each}
