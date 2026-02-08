@@ -18,6 +18,7 @@ from backend.models.player import Player
 from backend.solver.move_generator import Move, generate_all_moves
 from backend.solver.heuristics import (
     evaluate_position, rank_moves, HeuristicWeights, DEFAULT_WEIGHTS,
+    dynamic_weights,
 )
 from backend.solver.simulation import execute_move_on_sim, deep_copy_game
 
@@ -68,7 +69,7 @@ def lookahead_search(
     player: Player | None = None,
     depth: int = 2,
     beam_width: int = 6,
-    weights: HeuristicWeights = DEFAULT_WEIGHTS,
+    weights: HeuristicWeights | None = None,
 ) -> list[LookaheadResult]:
     """Rank moves using depth-limited lookahead with beam search.
 
@@ -85,6 +86,10 @@ def lookahead_search(
     if player is None:
         player = game.current_player
     player_name = player.name
+
+    # Use dynamic trained weights if none provided
+    if weights is None:
+        weights = dynamic_weights(game)
 
     # Get heuristic-ranked candidates, pruned by beam width
     candidates = rank_moves(game, player, weights)

@@ -57,39 +57,41 @@ class HeuristicWeights:
 DEFAULT_WEIGHTS = HeuristicWeights()
 
 # Per-player-count weights discovered via self-play evolutionary training
+# Retrained with improved heuristics (bonus card pursuit, nectar majority,
+# goal strategy, opponent blocking, tuck/cache early-game prioritization)
 TRAINED_WEIGHTS: dict[int, HeuristicWeights] = {
     2: HeuristicWeights(
-        bird_vp=0.71, egg_points=1.59, cached_food_points=1.11,
-        tucked_card_points=0.98, bonus_card_points=0.87,
-        round_goal_points=0.68, nectar_points=1.00,
-        engine_value=0.42, food_in_supply=0.36, cards_in_hand=0.61,
-        action_cubes=0.30, habitat_diversity_bonus=0.58,
-        early_game_engine_bonus=0.30, predator_penalty=0.66,
-        goal_alignment=0.71, nectar_early_bonus=0.22,
-        grassland_egg_synergy=0.99, play_another_bird_bonus=2.06,
-        food_for_birds_bonus=0.51,
+        bird_vp=1.13, egg_points=1.16, cached_food_points=0.86,
+        tucked_card_points=0.85, bonus_card_points=1.52,
+        round_goal_points=0.61, nectar_points=1.14,
+        engine_value=0.58, food_in_supply=0.19, cards_in_hand=0.23,
+        action_cubes=0.25, habitat_diversity_bonus=0.71,
+        early_game_engine_bonus=0.69, predator_penalty=1.00,
+        goal_alignment=0.69, nectar_early_bonus=0.33,
+        grassland_egg_synergy=0.56, play_another_bird_bonus=2.80,
+        food_for_birds_bonus=0.40,
     ),
     3: HeuristicWeights(
-        bird_vp=1.24, egg_points=0.60, cached_food_points=0.64,
-        tucked_card_points=0.57, bonus_card_points=1.57,
-        round_goal_points=1.88, nectar_points=2.00,
-        engine_value=0.47, food_in_supply=0.42, cards_in_hand=0.25,
-        action_cubes=0.38, habitat_diversity_bonus=0.69,
-        early_game_engine_bonus=0.27, predator_penalty=0.43,
-        goal_alignment=0.69, nectar_early_bonus=0.24,
-        grassland_egg_synergy=0.55, play_another_bird_bonus=2.40,
-        food_for_birds_bonus=0.21,
+        bird_vp=0.95, egg_points=0.81, cached_food_points=1.07,
+        tucked_card_points=1.68, bonus_card_points=0.76,
+        round_goal_points=1.13, nectar_points=0.70,
+        engine_value=0.36, food_in_supply=0.47, cards_in_hand=0.35,
+        action_cubes=0.16, habitat_diversity_bonus=0.57,
+        early_game_engine_bonus=0.19, predator_penalty=0.42,
+        goal_alignment=0.62, nectar_early_bonus=0.76,
+        grassland_egg_synergy=0.52, play_another_bird_bonus=1.79,
+        food_for_birds_bonus=0.27,
     ),
     4: HeuristicWeights(
-        bird_vp=0.97, egg_points=0.61, cached_food_points=1.34,
-        tucked_card_points=0.87, bonus_card_points=0.75,
-        round_goal_points=1.52, nectar_points=0.85,
-        engine_value=0.51, food_in_supply=0.18, cards_in_hand=0.21,
-        action_cubes=0.17, habitat_diversity_bonus=0.55,
-        early_game_engine_bonus=0.53, predator_penalty=1.06,
-        goal_alignment=2.25, nectar_early_bonus=0.30,
-        grassland_egg_synergy=0.76, play_another_bird_bonus=1.99,
-        food_for_birds_bonus=0.27,
+        bird_vp=0.58, egg_points=1.09, cached_food_points=0.78,
+        tucked_card_points=0.66, bonus_card_points=1.00,
+        round_goal_points=1.38, nectar_points=1.58,
+        engine_value=0.70, food_in_supply=0.26, cards_in_hand=0.22,
+        action_cubes=0.38, habitat_diversity_bonus=0.32,
+        early_game_engine_bonus=0.47, predator_penalty=0.96,
+        goal_alignment=0.96, nectar_early_bonus=0.54,
+        grassland_egg_synergy=0.62, play_another_bird_bonus=2.14,
+        food_for_birds_bonus=0.23,
     ),
 }
 
@@ -394,6 +396,79 @@ def _egg_goal_alignment(game: GameState) -> float:
     return bonus
 
 
+def _engine_synergy_bonus(new_bird: Bird, player: Player,
+                          habitat: Habitat, rounds_remaining: int) -> float:
+    """Bonus for a brown bird that synergizes with existing board powers.
+
+    Detects complementary power chains:
+    - "gain food" bird placed where "cache/tuck when gaining food" birds exist
+    - "draw cards" bird placed where "tuck from hand" birds exist
+    - "lay eggs" bird in grassland with "lay extra egg" or "cache food" birds
+    - Food generators in forest when hand has expensive birds
+    """
+    if rounds_remaining <= 0:
+        return 0.0
+
+    text = new_bird.power_text.lower()
+    bonus = 0.0
+
+    # Categorize what this new bird produces
+    produces_food = any(w in text for w in ("gain", "food from", "cache"))
+    produces_cards = "draw" in text and "card" in text
+    produces_eggs = "lay" in text and "egg" in text
+    produces_tuck = "tuck" in text
+
+    # Check existing birds on the board for complementary powers
+    for row in player.board.all_rows():
+        for slot in row.slots:
+            if not slot.bird or slot.bird.color != PowerColor.BROWN:
+                continue
+            existing_text = slot.bird.power_text.lower()
+
+            # New bird produces food -> existing bird benefits from food actions
+            if produces_food and habitat == Habitat.FOREST:
+                if "tuck" in existing_text and row.habitat == Habitat.FOREST:
+                    bonus += 0.5  # tuck cards trigger on same forest activation
+                if "cache" in existing_text and row.habitat == Habitat.FOREST:
+                    bonus += 0.4  # cache food triggers on same activation
+
+            # New bird produces cards -> existing tucking birds benefit
+            if produces_cards and habitat == Habitat.WETLAND:
+                if "tuck" in existing_text and "hand" in existing_text:
+                    bonus += 0.6  # more cards = more tuck fodder
+
+            # New bird tucks cards -> existing birds with "for each tucked" benefit
+            if produces_tuck:
+                if "tucked" in existing_text and "point" in existing_text:
+                    bonus += 0.4
+
+            # New bird lays eggs -> existing egg-dependent powers benefit
+            if produces_eggs and habitat == Habitat.GRASSLAND:
+                if "egg" in existing_text and row.habitat == Habitat.GRASSLAND:
+                    bonus += 0.3
+
+    return min(bonus, 2.5)  # Cap to prevent runaway
+
+
+def _bonus_card_marginal_vp(player: Player, bird: Bird) -> float:
+    """Calculate the marginal bonus card VP from playing this bird.
+
+    Returns the total VP improvement across all bonus cards the player holds
+    if this bird were added to their board.
+    """
+    total = 0.0
+    for bc in player.bonus_cards:
+        if bc.name not in bird.bonus_eligibility:
+            continue
+        current_qualifying = sum(
+            1 for b in player.board.all_birds() if bc.name in b.bonus_eligibility
+        )
+        current_score = bc.score(current_qualifying)
+        new_score = bc.score(current_qualifying + 1)
+        total += (new_score - current_score)
+    return total
+
+
 def _is_play_bird_power(bird: Bird) -> bool:
     """Check if a bird has a white power that lets you play another bird."""
     if bird.color != PowerColor.WHITE:
@@ -440,6 +515,14 @@ def evaluate_position(game: GameState, player: Player,
     food_total = player.food_supply.total_non_nectar()
     value += min(food_total, 8) * weights.food_in_supply
     value += min(player.hand_size, 5) * weights.cards_in_hand
+
+    # Late-game resource surplus penalty: excess food/cards with no way to use them
+    if rounds_remaining == 0 and player.action_cubes_remaining <= 1:
+        # Last turn of the game — food and cards in hand score 0 points
+        playable = sum(1 for b in player.hand if food_total >= b.food_cost.total)
+        if playable == 0:
+            value -= food_total * 0.1  # Can't use this food
+            value -= player.hand_size * 0.15  # Can't play these birds
 
     # Nectar timing: nectar is more valuable with more rounds remaining
     # But worthless on last turn of round since it clears at round end
@@ -605,11 +688,19 @@ def _evaluate_play_bird(game: GameState, player: Player, move: Move,
         # Extra positional bonus for zero-cost point generators (tuck from deck, cache from supply)
         if isinstance(power, (TuckFromDeck, FlockingPower, CacheFoodFromSupply)):
             # These generate 1pt per activation with no resource cost
-            power_val = max(power_val, activations_estimate * 0.9)
+            base_gen_val = activations_estimate * 0.9
+            # Early-game compounding bonus: these birds are much more valuable when placed early
+            if rounds_remaining >= 3:
+                base_gen_val *= 1.3
+            power_val = max(power_val, base_gen_val)
 
         # Predator penalty: predators are unreliable (~50% success)
         if bird.is_predator:
             power_val *= weights.predator_penalty
+
+        # Engine synergy: boost if this bird's power complements existing birds
+        power_val += _engine_synergy_bonus(bird, player, move.habitat, rounds_remaining)
+
         value += power_val
 
     elif bird.color == PowerColor.WHITE and not isinstance(power, NoPower):
@@ -669,7 +760,20 @@ def _evaluate_play_bird(game: GameState, player: Player, move: Move,
             game_state=game, player=player, bird=bird,
             slot_index=0, habitat=move.habitat,
         )
-        value += power.estimate_value(ctx) * rounds_remaining * 0.3
+        # Pink powers trigger at most once between your turns.
+        # More opponents = higher probability of triggering per window.
+        # Your triggers per round = your action cubes (one window per turn).
+        num_opponents = game.num_players - 1
+        # Trigger probability: with N opponents, chance at least one does the
+        # triggering action. Rough estimate: ~50% per opponent for common actions.
+        trigger_prob = 1.0 - (0.5 ** num_opponents) if num_opponents > 0 else 0.0
+        # Triggers per round ≈ actions_this_round * trigger_probability
+        from backend.config import ACTIONS_PER_ROUND
+        actions_remaining = player.action_cubes_remaining
+        future_triggers = rounds_remaining * ACTIONS_PER_ROUND[min(game.current_round, len(ACTIONS_PER_ROUND) - 1)] * trigger_prob
+        current_triggers = actions_remaining * trigger_prob
+        total_pink_triggers = current_triggers + future_triggers
+        value += power.estimate_value(ctx) * total_pink_triggers * 0.5
 
     elif bird.color in (PowerColor.TEAL, PowerColor.YELLOW):
         ctx = PowerContext(
@@ -678,17 +782,8 @@ def _evaluate_play_bird(game: GameState, player: Player, move: Move,
         )
         value += power.estimate_value(ctx) * rounds_remaining * 0.6
 
-    # Bonus card delta: compute the actual marginal VP from each bonus card
-    bonus_delta = 0.0
-    for bc in player.bonus_cards:
-        current_qualifying = sum(
-            1 for b in player.board.all_birds() if bc.name in b.bonus_eligibility
-        )
-        current_score = bc.score(current_qualifying)
-        if bc.name in bird.bonus_eligibility:
-            new_score = bc.score(current_qualifying + 1)
-            bonus_delta += (new_score - current_score)
-    value += bonus_delta * weights.bonus_card_points
+    # Bonus card delta: marginal VP from each bonus card
+    value += _bonus_card_marginal_vp(player, bird) * weights.bonus_card_points
 
     # Round goal alignment
     value += _goal_alignment_value(game, bird, move.habitat, weights)
@@ -714,6 +809,36 @@ def _evaluate_play_bird(game: GameState, player: Player, move: Move,
     if slot_idx is not None:
         egg_cost = EGG_COST_BY_COLUMN[slot_idx]
         value -= egg_cost * 0.3
+
+    # Hand constraint synergy: boost if playing this bird unlocks a much better bird
+    # (e.g., spending food on a 3-VP bird now frees space for a 9-VP bird next turn)
+    if rounds_remaining >= 1 and not _is_play_bird_power(bird):
+        remaining_hand = [b for b in player.hand if b.name != bird.name]
+        food_after = player.food_supply.total_non_nectar() - sum(
+            v for ft, v in move.food_payment.items() if ft != FoodType.NECTAR
+        )
+        nectar_after = player.food_supply.get(FoodType.NECTAR) - move.food_payment.get(FoodType.NECTAR, 0)
+        for candidate in remaining_hand:
+            # Is this candidate significantly better than the bird we're playing?
+            candidate_vp = candidate.victory_points
+            if candidate_vp <= bird.victory_points + 2:
+                continue  # not enough upside to warrant the "unlock" bonus
+            # Can we afford the candidate after playing this bird?
+            if candidate.food_cost.total > food_after + max(0, nectar_after):
+                continue
+            # Does a habitat have space for it?
+            for hab in candidate.habitats:
+                target_row = player.board.get_row(hab)
+                # Account for the bird we're about to place
+                count = target_row.bird_count + (1 if hab == move.habitat else 0)
+                if count < 5:
+                    target_egg_cost = EGG_COST_BY_COLUMN[count] if count < len(EGG_COST_BY_COLUMN) else 2
+                    total_eggs = player.board.total_eggs() - (egg_cost if slot_idx is not None else 0)
+                    if total_eggs >= target_egg_cost:
+                        # This play unlocks the candidate — bonus proportional to VP gap
+                        unlock_bonus = (candidate_vp - bird.victory_points) * 0.3
+                        value += min(unlock_bonus, 3.0)
+                        break
 
     return value
 
@@ -769,6 +894,36 @@ def _evaluate_gain_food(game: GameState, player: Player, move: Move,
     if player.hand_size > 0 and player.food_supply.total_non_nectar() == 0:
         value += 2.0  # Urgency: zero food with birds in hand
 
+    # Bonus card pursuit: extra value when food unlocks bonus-qualifying birds
+    if newly_affordable > 0:
+        for b in player.hand:
+            if (food_available + food_count >= b.food_cost.total
+                    and food_available < b.food_cost.total):
+                marginal = _bonus_card_marginal_vp(player, b)
+                if marginal > 0:
+                    value += marginal * 0.4  # Discounted: still need a turn to play it
+
+    # Goal pursuit: extra value when food enables playing goal-aligned birds
+    if newly_affordable > 0 and game.round_goals:
+        best_goal_food_val = 0.0
+        for b in player.hand:
+            if (food_available + food_count >= b.food_cost.total
+                    and food_available < b.food_cost.total):
+                for hab in b.habitats:
+                    gv = _goal_alignment_value(game, b, hab, weights)
+                    best_goal_food_val = max(best_goal_food_val, gv)
+        value += best_goal_food_val * 0.3
+
+    # Phase-dependent food penalty: food gained in round 4 is less useful
+    # because fewer turns remain to spend it on birds
+    rounds_remaining = max(0, ROUNDS - game.current_round)
+    if rounds_remaining == 0:
+        # Last round: food is only useful if we can play a bird this round
+        if affordable_after == 0:
+            value -= food_count * 0.3  # Surplus food = wasted action
+    elif rounds_remaining <= 1 and affordable_after == 0 and player.hand_size == 0:
+        value -= food_count * 0.2  # No birds to play, food is near-worthless
+
     # Reset moves: food choices are speculative (dice will be rerolled),
     # so discount food-specific bonuses/penalties
     reset_discount = 0.3 if move.reset_bonus else 1.0
@@ -784,6 +939,14 @@ def _evaluate_gain_food(game: GameState, player: Player, move: Move,
             rounds_remaining = max(0, ROUNDS - game.current_round)
             if rounds_remaining > 0:
                 value += weights.nectar_early_bonus * (rounds_remaining / ROUNDS) * reset_discount
+            # Nectar majority-aware valuation: gaining nectar is more valuable
+            # when it helps win or maintain majority in a habitat
+            best_majority = 0.0
+            for hab in (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND):
+                nv = _nectar_majority_value(game, player, hab, 1)
+                best_majority = max(best_majority, nv)
+            if best_majority > 0:
+                value += nectar_in_choices * best_majority * 0.4 * reset_discount
 
     # Food deficit targeting: bonus when gaining food types needed by best hand birds
     if move.food_choices and player.hand:
@@ -879,42 +1042,76 @@ def _evaluate_draw_cards(game: GameState, player: Player, move: Move,
     column = get_action_column(game.board_type, Habitat.WETLAND, bird_count)
     card_count = column.base_gain + move.bonus_count
 
-    # Cards are speculative value (might play them or tuck them)
-    value = card_count * 0.4
+    rounds_remaining = max(0, ROUNDS - game.current_round)
+
+    # Base value per card scales with rounds remaining (more turns = more chance to play)
+    card_base_value = 0.3 + 0.2 * (rounds_remaining / ROUNDS)
+    value = card_count * card_base_value
 
     # Bonus cost: paying an egg/nectar for +1 card
     if move.bonus_count > 0:
-        value += move.bonus_count * 0.2  # Cards are speculative, lower net than eggs
+        value += move.bonus_count * 0.2
 
     # Reset tray value: worth more when current tray options are poor
     if move.reset_bonus:
-        # Fresh tray gives new face-up options — costs a food
-        value += 0.3
+        value += 0.4
 
-    # Known tray cards can be evaluated more precisely
-    rounds_remaining = max(0, ROUNDS - game.current_round)
+    # Known tray cards can be evaluated precisely — this is the key advantage of tray picks
     for idx in move.tray_indices:
         if idx < len(game.card_tray.face_up):
             tray_bird = game.card_tray.face_up[idx]
-            # Quick evaluation: VP + egg potential + engine potential
+            # Full quick evaluation: VP + egg potential + engine + affordability
             tray_val = tray_bird.victory_points * 0.5
             tray_val += min(tray_bird.egg_limit, max(1, rounds_remaining)) * 0.3
             if tray_bird.color == PowerColor.BROWN and rounds_remaining >= 2:
                 tray_val += rounds_remaining * 0.4
-            value += tray_val
+            elif tray_bird.color == PowerColor.WHITE and _is_play_bird_power(tray_bird):
+                tray_val += 1.5  # Play-another-bird powers are very valuable to draw
 
-            # Bonus synergy
-            for bc in player.bonus_cards:
-                if bc.name in tray_bird.bonus_eligibility:
-                    value += 1.0
+            # Affordability bonus: a bird you can play NOW is worth more than one you can't
+            food_available = player.food_supply.total_non_nectar() + player.food_supply.get(FoodType.NECTAR)
+            if food_available >= tray_bird.food_cost.total:
+                tray_val += 0.8  # Can play immediately
+            elif food_available + 2 >= tray_bird.food_cost.total:
+                tray_val += 0.3  # Nearly affordable
 
-            # Goal synergy: does this bird help with round goals?
+            # Bonus card pursuit: actual marginal VP from adding this bird
+            bonus_marginal = _bonus_card_marginal_vp(player, tray_bird)
+            if bonus_marginal > 0:
+                value += bonus_marginal * 0.6  # Discounted: need to draw AND play
+
+            # Opponent denial: small bonus for taking cards opponents need for goals
+            if game.round_goals and game.current_round <= len(game.round_goals):
+                current_goal = game.round_goals[game.current_round - 1]
+                opponents = [p for p in game.players if p.name != player.name]
+                for opp in opponents:
+                    opp_progress = _estimate_goal_progress(opp, current_goal)
+                    my_progress = _estimate_goal_progress(player, current_goal)
+                    if opp_progress >= my_progress:
+                        for hab in tray_bird.habitats:
+                            contrib = _estimate_goal_contribution(tray_bird, hab, current_goal)
+                            if contrib > 0:
+                                tray_val += 0.5  # Denial bonus
+                                break
+                        break  # One denial check is enough
+
+            # Goal synergy
             if game.round_goals:
                 best_goal_val = 0.0
                 for hab in tray_bird.habitats:
                     gv = _goal_alignment_value(game, tray_bird, hab, weights)
                     best_goal_val = max(best_goal_val, gv)
-                value += best_goal_val * 0.3  # Discounted since we still need to play it
+                value += best_goal_val * 0.3
+
+            value += tray_val
+
+    # Deck draws: speculative value based on deck quality estimate
+    deck_draws = move.deck_draws
+    if deck_draws > 0:
+        # Deck cards have uncertain value — average bird VP is ~3-4
+        # Discount heavily since we can't see them
+        deck_per_card = 0.5 + 0.15 * rounds_remaining  # More valuable early
+        value += deck_draws * deck_per_card
 
     # Engine value: brown powers in wetland
     for i, slot in enumerate(player.board.wetland.slots):

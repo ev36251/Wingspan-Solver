@@ -104,8 +104,8 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
 
     start = time.perf_counter()
 
-    # Use depth-1 lookahead on top 5 candidates for better multi-turn decisions
-    la_results = lookahead_search(game, player=player, depth=1, beam_width=5)
+    # Use depth-2 lookahead on top 5 candidates for multi-turn combo detection
+    la_results = lookahead_search(game, player=player, depth=2, beam_width=5)
     # Also get heuristic reasoning for display
     heuristic_ranked = rank_moves(game, player=player)
     reasoning_map = {rm.move.description: rm.reasoning for rm in heuristic_ranked}
