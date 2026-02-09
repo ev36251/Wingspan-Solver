@@ -995,10 +995,10 @@ def _evaluate_gain_food(game: GameState, player: Player, move: Move,
         if nectar > 0:
             if move.reset_bonus:
                 # Reset feeder costs 1 food — can pay with nectar
-                value += 1.5  # Bonus for spending nectar that would expire
+                value += 1.5
             else:
-                # Gaining food without spending nectar — mild preference against
-                value -= 0.3
+                # Not spending nectar — penalty scales with nectar about to expire
+                value -= nectar * 0.5
 
     return value
 
@@ -1055,13 +1055,13 @@ def _evaluate_lay_eggs(game: GameState, player: Player, move: Move,
         if nectar > 0:
             if move.bonus_count > 0:
                 # Grassland column bonus costs 1 food per bonus — can pay with nectar
-                value += move.bonus_count * 1.5  # Bonus for spending nectar
+                value += move.bonus_count * 1.5
             elif move.reset_bonus:
                 # Reset feeder costs 1 food — can pay with nectar
                 value += 1.5
             else:
-                # Laying eggs without spending nectar — mild preference against
-                value -= 0.3
+                # Not spending nectar — penalty scales with nectar about to expire
+                value -= nectar * 0.5
 
     return value
 
@@ -1173,13 +1173,13 @@ def _evaluate_draw_cards(game: GameState, player: Player, move: Move,
         if nectar > 0:
             if move.bonus_count > 0:
                 # Wetland column bonus costs 1 egg or 1 food — can pay with nectar
-                value += move.bonus_count * 1.5  # Bonus for spending nectar
+                value += move.bonus_count * 1.5
             elif move.reset_bonus:
                 # Reset tray costs 1 food — can pay with nectar
                 value += 1.5
             else:
-                # Drawing cards without spending nectar — mild preference against
-                value -= 0.3
+                # Not spending nectar — penalty scales with nectar about to expire
+                value -= nectar * 0.5
 
     return value
 
@@ -1494,8 +1494,9 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
             reasons.append("food shown is best-case after reroll — use After Reset for exact picks")
             if player.action_cubes_remaining <= 1 and player.food_supply.get(FoodType.NECTAR) > 0:
                 reasons.append("SPEND NECTAR on feeder reset — nectar expires at end of round")
-        if bird_count > 0:
-            reasons.append(f"activates {bird_count} forest bird{'s' if bird_count > 1 else ''}")
+        brown_count = sum(1 for s in player.board.forest.slots if s.bird and s.bird.color == PowerColor.BROWN)
+        if brown_count > 0:
+            reasons.append(f"activates {brown_count} brown forest bird{'s' if brown_count > 1 else ''}")
             advice_player = _player_after_bonus(player, move, column.bonus)
             reasons.extend(_activation_advice(game, advice_player, Habitat.FOREST))
 
@@ -1512,8 +1513,9 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
             reasons.append(f"{actual} eggs = {actual}pts")
         if game.current_round >= 3:
             reasons.append("guaranteed late-game points")
-        if bird_count > 0:
-            reasons.append(f"activates {bird_count} grassland bird{'s' if bird_count > 1 else ''}")
+        brown_count = sum(1 for s in player.board.grassland.slots if s.bird and s.bird.color == PowerColor.BROWN)
+        if brown_count > 0:
+            reasons.append(f"activates {brown_count} brown grassland bird{'s' if brown_count > 1 else ''}")
             advice_player = _player_after_bonus(player, move, column.bonus)
             reasons.extend(_activation_advice(game, advice_player, Habitat.GRASSLAND))
         if move.bonus_count > 0 and column.bonus:
@@ -1549,8 +1551,9 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
             reasons.insert(0, f"FIRST reset tray ({payment}), then draw cards" if payment else "FIRST reset tray, then draw cards")
             if player.action_cubes_remaining <= 1 and player.food_supply.get(FoodType.NECTAR) > 0:
                 reasons.append("SPEND NECTAR on tray reset — nectar expires at end of round")
-        if bird_count > 0:
-            reasons.append(f"activates {bird_count} wetland bird{'s' if bird_count > 1 else ''}")
+        brown_count = sum(1 for s in player.board.wetland.slots if s.bird and s.bird.color == PowerColor.BROWN)
+        if brown_count > 0:
+            reasons.append(f"activates {brown_count} brown wetland bird{'s' if brown_count > 1 else ''}")
             advice_player = _player_after_bonus(player, move, column.bonus)
             reasons.extend(_activation_advice(game, advice_player, Habitat.WETLAND))
 
