@@ -135,6 +135,7 @@ export async function solveHeuristic(gameId: string, playerIdx?: number) {
 		recommendations: import('./types').SolverRecommendation[];
 		evaluation_time_ms: number;
 		player_name: string;
+		feeder_reroll_available?: boolean;
 	}>(`/games/${gameId}/solve/heuristic${params}`, { method: 'POST' });
 }
 

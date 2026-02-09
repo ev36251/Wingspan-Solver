@@ -204,6 +204,7 @@ def generate_gain_food_moves(game: GameState, player: Player) -> list[Move]:
             action_type=ActionType.GAIN_FOOD,
             description=f"Gain food (feeder will reroll, {food_count} food)",
             food_choices=[],
+            habitat=Habitat.FOREST,
         )]
         if can_extra:
             moves.append(Move(
@@ -211,6 +212,7 @@ def generate_gain_food_moves(game: GameState, player: Player) -> list[Move]:
                 description=f"Gain food (feeder reroll, {food_count + 1} food, +1 food)",
                 food_choices=[],
                 bonus_count=1,
+                habitat=Habitat.FOREST,
             ))
         if can_reset:
             moves.append(Move(
@@ -218,6 +220,7 @@ def generate_gain_food_moves(game: GameState, player: Player) -> list[Move]:
                 description=f"Gain food (reset feeder, {food_count} food)",
                 food_choices=[],
                 reset_bonus=True,
+                habitat=Habitat.FOREST,
             ))
         return moves
 
@@ -254,6 +257,7 @@ def generate_gain_food_moves(game: GameState, player: Player) -> list[Move]:
                 food_choices=combo,
                 bonus_count=bonus,
                 reset_bonus=use_reset,
+                habitat=Habitat.FOREST,
             ))
         return result
 
@@ -382,6 +386,7 @@ def generate_lay_eggs_moves(game: GameState, player: Player) -> list[Move]:
                 description=desc,
                 egg_distribution=dist,
                 bonus_count=bonus,
+                habitat=Habitat.GRASSLAND,
             ))
 
         # Strategy 1: Greedy (default)
@@ -412,6 +417,7 @@ def generate_lay_eggs_moves(game: GameState, player: Player) -> list[Move]:
                 description=f"Lay eggs (no eligible birds, {count} available{suffix})",
                 egg_distribution={},
                 bonus_count=bonus,
+                habitat=Habitat.GRASSLAND,
             ))
 
         return moves
@@ -467,6 +473,7 @@ def generate_draw_cards_moves(game: GameState, player: Player) -> list[Move]:
                 deck_draws=count,
                 bonus_count=bonus,
                 reset_bonus=use_reset,
+                habitat=Habitat.WETLAND,
             ))
 
         # Option 2: pick from tray (1 card, 2 cards, etc.) + rest from deck
@@ -490,6 +497,7 @@ def generate_draw_cards_moves(game: GameState, player: Player) -> list[Move]:
                     deck_draws=deck_needed,
                     bonus_count=bonus,
                     reset_bonus=use_reset,
+                    habitat=Habitat.WETLAND,
                 ))
 
         # If no moves yet (empty deck & tray), allow what's available
@@ -503,6 +511,7 @@ def generate_draw_cards_moves(game: GameState, player: Player) -> list[Move]:
                 deck_draws=available_from_deck,
                 bonus_count=bonus,
                 reset_bonus=use_reset,
+                habitat=Habitat.WETLAND,
             ))
 
         return moves

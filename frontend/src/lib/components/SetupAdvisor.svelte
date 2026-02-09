@@ -179,9 +179,15 @@
 			{#if showBonusDropdown && filteredBonus.length > 0}
 				<ul class="dropdown">
 					{#each filteredBonus.slice(0, 15) as bc}
-						<li on:mousedown|preventDefault={() => selectBonusCard(bc)}>
-							<span class="item-name">{bc.name}</span>
-							<span class="item-desc">{bc.condition_text}</span>
+						<li>
+							<button
+								class="dropdown-item"
+								type="button"
+								on:mousedown|preventDefault={() => selectBonusCard(bc)}
+							>
+								<span class="item-name">{bc.name}</span>
+								<span class="item-desc">{bc.condition_text}</span>
+							</button>
 						</li>
 					{/each}
 				</ul>
@@ -217,9 +223,15 @@
 			{#if showGoalDropdown && filteredGoals.length > 0}
 				<ul class="dropdown">
 					{#each filteredGoals.slice(0, 15) as g}
-						<li on:mousedown|preventDefault={() => selectGoal(g)}>
-							<span class="item-name">{g.description}</span>
-							<span class="item-desc">{g.game_set}</span>
+						<li>
+							<button
+								class="dropdown-item"
+								type="button"
+								on:mousedown|preventDefault={() => selectGoal(g)}
+							>
+								<span class="item-name">{g.description}</span>
+								<span class="item-desc">{g.game_set}</span>
+							</button>
 						</li>
 					{/each}
 				</ul>

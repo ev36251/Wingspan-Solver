@@ -117,10 +117,14 @@
 	} as Record<string, number>;
 
 	function adjustFood(foodType: string, delta: number) {
-		const key = foodType as keyof typeof player.food_supply;
-		const current = player.food_supply[key] || 0;
-		(player.food_supply as Record<string, number>)[key] = Math.max(0, current + delta);
-		player.food_supply = { ...player.food_supply };
+		const next = { ...player.food_supply };
+		if (foodType === 'invertebrate') next.invertebrate = Math.max(0, next.invertebrate + delta);
+		else if (foodType === 'seed') next.seed = Math.max(0, next.seed + delta);
+		else if (foodType === 'fish') next.fish = Math.max(0, next.fish + delta);
+		else if (foodType === 'fruit') next.fruit = Math.max(0, next.fruit + delta);
+		else if (foodType === 'rodent') next.rodent = Math.max(0, next.rodent + delta);
+		else if (foodType === 'nectar') next.nectar = Math.max(0, next.nectar + delta);
+		player.food_supply = next;
 		player = player;
 		dispatch('changed');
 	}
@@ -378,6 +382,7 @@
 				<span
 					class="hand-card"
 					draggable="true"
+					role="listitem"
 					class:drag-over={handDragOverIdx === i && handDragIdx !== i}
 					on:dragstart={(e) => onHandDragStart(i, e)}
 					on:dragover={(e) => onHandDragOver(i, e)}
@@ -430,9 +435,15 @@
 				{#if showBonusDropdown && filteredBonusCards.length > 0}
 					<ul class="bonus-dropdown">
 						{#each filteredBonusCards.slice(0, 12) as bc}
-							<li on:mousedown|preventDefault={() => selectBonusCard(bc)}>
-								<span class="dropdown-name">{bc.name}</span>
-								<span class="dropdown-desc">{bc.condition_text}</span>
+							<li>
+								<button
+									class="dropdown-item"
+									type="button"
+									on:mousedown|preventDefault={() => selectBonusCard(bc)}
+								>
+									<span class="dropdown-name">{bc.name}</span>
+									<span class="dropdown-desc">{bc.condition_text}</span>
+								</button>
 							</li>
 						{/each}
 					</ul>

@@ -187,10 +187,125 @@ def execute_play_bird(
     player.remove_from_hand(bird.name)
     row.slots[slot_idx].bird = bird
 
+    power_acts: list[PowerActivation] = []
+
+    # Execute "when played" (white) powers immediately
+    if bird.color == PowerColor.WHITE:
+        power = get_power(bird)
+        if not isinstance(power, NoPower):
+            ctx = PowerContext(
+                game_state=game_state, player=player, bird=bird,
+                slot_index=slot_idx, habitat=habitat,
+            )
+            if power.can_execute(ctx):
+                result = power.execute(ctx)
+                if result.executed:
+                    power_acts.append(PowerActivation(
+                        bird_name=bird.name,
+                        slot_index=slot_idx,
+                        result=result,
+                    ))
+
     return ActionResult(
         True, ActionType.PLAY_BIRD,
         f"Played {bird.name} in {habitat.value} slot {slot_idx + 1}",
         bird_played=bird.name, habitat=habitat,
+        power_activations=power_acts,
+    )
+
+
+def execute_play_bird_discounted(
+    game_state: GameState,
+    player: Player,
+    bird: Bird,
+    habitat: Habitat,
+    food_payment: dict[FoodType, int],
+    egg_discount: int = 0,
+    egg_payment_slots: list[tuple[Habitat, int]] | None = None,
+) -> ActionResult:
+    """Play a bird with an egg cost discount (used for bonus plays)."""
+    # Custom legality: same as can_play_bird, but egg cost is discounted
+    if not player.has_bird_in_hand(bird.name):
+        return ActionResult(False, ActionType.PLAY_BIRD, "Bird not in hand")
+    if not bird.can_live_in(habitat):
+        return ActionResult(False, ActionType.PLAY_BIRD,
+                            f"{bird.name} cannot live in {habitat.value}")
+    row = player.board.get_row(habitat)
+    slot_idx = row.next_empty_slot()
+    if slot_idx is None:
+        return ActionResult(False, ActionType.PLAY_BIRD, f"{habitat.value} row is full")
+    egg_cost = max(0, EGG_COST_BY_COLUMN[slot_idx] - egg_discount)
+    if player.board.total_eggs() < egg_cost:
+        return ActionResult(False, ActionType.PLAY_BIRD,
+                            f"Need {egg_cost} egg(s) to play in column {slot_idx + 1}")
+    # Validate food payment against supply (discounted payment provided)
+    if any(player.food_supply.get(ft) < cnt for ft, cnt in food_payment.items()):
+        return ActionResult(False, ActionType.PLAY_BIRD, "Not enough food to pay")
+    if player.action_cubes_remaining <= 0:
+        return ActionResult(False, ActionType.PLAY_BIRD, "No action cubes remaining")
+
+    row = player.board.get_row(habitat)
+    slot_idx = row.next_empty_slot()
+
+    # Pay discounted egg cost
+    base_egg_cost = EGG_COST_BY_COLUMN[slot_idx]
+    egg_cost = max(0, base_egg_cost - egg_discount)
+    if egg_cost > 0:
+        if not egg_payment_slots:
+            egg_payment_slots = _auto_select_egg_payment(player, egg_cost)
+        if egg_payment_slots is None:
+            return ActionResult(False, ActionType.PLAY_BIRD, "Cannot pay egg cost")
+
+        eggs_removed = 0
+        for hab, si in egg_payment_slots:
+            slot = player.board.get_row(hab).slots[si]
+            if slot.eggs > 0:
+                slot.eggs -= 1
+                eggs_removed += 1
+            if eggs_removed >= egg_cost:
+                break
+
+        if eggs_removed < egg_cost:
+            return ActionResult(False, ActionType.PLAY_BIRD,
+                                f"Could only remove {eggs_removed}/{egg_cost} eggs")
+
+    # Pay food cost
+    for food_type, count in food_payment.items():
+        if not player.food_supply.spend(food_type, count):
+            return ActionResult(False, ActionType.PLAY_BIRD,
+                                f"Failed to spend {count} {food_type.value}")
+
+    # Track nectar spent per habitat (Oceania)
+    nectar_spent = food_payment.get(FoodType.NECTAR, 0)
+    if nectar_spent > 0:
+        row.nectar_spent += nectar_spent
+
+    # Remove bird from hand and place on board
+    player.remove_from_hand(bird.name)
+    row.slots[slot_idx].bird = bird
+
+    power_acts: list[PowerActivation] = []
+    if bird.color == PowerColor.WHITE:
+        power = get_power(bird)
+        if not isinstance(power, NoPower):
+            ctx = PowerContext(
+                game_state=game_state, player=player, bird=bird,
+                slot_index=slot_idx, habitat=habitat,
+            )
+            if power.can_execute(ctx):
+                result = power.execute(ctx)
+                if result.executed:
+                    power_acts.append(PowerActivation(
+                        bird_name=bird.name,
+                        slot_index=slot_idx,
+                        result=result,
+                    ))
+
+    return ActionResult(
+        True, ActionType.PLAY_BIRD,
+        f"Played {bird.name} in {habitat.value} slot {slot_idx + 1}",
+        bird_played=bird.name, habitat=habitat,
+        power_activations=power_acts,
     )
 
 

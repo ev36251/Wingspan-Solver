@@ -372,8 +372,21 @@ def _goal_alignment_value(game: GameState, bird: Bird, habitat: Habitat,
             else:
                 # Far behind — contribution still valuable but catching up is hard
                 position_mult = 0.7
+        # Urgency: fewer actions left in round means goal contributions matter more
+        if player.action_cubes_remaining <= 2:
+            position_mult *= 1.25
 
-        goal_value = first_place_pts * 0.4 * position_mult
+        # Bonus if this contribution is likely to flip/tie the lead
+        flip_bonus = 0.0
+        if opponents:
+            my_progress = _estimate_goal_progress(player, goal)
+            best_opp = max(_estimate_goal_progress(opp, goal) for opp in opponents)
+            if my_progress < best_opp and my_progress + contribution >= best_opp:
+                flip_bonus = first_place_pts * 0.25
+            elif my_progress == best_opp and contribution > 0:
+                flip_bonus = first_place_pts * 0.15
+
+        goal_value = first_place_pts * 0.4 * position_mult + flip_bonus
         total += contribution * time_discount * goal_value
 
     return total * weights.goal_alignment
@@ -606,6 +619,183 @@ def _estimate_move_value(game: GameState, player: Player, move: Move,
     elif move.action_type == ActionType.DRAW_CARDS:
         return _evaluate_draw_cards(game, player, move, weights)
     return 0.0
+
+
+def estimate_move_breakdown(
+    game: GameState,
+    player: Player,
+    move: Move,
+    weights: HeuristicWeights | None = None,
+) -> dict:
+    """Return a rough component breakdown for a move's heuristic score."""
+    if weights is None:
+        weights = dynamic_weights(game)
+
+    breakdown: dict[str, float] = {}
+    rounds_remaining = max(0, ROUNDS - game.current_round)
+
+    if move.action_type == ActionType.PLAY_BIRD:
+        from backend.data.registries import get_bird_registry
+        bird = get_bird_registry().get(move.bird_name)
+        if not bird:
+            return {}
+
+        # Base VP + egg capacity
+        breakdown["bird_vp"] = round(bird.victory_points * weights.bird_vp, 2)
+        eggs_likely = min(bird.egg_limit, max(1, rounds_remaining))
+        breakdown["egg_capacity"] = round(eggs_likely * weights.egg_points * 0.8, 2)
+
+        # Power value estimate
+        power = get_power(bird)
+        power_val = 0.0
+        if bird.color == PowerColor.BROWN and not isinstance(power, NoPower):
+            row = player.board.get_row(move.habitat)
+            slot_idx = row.bird_count
+            ctx = PowerContext(game_state=game, player=player, bird=bird,
+                               slot_index=slot_idx, habitat=move.habitat)
+            total_uses = rounds_remaining * 1.5
+            activation_factor = max(0.3, 1.0 - slot_idx * 0.15)
+            activations_estimate = total_uses * activation_factor
+            power_val = power.estimate_value(ctx) * activations_estimate * 0.7
+            if bird.is_predator:
+                power_val *= weights.predator_penalty
+            power_val += _engine_synergy_bonus(bird, player, move.habitat, rounds_remaining)
+        elif bird.color == PowerColor.WHITE and not isinstance(power, NoPower):
+            ctx = PowerContext(game_state=game, player=player, bird=bird,
+                               slot_index=0, habitat=move.habitat)
+            power_val = power.estimate_value(ctx) * 0.8
+            if _is_play_bird_power(bird):
+                power_val += weights.play_another_bird_bonus * min(rounds_remaining, 2)
+        elif bird.color == PowerColor.PINK:
+            ctx = PowerContext(game_state=game, player=player, bird=bird,
+                               slot_index=0, habitat=move.habitat)
+            num_opponents = game.num_players - 1
+            trigger_prob = 1.0 - (0.5 ** num_opponents) if num_opponents > 0 else 0.0
+            from backend.config import ACTIONS_PER_ROUND
+            actions_remaining = player.action_cubes_remaining
+            future_triggers = rounds_remaining * ACTIONS_PER_ROUND[min(game.current_round, len(ACTIONS_PER_ROUND) - 1)] * trigger_prob
+            current_triggers = actions_remaining * trigger_prob
+            total_pink_triggers = current_triggers + future_triggers
+            power_val = power.estimate_value(ctx) * total_pink_triggers * 0.5
+        elif bird.color in (PowerColor.TEAL, PowerColor.YELLOW):
+            ctx = PowerContext(game_state=game, player=player, bird=bird,
+                               slot_index=0, habitat=move.habitat)
+            power_val = power.estimate_value(ctx) * rounds_remaining * 0.6
+
+        if power_val:
+            breakdown["power_engine"] = round(power_val, 2)
+
+        # Bonus and goal alignment
+        bonus = _bonus_card_marginal_vp(player, bird) * weights.bonus_card_points
+        if bonus:
+            breakdown["bonus_cards"] = round(bonus, 2)
+        goal_val = _goal_alignment_value(game, bird, move.habitat, weights)
+        if goal_val:
+            breakdown["round_goal"] = round(goal_val, 2)
+
+        # Costs
+        nectar_in_payment = move.food_payment.get(FoodType.NECTAR, 0)
+        non_nectar_spent = sum(v for ft, v in move.food_payment.items() if ft != FoodType.NECTAR)
+        cost = non_nectar_spent * 0.15 + nectar_in_payment * 0.05
+        row = player.board.get_row(move.habitat)
+        slot_idx = row.next_empty_slot()
+        if slot_idx is not None:
+            cost += EGG_COST_BY_COLUMN[slot_idx] * 0.3
+        if cost:
+            breakdown["costs"] = round(-cost, 2)
+
+    elif move.action_type == ActionType.GAIN_FOOD:
+        bird_count = player.board.forest.bird_count
+        column = get_action_column(game.board_type, Habitat.FOREST, bird_count)
+        food_count = column.base_gain + move.bonus_count
+        breakdown["food_gain"] = round(food_count * 0.5, 2)
+
+        # Engine activation value
+        engine = 0.0
+        for i, slot in enumerate(player.board.forest.slots):
+            if slot.bird and slot.bird.color == PowerColor.BROWN:
+                power = get_power(slot.bird)
+                if not isinstance(power, NoPower):
+                    ctx = PowerContext(game_state=game, player=player, bird=slot.bird,
+                                       slot_index=i, habitat=Habitat.FOREST)
+                    val = power.estimate_value(ctx)
+                    if slot.bird.is_predator:
+                        val *= weights.predator_penalty
+                    engine += val
+        if engine:
+            breakdown["engine_activation"] = round(engine, 2)
+
+        # Unlock value
+        food_available = player.food_supply.total_non_nectar() + player.food_supply.get(FoodType.NECTAR)
+        affordable_before = sum(1 for b in player.hand if food_available >= b.food_cost.total)
+        affordable_after = sum(1 for b in player.hand if food_available + food_count >= b.food_cost.total)
+        newly_affordable = affordable_after - affordable_before
+        if newly_affordable > 0:
+            breakdown["bird_unlocks"] = round(newly_affordable * 1.5, 2)
+
+        # Nectar early value
+        if move.food_choices and FoodType.NECTAR in move.food_choices:
+            nectar_bonus = weights.nectar_early_bonus * (rounds_remaining / ROUNDS) if rounds_remaining > 0 else 0
+            breakdown["nectar_value"] = round(nectar_bonus, 2) if nectar_bonus else 0.0
+
+    elif move.action_type == ActionType.LAY_EGGS:
+        bird_count = player.board.grassland.bird_count
+        column = get_action_column(game.board_type, Habitat.GRASSLAND, bird_count)
+        egg_count = column.base_gain + move.bonus_count
+        eligible_space = sum(
+            slot.eggs_space()
+            for row in player.board.all_rows()
+            for slot in row.slots
+            if slot.bird
+        )
+        actual_eggs = min(egg_count, eligible_space)
+        breakdown["eggs"] = round(actual_eggs * weights.egg_points, 2)
+
+        # Engine activation
+        engine = 0.0
+        for i, slot in enumerate(player.board.grassland.slots):
+            if slot.bird and slot.bird.color == PowerColor.BROWN:
+                power = get_power(slot.bird)
+                if not isinstance(power, NoPower):
+                    ctx = PowerContext(game_state=game, player=player, bird=slot.bird,
+                                       slot_index=i, habitat=Habitat.GRASSLAND)
+                    engine += power.estimate_value(ctx)
+        if engine:
+            breakdown["engine_activation"] = round(engine, 2)
+
+        goal_val = _egg_goal_alignment(game)
+        if goal_val:
+            breakdown["round_goal"] = round(goal_val, 2)
+
+    elif move.action_type == ActionType.DRAW_CARDS:
+        bird_count = player.board.wetland.bird_count
+        column = get_action_column(game.board_type, Habitat.WETLAND, bird_count)
+        card_count = column.base_gain + move.bonus_count
+        phase = rounds_remaining / ROUNDS if ROUNDS else 0
+        card_base_value = 0.2 + 0.1 * phase
+        breakdown["cards"] = round(card_count * card_base_value, 2)
+
+        tray_value = 0.0
+        for idx in move.tray_indices:
+            if idx < len(game.card_tray.face_up):
+                tray_bird = game.card_tray.face_up[idx]
+                tv = tray_bird.victory_points * 0.5
+                tv += min(tray_bird.egg_limit, max(1, rounds_remaining)) * 0.3
+                if tray_bird.color == PowerColor.BROWN and rounds_remaining >= 2:
+                    tv += rounds_remaining * 0.4
+                tray_value += tv
+        if tray_value:
+            breakdown["tray_value"] = round(tray_value, 2)
+
+        deck_draws = move.deck_draws
+        if deck_draws > 0:
+            deck_per_card = 0.2 + 0.1 * phase
+            breakdown["deck_value"] = round(deck_draws * deck_per_card, 2)
+
+    # Total estimate
+    total = _estimate_move_value(game, player, move, weights)
+    breakdown["total_estimate"] = round(total, 2)
+    return breakdown
 
 
 def _nectar_majority_value(game: GameState, player: Player,
@@ -1076,6 +1266,14 @@ def _evaluate_lay_eggs(game: GameState, player: Player, move: Move,
                         if h == hab_enum
                     )
                     value += eggs_in_target * 0.3 * time_discount
+                    # Flip bonus for current goal
+                    if i == game.current_round - 1:
+                        opponents = [p for p in game.players if p.name != player.name]
+                        if opponents:
+                            my_progress = _estimate_goal_progress(player, goal)
+                            best_opp = max(_estimate_goal_progress(opp, goal) for opp in opponents)
+                            if my_progress < best_opp and my_progress + eggs_in_target >= best_opp:
+                                value += max(goal.scoring[3], 0) * 0.25
             # Eggs-in-nest-type goals
             for nt in ("bowl", "cavity", "ground", "platform"):
                 if f"[egg] in [{nt}]" in desc:
@@ -1089,6 +1287,13 @@ def _evaluate_lay_eggs(game: GameState, player: Player, move: Move,
                                           or slot.bird.nest_type == NestType.WILD):
                             eggs_matching += c
                     value += eggs_matching * 0.3 * time_discount
+                    if i == game.current_round - 1:
+                        opponents = [p for p in game.players if p.name != player.name]
+                        if opponents and eggs_matching > 0:
+                            my_progress = _estimate_goal_progress(player, goal)
+                            best_opp = max(_estimate_goal_progress(opp, goal) for opp in opponents)
+                            if my_progress < best_opp and my_progress + eggs_matching >= best_opp:
+                                value += max(goal.scoring[3], 0) * 0.2
 
     # Bonus card awareness: filling birds to thresholds
     if move.egg_distribution:
@@ -1144,7 +1349,9 @@ def _evaluate_draw_cards(game: GameState, player: Player, move: Move,
     rounds_remaining = max(0, ROUNDS - game.current_round)
 
     # Base value per card scales with rounds remaining (more turns = more chance to play)
-    card_base_value = 0.3 + 0.2 * (rounds_remaining / ROUNDS)
+    # Keep modest because tray cards are evaluated separately below.
+    phase = rounds_remaining / ROUNDS if ROUNDS else 0
+    card_base_value = 0.2 + 0.1 * phase
     value = card_count * card_base_value
 
     # Bonus cost: paying an egg/nectar for +1 card
@@ -1193,6 +1400,31 @@ def _evaluate_draw_cards(game: GameState, player: Player, move: Move,
                                 tray_val += 0.5  # Denial bonus
                                 break
                         break  # One denial check is enough
+            # Opponent denial: bonus card blocking if known
+            opponents = [p for p in game.players if p.name != player.name]
+            for opp in opponents:
+                for bc in opp.bonus_cards:
+                    if bc.name in tray_bird.bonus_eligibility:
+                        tray_val += 0.4
+                        break
+            # Opponent tray value: deny high-value birds
+            if opponents:
+                for opp in opponents:
+                    opp_food = opp.food_supply.total_non_nectar() + opp.food_supply.get(FoodType.NECTAR)
+                    opp_val = tray_bird.victory_points * 0.4
+                    if opp_food >= tray_bird.food_cost.total:
+                        opp_val += 0.6
+                    if tray_bird.color == PowerColor.BROWN and rounds_remaining >= 2:
+                        opp_val += rounds_remaining * 0.3
+                    if game.round_goals and game.current_round <= len(game.round_goals):
+                        g = game.round_goals[game.current_round - 1]
+                        best_contrib = 0.0
+                        for hab in tray_bird.habitats:
+                            best_contrib = max(best_contrib, _estimate_goal_contribution(tray_bird, hab, g))
+                        opp_val += best_contrib * 0.6
+                    if opp_val >= 3.5:
+                        tray_val += min(opp_val * 0.2, 1.2)
+                        break
 
             # Goal synergy
             if game.round_goals:
@@ -1209,7 +1441,7 @@ def _evaluate_draw_cards(game: GameState, player: Player, move: Move,
     if deck_draws > 0:
         # Deck cards have uncertain value — average bird VP is ~3-4
         # Discount heavily since we can't see them
-        deck_per_card = 0.5 + 0.15 * rounds_remaining  # More valuable early
+        deck_per_card = 0.2 + 0.1 * phase  # More valuable early, but uncertain
         value += deck_draws * deck_per_card
 
     # Engine value: brown powers in wetland
@@ -1244,6 +1476,17 @@ def _evaluate_draw_cards(game: GameState, player: Player, move: Move,
         elif player.hand_size > player.action_cubes_remaining * 2:
             # More birds than you could possibly play with remaining cubes
             value -= (player.hand_size - 6) * 0.5
+    elif player.hand_size >= 4:
+        # Moderate penalty once hand is already healthy
+        value -= (player.hand_size - 3) * 0.4
+
+    # Small penalty if few board slots remain
+    empty_slots = sum(
+        1 for row in player.board.all_rows()
+        for slot in row.slots if not slot.bird
+    )
+    if empty_slots <= 2 and player.hand_size >= 3:
+        value -= (3 - empty_slots) * 0.6
 
     # Late game penalty: drawing cards with few actions left is wasteful
     if game.current_round >= 4 and player.action_cubes_remaining <= 2:
@@ -1316,7 +1559,7 @@ def _activation_advice(game: GameState, player: Player, habitat: Habitat) -> lis
 
         # Detailed activation description
         desc = power.describe_activation(ctx)
-        advice.append(f"{name}: {desc}")
+        advice.append(f"Activate {habitat.value}: {name} — {desc}")
     return advice
 
 
@@ -1579,8 +1822,6 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
         brown_count = sum(1 for s in player.board.forest.slots if s.bird and s.bird.color == PowerColor.BROWN)
         if brown_count > 0:
             reasons.append(f"activates {brown_count} brown forest bird{'s' if brown_count > 1 else ''}")
-            advice_player = _player_after_bonus(player, move, column.bonus)
-            reasons.extend(_activation_advice(game, advice_player, Habitat.FOREST))
 
     elif move.action_type == ActionType.LAY_EGGS:
         bird_count = player.board.grassland.bird_count
@@ -1598,8 +1839,6 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
         brown_count = sum(1 for s in player.board.grassland.slots if s.bird and s.bird.color == PowerColor.BROWN)
         if brown_count > 0:
             reasons.append(f"activates {brown_count} brown grassland bird{'s' if brown_count > 1 else ''}")
-            advice_player = _player_after_bonus(player, move, column.bonus)
-            reasons.extend(_activation_advice(game, advice_player, Habitat.GRASSLAND))
         if move.bonus_count > 0 and column.bonus:
             payment = _recommend_bonus_payment(player, column.bonus.cost_options, game)
             label = f"+{move.bonus_count} egg{'s' if move.bonus_count > 1 else ''}"
@@ -1645,8 +1884,6 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
         brown_count = sum(1 for s in player.board.wetland.slots if s.bird and s.bird.color == PowerColor.BROWN)
         if brown_count > 0:
             reasons.append(f"activates {brown_count} brown wetland bird{'s' if brown_count > 1 else ''}")
-            advice_player = _player_after_bonus(player, move, column.bonus)
-            reasons.extend(_activation_advice(game, advice_player, Habitat.WETLAND))
 
     return "; ".join(reasons) if reasons else "standard play"
 

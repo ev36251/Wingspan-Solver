@@ -179,9 +179,147 @@
 		lay_eggs: 'Lay Eggs',
 		draw_cards: 'Draw Cards'
 	};
+
+	const detailsOf = (rec: SolverRecommendation) => rec.details as Record<string, any>;
+	const hasPlan = (rec: SolverRecommendation) => Array.isArray(detailsOf(rec)?.plan);
+	const getPlan = (rec: SolverRecommendation) => detailsOf(rec)?.plan as string[] | undefined;
+	const hasPlanDetails = (rec: SolverRecommendation) => Array.isArray(detailsOf(rec)?.plan_details);
+	const getPlanDetails = (rec: SolverRecommendation) =>
+		detailsOf(rec)?.plan_details as { description: string; delta?: any; power?: string[]; goal?: any }[] | undefined;
+	const hasActivationAdvice = (rec: SolverRecommendation) =>
+		Array.isArray(detailsOf(rec)?.activation_advice);
+	const getActivationAdvice = (rec: SolverRecommendation) =>
+		detailsOf(rec)?.activation_advice as string[] | undefined;
+	const hasWhy = (rec: SolverRecommendation) => Array.isArray(detailsOf(rec)?.why);
+	const getWhy = (rec: SolverRecommendation) => detailsOf(rec)?.why as string[] | undefined;
+	const getBreakdown = (rec: SolverRecommendation) =>
+		detailsOf(rec)?.breakdown as Record<string, number> | undefined;
+
+	type BreakdownLine = { label: string; value: number; isNegative: boolean };
+	const expandedBreakdownRanks = new Set<number>();
+
+	function formatBreakdown(
+		bd: Record<string, number> | undefined,
+		expanded = false
+	): BreakdownLine[] {
+		if (!bd) return [];
+		const order = [
+			'bird_vp',
+			'egg_capacity',
+			'power_engine',
+			'bonus_cards',
+			'round_goal',
+			'food_gain',
+			'bird_unlocks',
+			'engine_activation',
+			'eggs',
+			'cards',
+			'tray_value',
+			'deck_value',
+			'nectar_value',
+			'costs',
+			'total_estimate'
+		];
+		const labels: Record<string, string> = {
+			bird_vp: 'Bird VP',
+			egg_capacity: 'Egg capacity',
+			power_engine: 'Engine value',
+			bonus_cards: 'Bonus card value',
+			round_goal: 'Goal swing',
+			food_gain: 'Food gained',
+			bird_unlocks: 'Bird unlocks',
+			engine_activation: 'Row activation',
+			eggs: 'Egg points',
+			cards: 'Card value',
+			tray_value: 'Tray value',
+			deck_value: 'Deck value',
+			nectar_value: 'Nectar value',
+			costs: 'Costs',
+			total_estimate: 'Total estimate'
+		};
+		const alwaysInclude = new Set(['total_estimate', 'costs']);
+		const entries = Object.entries(bd)
+			.filter(([k, v]) => v !== 0 && (alwaysInclude.has(k) || Math.abs(v) >= 0.2));
+
+		let ordered: [string, number][];
+		if (expanded) {
+			ordered = [...entries].sort((a, b) => {
+				const ai = order.indexOf(a[0]);
+				const bi = order.indexOf(b[0]);
+				return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+			});
+		} else {
+			// Pull total first, then top 4 by absolute contribution
+			const total = entries.find(([k]) => k === 'total_estimate');
+			const rest = entries.filter(([k]) => k !== 'total_estimate');
+			rest.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+			const top = rest.slice(0, 4);
+
+			ordered = [];
+			if (total) ordered.push(total);
+			ordered.push(...top);
+			// Ensure costs are visible even if small
+			if (!ordered.find(([k]) => k === 'costs')) {
+				const cost = entries.find(([k]) => k === 'costs');
+				if (cost) ordered.push(cost);
+			}
+		}
+
+		return ordered.map(([k, v]) => ({
+			label: labels[k] || k,
+			value: v,
+			isNegative: v < 0
+		}));
+	}
+
+	function toggleBreakdown(rank: number) {
+		if (expandedBreakdownRanks.has(rank)) {
+			expandedBreakdownRanks.delete(rank);
+		} else {
+			expandedBreakdownRanks.add(rank);
+		}
+		expandedBreakdownRanks.add(0); // force Svelte update by touching the set
+		expandedBreakdownRanks.delete(0);
+	}
+
+	function formatDelta(delta: any): string {
+		if (!delta) return '';
+		const parts: string[] = [];
+		if (delta.food) {
+			for (const [ft, v] of Object.entries(delta.food)) {
+				const n = Number(v);
+				if (n !== 0) parts.push(`${n > 0 ? '+' : ''}${n} ${ft}`);
+			}
+		}
+		if (delta.eggs) parts.push(`${delta.eggs > 0 ? '+' : ''}${delta.eggs} eggs`);
+		if (delta.cards) parts.push(`${delta.cards > 0 ? '+' : ''}${delta.cards} cards`);
+		if (delta.cached) parts.push(`${delta.cached > 0 ? '+' : ''}${delta.cached} cached`);
+		if (delta.tucked) parts.push(`${delta.tucked > 0 ? '+' : ''}${delta.tucked} tucked`);
+		if (delta.nectar_spent) {
+			for (const [hab, v] of Object.entries(delta.nectar_spent)) {
+				const n = Number(v);
+				if (n !== 0) parts.push(`${n > 0 ? '+' : ''}${n} nectar in ${hab}`);
+			}
+		}
+		return parts.join(', ');
+	}
+
+	function applyRecommendation(rec: SolverRecommendation) {
+		if (disabled) return;
+		dispatch('apply', rec);
+		appliedRank = rec.rank;
+		setTimeout(() => { appliedRank = null; }, 2000);
+	}
+
+	function onRecKeydown(e: KeyboardEvent, rec: SolverRecommendation) {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			applyRecommendation(rec);
+		}
+	}
 </script>
 
-<div class="solver-panel card">
+<div class="solver-panel card" class:disabled={disabled} aria-disabled={disabled}>
 	<div class="panel-header">
 		<h3>Recommendations{playerName ? ` for ${playerName}` : ''}</h3>
 	</div>
@@ -201,11 +339,10 @@
 					class="rec clickable"
 					class:top-pick={rec.rank === 1}
 					class:applied={appliedRank === rec.rank}
-					on:click={() => {
-						dispatch('apply', rec);
-						appliedRank = rec.rank;
-						setTimeout(() => { appliedRank = null; }, 2000);
-					}}
+					role="button"
+					tabindex={disabled ? -1 : 0}
+					on:click={() => applyRecommendation(rec)}
+					on:keydown={(e) => onRecKeydown(e, rec)}
 					title="Click to apply this move"
 				>
 					<div class="rec-header">
@@ -228,11 +365,84 @@
 									<span class="reroll-hint">{part}</span>
 								{:else if part.startsWith('FIRST ')}
 									<span class="reset-order-hint">{part}</span>
-								{:else if part.startsWith('activate ')}
+								{:else if part.toLowerCase().startsWith('activate ')}
 									<span class="activate-hint">{part}</span>
 								{:else}
 									<span>{part}</span>
 								{/if}
+							{/each}
+						</div>
+					{/if}
+					{#if hasWhy(rec)}
+						<div class="rec-why">
+							<span class="label">Why:</span>
+							{#each getWhy(rec) || [] as line, li}
+								{#if li > 0}<span class="reason-sep"> · </span>{/if}
+								<span>{line}</span>
+							{/each}
+						</div>
+					{/if}
+					{#if getBreakdown(rec)}
+						<div class="rec-breakdown">
+							<span class="label">Breakdown:</span>
+							{#each formatBreakdown(getBreakdown(rec), expandedBreakdownRanks.has(rec.rank)) as line, li}
+								{#if li > 0}<span class="reason-sep"> · </span>{/if}
+								<span class:negative={line.isNegative}>
+									{line.label}: {line.value.toFixed(1)}
+								</span>
+							{/each}
+							<button
+								class="toggle-breakdown"
+								type="button"
+								on:click|stopPropagation={() => toggleBreakdown(rec.rank)}
+							>
+								{expandedBreakdownRanks.has(rec.rank) ? 'Show less' : 'Show full'}
+							</button>
+						</div>
+					{/if}
+					{#if hasPlan(rec)}
+						<div class="rec-plan">
+							<span class="label">Plan:</span>
+							<span class="plan-steps">
+								{#each getPlan(rec) || [] as step, si}
+									{#if si > 0}<span class="reason-sep"> → </span>{/if}
+									<span>{step}</span>
+								{/each}
+							</span>
+						</div>
+					{/if}
+					{#if hasPlanDetails(rec)}
+						<div class="rec-plan-details">
+							{#each getPlanDetails(rec) || [] as step, si}
+								<div class="plan-detail">
+									<span class="step-index">{si + 1}.</span>
+									<span class="step-desc">{step.description}</span>
+									{#if step.delta && formatDelta(step.delta)}
+										<span class="step-delta">({formatDelta(step.delta)})</span>
+									{/if}
+									{#if step.goal}
+										<span class="step-goal">
+											Goal gap {step.goal.gap_before} → {step.goal.gap_after}
+										</span>
+									{/if}
+									{#if Array.isArray(step.power)}
+										<div class="step-power">
+											{#each step.power as p, pi}
+												{#if pi > 0}<span class="reason-sep"> · </span>{/if}
+												<span>{p}</span>
+											{/each}
+										</div>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					{/if}
+					{#if hasActivationAdvice(rec)}
+						<div class="rec-activation">
+							<span class="label">Activation:</span>
+							{#each getActivationAdvice(rec) || [] as line, li}
+								{#if li > 0}<span class="reason-sep"> · </span>{/if}
+								<span>{line}</span>
 							{/each}
 						</div>
 					{/if}
@@ -478,6 +688,86 @@
 		margin-top: 2px;
 		padding-left: 32px;
 		font-style: italic;
+	}
+
+	.rec-plan,
+	.rec-activation {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		margin-top: 4px;
+		padding-left: 32px;
+	}
+
+	.rec-why {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		margin-top: 4px;
+		padding-left: 32px;
+	}
+
+	.rec-breakdown {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		margin-top: 4px;
+		padding-left: 32px;
+	}
+
+	.rec-breakdown .negative {
+		color: #b91c1c;
+	}
+
+	.toggle-breakdown {
+		margin-left: 8px;
+		font-size: 0.7rem;
+		background: transparent;
+		border: none;
+		color: var(--accent);
+		cursor: pointer;
+		padding: 0;
+	}
+
+	.rec-plan-details {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		margin-top: 6px;
+		padding-left: 32px;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.plan-detail {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		align-items: baseline;
+	}
+
+	.step-index {
+		font-weight: 600;
+		color: var(--accent);
+	}
+
+	.step-desc {
+		font-weight: 500;
+		color: var(--text);
+	}
+
+	.step-delta,
+	.step-goal {
+		color: var(--text-muted);
+	}
+
+	.step-power {
+		font-style: italic;
+		color: var(--accent);
+	}
+
+	.rec-plan .label,
+	.rec-activation .label {
+		font-weight: 600;
+		color: var(--accent);
+		margin-right: 6px;
 	}
 
 	.skip-warning {

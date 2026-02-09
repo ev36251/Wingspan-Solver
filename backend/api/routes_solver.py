@@ -5,10 +5,13 @@ import time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from backend.models.enums import FoodType
-from backend.config import EGG_COST_BY_COLUMN
+from backend.models.enums import FoodType, ActionType, Habitat
+from backend.config import EGG_COST_BY_COLUMN, get_action_column
 from backend.data.registries import get_bird_registry
-from backend.solver.heuristics import rank_moves
+from backend.solver.heuristics import (
+    rank_moves, _activation_advice, _player_after_bonus,
+    estimate_move_breakdown, dynamic_weights,
+)
 from backend.solver.monte_carlo import monte_carlo_evaluate, MCConfig
 from backend.solver.max_score import calculate_max_score
 from backend.solver.analysis import analyze_game
@@ -114,7 +117,8 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
         depth = 2
     la_results = lookahead_search(game, player=player, depth=depth, beam_width=5)
     # Also get heuristic reasoning for display
-    heuristic_ranked = rank_moves(game, player=player)
+    weights = dynamic_weights(game)
+    heuristic_ranked = rank_moves(game, player=player, weights=weights)
     reasoning_map = {rm.move.description: rm.reasoning for rm in heuristic_ranked}
 
     elapsed_ms = (time.perf_counter() - start) * 1000
@@ -157,6 +161,27 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
         details["reset_bonus"] = la.move.reset_bonus
         if la.best_sequence and len(la.best_sequence) > 1:
             details["best_sequence"] = la.best_sequence
+            details["plan"] = la.best_sequence[:3]
+            details["plan_depth"] = la.depth_reached
+        if la.plan_details:
+            details["plan_details"] = la.plan_details[:3]
+        details["breakdown"] = estimate_move_breakdown(game, player, la.move, weights=weights)
+
+        # Provide explicit activation advice for habitat actions
+        if la.move.action_type in (ActionType.GAIN_FOOD, ActionType.LAY_EGGS, ActionType.DRAW_CARDS):
+            hab = la.move.habitat
+            if hab is None:
+                if la.move.action_type == ActionType.GAIN_FOOD:
+                    hab = Habitat.FOREST
+                elif la.move.action_type == ActionType.LAY_EGGS:
+                    hab = Habitat.GRASSLAND
+                else:
+                    hab = Habitat.WETLAND
+            column = get_action_column(game.board_type, hab, player.board.get_row(hab).bird_count)
+            advice_player = _player_after_bonus(player, la.move, column.bonus)
+            advice = _activation_advice(game, advice_player, hab)
+            if advice:
+                details["activation_advice"] = advice
 
         recommendations.append(SolverMoveRecommendation(
             rank=la.rank,
@@ -166,6 +191,27 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
             reasoning=reasoning_map.get(la.move.description, ""),
             details=details,
         ))
+
+    # Explainability: compare top picks
+    if recommendations:
+        recommendations.sort(key=lambda r: r.rank)
+        top = recommendations[0]
+        if len(recommendations) > 1:
+            second = recommendations[1]
+            margin = round(top.score - second.score, 2)
+            if margin != 0:
+                top.details["margin_vs_next"] = margin
+        # Goal gap change (if present in plan details)
+        if isinstance(top.details.get("plan_details"), list):
+            for step in top.details["plan_details"]:
+                goal = step.get("goal")
+                if goal:
+                    top.details.setdefault("why", []).append(
+                        f"Goal gap {goal.get('gap_before')} → {goal.get('gap_after')}"
+                    )
+                    break
+        if "margin_vs_next" in top.details:
+            top.details.setdefault("why", []).insert(0, f"+{top.details['margin_vs_next']} pts vs #2")
 
     # Check if the feeder has all-same-face (free reroll available)
     feeder = game.birdfeeder

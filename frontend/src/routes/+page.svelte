@@ -534,6 +534,7 @@
 							<div
 								class="tray-card-h"
 								draggable="true"
+								role="listitem"
 								class:drag-over={trayDragOverIdx === i && trayDragIdx !== i}
 								on:dragstart={(e) => onTrayDragStart(i, e)}
 								on:dragover={(e) => onTrayDragOver(i, e)}

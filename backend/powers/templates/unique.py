@@ -7,6 +7,7 @@ and require dedicated implementations.
 import random
 from backend.models.enums import FoodType, Habitat, PowerColor
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
+from backend.engine.scoring import CUSTOM_BONUS_COUNTERS, CUSTOM_BONUS_FULL_SCORERS
 
 
 class CountsDoubleForGoal(PowerEffect):
@@ -170,13 +171,25 @@ class ScoreBonusCardNow(PowerEffect):
         if not ctx.player.bonus_cards:
             return PowerResult(executed=False, description="No bonus cards to score")
 
+        def _score_bonus(bonus, player) -> int:
+            if bonus.name in CUSTOM_BONUS_FULL_SCORERS:
+                return CUSTOM_BONUS_FULL_SCORERS[bonus.name](player)
+            if bonus.name in CUSTOM_BONUS_COUNTERS:
+                qualifying = CUSTOM_BONUS_COUNTERS[bonus.name](player)
+                return bonus.score(qualifying)
+            qualifying = sum(
+                1 for bird in player.board.all_birds()
+                if bonus.name in bird.bonus_eligibility
+            )
+            return bonus.score(qualifying)
+
         # Pick the highest-scoring bonus card
-        from backend.data.registries import get_bonus_card_registry
+        from backend.data.registries import get_bonus_registry
         best_score = 0
         for bc_name in ctx.player.bonus_cards:
-            bc = get_bonus_card_registry().get(bc_name)
+            bc = get_bonus_registry().get(bc_name)
             if bc:
-                score = bc.calculate_score(ctx.player)
+                score = _score_bonus(bc, ctx.player)
                 best_score = max(best_score, score)
 
         if best_score > 0:
@@ -240,13 +253,23 @@ class CopyNeighborBonusCard(PowerEffect):
             return PowerResult(executed=False, description="No neighbor bonus cards")
 
         # Find the best-scoring card (scored against THIS player's birds)
-        from backend.data.registries import get_bonus_card_registry
+        from backend.data.registries import get_bonus_registry
         best_name = None
         best_score = 0
         for bc_name in neighbor.bonus_cards:
-            bc = get_bonus_card_registry().get(bc_name)
+            bc = get_bonus_registry().get(bc_name)
             if bc:
-                score = bc.calculate_score(ctx.player)
+                if bc.name in CUSTOM_BONUS_FULL_SCORERS:
+                    score = CUSTOM_BONUS_FULL_SCORERS[bc.name](ctx.player)
+                elif bc.name in CUSTOM_BONUS_COUNTERS:
+                    qualifying = CUSTOM_BONUS_COUNTERS[bc.name](ctx.player)
+                    score = bc.score(qualifying)
+                else:
+                    qualifying = sum(
+                        1 for bird in ctx.player.board.all_birds()
+                        if bc.name in bird.bonus_eligibility
+                    )
+                    score = bc.score(qualifying)
                 if score > best_score:
                     best_score = score
                     best_name = bc_name
