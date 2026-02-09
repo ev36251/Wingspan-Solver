@@ -6,6 +6,7 @@ and require dedicated implementations.
 
 import random
 from backend.models.enums import FoodType, Habitat, PowerColor
+from backend.models.bonus_card import BonusCard
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
 from backend.engine.scoring import CUSTOM_BONUS_COUNTERS, CUSTOM_BONUS_FULL_SCORERS
 
@@ -186,8 +187,11 @@ class ScoreBonusCardNow(PowerEffect):
         # Pick the highest-scoring bonus card
         from backend.data.registries import get_bonus_registry
         best_score = 0
-        for bc_name in ctx.player.bonus_cards:
-            bc = get_bonus_registry().get(bc_name)
+        for bc_entry in ctx.player.bonus_cards:
+            if isinstance(bc_entry, BonusCard):
+                bc = bc_entry
+            else:
+                bc = get_bonus_registry().get(str(bc_entry))
             if bc:
                 score = _score_bonus(bc, ctx.player)
                 best_score = max(best_score, score)
