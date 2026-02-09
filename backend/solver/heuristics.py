@@ -501,7 +501,7 @@ def evaluate_position(game: GameState, player: Player,
     )
 
     # Engine value: expected future points from brown powers per activation
-    engine_val = _estimate_engine_value(game, player)
+    engine_val = _estimate_engine_value(game, player, weights)
     rounds_remaining = max(0, ROUNDS - game.current_round)
 
     # Weight engine more in early game
@@ -545,7 +545,8 @@ def evaluate_position(game: GameState, player: Player,
     return value
 
 
-def _estimate_engine_value(game: GameState, player: Player) -> float:
+def _estimate_engine_value(game: GameState, player: Player,
+                           weights: HeuristicWeights | None = None) -> float:
     """Estimate the per-activation value of the player's engine.
 
     Sums the estimated value of all brown powers on the board,
@@ -555,6 +556,9 @@ def _estimate_engine_value(game: GameState, player: Player) -> float:
     from backend.powers.templates.tuck_cards import TuckFromDeck
     from backend.powers.templates.special import FlockingPower
     from backend.powers.templates.cache_food import CacheFoodFromSupply
+
+    if weights is None:
+        weights = DEFAULT_WEIGHTS
 
     total = 0.0
     for row in player.board.all_rows():
@@ -582,7 +586,7 @@ def _estimate_engine_value(game: GameState, player: Player) -> float:
 
             # Predator penalty: ~50% success rate on dice
             if slot.bird.is_predator:
-                power_val *= DEFAULT_WEIGHTS.predator_penalty
+                power_val *= weights.predator_penalty
             total += power_val
     return total
 
@@ -609,6 +613,7 @@ def _nectar_majority_value(game: GameState, player: Player,
     """Estimate the marginal scoring improvement from spending nectar in a habitat.
 
     Nectar majority per habitat: 1st place = 5pts, 2nd = 2pts.
+    Ties share prizes for all positions the tied group occupies (rounded down).
     Returns the marginal VP improvement from spending `nectar_count` more nectar.
     """
     from backend.config import BoardType
@@ -619,30 +624,30 @@ def _nectar_majority_value(game: GameState, player: Player,
     my_current = row.nectar_spent
     my_new = my_current + nectar_count
 
-    # Gather opponent nectar spent in this habitat
+    # Gather all opponent nectar counts in this habitat
     opponents = [p for p in game.players if p.name != player.name]
-    opp_max = max((p.board.get_row(habitat).nectar_spent for p in opponents), default=0)
+    opp_counts = [p.board.get_row(habitat).nectar_spent for p in opponents]
 
-    # Score before spending
-    if my_current > opp_max:
-        score_before = 5
-    elif my_current == opp_max and my_current > 0:
-        score_before = 5  # tied for 1st (both get 5 in 2-player)
-    elif my_current > 0:
-        score_before = 2  # 2nd place
-    else:
-        score_before = 0
+    def _estimate_points(my_nectar: int) -> float:
+        if my_nectar <= 0:
+            return 0.0
+        # Count players above, tied with, and below us
+        above = sum(1 for c in opp_counts if c > my_nectar)
+        tied_with = sum(1 for c in opp_counts if c == my_nectar)
+        # My position (0-based): number of opponents ahead of me
+        position = above
+        # Prize pools: 1st=5, 2nd=2
+        prizes = [5, 2]
+        if position >= len(prizes):
+            return 0.0  # 3rd or worse, no points
+        # Tied group occupies positions [position, position + tied_with]
+        # (tied_with = opponents at same level; total group size = tied_with + 1 for me)
+        group_size = tied_with + 1
+        pool = sum(prizes[position:position + group_size])
+        return pool // group_size
 
-    # Score after spending
-    if my_new > opp_max:
-        score_after = 5
-    elif my_new == opp_max and my_new > 0:
-        score_after = 5
-    elif my_new > 0:
-        score_after = 2
-    else:
-        score_after = 0
-
+    score_before = _estimate_points(my_current)
+    score_after = _estimate_points(my_new)
     return max(0.0, score_after - score_before)
 
 
@@ -1053,6 +1058,64 @@ def _evaluate_lay_eggs(game: GameState, player: Player, move: Move,
 
     # Goal alignment: egg-related goals boost value
     value += _egg_goal_alignment(game)
+
+    # Distribution-aware bonuses: value WHERE eggs go
+    if move.egg_distribution and game.round_goals:
+        for i in range(game.current_round - 1, min(len(game.round_goals), 4)):
+            goal = game.round_goals[i]
+            desc = goal.description.lower()
+            rounds_away = i - (game.current_round - 1)
+            time_discount = 1.0 / (1.0 + rounds_away * 0.5)
+            # Eggs-in-habitat goals: reward concentrating eggs in that habitat
+            for hab_name, hab_enum in (("forest", Habitat.FOREST),
+                                        ("grassland", Habitat.GRASSLAND),
+                                        ("wetland", Habitat.WETLAND)):
+                if f"[egg] in [{hab_name}]" in desc:
+                    eggs_in_target = sum(
+                        c for (h, _), c in move.egg_distribution.items()
+                        if h == hab_enum
+                    )
+                    value += eggs_in_target * 0.3 * time_discount
+            # Eggs-in-nest-type goals
+            for nt in ("bowl", "cavity", "ground", "platform"):
+                if f"[egg] in [{nt}]" in desc:
+                    from backend.models.enums import NestType
+                    nest_map = {"bowl": NestType.BOWL, "cavity": NestType.CAVITY,
+                                "ground": NestType.GROUND, "platform": NestType.PLATFORM}
+                    eggs_matching = 0
+                    for (h, idx), c in move.egg_distribution.items():
+                        slot = player.board.get_row(h).slots[idx]
+                        if slot.bird and (slot.bird.nest_type == nest_map[nt]
+                                          or slot.bird.nest_type == NestType.WILD):
+                            eggs_matching += c
+                    value += eggs_matching * 0.3 * time_discount
+
+    # Bonus card awareness: filling birds to thresholds
+    if move.egg_distribution:
+        for bc in player.bonus_cards:
+            bc_name = bc.name.lower()
+            if "breeding manager" in bc_name:
+                # Birds with >=4 eggs — value placing eggs to reach 4
+                for (h, idx), c in move.egg_distribution.items():
+                    slot = player.board.get_row(h).slots[idx]
+                    if slot.bird:
+                        eggs_after = slot.eggs + c
+                        if slot.eggs < 4 <= eggs_after:
+                            value += 1.0  # Crossing the 4-egg threshold
+            elif "oologist" in bc_name:
+                # Birds with >=1 egg — value spreading to new birds
+                for (h, idx), c in move.egg_distribution.items():
+                    slot = player.board.get_row(h).slots[idx]
+                    if slot.bird and slot.eggs == 0 and c > 0:
+                        value += 0.5  # New bird gets first egg
+            elif "theriogenologist" in bc_name:
+                # Full nests (eggs == egg_limit) — value filling birds
+                for (h, idx), c in move.egg_distribution.items():
+                    slot = player.board.get_row(h).slots[idx]
+                    if slot.bird and slot.bird.egg_limit > 0:
+                        eggs_after = slot.eggs + c
+                        if eggs_after >= slot.bird.egg_limit and slot.eggs < slot.bird.egg_limit:
+                            value += 1.0  # Completing a full nest
 
     # Last turn nectar strategy: prefer moves that spend nectar before round end
     if player.action_cubes_remaining <= 1:

@@ -271,11 +271,89 @@ def generate_gain_food_moves(game: GameState, player: Player) -> list[Move]:
     return moves
 
 
+def _build_egg_distribution(
+    player: Player, count: int,
+    priority_habitat: Habitat | None = None,
+    spread: bool = False,
+) -> tuple[dict[tuple[Habitat, int], int], list[str]]:
+    """Build an egg distribution for laying eggs.
+
+    Strategies:
+      - Default (no flags): fill birds with most space first
+      - priority_habitat: concentrate eggs in one habitat first
+      - spread: place 1 egg per bird to maximize birds-with-eggs count
+    """
+    eligible = []
+    for row in player.board.all_rows():
+        for i, slot in enumerate(row.slots):
+            if slot.bird and slot.can_hold_more_eggs():
+                eligible.append((slot.eggs_space(), row.habitat, i, slot))
+
+    if not eligible:
+        return {}, []
+
+    if spread:
+        # Place 1 egg per bird first, then fill remaining
+        eligible.sort(key=lambda x: (x[0], x[1].value))
+        dist: dict[tuple[Habitat, int], int] = {}
+        remaining = count
+        # Pass 1: 1 egg per bird
+        for space, hab, idx, slot in eligible:
+            if remaining <= 0:
+                break
+            dist[(hab, idx)] = 1
+            remaining -= 1
+        # Pass 2: fill remaining capacity on birds that got eggs
+        if remaining > 0:
+            for space, hab, idx, slot in sorted(eligible, key=lambda x: -x[0]):
+                if remaining <= 0:
+                    break
+                already = dist.get((hab, idx), 0)
+                can_add = min(space - already, remaining)
+                if can_add > 0:
+                    dist[(hab, idx)] = already + can_add
+                    remaining -= can_add
+    elif priority_habitat:
+        # Prioritize birds in the target habitat, then others
+        in_hab = [(s, h, i, sl) for s, h, i, sl in eligible if h == priority_habitat]
+        others = [(s, h, i, sl) for s, h, i, sl in eligible if h != priority_habitat]
+        in_hab.sort(key=lambda x: -x[0])
+        others.sort(key=lambda x: -x[0])
+        ordered = in_hab + others
+        dist = {}
+        remaining = count
+        for space, hab, idx, slot in ordered:
+            if remaining <= 0:
+                break
+            to_lay = min(space, remaining)
+            dist[(hab, idx)] = to_lay
+            remaining -= to_lay
+    else:
+        # Default: fill biggest-space-first
+        eligible.sort(key=lambda x: -x[0])
+        dist = {}
+        remaining = count
+        for space, hab, idx, slot in eligible:
+            if remaining <= 0:
+                break
+            to_lay = min(space, remaining)
+            dist[(hab, idx)] = to_lay
+            remaining -= to_lay
+
+    desc_parts = []
+    for (hab, idx), c in dist.items():
+        slot = player.board.get_row(hab).slots[idx]
+        desc_parts.append(f"{c} on {slot.bird.name}")
+    return dist, desc_parts
+
+
 def generate_lay_eggs_moves(game: GameState, player: Player) -> list[Move]:
     """All legal lay-eggs moves.
 
-    Generate a default distribution that fills birds optimally,
-    with and without bonus trade activation.
+    Generates multiple egg distribution strategies:
+      - Greedy: fill birds with most space first
+      - Per-habitat: concentrate eggs in each habitat (for goal scoring)
+      - Spread: maximize birds-with-eggs count (for bonus cards)
     """
     legal, _ = can_lay_eggs(player)
     if not legal:
@@ -285,56 +363,68 @@ def generate_lay_eggs_moves(game: GameState, player: Player) -> list[Move]:
     column = get_action_column(game.board_type, Habitat.GRASSLAND, bird_count)
     egg_count = column.base_gain
 
-    def _make_egg_move(count: int, bonus: int = 0) -> Move:
-        eligible = []
-        for row in player.board.all_rows():
-            for i, slot in enumerate(row.slots):
-                if slot.bird and slot.can_hold_more_eggs():
-                    eligible.append((slot.eggs_space(), row.habitat, i, slot))
+    def _make_egg_moves(count: int, bonus: int = 0) -> list[Move]:
+        moves = []
+        seen_dists: set[tuple] = set()
 
-        if not eligible:
+        def _add_move(dist, desc_parts, strategy_label=""):
+            key = tuple(sorted(dist.items(), key=lambda x: (x[0][0].value, x[0][1])))
+            if key in seen_dists:
+                return
+            seen_dists.add(key)
+            desc = f"Lay eggs: {', '.join(desc_parts)}" if desc_parts else "Lay eggs"
+            if strategy_label:
+                desc += f" [{strategy_label}]"
+            if bonus:
+                desc += f" (+{bonus} bonus)"
+            moves.append(Move(
+                action_type=ActionType.LAY_EGGS,
+                description=desc,
+                egg_distribution=dist,
+                bonus_count=bonus,
+            ))
+
+        # Strategy 1: Greedy (default)
+        dist, parts = _build_egg_distribution(player, count)
+        _add_move(dist, parts)
+
+        # Strategy 2: Per-habitat concentration
+        for hab in (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND):
+            row = player.board.get_row(hab)
+            has_space = any(s.bird and s.can_hold_more_eggs() for s in row.slots)
+            if has_space:
+                dist, parts = _build_egg_distribution(player, count, priority_habitat=hab)
+                _add_move(dist, parts, f"{hab.value} focus")
+
+        # Strategy 3: Spread (maximize birds-with-eggs)
+        birds_with_space = sum(
+            1 for r in player.board.all_rows()
+            for s in r.slots if s.bird and s.can_hold_more_eggs()
+        )
+        if birds_with_space >= 2 and count >= 2:
+            dist, parts = _build_egg_distribution(player, count, spread=True)
+            _add_move(dist, parts, "spread")
+
+        if not moves:
             suffix = " + bonus" if bonus else ""
-            return Move(
+            moves.append(Move(
                 action_type=ActionType.LAY_EGGS,
                 description=f"Lay eggs (no eligible birds, {count} available{suffix})",
                 egg_distribution={},
                 bonus_count=bonus,
-            )
+            ))
 
-        eligible.sort(key=lambda x: -x[0])
-        dist: dict[tuple[Habitat, int], int] = {}
-        remaining = count
-        for space, hab, idx, slot in eligible:
-            if remaining <= 0:
-                break
-            to_lay = min(space, remaining)
-            dist[(hab, idx)] = to_lay
-            remaining -= to_lay
+        return moves
 
-        desc_parts = []
-        for (hab, idx), c in dist.items():
-            slot = player.board.get_row(hab).slots[idx]
-            desc_parts.append(f"{c} on {slot.bird.name}")
-        desc = f"Lay eggs: {', '.join(desc_parts)}" if desc_parts else "Lay eggs"
-        if bonus:
-            desc += f" (+{bonus} bonus)"
-
-        return Move(
-            action_type=ActionType.LAY_EGGS,
-            description=desc,
-            egg_distribution=dist,
-            bonus_count=bonus,
-        )
-
-    moves = [_make_egg_move(egg_count)]
+    moves = _make_egg_moves(egg_count)
 
     # Add bonus-trade variants
     if column.bonus and _can_pay_bonus(player, column.bonus.cost_options):
         bonus = column.bonus
         if bonus.bonus_type == "extra":
-            moves.append(_make_egg_move(egg_count + 1, bonus=1))
+            moves.extend(_make_egg_moves(egg_count + 1, bonus=1))
             if bonus.max_uses >= 2 and _can_pay_bonus(player, bonus.cost_options):
-                moves.append(_make_egg_move(egg_count + 2, bonus=2))
+                moves.extend(_make_egg_moves(egg_count + 2, bonus=2))
 
     return moves
 
@@ -379,14 +469,24 @@ def generate_draw_cards_moves(game: GameState, player: Player) -> list[Move]:
                 reset_bonus=use_reset,
             ))
 
-        # Option 2: each face-up card from tray (take 1 from tray, rest from deck)
-        for i, bird in enumerate(game.card_tray.face_up):
-            deck_needed = count - 1
-            if game.deck_remaining >= deck_needed:
+        # Option 2: pick from tray (1 card, 2 cards, etc.) + rest from deck
+        from itertools import combinations
+        tray_cards = game.card_tray.face_up
+        max_from_tray = min(count, len(tray_cards))
+        for num_tray in range(1, max_from_tray + 1):
+            deck_needed = count - num_tray
+            if game.deck_remaining < deck_needed:
+                continue
+            for combo in combinations(range(len(tray_cards)), num_tray):
+                names = [tray_cards[i].name for i in combo]
+                if deck_needed > 0:
+                    desc = f"Take {', '.join(names)} from tray + {deck_needed} from deck{suffix}"
+                else:
+                    desc = f"Take {', '.join(names)} from tray{suffix}"
                 moves.append(Move(
                     action_type=ActionType.DRAW_CARDS,
-                    description=f"Take {bird.name} from tray + {deck_needed} from deck{suffix}",
-                    tray_indices=[i],
+                    description=desc,
+                    tray_indices=list(combo),
                     deck_draws=deck_needed,
                     bonus_count=bonus,
                     reset_bonus=use_reset,

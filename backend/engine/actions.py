@@ -101,7 +101,10 @@ def _pay_bonus_cost(player: Player, cost_options: tuple[str, ...]) -> bool:
     """
     for cost in cost_options:
         if cost == "card" and player.hand:
-            player.hand.pop()
+            # Discard the lowest-VP card (least valuable to keep)
+            worst_idx = min(range(len(player.hand)),
+                            key=lambda i: player.hand[i].victory_points)
+            player.hand.pop(worst_idx)
             return True
         elif cost == "food":
             for ft in [FoodType.SEED, FoodType.INVERTEBRATE, FoodType.FRUIT,

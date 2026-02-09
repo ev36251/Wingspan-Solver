@@ -18,6 +18,27 @@ from backend.engine.actions import (
 from backend.solver.move_generator import Move, generate_all_moves
 
 
+_SIM_BIRD_POOL: list | None = None
+
+
+def _get_sim_bird_pool():
+    """Lazily load a pool of birds for simulated deck draws."""
+    global _SIM_BIRD_POOL
+    if _SIM_BIRD_POOL is None:
+        from backend.data.registries import get_bird_registry
+        _SIM_BIRD_POOL = list(get_bird_registry().all_birds)
+    return _SIM_BIRD_POOL
+
+
+def _add_random_deck_draws(player: Player, count: int) -> None:
+    """Add random birds to a player's hand to simulate deck draws."""
+    pool = _get_sim_bird_pool()
+    if not pool:
+        return
+    for _ in range(count):
+        player.hand.append(random.choice(pool))
+
+
 def deep_copy_game(game: GameState) -> GameState:
     """Deep copy a game state for simulation."""
     return copy.deepcopy(game)
@@ -90,10 +111,17 @@ def execute_move_on_sim(game: GameState, player: Player, move: Move) -> bool:
         return result.success
 
     elif move.action_type == ActionType.DRAW_CARDS:
+        deck_draws = move.deck_draws
         result = execute_draw_cards(
-            game, player, move.tray_indices, move.deck_draws,
+            game, player, move.tray_indices, deck_draws,
             move.bonus_count, move.reset_bonus
         )
+        if result.success and deck_draws > 0:
+            # execute_draw_cards decrements deck_remaining but doesn't add
+            # cards to hand for deck draws (since actual identity is unknown
+            # in real play). For simulation, add random birds so the
+            # simulated player has realistic hand sizes for future turns.
+            _add_random_deck_draws(player, deck_draws)
         return result.success
 
     return False

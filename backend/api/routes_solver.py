@@ -106,8 +106,13 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
 
     start = time.perf_counter()
 
-    # Use depth-2 lookahead on top 5 candidates for multi-turn combo detection
-    la_results = lookahead_search(game, player=player, depth=2, beam_width=5)
+    # Adaptive lookahead: deeper search in late game when tree is small
+    cubes = player.action_cubes_remaining
+    if game.current_round >= 3 and cubes <= 4:
+        depth = min(3, cubes)
+    else:
+        depth = 2
+    la_results = lookahead_search(game, player=player, depth=depth, beam_width=5)
     # Also get heuristic reasoning for display
     heuristic_ranked = rank_moves(game, player=player)
     reasoning_map = {rm.move.description: rm.reasoning for rm in heuristic_ranked}
