@@ -7,6 +7,8 @@
 
 	const dispatch = createEventDispatcher();
 
+	export let playerNames: string[] = [];
+
 	// Input state
 	let selectedBirds: Bird[] = [];
 	let bonusCards: BonusCard[] = [];
@@ -45,6 +47,10 @@
 		}
 	}
 	loadData();
+
+	$: if (playerNames.length >= 2) {
+		playerCount = playerNames.length;
+	}
 
 	function handleBirdSelect(e: CustomEvent<Bird>) {
 		if (selectedBirds.length >= 5) return;
@@ -147,6 +153,7 @@
 	function applyRecommendation(rec: SetupRecommendation) {
 		dispatch('applySetup', {
 			player_count: Number(playerCount),
+			player_names: playerNames,
 			round_goals: goalSelections.map(g => g || 'No Goal'),
 			birds_to_keep: rec.birds_to_keep,
 			food_to_keep: rec.food_to_keep,
@@ -170,6 +177,7 @@
 		}
 		dispatch('applySetup', {
 			player_count: Number(playerCount),
+			player_names: playerNames,
 			round_goals: goalSelections.map(g => g || 'No Goal'),
 			birds_to_keep: birds,
 			food_to_keep: food,
@@ -186,15 +194,10 @@
 		<div class="error">{error}</div>
 	{/if}
 
-	<!-- Player Count -->
+	<!-- Player Count (from names) -->
 	<div class="section">
 		<h3>Players</h3>
-		<select bind:value={playerCount}>
-			<option value="2">2 players</option>
-			<option value="3">3 players</option>
-			<option value="4">4 players</option>
-			<option value="5">5 players</option>
-		</select>
+		<div class="player-count">Players: {playerCount}</div>
 	</div>
 
 	<!-- Bird Selection -->
@@ -514,6 +517,11 @@
 
 	.apply-custom {
 		margin-top: 10px;
+	}
+
+	.player-count {
+		font-size: 0.85rem;
+		color: var(--text-muted);
 	}
 
 	.selected-list {

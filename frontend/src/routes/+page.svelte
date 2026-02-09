@@ -20,7 +20,7 @@
 	// New game form
 	let playerNames = ['Player 1', 'Player 2'];
 	let showNewGame = true;
-	let activeTab: 'setup' | 'newgame' = 'setup';
+	let showDraftAdvisor = false;
 	let activePlayerIdx = 0;
 	let playerOrder: number[] = [];  // Display order of player indices
 
@@ -87,6 +87,7 @@
 
 	async function applySetup(e: CustomEvent<{
 		player_count: number;
+		player_names?: string[];
 		round_goals: string[];
 		birds_to_keep: string[];
 		food_to_keep: Record<string, number>;
@@ -97,7 +98,10 @@
 		error = '';
 		try {
 			const count = Math.max(2, Math.min(5, e.detail.player_count || 2));
-			const names = Array.from({ length: count }, (_, i) => `Player ${i + 1}`);
+			const inputNames = (e.detail.player_names || []).map(n => n.trim()).filter(Boolean);
+			const names = inputNames.length === count
+				? inputNames
+				: Array.from({ length: count }, (_, i) => `Player ${i + 1}`);
 			const roundGoals = e.detail.round_goals || [];
 			const created = await createGame(names, roundGoals);
 			gameId = created.game_id;
@@ -127,7 +131,6 @@
 			state = state;
 			await updateGameState(gameId, state);
 			showNewGame = false;
-			activeTab = 'setup';
 			activePlayerIdx = 0;
 			initPlayerOrder();
 			syncGoalSelections();
@@ -464,27 +467,11 @@
 </script>
 
 {#if showNewGame}
-	<!-- Tab selector -->
-	<div class="tab-bar">
-		<button
-			class="tab"
-			class:active={activeTab === 'setup'}
-			on:click={() => activeTab = 'setup'}
-		>Draft Advisor</button>
-		<button
-			class="tab"
-			class:active={activeTab === 'newgame'}
-			on:click={() => activeTab = 'newgame'}
-		>New Game</button>
-	</div>
-
-	{#if activeTab === 'setup'}
-		<SetupAdvisor on:applySetup={applySetup} />
-	{:else}
-		<!-- Game creation screen -->
+	{#if !showDraftAdvisor}
+		<!-- Player names first -->
 		<div class="new-game card">
 			<h2>New Game</h2>
-			<p class="subtitle">Enter player names to start a new Wingspan game session.</p>
+			<p class="subtitle">Enter player names to start a new Wingspan draft session.</p>
 
 			{#if error}
 				<div class="error">{error}</div>
@@ -509,11 +496,13 @@
 				{#if playerNames.length < 5}
 					<button on:click={addPlayer}>+ Add Player</button>
 				{/if}
-				<button class="primary" on:click={startGame} disabled={loading}>
-					{loading ? 'Creating...' : 'Start Game'}
+				<button class="primary" on:click={() => { showDraftAdvisor = true; }} disabled={loading}>
+					Continue to Draft
 				</button>
 			</div>
 		</div>
+	{:else}
+		<SetupAdvisor on:applySetup={applySetup} playerNames={playerNames} />
 	{/if}
 
 {:else if state}
@@ -806,36 +795,6 @@
 {/if}
 
 <style>
-	/* Setup tab bar */
-	.tab-bar {
-		display: flex;
-		gap: 0;
-		max-width: 700px;
-		margin: 20px auto 0;
-		border-bottom: 2px solid var(--border);
-	}
-
-	.tab {
-		padding: 10px 24px;
-		background: none;
-		border: none;
-		border-bottom: 2px solid transparent;
-		margin-bottom: -2px;
-		font-size: 0.95rem;
-		color: var(--text-muted);
-		cursor: pointer;
-		font-weight: 500;
-	}
-
-	.tab:hover {
-		color: var(--text);
-	}
-
-	.tab.active {
-		color: var(--accent);
-		border-bottom-color: var(--accent);
-	}
-
 	.new-game {
 		max-width: 500px;
 		margin: 20px auto;
