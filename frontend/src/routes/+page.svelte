@@ -336,6 +336,10 @@
 		if (!state) return;
 		const player = state.players[activePlayerIdx];
 		const details = rec.details as Record<string, any>;
+		if (player.action_cubes_remaining <= 0) {
+			error = 'No action cubes remaining.';
+			return;
+		}
 
 		if (rec.action_type === 'gain_food') {
 			const foodChoices: string[] = details.food_choices || [];
@@ -353,7 +357,7 @@
 					state.birdfeeder.dice = state.birdfeeder.dice.filter((_, i) => i !== dieIdx);
 				}
 			}
-			player.action_cubes_remaining -= 1;
+			player.action_cubes_remaining = Math.max(0, player.action_cubes_remaining - 1);
 
 		} else if (rec.action_type === 'play_bird') {
 			const birdName: string = details.bird_name;
@@ -365,6 +369,9 @@
 			const handIdx = player.hand.indexOf(birdName);
 			if (handIdx >= 0) {
 				player.hand = player.hand.filter((_, i) => i !== handIdx);
+			} else {
+				error = `Bird '${birdName}' not in hand.`;
+				return;
 			}
 
 			// Place bird in first empty slot of the habitat row
@@ -380,7 +387,13 @@
 					emptySlot.eggs = 0;
 					emptySlot.cached_food = {};
 					emptySlot.tucked_cards = 0;
+				} else {
+					error = `No empty slot in ${habitat}.`;
+					return;
 				}
+			} else {
+				error = `Unknown habitat: ${habitat}`;
+				return;
 			}
 
 			// Deduct food payment
@@ -406,7 +419,7 @@
 				}
 			}
 
-			player.action_cubes_remaining -= 1;
+			player.action_cubes_remaining = Math.max(0, player.action_cubes_remaining - 1);
 
 		} else if (rec.action_type === 'lay_eggs') {
 			const eggDist: Record<string, Record<string, number>> = details.egg_distribution || {};
@@ -421,7 +434,7 @@
 					}
 				}
 			}
-			player.action_cubes_remaining -= 1;
+			player.action_cubes_remaining = Math.max(0, player.action_cubes_remaining - 1);
 
 		} else if (rec.action_type === 'draw_cards') {
 			const trayIndices: number[] = details.tray_indices || [];
@@ -442,7 +455,7 @@
 				player.unknown_hand_count += deckDraws;
 			}
 
-			player.action_cubes_remaining -= 1;
+			player.action_cubes_remaining = Math.max(0, player.action_cubes_remaining - 1);
 		}
 
 		state = state;

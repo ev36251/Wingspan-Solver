@@ -186,7 +186,8 @@ def find_food_payment_options(player: Player, cost: FoodCost) -> list[dict[FoodT
             if have >= count:
                 payment[ft] = count
             else:
-                payment[ft] = have
+                if have > 0:
+                    payment[ft] = have
                 shortfall = count - have
                 nectar_used += shortfall
                 if nectar_used > nectar_available:
@@ -195,7 +196,7 @@ def find_food_payment_options(player: Player, cost: FoodCost) -> list[dict[FoodT
 
         if valid:
             if nectar_used > 0:
-                payment[FoodType.NECTAR] = nectar_used
+                payment[FoodType.NECTAR] = payment.get(FoodType.NECTAR, 0) + nectar_used
 
             # Handle wild slots with remaining resources
             if wild_needed > 0:
