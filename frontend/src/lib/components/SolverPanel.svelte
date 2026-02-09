@@ -194,6 +194,18 @@
 	const getWhy = (rec: SolverRecommendation) => detailsOf(rec)?.why as string[] | undefined;
 	const getBreakdown = (rec: SolverRecommendation) =>
 		detailsOf(rec)?.breakdown as Record<string, number> | undefined;
+	const projectedFinal = (rec: SolverRecommendation) => {
+		const v = detailsOf(rec)?.projected_final_score;
+		return typeof v === 'number' ? v : null;
+	};
+	const pHit = (rec: SolverRecommendation, key: 'p100' | 'p110' | 'p120') => {
+		const v = detailsOf(rec)?.[key];
+		return typeof v === 'number' ? Math.round(v * 100) : null;
+	};
+	const rolloutSamples = (rec: SolverRecommendation) => {
+		const v = detailsOf(rec)?.rollout_samples;
+		return typeof v === 'number' ? v : null;
+	};
 
 	type BreakdownLine = { label: string; value: number; isNegative: boolean; tooltip?: string };
 	let expandedBreakdownRanks = new Set<number>();
@@ -389,6 +401,22 @@
 									<span>{part}</span>
 								{/if}
 							{/each}
+						</div>
+					{/if}
+					{#if projectedFinal(rec) !== null}
+						<div class="rec-forecast">
+							<span class="label">Forecast:</span>
+							<span>Expected final: {projectedFinal(rec)?.toFixed(1)}</span>
+							<span class="reason-sep"> · </span>
+							<span>100+: {pHit(rec, 'p100')}%</span>
+							<span class="reason-sep"> · </span>
+							<span>110+: {pHit(rec, 'p110')}%</span>
+							<span class="reason-sep"> · </span>
+							<span>120+: {pHit(rec, 'p120')}%</span>
+							{#if rolloutSamples(rec) !== null}
+								<span class="reason-sep"> · </span>
+								<span>{rolloutSamples(rec)} sims</span>
+							{/if}
 						</div>
 					{/if}
 					{#if hasWhy(rec)}
@@ -717,6 +745,13 @@
 	}
 
 	.rec-why {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		margin-top: 4px;
+		padding-left: 32px;
+	}
+
+	.rec-forecast {
 		font-size: 0.7rem;
 		color: var(--text-muted);
 		margin-top: 4px;

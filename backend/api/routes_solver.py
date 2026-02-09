@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from backend.models.enums import FoodType, ActionType, Habitat
+from backend.models.player import Player
 from backend.config import EGG_COST_BY_COLUMN, get_action_column
 from backend.data.registries import get_bird_registry
 from backend.solver.heuristics import (
@@ -17,6 +18,7 @@ from backend.solver.max_score import calculate_max_score
 from backend.solver.analysis import analyze_game
 from backend.solver.lookahead import lookahead_search
 from backend.solver.move_generator import Move
+from backend.solver.simulation import deep_copy_game, execute_move_on_sim, simulate_playout
 
 router = APIRouter()
 
@@ -88,6 +90,28 @@ class AnalysisResponse(BaseModel):
     deviations: list[dict] = Field(default_factory=list)
 
 
+def _project_final_scores(
+    game,
+    player_name: str,
+    move: Move,
+    simulations: int,
+) -> list[int]:
+    """Estimate final score distribution for a move via rollout playouts."""
+    scores: list[int] = []
+    for _ in range(max(1, simulations)):
+        sim = deep_copy_game(game)
+        sim_player = sim.get_player(player_name)
+        if not sim_player:
+            continue
+        success = execute_move_on_sim(sim, sim_player, move)
+        if success:
+            sim.advance_turn()
+        result = simulate_playout(sim, max_turns=260)
+        if player_name in result:
+            scores.append(result[player_name])
+    return scores
+
+
 @router.post("/{game_id}/solve/heuristic", response_model=HeuristicResponse)
 async def solve_heuristic(game_id: str, player_idx: int | None = None) -> HeuristicResponse:
     """Quick move ranking using static evaluation.
@@ -121,6 +145,49 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
     weights = dynamic_weights(game)
     heuristic_ranked = rank_moves(game, player=player, weights=weights)
     reasoning_map = {rm.move.description: rm.reasoning for rm in heuristic_ranked}
+
+    # End-score mode: rerank top candidates by projected final game score.
+    actions_left = game.total_actions_remaining
+    if actions_left >= 50:
+        sims_per_move = 4
+    elif actions_left >= 30:
+        sims_per_move = 6
+    elif actions_left >= 16:
+        sims_per_move = 8
+    else:
+        sims_per_move = 12
+
+    projections: dict[str, dict[str, float]] = {}
+    if la_results:
+        eval_count = min(5, len(la_results))
+        projected = []
+        for la in la_results[:eval_count]:
+            rollout_scores = _project_final_scores(
+                game, player.name, la.move, simulations=sims_per_move
+            )
+            if rollout_scores:
+                avg = sum(rollout_scores) / len(rollout_scores)
+                projections[la.move.description] = {
+                    "expected_final_score": round(avg, 2),
+                    "p100": round(sum(1 for s in rollout_scores if s >= 100) / len(rollout_scores), 3),
+                    "p110": round(sum(1 for s in rollout_scores if s >= 110) / len(rollout_scores), 3),
+                    "p120": round(sum(1 for s in rollout_scores if s >= 120) / len(rollout_scores), 3),
+                    "rollout_samples": float(len(rollout_scores)),
+                }
+                projected.append((avg, la))
+            else:
+                projected.append((la.score, la))
+
+        # Keep unevaluated candidates but prioritize projected final score.
+        projected.sort(key=lambda x: -x[0])
+        ordered = [la for _, la in projected]
+        if len(la_results) > eval_count:
+            ordered.extend(la_results[eval_count:])
+        for i, la in enumerate(ordered):
+            la.rank = i + 1
+            if la.move.description in projections:
+                la.score = projections[la.move.description]["expected_final_score"]
+        la_results = ordered
 
     elapsed_ms = (time.perf_counter() - start) * 1000
 
@@ -186,6 +253,14 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
         details["deck_draws"] = la.move.deck_draws
         details["bonus_count"] = la.move.bonus_count
         details["reset_bonus"] = la.move.reset_bonus
+        details["score_mode"] = "projected_final_score"
+        details["score_target"] = "maximize_end_game_points"
+        if la.move.description in projections:
+            details["projected_final_score"] = projections[la.move.description]["expected_final_score"]
+            details["p100"] = projections[la.move.description]["p100"]
+            details["p110"] = projections[la.move.description]["p110"]
+            details["p120"] = projections[la.move.description]["p120"]
+            details["rollout_samples"] = int(projections[la.move.description]["rollout_samples"])
         if la.best_sequence and len(la.best_sequence) > 1:
             details["best_sequence"] = la.best_sequence
             details["plan"] = la.best_sequence[:3]
