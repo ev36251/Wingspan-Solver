@@ -846,6 +846,11 @@ def _evaluate_play_bird(game: GameState, player: Player, move: Move,
                         value += min(unlock_bonus, 3.0)
                         break
 
+    # Large hand urgency: with many birds in hand, playing them is increasingly important
+    # since unplayed birds at game end score 0 points
+    if player.hand_size >= 8:
+        value += (player.hand_size - 6) * 0.3  # +0.6 at 8, +3.0 at 16
+
     return value
 
 
@@ -1157,11 +1162,25 @@ def _evaluate_draw_cards(game: GameState, player: Player, move: Move,
         )
         value += power.estimate_value(ctx)
 
-    # If hand is empty, drawing cards is more urgent
+    # Hand size: urgency when empty, penalty when bloated
     if player.hand_size == 0:
         value += 2.0
     elif player.hand_size <= 2:
         value += 0.5
+    elif player.hand_size >= 8:
+        # Diminishing returns: you can't play them all
+        # Remaining empty slots on the board is the real capacity
+        empty_slots = sum(
+            1 for row in player.board.all_rows()
+            for slot in row.slots if not slot.bird
+        )
+        excess = player.hand_size - empty_slots
+        if excess > 0:
+            # More birds in hand than board slots — drawing more is waste
+            value -= excess * 1.5
+        elif player.hand_size > player.action_cubes_remaining * 2:
+            # More birds than you could possibly play with remaining cubes
+            value -= (player.hand_size - 6) * 0.5
 
     # Late game penalty: drawing cards with few actions left is wasteful
     if game.current_round >= 4 and player.action_cubes_remaining <= 2:
@@ -1389,6 +1408,8 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
             reasons.append(f"high VP ({bird.victory_points})")
         elif bird.victory_points > 0:
             reasons.append(f"{bird.victory_points}VP")
+        if player.hand_size >= 8:
+            reasons.append(f"large hand ({player.hand_size} birds) — play birds now")
         # Column egg cost info
         row = player.board.get_row(move.habitat)
         slot_idx = row.next_empty_slot()
@@ -1534,6 +1555,15 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
             reasons.append("empty hand — need cards")
         elif player.hand_size <= 2:
             reasons.append("hand is low")
+        elif player.hand_size >= 8:
+            empty_slots = sum(
+                1 for row in player.board.all_rows()
+                for slot in row.slots if not slot.bird
+            )
+            if player.hand_size > empty_slots:
+                reasons.insert(0, f"WARNING: {player.hand_size} birds in hand but only {empty_slots} board slots — play birds instead")
+            else:
+                reasons.insert(0, f"WARNING: {player.hand_size} birds in hand — consider playing birds instead")
         for idx in move.tray_indices:
             if idx < len(game.card_tray.face_up):
                 tray_bird = game.card_tray.face_up[idx]
