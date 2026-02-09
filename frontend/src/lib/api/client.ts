@@ -112,7 +112,10 @@ export async function drawCards(gameId: string, trayIndices: number[], deckCount
 export async function analyzeSetup(
 	birdNames: string[],
 	bonusCardNames: string[],
-	roundGoals: string[] = []
+	roundGoals: string[] = [],
+	trayCards: string[] = [],
+	turnOrder: number = 1,
+	numPlayers: number = 2
 ) {
 	return request<{
 		recommendations: import('./types').SetupRecommendation[];
@@ -122,7 +125,10 @@ export async function analyzeSetup(
 		body: JSON.stringify({
 			bird_names: birdNames,
 			bonus_card_names: bonusCardNames,
-			round_goals: roundGoals
+			round_goals: roundGoals,
+			tray_cards: trayCards,
+			turn_order: turnOrder,
+			num_players: numPlayers
 		})
 	});
 }

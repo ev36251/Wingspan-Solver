@@ -419,6 +419,9 @@ def _evaluate_option(
     food_kept: tuple[FoodType, ...],
     bonus_card: BonusCard,
     round_goals: list[Goal],
+    tray_birds: list[Bird],
+    turn_order: int,
+    num_players: int,
 ) -> float:
     """Score a single draft option."""
     score = 0.0
@@ -500,6 +503,29 @@ def _evaluate_option(
     remaining_types = sum(1 for v in remaining_food.values() if v > 0)
     score += remaining_types * 0.3
 
+    # 11. Tray access value (early pick advantage)
+    if tray_birds:
+        def _tray_value(b: Bird) -> float:
+            val = b.victory_points * 0.8
+            val += min(b.egg_limit, 3) * 0.3
+            if b.color == PowerColor.BROWN:
+                val += 1.0
+            if b.color == PowerColor.WHITE and "play" in b.power_text.lower() and "bird" in b.power_text.lower():
+                val += 1.0
+            for goal in round_goals:
+                val += _estimate_goal_contribution(b, goal) * 0.6
+            # Affordability using starting food
+            if _can_afford_bird(b, food_dict):
+                val += 0.8
+            return val
+
+        best_tray = max(_tray_value(b) for b in tray_birds)
+        position_factor = max(0.2, 1.0 - 0.2 * max(0, turn_order - 1))
+        # More players -> lower chance the card survives to you
+        if num_players > 2:
+            position_factor *= max(0.5, 1.0 - (turn_order - 1) / max(1, num_players - 1) * 0.3)
+        score += best_tray * position_factor
+
     return score
 
 
@@ -508,6 +534,8 @@ def _generate_reasoning(
     food_kept: tuple[FoodType, ...],
     bonus_card: BonusCard,
     round_goals: list[Goal],
+    tray_birds: list[Bird],
+    turn_order: int,
 ) -> str:
     """Generate human-readable reasoning for a recommendation."""
     parts = []
@@ -553,6 +581,10 @@ def _generate_reasoning(
     if goal_hits:
         parts.append(f"helps {goal_hits}/{len(round_goals)} goals")
 
+    if tray_birds:
+        best = max(tray_birds, key=lambda b: b.victory_points)
+        parts.append(f"tray access: {best.name} (turn {turn_order})")
+
     return "; ".join(parts)
 
 
@@ -561,6 +593,9 @@ def analyze_setup(
     bonus_cards: list[BonusCard],
     round_goals: list[Goal],
     top_n: int = 10,
+    tray_birds: list[Bird] | None = None,
+    turn_order: int = 1,
+    num_players: int = 2,
 ) -> list[SetupRecommendation]:
     """Evaluate all starting draft combinations and return the best options.
 
@@ -574,6 +609,7 @@ def analyze_setup(
         Top N recommendations sorted by score (best first)
     """
     options: list[tuple[float, list[Bird], tuple[FoodType, ...], BonusCard]] = []
+    tray_birds = tray_birds or []
 
     for num_birds in range(len(birds) + 1):
         num_food = 5 - num_birds
@@ -585,6 +621,7 @@ def analyze_setup(
                 for bonus in bonus_cards:
                     score = _evaluate_option(
                         list(bird_combo), food_combo, bonus, round_goals,
+                        tray_birds, turn_order, num_players,
                     )
                     options.append((score, list(bird_combo), food_combo, bonus))
 
@@ -594,7 +631,10 @@ def analyze_setup(
     # Build recommendations
     results = []
     for i, (score, kept_birds, kept_food, bonus) in enumerate(options[:top_n]):
-        reasoning = _generate_reasoning(kept_birds, kept_food, bonus, round_goals)
+        reasoning = _generate_reasoning(
+            kept_birds, kept_food, bonus, round_goals,
+            tray_birds, turn_order,
+        )
         results.append(SetupRecommendation(
             rank=i + 1,
             score=round(score, 1),

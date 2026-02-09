@@ -13,6 +13,9 @@ class SetupAnalyzeRequest(BaseModel):
     bird_names: list[str] = Field(..., min_length=1, max_length=5)
     bonus_card_names: list[str] = Field(..., min_length=1, max_length=2)
     round_goals: list[str] = Field(default_factory=list)
+    tray_cards: list[str] = Field(default_factory=list, max_length=3)
+    turn_order: int = Field(default=1, ge=1, le=5)
+    num_players: int = Field(default=2, ge=2, le=5)
 
 
 class SetupRecommendationSchema(BaseModel):
@@ -65,7 +68,19 @@ async def analyze_draft(req: SetupAnalyzeRequest) -> SetupAnalyzeResponse:
             raise HTTPException(400, f"Goal not found: '{desc}'")
         round_goals.append(found)
 
-    recommendations = analyze_setup(birds, bonus_cards, round_goals)
+    tray_birds = []
+    for name in req.tray_cards:
+        bird = bird_reg.get(name)
+        if not bird:
+            raise HTTPException(400, f"Bird not found: '{name}'")
+        tray_birds.append(bird)
+
+    recommendations = analyze_setup(
+        birds, bonus_cards, round_goals,
+        tray_birds=tray_birds,
+        turn_order=req.turn_order,
+        num_players=req.num_players,
+    )
 
     # Calculate total combinations
     from math import comb

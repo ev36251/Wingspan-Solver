@@ -16,6 +16,8 @@
 	let selectedBonusCards: BonusCard[] = [];
 	let goalSelections: string[] = ['No Goal', 'No Goal', 'No Goal', 'No Goal'];
 	let playerCount = 2;
+	let turnOrder = 1;
+	let trayBirds: Bird[] = [];
 
 	// Custom setup (manual selection)
 	let customKeepBirds: Set<string> = new Set();
@@ -51,6 +53,9 @@
 	$: if (playerNames.length >= 2) {
 		playerCount = playerNames.length;
 	}
+	$: if (turnOrder > playerCount) {
+		turnOrder = playerCount;
+	}
 
 	function handleBirdSelect(e: CustomEvent<Bird>) {
 		if (selectedBirds.length >= 5) return;
@@ -66,6 +71,16 @@
 			customKeepBirds.delete(removed.name);
 			customKeepBirds = new Set(customKeepBirds);
 		}
+	}
+
+	function addTrayBird(e: CustomEvent<Bird>) {
+		if (trayBirds.length >= 3) return;
+		if (trayBirds.find(b => b.name === e.detail.name)) return;
+		trayBirds = [...trayBirds, e.detail];
+	}
+
+	function removeTrayBird(i: number) {
+		trayBirds = trayBirds.filter((_, idx) => idx !== i);
 	}
 
 	$: filteredBonus = bonusSearchQuery.length > 0
@@ -107,7 +122,10 @@
 			const data = await analyzeSetup(
 				selectedBirds.map(b => b.name),
 				selectedBonusCards.map(bc => bc.name),
-				roundGoals
+				roundGoals,
+				trayBirds.map(b => b.name),
+				turnOrder,
+				playerCount
 			);
 			recommendations = data.recommendations;
 			totalCombinations = data.total_combinations;
@@ -154,6 +172,8 @@
 		dispatch('applySetup', {
 			player_count: Number(playerCount),
 			player_names: playerNames,
+			turn_order: turnOrder,
+			tray_cards: trayBirds.map(b => b.name),
 			round_goals: goalSelections.map(g => g || 'No Goal'),
 			birds_to_keep: rec.birds_to_keep,
 			food_to_keep: rec.food_to_keep,
@@ -178,6 +198,8 @@
 		dispatch('applySetup', {
 			player_count: Number(playerCount),
 			player_names: playerNames,
+			turn_order: turnOrder,
+			tray_cards: trayBirds.map(b => b.name),
 			round_goals: goalSelections.map(g => g || 'No Goal'),
 			birds_to_keep: birds,
 			food_to_keep: food,
@@ -198,6 +220,16 @@
 	<div class="section">
 		<h3>Players</h3>
 		<div class="player-count">Players: {playerCount}</div>
+	</div>
+
+	<!-- Turn order -->
+	<div class="section">
+		<h3>Your Turn Order</h3>
+		<select bind:value={turnOrder}>
+			{#each Array(playerCount) as _, i}
+				<option value={i + 1}>Turn {i + 1}</option>
+			{/each}
+		</select>
 	</div>
 
 	<!-- Bird Selection -->
@@ -290,6 +322,25 @@
 				</div>
 			{/each}
 		</div>
+	</div>
+
+	<!-- Tray Cards -->
+	<div class="section">
+		<h3>Face-up Tray Cards ({trayBirds.length}/3)</h3>
+		<BirdSearch placeholder="Add tray bird..." on:select={addTrayBird} disabled={trayBirds.length >= 3} />
+		{#if trayBirds.length > 0}
+			<div class="selected-list">
+				{#each trayBirds as bird, i}
+					<div class="selected-item">
+						<div class="item-info">
+							<span class="item-name">{bird.name}</span>
+							<span class="item-meta">{bird.victory_points}VP</span>
+						</div>
+						<button class="remove" on:click={() => removeTrayBird(i)}>x</button>
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</div>
 
 	<!-- Analyze Button -->

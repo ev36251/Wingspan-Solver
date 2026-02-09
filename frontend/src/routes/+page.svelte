@@ -88,6 +88,8 @@
 	async function applySetup(e: CustomEvent<{
 		player_count: number;
 		player_names?: string[];
+		turn_order?: number;
+		tray_cards?: string[];
 		round_goals: string[];
 		birds_to_keep: string[];
 		food_to_keep: Record<string, number>;
@@ -128,10 +130,26 @@
 				}
 			}
 
+			// Apply tray cards if provided
+			if (e.detail.tray_cards && e.detail.tray_cards.length > 0) {
+				state.card_tray.face_up = [...e.detail.tray_cards].slice(0, 3);
+			}
+
+			// Set active/current player based on turn order
+			if (e.detail.turn_order) {
+				const idx = Math.max(0, Math.min(state.players.length - 1, e.detail.turn_order - 1));
+				state.current_player_idx = idx;
+				activePlayerIdx = idx;
+			}
+
 			state = state;
 			await updateGameState(gameId, state);
 			showNewGame = false;
-			activePlayerIdx = 0;
+			if (e.detail.turn_order) {
+				activePlayerIdx = Math.max(0, Math.min(state.players.length - 1, e.detail.turn_order - 1));
+			} else {
+				activePlayerIdx = 0;
+			}
 			initPlayerOrder();
 			syncGoalSelections();
 		} catch (err) {
