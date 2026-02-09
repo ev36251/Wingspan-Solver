@@ -48,9 +48,7 @@ def generate_play_bird_moves(game: GameState, player: Player) -> list[Move]:
             legal, _ = can_play_bird(player, bird, habitat, game)
             if not legal:
                 continue
-            payment_options = find_food_payment_options(player, bird.food_cost)
-            if not payment_options:
-                # Free bird (0 cost)
+            if bird.food_cost.total == 0:
                 moves.append(Move(
                     action_type=ActionType.PLAY_BIRD,
                     description=f"Play {bird.name} in {habitat.value}",
@@ -58,9 +56,16 @@ def generate_play_bird_moves(game: GameState, player: Player) -> list[Move]:
                     habitat=habitat,
                     food_payment={},
                 ))
+                continue
+            payment_options = find_food_payment_options(player, bird.food_cost)
+            if not payment_options:
+                # Cannot afford this bird
+                continue
             else:
                 # One move per payment option (solver picks the best)
                 for payment in payment_options:
+                    if not payment:
+                        continue
                     pay_desc = ", ".join(
                         f"{c} {ft.value}" for ft, c in payment.items()
                     )

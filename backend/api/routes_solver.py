@@ -16,6 +16,7 @@ from backend.solver.monte_carlo import monte_carlo_evaluate, MCConfig
 from backend.solver.max_score import calculate_max_score
 from backend.solver.analysis import analyze_game
 from backend.solver.lookahead import lookahead_search
+from backend.solver.move_generator import Move
 
 router = APIRouter()
 
@@ -126,6 +127,32 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
     bird_reg = get_bird_registry()
 
     recommendations = []
+    def _activation_player_after_move(base_player: Player, move: Move, column_bonus) -> Player:
+        """Prepare a player snapshot for activation advice after the move's gains."""
+        advice_player = copy.deepcopy(base_player)
+        advice_player = _player_after_bonus(advice_player, move, column_bonus)
+
+        if move.action_type == ActionType.GAIN_FOOD:
+            for ft in move.food_choices:
+                advice_player.food_supply.add(ft)
+        elif move.action_type == ActionType.DRAW_CARDS:
+            gained = move.deck_draws + len(move.tray_indices)
+            if gained > 0:
+                advice_player.unknown_hand_count += gained
+        elif move.action_type == ActionType.LAY_EGGS:
+            for (hab, slot_idx), count in move.egg_distribution.items():
+                row = advice_player.board.get_row(hab)
+                if slot_idx < 0 or slot_idx >= len(row.slots):
+                    continue
+                slot = row.slots[slot_idx]
+                if slot.bird is None:
+                    continue
+                for _ in range(count):
+                    if slot.can_hold_more_eggs():
+                        slot.eggs += 1
+
+        return advice_player
+
     for la in la_results:
         details = {}
         if la.move.bird_name:
@@ -178,7 +205,7 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
                 else:
                     hab = Habitat.WETLAND
             column = get_action_column(game.board_type, hab, player.board.get_row(hab).bird_count)
-            advice_player = _player_after_bonus(player, la.move, column.bonus)
+            advice_player = _activation_player_after_move(player, la.move, column.bonus)
             advice = _activation_advice(game, advice_player, hab)
             if advice:
                 details["activation_advice"] = advice
