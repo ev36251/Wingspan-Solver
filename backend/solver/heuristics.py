@@ -1535,7 +1535,7 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
         # Cached food that could help pay
         for row in player.board.all_rows():
             for slot in row.slots:
-                if not slot.bird or slot.total_cached_food() == 0:
+                if not slot.bird or slot.total_cached_food == 0:
                     continue
                 for ft, cnt in slot.cached_food.items():
                     if cnt > 0 and ft in move.food_payment:
@@ -1567,8 +1567,6 @@ def _generate_move_reasoning(game: GameState, player: Player, move: Move) -> str
         if move.food_choices and FoodType.NECTAR in move.food_choices:
             if player.action_cubes_remaining <= 1:
                 reasons.append("WARNING: nectar clears at end of round — avoid gaining nectar on last turn")
-            else:
-                reasons.append("gains nectar for majority")
         if move.bonus_count > 0 and column.bonus:
             payment = _recommend_bonus_payment(player, column.bonus.cost_options, game)
             reasons.append(f"+1 food ({payment})" if payment else "+1 food")

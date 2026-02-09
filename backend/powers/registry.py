@@ -84,6 +84,22 @@ _MANUAL_OVERRIDES: dict[str, PowerEffect] = {
     # Brown: cache if neighbor has invertebrate
     "South Island Robin": ConditionalCacheFromNeighbor(
         direction="right", food_type=FoodType.INVERTEBRATE),
+    # Brown: discard 1 card from hand to play another bird in forest
+    "Goldcrest": PlayAdditionalBird(habitat_filter=Habitat.FOREST),
+    # Brown: discard 1 food to play another bird in wetland
+    "Common Moorhen": PlayAdditionalBird(habitat_filter=Habitat.WETLAND),
+    # Brown: discard 1 egg to play another bird in forest
+    "Short-Toed Treecreeper": PlayAdditionalBird(habitat_filter=Habitat.FOREST),
+    # Yellow: play a bird at normal cost (triggers when-played powers)
+    "Gould's Finch": PlayAdditionalBird(),
+    # Yellow: play a bird, ignore 1 egg cost
+    "Grey-Headed Mannikin": PlayAdditionalBird(egg_discount=1),
+    # Yellow: discard 2 eggs to play 1 bird in grassland
+    "Magpie-Lark": PlayAdditionalBird(habitat_filter=Habitat.GRASSLAND),
+    # Teal: conditional — if used all 4 action types, play another bird
+    "Moltoni's Warbler": PlayAdditionalBird(),
+    "White Wagtail": PlayAdditionalBird(),
+    "Yellowhammer": PlayAdditionalBird(),
     # Brown: copy a brown power from neighbor's habitat
     "Superb Lyrebird": CopyNeighborBrownPower(
         direction="right", target_habitat=Habitat.FOREST),
@@ -264,7 +280,8 @@ def parse_power(bird: Bird) -> PowerEffect:
             return CacheFoodFromFeeder(food_type=ft)
 
     # --- Lay eggs (various patterns) ---
-    if "lay" in t and "egg" in t:
+    # Use word boundary to avoid matching "lay" inside "play"
+    if re.search(r'\blay\b', t) and "egg" in t:
         count = _extract_count(text, "lay")
 
         # "each bird in this bird's row"

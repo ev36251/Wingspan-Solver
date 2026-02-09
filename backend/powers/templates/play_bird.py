@@ -33,6 +33,21 @@ class PlayAdditionalBird(PowerEffect):
                         f"{' (-' + str(self.food_discount) + ' food)' if self.food_discount else ''}"
         )
 
+    def describe_activation(self, ctx: PowerContext) -> str:
+        parts = ["play another bird"]
+        if self.habitat_filter:
+            parts[0] += f" in {self.habitat_filter.value}"
+        discounts = []
+        if self.food_discount:
+            discounts.append(f"-{self.food_discount} food cost")
+        if self.egg_discount:
+            discounts.append(f"-{self.egg_discount} egg cost")
+        if discounts:
+            parts.append(f"({', '.join(discounts)})")
+        else:
+            parts.append("(pay normal cost)")
+        return " ".join(parts)
+
     def estimate_value(self, ctx: PowerContext) -> float:
         # Playing an extra bird is very valuable
         base = 3.0
