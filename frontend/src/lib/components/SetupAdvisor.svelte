@@ -12,7 +12,13 @@
 	let bonusCards: BonusCard[] = [];
 	let allGoals: Goal[] = [];
 	let selectedBonusCards: BonusCard[] = [];
-	let selectedGoals: Goal[] = [];
+	let goalSelections: string[] = ['No Goal', 'No Goal', 'No Goal', 'No Goal'];
+	let playerCount = 2;
+
+	// Custom setup (manual selection)
+	let customKeepBirds: Set<string> = new Set();
+	let customKeepFood: Set<string> = new Set();
+	let customBonusCard = '';
 
 	// Results
 	let recommendations: SetupRecommendation[] = [];
@@ -21,11 +27,9 @@
 	let error = '';
 	let hasAnalyzed = false;
 
-	// Search state for bonus cards and goals
+	// Search state for bonus cards
 	let bonusSearchQuery = '';
-	let goalSearchQuery = '';
 	let showBonusDropdown = false;
-	let showGoalDropdown = false;
 
 	// Load bonus cards and goals on mount
 	async function loadData() {
@@ -49,8 +53,13 @@
 	}
 
 	function removeBird(i: number) {
+		const removed = selectedBirds[i];
 		selectedBirds = selectedBirds.filter((_, idx) => idx !== i);
 		hasAnalyzed = false;
+		if (removed) {
+			customKeepBirds.delete(removed.name);
+			customKeepBirds = new Set(customKeepBirds);
+		}
 	}
 
 	$: filteredBonus = bonusSearchQuery.length > 0
@@ -59,12 +68,6 @@
 			bc.condition_text.toLowerCase().includes(bonusSearchQuery.toLowerCase())
 		)
 		: bonusCards;
-
-	$: filteredGoals = goalSearchQuery.length > 0
-		? allGoals.filter(g =>
-			g.description.toLowerCase().includes(goalSearchQuery.toLowerCase())
-		)
-		: allGoals;
 
 	function selectBonusCard(bc: BonusCard) {
 		if (selectedBonusCards.length >= 2) return;
@@ -80,17 +83,9 @@
 		hasAnalyzed = false;
 	}
 
-	function selectGoal(g: Goal) {
-		if (selectedGoals.length >= 4) return;
-		if (selectedGoals.find(sg => sg.description === g.description)) return;
-		selectedGoals = [...selectedGoals, g];
-		goalSearchQuery = '';
-		showGoalDropdown = false;
-		hasAnalyzed = false;
-	}
-
-	function removeGoal(i: number) {
-		selectedGoals = selectedGoals.filter((_, idx) => idx !== i);
+	function setGoal(roundIdx: number, value: string) {
+		goalSelections[roundIdx] = value;
+		goalSelections = [...goalSelections];
 		hasAnalyzed = false;
 	}
 
@@ -102,10 +97,11 @@
 		loading = true;
 		error = '';
 		try {
+			const roundGoals = goalSelections.map(g => g || 'No Goal');
 			const data = await analyzeSetup(
 				selectedBirds.map(b => b.name),
 				selectedBonusCards.map(bc => bc.name),
-				selectedGoals.map(g => g.description)
+				roundGoals
 			);
 			recommendations = data.recommendations;
 			totalCombinations = data.total_combinations;
@@ -129,6 +125,57 @@
 			.map(([type, count]) => `${FOOD_ICONS[type] || type} x${count}`)
 			.join('  ');
 	}
+
+	function toggleCustomBird(name: string) {
+		if (customKeepBirds.has(name)) customKeepBirds.delete(name);
+		else customKeepBirds.add(name);
+		customKeepBirds = new Set(customKeepBirds);
+	}
+
+	function toggleCustomFood(type: string) {
+		if (customKeepFood.has(type)) customKeepFood.delete(type);
+		else customKeepFood.add(type);
+		customKeepFood = new Set(customKeepFood);
+	}
+
+	function buildCustomFoodToKeep(): Record<string, number> {
+		const food: Record<string, number> = {};
+		for (const f of customKeepFood) food[f] = (food[f] || 0) + 1;
+		return food;
+	}
+
+	function applyRecommendation(rec: SetupRecommendation) {
+		dispatch('applySetup', {
+			player_count: Number(playerCount),
+			round_goals: goalSelections.map(g => g || 'No Goal'),
+			birds_to_keep: rec.birds_to_keep,
+			food_to_keep: rec.food_to_keep,
+			bonus_card: rec.bonus_card
+		});
+	}
+
+	function applyCustom() {
+		const birds = Array.from(customKeepBirds);
+		const food = buildCustomFoodToKeep();
+		const requiredFood = Math.max(0, 5 - birds.length);
+		const foodCount = Object.values(food).reduce((a, b) => a + b, 0);
+		if (foodCount !== requiredFood) {
+			error = `Custom setup needs ${requiredFood} food (you selected ${foodCount}).`;
+			return;
+		}
+		const bonus = customBonusCard || selectedBonusCards[0]?.name || '';
+		if (!bonus) {
+			error = 'Select a bonus card to keep.';
+			return;
+		}
+		dispatch('applySetup', {
+			player_count: Number(playerCount),
+			round_goals: goalSelections.map(g => g || 'No Goal'),
+			birds_to_keep: birds,
+			food_to_keep: food,
+			bonus_card: bonus
+		});
+	}
 </script>
 
 <div class="setup-advisor card">
@@ -138,6 +185,17 @@
 	{#if error}
 		<div class="error">{error}</div>
 	{/if}
+
+	<!-- Player Count -->
+	<div class="section">
+		<h3>Players</h3>
+		<select bind:value={playerCount}>
+			<option value="2">2 players</option>
+			<option value="3">3 players</option>
+			<option value="4">4 players</option>
+			<option value="5">5 players</option>
+		</select>
+	</div>
 
 	<!-- Bird Selection -->
 	<div class="section">
@@ -210,45 +268,25 @@
 
 	<!-- Round Goals (Optional) -->
 	<div class="section">
-		<h3>Round Goals ({selectedGoals.length}/4) <span class="optional">optional</span></h3>
-		<div class="search-container">
-			<input
-				type="text"
-				bind:value={goalSearchQuery}
-				on:focus={() => showGoalDropdown = true}
-				on:blur={() => setTimeout(() => showGoalDropdown = false, 200)}
-				placeholder="Search round goals..."
-				disabled={selectedGoals.length >= 4}
-			/>
-			{#if showGoalDropdown && filteredGoals.length > 0}
-				<ul class="dropdown">
-					{#each filteredGoals.slice(0, 15) as g}
-						<li>
-							<button
-								class="dropdown-item"
-								type="button"
-								on:mousedown|preventDefault={() => selectGoal(g)}
-							>
-								<span class="item-name">{g.description}</span>
-								<span class="item-desc">{g.game_set}</span>
-							</button>
-						</li>
-					{/each}
-				</ul>
-			{/if}
+		<h3>Round Goals (4 rounds)</h3>
+		<div class="goal-grid">
+			{#each [0, 1, 2, 3] as idx}
+				<div class="goal-row">
+					<label for={`goal-round-${idx}`}>Round {idx + 1}</label>
+					<select
+						id={`goal-round-${idx}`}
+						class="goal-select"
+						value={goalSelections[idx]}
+						on:change={(e) => setGoal(idx, e.currentTarget.value)}
+					>
+						<option value="No Goal">No Goal (+1 action later)</option>
+						{#each allGoals as g}
+							<option value={g.description}>{g.description}</option>
+						{/each}
+					</select>
+				</div>
+			{/each}
 		</div>
-		{#if selectedGoals.length > 0}
-			<div class="selected-list">
-				{#each selectedGoals as goal, i}
-					<div class="selected-item">
-						<div class="item-info">
-							<span class="item-name">{goal.description}</span>
-						</div>
-						<button class="remove" on:click={() => removeGoal(i)}>x</button>
-					</div>
-				{/each}
-			</div>
-		{/if}
 	</div>
 
 	<!-- Analyze Button -->
@@ -296,9 +334,56 @@
 						</div>
 
 						<div class="rec-reasoning">{rec.reasoning}</div>
+						<button class="apply-btn" on:click={() => applyRecommendation(rec)}>
+							Use This Setup
+						</button>
 					</div>
 				</div>
 			{/each}
+		</div>
+	{/if}
+
+	<!-- Manual selection -->
+	{#if selectedBirds.length > 0 && selectedBonusCards.length > 0}
+		<div class="section">
+			<h3>Custom Setup</h3>
+			<div class="custom-grid">
+				<div>
+					<div class="custom-label">Keep birds</div>
+					{#each selectedBirds as bird}
+						<label class="custom-option">
+							<input type="checkbox" checked={customKeepBirds.has(bird.name)}
+								on:change={() => toggleCustomBird(bird.name)} />
+							{bird.name}
+						</label>
+					{/each}
+				</div>
+				<div>
+					<div class="custom-label">Keep food</div>
+					{#each ['invertebrate','seed','fish','fruit','rodent'] as ft}
+						<label class="custom-option">
+							<input type="checkbox" checked={customKeepFood.has(ft)}
+								on:change={() => toggleCustomFood(ft)} />
+							{FOOD_ICONS[ft] || ft} {ft}
+						</label>
+					{/each}
+					<div class="custom-note">
+						Keep {Math.max(0, 5 - customKeepBirds.size)} food total.
+					</div>
+				</div>
+				<div>
+					<div class="custom-label">Bonus card</div>
+					<select bind:value={customBonusCard}>
+						<option value="">Select bonus card</option>
+						{#each selectedBonusCards as bc}
+							<option value={bc.name}>{bc.name}</option>
+						{/each}
+					</select>
+				</div>
+			</div>
+			<button class="primary apply-custom" on:click={applyCustom}>
+				Apply Custom Setup
+			</button>
 		</div>
 	{/if}
 </div>
@@ -336,12 +421,6 @@
 		font-size: 0.95rem;
 		margin-bottom: 8px;
 		color: var(--text);
-	}
-
-	.optional {
-		font-size: 0.75rem;
-		color: var(--text-muted);
-		font-weight: normal;
 	}
 
 	.search-container {
@@ -387,6 +466,54 @@
 		display: block;
 		font-size: 0.75rem;
 		color: var(--text-muted);
+	}
+
+	.goal-grid {
+		display: grid;
+		gap: 8px;
+	}
+
+	.goal-row {
+		display: grid;
+		grid-template-columns: 80px 1fr;
+		gap: 8px;
+		align-items: center;
+	}
+
+	.goal-select {
+		width: 100%;
+	}
+
+	.apply-btn {
+		margin-top: 8px;
+	}
+
+	.custom-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		gap: 12px;
+		margin-top: 8px;
+	}
+
+	.custom-label {
+		font-weight: 600;
+		margin-bottom: 6px;
+	}
+
+	.custom-option {
+		display: block;
+		font-size: 0.85rem;
+		margin-bottom: 4px;
+	}
+
+	.custom-note {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		margin-top: 6px;
+	}
+
+	.apply-custom {
+		margin-top: 10px;
 	}
 
 	.selected-list {

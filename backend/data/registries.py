@@ -4,6 +4,7 @@ Load once at startup, then provide fast lookup by name, set, habitat, etc.
 """
 
 from pathlib import Path
+import unicodedata
 
 from backend.models.bird import Bird
 from backend.models.bonus_card import BonusCard
@@ -18,6 +19,7 @@ class BirdRegistry:
     def __init__(self, birds: list[Bird]):
         self._birds = birds
         self._by_name: dict[str, Bird] = {}
+        self._by_name_norm: dict[str, Bird] = {}
         self._by_set: dict[GameSet, list[Bird]] = {}
         self._by_habitat: dict[Habitat, list[Bird]] = {}
         self._by_color: dict[PowerColor, list[Bird]] = {}
@@ -25,6 +27,7 @@ class BirdRegistry:
 
         for bird in birds:
             self._by_name[bird.name.lower()] = bird
+            self._by_name_norm[self._normalize(bird.name)] = bird
 
             self._by_set.setdefault(bird.game_set, []).append(bird)
 
@@ -39,12 +42,32 @@ class BirdRegistry:
         return self._birds
 
     def get(self, name: str) -> Bird | None:
-        return self._by_name.get(name.lower())
+        key = name.lower()
+        bird = self._by_name.get(key)
+        if bird:
+            return bird
+        return self._by_name_norm.get(self._normalize(name))
+
+    @staticmethod
+    def _normalize(text: str) -> str:
+        """Normalize text for diacritic-insensitive matching."""
+        normalized = unicodedata.normalize("NFD", text)
+        stripped = "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn")
+        return stripped.lower()
 
     def search(self, query: str) -> list[Bird]:
         """Search birds by partial name match."""
         q = query.lower()
-        return [b for b in self._birds if q in b.name.lower()]
+        q_norm = self._normalize(query)
+        results = []
+        for b in self._birds:
+            name = b.name.lower()
+            if q in name:
+                results.append(b)
+                continue
+            if q_norm in self._normalize(b.name):
+                results.append(b)
+        return results
 
     def by_set(self, game_set: GameSet) -> list[Bird]:
         return self._by_set.get(game_set, [])

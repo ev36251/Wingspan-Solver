@@ -85,6 +85,59 @@
 	}
 	loadGoals();
 
+	async function applySetup(e: CustomEvent<{
+		player_count: number;
+		round_goals: string[];
+		birds_to_keep: string[];
+		food_to_keep: Record<string, number>;
+		bonus_card: string;
+	}>) {
+		if (loading) return;
+		loading = true;
+		error = '';
+		try {
+			const count = Math.max(2, Math.min(5, e.detail.player_count || 2));
+			const names = Array.from({ length: count }, (_, i) => `Player ${i + 1}`);
+			const roundGoals = e.detail.round_goals || [];
+			const created = await createGame(names, roundGoals);
+			gameId = created.game_id;
+			state = created.state;
+
+			// Apply draft selections to Player 1
+			const p0 = state.players[0];
+			p0.hand = [...e.detail.birds_to_keep];
+			p0.bonus_cards = e.detail.bonus_card ? [e.detail.bonus_card] : [];
+			p0.unknown_hand_count = 0;
+			p0.unknown_bonus_count = 0;
+			p0.food_supply = {
+				invertebrate: 0,
+				seed: 0,
+				fish: 0,
+				fruit: 0,
+				rodent: 0,
+				nectar: p0.food_supply.nectar || 0
+			};
+			for (const [ft, cnt] of Object.entries(e.detail.food_to_keep || {})) {
+				if (ft in p0.food_supply) {
+					// @ts-ignore safe indexed assignment
+					p0.food_supply[ft] = cnt;
+				}
+			}
+
+			state = state;
+			await updateGameState(gameId, state);
+			showNewGame = false;
+			activeTab = 'setup';
+			activePlayerIdx = 0;
+			initPlayerOrder();
+			syncGoalSelections();
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Failed to create game from setup';
+		} finally {
+			loading = false;
+		}
+	}
+
 	function syncGoalSelections() {
 		if (!state) return;
 		goalSelections = [
@@ -413,7 +466,7 @@
 	</div>
 
 	{#if activeTab === 'setup'}
-		<SetupAdvisor />
+		<SetupAdvisor on:applySetup={applySetup} />
 	{:else}
 		<!-- Game creation screen -->
 		<div class="new-game card">
