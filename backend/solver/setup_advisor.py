@@ -506,25 +506,53 @@ def _evaluate_option(
     # 11. Tray access value (early pick advantage)
     if tray_birds:
         def _tray_value(b: Bird) -> float:
-            val = b.victory_points * 0.8
-            val += min(b.egg_limit, 3) * 0.3
+            val = b.victory_points * 1.1
+            val += min(b.egg_limit, 3) * 0.4
             if b.color == PowerColor.BROWN:
-                val += 1.0
+                val += 1.2
             if b.color == PowerColor.WHITE and "play" in b.power_text.lower() and "bird" in b.power_text.lower():
                 val += 1.0
+            if bonus_card.name in b.bonus_eligibility:
+                val += 2.0
             for goal in round_goals:
-                val += _estimate_goal_contribution(b, goal) * 0.6
-            # Affordability using starting food
+                val += _estimate_goal_contribution(b, goal) * 0.9
+            # Habitat diversity with kept birds
+            existing_habs = set()
+            for kept in birds:
+                existing_habs.update(kept.habitats)
+            if any(h not in existing_habs for h in b.habitats):
+                val += 0.6
+            # Affordability using kept food
             if _can_afford_bird(b, food_dict):
-                val += 0.8
+                val += 1.0
+            if b.is_predator:
+                val += 0.3
             return val
 
-        best_tray = max(_tray_value(b) for b in tray_birds)
-        position_factor = max(0.2, 1.0 - 0.2 * max(0, turn_order - 1))
-        # More players -> lower chance the card survives to you
-        if num_players > 2:
-            position_factor *= max(0.5, 1.0 - (turn_order - 1) / max(1, num_players - 1) * 0.3)
-        score += best_tray * position_factor
+        tray_values = [(b, _tray_value(b)) for b in tray_birds]
+        tray_values.sort(key=lambda x: -x[1])
+        values_only = [v for _, v in tray_values]
+
+        weights_by_turn: dict[int, list[float]] = {
+            1: [1.0],
+            2: [0.35, 0.65],
+            3: [0.2, 0.3, 0.5],
+            4: [0.15, 0.25, 0.3, 0.3],
+            5: [0.1, 0.2, 0.25, 0.25, 0.2],
+        }
+        weights = weights_by_turn.get(max(1, min(5, turn_order)), [1.0])
+        weights = weights[:len(values_only)]
+        if weights:
+            total_w = sum(weights)
+            if total_w > 0:
+                weights = [w / total_w for w in weights]
+        expected_tray = 0.0
+        for i, val in enumerate(values_only):
+            w = weights[i] if i < len(weights) else 0.0
+            expected_tray += val * w
+
+        # Slightly boost tray impact to be more aggressive about face-up picks
+        score += expected_tray * 1.2
 
     return score
 
@@ -582,8 +610,18 @@ def _generate_reasoning(
         parts.append(f"helps {goal_hits}/{len(round_goals)} goals")
 
     if tray_birds:
+        # Prefer the highest VP as a simple, readable tray cue
         best = max(tray_birds, key=lambda b: b.victory_points)
-        parts.append(f"tray access: {best.name} (turn {turn_order})")
+        if len(tray_birds) >= 2 and turn_order > 1:
+            # Also mention a likely fallback if you're not first
+            sorted_vp = sorted(tray_birds, key=lambda b: -b.victory_points)
+            fallback = sorted_vp[min(turn_order - 1, len(sorted_vp) - 1)]
+            if fallback.name != best.name:
+                parts.append(f"tray access: likely {fallback.name} (turn {turn_order}), backup {best.name}")
+            else:
+                parts.append(f"tray access: likely {best.name} (turn {turn_order})")
+        else:
+            parts.append(f"tray access: likely {best.name} (turn {turn_order})")
 
     return "; ".join(parts)
 
