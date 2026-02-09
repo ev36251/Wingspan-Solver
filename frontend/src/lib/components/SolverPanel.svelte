@@ -195,8 +195,8 @@
 	const getBreakdown = (rec: SolverRecommendation) =>
 		detailsOf(rec)?.breakdown as Record<string, number> | undefined;
 
-	type BreakdownLine = { label: string; value: number; isNegative: boolean };
-	const expandedBreakdownRanks = new Set<number>();
+	type BreakdownLine = { label: string; value: number; isNegative: boolean; tooltip?: string };
+	let expandedBreakdownRanks = new Set<number>();
 
 	function formatBreakdown(
 		bd: Record<string, number> | undefined,
@@ -237,6 +237,23 @@
 			costs: 'Costs',
 			total_estimate: 'Total estimate'
 		};
+		const tooltips: Record<string, string> = {
+			bird_vp: 'Printed bird points plus immediate bird value.',
+			egg_capacity: 'Value from added egg slots you can fill later.',
+			power_engine: 'Estimated value from brown-power engines.',
+			bonus_cards: 'Estimated alignment with active bonus cards.',
+			round_goal: 'Estimated swing toward round-goal scoring tiers.',
+			food_gain: 'Expected food gained from the move/activation.',
+			bird_unlocks: 'Value from unlocking additional bird plays.',
+			engine_activation: 'Value from activating a row this turn.',
+			eggs: 'Immediate egg point value.',
+			cards: 'Card draw/tuck value converted to points.',
+			tray_value: 'Value of picking cards from the tray.',
+			deck_value: 'Value of drawing unknown cards from the deck.',
+			nectar_value: 'Nectar majority/scoring value.',
+			costs: 'Penalty for food/tempo/nectar spent to execute.',
+			total_estimate: 'Sum of the heuristic components shown.'
+		};
 		const alwaysInclude = new Set(['total_estimate', 'costs']);
 		const entries = Object.entries(bd)
 			.filter(([k, v]) => v !== 0 && (alwaysInclude.has(k) || Math.abs(v) >= 0.2));
@@ -268,18 +285,19 @@
 		return ordered.map(([k, v]) => ({
 			label: labels[k] || k,
 			value: v,
-			isNegative: v < 0
+			isNegative: v < 0,
+			tooltip: tooltips[k]
 		}));
 	}
 
 	function toggleBreakdown(rank: number) {
-		if (expandedBreakdownRanks.has(rank)) {
-			expandedBreakdownRanks.delete(rank);
+		const next = new Set(expandedBreakdownRanks);
+		if (next.has(rank)) {
+			next.delete(rank);
 		} else {
-			expandedBreakdownRanks.add(rank);
+			next.add(rank);
 		}
-		expandedBreakdownRanks.add(0); // force Svelte update by touching the set
-		expandedBreakdownRanks.delete(0);
+		expandedBreakdownRanks = next;
 	}
 
 	function formatDelta(delta: any): string {
@@ -387,9 +405,9 @@
 							<span class="label">Breakdown:</span>
 							{#each formatBreakdown(getBreakdown(rec), expandedBreakdownRanks.has(rec.rank)) as line, li}
 								{#if li > 0}<span class="reason-sep"> · </span>{/if}
-								<span class:negative={line.isNegative}>
-									{line.label}: {line.value.toFixed(1)}
-								</span>
+							<span class:negative={line.isNegative} title={line.tooltip || ''}>
+								{line.label}: {line.value.toFixed(1)}
+							</span>
 							{/each}
 							<button
 								class="toggle-breakdown"
