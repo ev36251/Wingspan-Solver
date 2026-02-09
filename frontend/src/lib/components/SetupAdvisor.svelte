@@ -206,6 +206,16 @@
 			bonus_card: bonus
 		});
 	}
+
+	function continueToGame() {
+		dispatch('continue', {
+			player_count: Number(playerCount),
+			player_names: playerNames,
+			turn_order: turnOrder,
+			tray_cards: trayBirds.map(b => b.name),
+			round_goals: goalSelections.map(g => g || 'No Goal'),
+		});
+	}
 </script>
 
 <div class="setup-advisor card">
@@ -347,6 +357,9 @@
 	<div class="actions">
 		<button class="primary" on:click={analyze} disabled={loading || selectedBirds.length === 0 || selectedBonusCards.length === 0}>
 			{loading ? 'Analyzing...' : 'Analyze Draft'}
+		</button>
+		<button class="secondary" on:click={continueToGame}>
+			Continue to Game
 		</button>
 	</div>
 

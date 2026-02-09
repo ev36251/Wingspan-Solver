@@ -159,6 +159,54 @@
 		}
 	}
 
+	async function continueFromDraft(e: CustomEvent<{
+		player_count: number;
+		player_names?: string[];
+		turn_order?: number;
+		tray_cards?: string[];
+		round_goals: string[];
+	}>) {
+		if (loading) return;
+		loading = true;
+		error = '';
+		try {
+			const count = Math.max(2, Math.min(5, e.detail.player_count || 2));
+			const inputNames = (e.detail.player_names || []).map(n => n.trim()).filter(Boolean);
+			const names = inputNames.length === count
+				? inputNames
+				: Array.from({ length: count }, (_, i) => `Player ${i + 1}`);
+			const roundGoals = e.detail.round_goals || [];
+			const created = await createGame(names, roundGoals);
+			gameId = created.game_id;
+			state = created.state;
+
+			if (e.detail.tray_cards && e.detail.tray_cards.length > 0) {
+				state.card_tray.face_up = [...e.detail.tray_cards].slice(0, 3);
+			}
+
+			if (e.detail.turn_order) {
+				const idx = Math.max(0, Math.min(state.players.length - 1, e.detail.turn_order - 1));
+				state.current_player_idx = idx;
+				activePlayerIdx = idx;
+			}
+
+			state = state;
+			await updateGameState(gameId, state);
+			showNewGame = false;
+			if (e.detail.turn_order) {
+				activePlayerIdx = Math.max(0, Math.min(state.players.length - 1, e.detail.turn_order - 1));
+			} else {
+				activePlayerIdx = 0;
+			}
+			initPlayerOrder();
+			syncGoalSelections();
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Failed to create game';
+		} finally {
+			loading = false;
+		}
+	}
+
 	function syncGoalSelections() {
 		if (!state) return;
 		goalSelections = [
@@ -520,7 +568,7 @@
 			</div>
 		</div>
 	{:else}
-		<SetupAdvisor on:applySetup={applySetup} playerNames={playerNames} />
+		<SetupAdvisor on:applySetup={applySetup} on:continue={continueFromDraft} playerNames={playerNames} />
 	{/if}
 
 {:else if state}
