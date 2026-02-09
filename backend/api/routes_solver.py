@@ -147,21 +147,27 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
     reasoning_map = {rm.move.description: rm.reasoning for rm in heuristic_ranked}
 
     # End-score mode: rerank top candidates by projected final game score.
+    # Target ~3s total compute for stronger long-horizon quality.
+    target_compute_seconds = 2.8
     actions_left = game.total_actions_remaining
     if actions_left >= 50:
-        sims_per_move = 4
-    elif actions_left >= 30:
-        sims_per_move = 6
-    elif actions_left >= 16:
-        sims_per_move = 8
-    else:
         sims_per_move = 12
+    elif actions_left >= 30:
+        sims_per_move = 16
+    elif actions_left >= 16:
+        sims_per_move = 22
+    else:
+        sims_per_move = 30
 
     projections: dict[str, dict[str, float]] = {}
     if la_results:
-        eval_count = min(5, len(la_results))
+        eval_count = min(8, len(la_results))
         projected = []
-        for la in la_results[:eval_count]:
+        for idx, la in enumerate(la_results[:eval_count]):
+            if time.perf_counter() - start > target_compute_seconds and idx >= 3:
+                # Ensure we project at least a few top moves, then respect budget.
+                projected.append((la.score, la))
+                continue
             rollout_scores = _project_final_scores(
                 game, player.name, la.move, simulations=sims_per_move
             )
