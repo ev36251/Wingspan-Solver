@@ -27,7 +27,7 @@ from backend.models.player import Player
 from backend.engine.scoring import calculate_score
 from backend.solver.heuristics import HeuristicWeights, DEFAULT_WEIGHTS, dynamic_weights
 from backend.solver.move_generator import Move, generate_all_moves
-from backend.solver.simulation import deep_copy_game, execute_move_on_sim
+from backend.solver.simulation import deep_copy_game, execute_move_on_sim, _refill_tray, _score_round_goal
 
 
 @dataclass
@@ -181,6 +181,7 @@ def play_head_to_head(game: GameState,
         player = sim.current_player
         if player.action_cubes_remaining <= 0:
             if all(p.action_cubes_remaining <= 0 for p in sim.players):
+                _score_round_goal(sim, sim.current_round)
                 sim.advance_round()
                 continue
             sim.current_player_idx = (sim.current_player_idx + 1) % sim.num_players
@@ -198,17 +199,20 @@ def play_head_to_head(game: GameState,
 
         if success:
             sim.advance_turn()
+            _refill_tray(sim)
         else:
             fallback_ok = False
             for m in moves:
                 if m.action_type in (ActionType.GAIN_FOOD, ActionType.LAY_EGGS):
                     if execute_move_on_sim(sim, player, m):
                         sim.advance_turn()
+                        _refill_tray(sim)
                         fallback_ok = True
                         break
             if not fallback_ok:
                 player.action_cubes_remaining -= 1
                 sim.advance_turn()
+                _refill_tray(sim)
 
         turns += 1
 

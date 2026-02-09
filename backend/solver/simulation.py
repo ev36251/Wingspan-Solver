@@ -40,6 +40,60 @@ def _add_random_deck_draws(player: Player, count: int) -> None:
         player.hand.append(random.choice(pool))
 
 
+def _refill_tray(game: GameState) -> None:
+    """Refill the face-up tray to 3 cards using random deck draws."""
+    needed = game.card_tray.needs_refill()
+    if needed <= 0 or game.deck_remaining <= 0:
+        return
+    pool = _get_sim_bird_pool()
+    if not pool:
+        return
+    for _ in range(min(needed, game.deck_remaining)):
+        game.card_tray.add_card(random.choice(pool))
+        game.deck_remaining = max(0, game.deck_remaining - 1)
+
+
+def _score_round_goal(game: GameState, round_num: int) -> None:
+    """Compute and store end-of-round goal scores for the given round."""
+    if round_num < 1 or round_num > len(game.round_goals):
+        return
+    goal = game.round_goals[round_num - 1]
+    if goal is None or goal.description.lower() == "no goal":
+        return
+
+    from backend.solver.heuristics import _estimate_goal_progress
+
+    progress = []
+    for p in game.players:
+        progress.append((p.name, _estimate_goal_progress(p, goal)))
+
+    progress.sort(key=lambda x: -x[1])
+    if not progress:
+        return
+
+    # Group ties and share placement points (rounded down)
+    scores: dict[str, int] = {}
+    pos = 1
+    i = 0
+    while i < len(progress):
+        j = i + 1
+        while j < len(progress) and progress[j][1] == progress[i][1]:
+            j += 1
+        group = progress[i:j]
+        placements = list(range(pos, min(pos + len(group), 5)))
+        pool = sum(goal.score_for_placement(pl) for pl in placements)
+        share = int(pool // len(group)) if group else 0
+        for name, _ in group:
+            scores[name] = share
+        pos += len(group)
+        i = j
+
+    if round_num not in game.round_goal_scores:
+        game.round_goal_scores[round_num] = {}
+    for name, pts in scores.items():
+        game.round_goal_scores[round_num][name] = pts
+
+
 def deep_copy_game(game: GameState) -> GameState:
     """Deep copy a game state for simulation."""
     return copy.deepcopy(game)
@@ -153,6 +207,7 @@ def simulate_playout(game: GameState, max_turns: int = 200,
         if player.action_cubes_remaining <= 0:
             # All players might be exhausted — advance round
             if all(p.action_cubes_remaining <= 0 for p in sim.players):
+                _score_round_goal(sim, sim.current_round)
                 sim.advance_round()
                 continue
             sim.current_player_idx = (sim.current_player_idx + 1) % sim.num_players
@@ -170,6 +225,7 @@ def simulate_playout(game: GameState, max_turns: int = 200,
 
         if success:
             sim.advance_turn()
+            _refill_tray(sim)
         else:
             # Move failed — try a simple fallback (gain food or lay eggs)
             fallback_executed = False
@@ -177,12 +233,14 @@ def simulate_playout(game: GameState, max_turns: int = 200,
                 if m.action_type in (ActionType.GAIN_FOOD, ActionType.LAY_EGGS):
                     if execute_move_on_sim(sim, player, m):
                         sim.advance_turn()
+                        _refill_tray(sim)
                         fallback_executed = True
                         break
             if not fallback_executed:
                 # Force skip
                 player.action_cubes_remaining -= 1
                 sim.advance_turn()
+                _refill_tray(sim)
 
         turns += 1
 
