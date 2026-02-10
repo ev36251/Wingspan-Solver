@@ -1,0 +1,61 @@
+"""Inference helpers for factorized behavioral-cloning models."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import numpy as np
+
+from backend.models.player import Player
+from backend.solver.move_generator import Move
+from backend.ml.factorized_policy import encode_factorized_targets, RELEVANT_HEADS_BY_ACTION
+
+
+class FactorizedPolicyModel:
+    def __init__(self, path: str | Path):
+        z = np.load(path, allow_pickle=True)
+        self.W1 = z["W1"]
+        self.b1 = z["b1"]
+
+        meta_json = z["metadata_json"][0]
+        if isinstance(meta_json, bytes):
+            meta_json = meta_json.decode("utf-8")
+        self.meta = json.loads(str(meta_json))
+
+        self.head_dims = self.meta.get("head_dims") or self.meta.get("target_heads") or {}
+        self.head_W: dict[str, np.ndarray] = {}
+        self.head_b: dict[str, np.ndarray] = {}
+        for hn in self.head_dims:
+            self.head_W[hn] = z[f"W_{hn}"]
+            self.head_b[hn] = z[f"b_{hn}"]
+
+        self.has_value_head = "W_value" in z and "b_value" in z
+        self.W_value = z["W_value"] if self.has_value_head else None
+        self.b_value = float(z["b_value"][0]) if self.has_value_head else 0.0
+
+    def forward(self, state: np.ndarray) -> tuple[dict[str, np.ndarray], float | None]:
+        h_pre = state @ self.W1 + self.b1
+        h = np.maximum(h_pre, 0.0)
+        logits = {hn: h @ self.head_W[hn] + self.head_b[hn] for hn in self.head_W}
+        value = None
+        if self.has_value_head:
+            vr = float(h @ self.W_value + self.b_value)
+            value = 1.0 / (1.0 + np.exp(-vr))
+        return logits, value
+
+
+def score_move_with_factorized_model(
+    logits: dict[str, np.ndarray],
+    move: Move,
+    player: Player,
+) -> float:
+    """Score a move from factorized logits by summing relevant head logits."""
+    t = encode_factorized_targets(move, player)
+    action_id = int(t["action_type"])
+
+    score = float(logits["action_type"][action_id])
+    for hn in RELEVANT_HEADS_BY_ACTION.get(action_id, []):
+        tv = int(t[hn])
+        score += float(logits[hn][tv])
+    return score
