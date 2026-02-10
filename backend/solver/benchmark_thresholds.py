@@ -34,12 +34,13 @@ def run_benchmark(
     games_per_count: int = 5,
     max_turns: int = 220,
     board_type: BoardType = BoardType.OCEANIA,
+    player_counts: tuple[int, ...] = (2, 3, 4),
 ) -> dict:
     load_all(EXCEL_FILE)
     out: dict = {}
     start_all = time.time()
 
-    for num_players in (2, 3, 4):
+    for num_players in player_counts:
         t0 = time.time()
         scores: list[int] = []
         winners: list[int] = []
@@ -119,6 +120,7 @@ def run_benchmark(
     out["meta"] = {
         "mode": "solver_recommendation_on_sim_state",
         "board_type": board_type.value,
+        "player_counts": list(player_counts),
         "games_per_count": games_per_count,
         "max_turns": max_turns,
         "total_elapsed_sec": round(time.time() - start_all, 1),
@@ -130,10 +132,24 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Benchmark solver score thresholds")
     parser.add_argument("--games", type=int, default=5, help="Games per player count (2,3,4)")
     parser.add_argument("--max-turns", type=int, default=220, help="Max turns per simulated game")
+    parser.add_argument(
+        "--players",
+        default="2,3,4",
+        help="Comma-separated player counts to benchmark (e.g. 2 or 2,3,4)",
+    )
     parser.add_argument("--out", default="reports/score_distribution_solver_simloop.json", help="JSON output path")
     args = parser.parse_args()
 
-    result = run_benchmark(games_per_count=args.games, max_turns=args.max_turns)
+    player_counts = tuple(int(p.strip()) for p in args.players.split(",") if p.strip())
+    for p in player_counts:
+        if p not in (2, 3, 4):
+            raise ValueError(f"Unsupported player count: {p}")
+
+    result = run_benchmark(
+        games_per_count=args.games,
+        max_turns=args.max_turns,
+        player_counts=player_counts,
+    )
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(result, indent=2))
