@@ -419,12 +419,13 @@ def _evaluate_option(
     food_kept: tuple[FoodType, ...],
     bonus_card: BonusCard,
     round_goals: list[Goal],
-    tray_birds: list[Bird],
-    turn_order: int,
-    num_players: int,
+    tray_birds: list[Bird] | None = None,
+    turn_order: int = 1,
+    num_players: int = 2,
 ) -> float:
     """Score a single draft option."""
     score = 0.0
+    tray_birds = tray_birds or []
 
     # Build food supply (kept food + 1 free nectar for Oceania)
     food_dict: dict[FoodType, int] = {}
@@ -562,11 +563,12 @@ def _generate_reasoning(
     food_kept: tuple[FoodType, ...],
     bonus_card: BonusCard,
     round_goals: list[Goal],
-    tray_birds: list[Bird],
-    turn_order: int,
+    tray_birds: list[Bird] | None = None,
+    turn_order: int = 1,
 ) -> str:
     """Generate human-readable reasoning for a recommendation."""
     parts = []
+    tray_birds = tray_birds or []
 
     # Food supply for analysis
     food_dict: dict[FoodType, int] = {}

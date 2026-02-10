@@ -61,15 +61,15 @@ DEFAULT_WEIGHTS = HeuristicWeights()
 # goal strategy, opponent blocking, tuck/cache early-game prioritization)
 TRAINED_WEIGHTS: dict[int, HeuristicWeights] = {
     2: HeuristicWeights(
-        bird_vp=1.13, egg_points=1.16, cached_food_points=0.86,
-        tucked_card_points=0.85, bonus_card_points=1.52,
-        round_goal_points=0.61, nectar_points=1.14,
-        engine_value=0.58, food_in_supply=0.19, cards_in_hand=0.23,
-        action_cubes=0.25, habitat_diversity_bonus=0.71,
-        early_game_engine_bonus=0.69, predator_penalty=1.00,
-        goal_alignment=0.69, nectar_early_bonus=0.33,
-        grassland_egg_synergy=0.56, play_another_bird_bonus=2.80,
-        food_for_birds_bonus=0.40,
+        bird_vp=1.878, egg_points=1.000, cached_food_points=1.588,
+        tucked_card_points=1.000, bonus_card_points=0.577,
+        round_goal_points=1.640, nectar_points=1.922,
+        engine_value=0.404, food_in_supply=0.403, cards_in_hand=0.350,
+        action_cubes=0.200, habitat_diversity_bonus=0.415,
+        early_game_engine_bonus=0.177, predator_penalty=0.290,
+        goal_alignment=1.200, nectar_early_bonus=0.380,
+        grassland_egg_synergy=0.937, play_another_bird_bonus=2.440,
+        food_for_birds_bonus=0.443,
     ),
     3: HeuristicWeights(
         bird_vp=0.95, egg_points=0.81, cached_food_points=1.07,
