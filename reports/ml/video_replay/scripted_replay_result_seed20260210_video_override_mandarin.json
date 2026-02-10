@@ -1,0 +1,80 @@
+{
+  "seed": 20260210,
+  "turns": 52,
+  "script_steps_total": 28,
+  "script_steps_consumed": 26,
+  "divergence_count": 3,
+  "divergences": [
+    {
+      "turn": 42,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Roseate Spoonbill:Habitat.WETLAND hand=['Trumpeter Swan', 'Baltimore Oriole', 'White Stork', 'Roseate Spoonbill', 'Blue-Winged Warbler', 'European Goldfinch'] food={inv=0,seed=0,fish=2,fruit=2,rod=1,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 46,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Black-Tailed Godwit:Habitat.WETLAND hand=['Trumpeter Swan', 'Baltimore Oriole', 'White Stork'] food={inv=0,seed=0,fish=2,fruit=4,rod=1,nectar=1} legal_plays=['Baltimore Oriole', 'White Stork', 'White Stork']"
+    },
+    {
+      "turn": 50,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Trumpeter Swan:Habitat.WETLAND hand=['Trumpeter Swan'] food={inv=0,seed=0,fish=2,fruit=3,rod=1,nectar=1} legal_plays=[]"
+    }
+  ],
+  "you_score": {
+    "bird_vp": 44,
+    "eggs": 6,
+    "cached_food": 5,
+    "tucked_cards": 19,
+    "bonus_cards": 3,
+    "round_goals": 20,
+    "nectar": 5,
+    "total": 102
+  },
+  "opp_score": {
+    "bird_vp": 31,
+    "eggs": 21,
+    "cached_food": 3,
+    "tucked_cards": 0,
+    "bonus_cards": 7,
+    "round_goals": 21,
+    "nectar": 7,
+    "total": 90
+  },
+  "you_birds": [
+    "Violet-Green Swallow",
+    "Wood Duck",
+    "Great Hornbill",
+    "Baltimore Oriole",
+    "Golden Pheasant",
+    "Twite",
+    "Lesser Whitethroat",
+    "Magpie-Lark",
+    "Forster's Tern",
+    "Mandarin Duck"
+  ],
+  "opp_birds": [
+    "Spotted Dove",
+    "Sri Lanka Blue-Magpie",
+    "North Island Brown Kiwi",
+    "Red-Wattled Lapwing",
+    "Golden Pheasant",
+    "Willie-Wagtail",
+    "Magpie-Lark"
+  ],
+  "opp_sri_lanka_blue_magpie_tucked_cards": 0,
+  "video_bird_overrides": {
+    "Mandarin Duck": {
+      "food_cost": [
+        "invertebrate",
+        "invertebrate",
+        "invertebrate"
+      ],
+      "food_total": 3,
+      "is_or": false
+    }
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "seed": 20260210,
+  "turns": 52,
+  "script_steps_total": 24,
+  "script_steps_consumed": 24,
+  "divergence_count": 13,
+  "divergences": [
+    {
+      "turn": 4,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Violet-Green Swallow:Habitat.FOREST"
+    },
+    {
+      "turn": 8,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Golden Pheasant:Habitat.FOREST"
+    },
+    {
+      "turn": 10,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Wood Duck:Habitat.FOREST"
+    },
+    {
+      "turn": 16,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Twite:Habitat.GRASSLAND"
+    },
+    {
+      "turn": 18,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Lesser Whitethroat:Habitat.GRASSLAND"
+    },
+    {
+      "turn": 20,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Mandarin Duck:Habitat.WETLAND"
+    },
+    {
+      "turn": 26,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Great Hornbill:Habitat.FOREST"
+    },
+    {
+      "turn": 30,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:White Stork:Habitat.FOREST"
+    },
+    {
+      "turn": 34,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Roseate Spoonbill:Habitat.WETLAND"
+    },
+    {
+      "turn": 38,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Black-Tailed Godwit:Habitat.WETLAND"
+    },
+    {
+      "turn": 42,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Trumpeter Swan:Habitat.WETLAND"
+    },
+    {
+      "turn": 44,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Baltimore Oriole:Habitat.FOREST"
+    },
+    {
+      "turn": 46,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "play_bird:Magpie-Lark:Habitat.GRASSLAND"
+    }
+  ],
+  "you_score": {
+    "bird_vp": 8,
+    "eggs": 2,
+    "cached_food": 2,
+    "tucked_cards": 0,
+    "bonus_cards": 0,
+    "round_goals": 19,
+    "nectar": 0,
+    "total": 31
+  },
+  "opp_score": {
+    "bird_vp": 47,
+    "eggs": 3,
+    "cached_food": 0,
+    "tucked_cards": 0,
+    "bonus_cards": 4,
+    "round_goals": 22,
+    "nectar": 15,
+    "total": 91
+  },
+  "you_birds": [
+    "Red-Headed Woodpecker",
+    "Forster's Tern"
+  ],
+  "opp_birds": [
+    "Baltimore Oriole",
+    "Red-Wattled Lapwing",
+    "Spotted Dove",
+    "Blue-Winged Warbler",
+    "White Stork",
+    "Bald Eagle",
+    "Black-Crowned Night-Heron"
+  ],
+  "opp_sri_lanka_blue_magpie_tucked_cards": 0
+}

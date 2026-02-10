@@ -1,0 +1,69 @@
+{
+  "seed": 20260210,
+  "turns": 52,
+  "script_steps_total": 28,
+  "script_steps_consumed": 26,
+  "divergence_count": 3,
+  "divergences": [
+    {
+      "turn": 28,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "r2t7 | wanted=play_bird:Mandarin Duck:Habitat.WETLAND hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'White Stork', 'Roseate Spoonbill', 'Mandarin Duck', 'Blue-Winged Warbler', 'Great Hornbill'] food={inv=3,seed=0,fish=1,fruit=1,rod=0,nectar=0} legal_plays=['White Stork', 'White Stork', 'White Stork', 'White Stork', 'Blue-Winged Warbler', 'Blue-Winged Warbler']"
+    },
+    {
+      "turn": 42,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Roseate Spoonbill:Habitat.WETLAND hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Roseate Spoonbill', 'Mandarin Duck', 'Blue-Winged Warbler', 'European Goldfinch'] food={inv=0,seed=0,fish=2,fruit=2,rod=1,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 46,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Black-Tailed Godwit:Habitat.WETLAND hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Roseate Spoonbill'] food={inv=0,seed=1,fish=2,fruit=4,rod=1,nectar=0} legal_plays=[]"
+    }
+  ],
+  "you_score": {
+    "bird_vp": 49,
+    "eggs": 6,
+    "cached_food": 5,
+    "tucked_cards": 16,
+    "bonus_cards": 0,
+    "round_goals": 23,
+    "nectar": 5,
+    "total": 104
+  },
+  "opp_score": {
+    "bird_vp": 45,
+    "eggs": 2,
+    "cached_food": 6,
+    "tucked_cards": 0,
+    "bonus_cards": 0,
+    "round_goals": 17,
+    "nectar": 12,
+    "total": 82
+  },
+  "you_birds": [
+    "Violet-Green Swallow",
+    "Wood Duck",
+    "Great Hornbill",
+    "Golden Pheasant",
+    "Twite",
+    "Lesser Whitethroat",
+    "White Stork",
+    "Magpie-Lark",
+    "Forster's Tern",
+    "Trumpeter Swan"
+  ],
+  "opp_birds": [
+    "Spotted Dove",
+    "Sri Lanka Blue-Magpie",
+    "Great Hornbill",
+    "Red-Wattled Lapwing",
+    "Golden Pheasant",
+    "Bald Eagle",
+    "Black-Crowned Night-Heron"
+  ],
+  "opp_sri_lanka_blue_magpie_tucked_cards": 0
+}

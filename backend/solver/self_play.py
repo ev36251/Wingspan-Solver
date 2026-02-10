@@ -47,6 +47,7 @@ class TrainingConfig:
     convergence_threshold: float = 0.01
     output_path: str = "training_results.json"
     seed: int | None = None
+    strict_rules_mode: bool = False
 
 
 @dataclass
@@ -106,7 +107,11 @@ def tournament_select(population: list[Individual], k: int) -> Individual:
     return max(contestants, key=lambda ind: ind.fitness)
 
 
-def create_training_game(num_players: int, board_type: BoardType) -> GameState:
+def create_training_game(
+    num_players: int,
+    board_type: BoardType,
+    strict_rules_mode: bool = False,
+) -> GameState:
     """Create a game state suitable for self-play training."""
     bird_reg = get_bird_registry()
     goal_reg = get_goal_registry()
@@ -118,10 +123,29 @@ def create_training_game(num_players: int, board_type: BoardType) -> GameState:
     all_goals = goal_reg.all_goals
     round_goals = random.sample(all_goals, min(4, len(all_goals)))
 
-    game = create_new_game(player_names, round_goals, board_type)
+    game = create_new_game(
+        player_names,
+        round_goals,
+        board_type,
+        strict_rules_mode=strict_rules_mode,
+    )
 
-    # Deal random hands (5 birds each) and bonus cards (1 each)
-    all_birds = list(bird_reg.all_birds)
+    # Deal random hands (5 birds each) and bonus cards (1 each).
+    # In strict mode, only use strict-certified bird powers so playouts are
+    # rules-certified end-to-end.
+    if strict_rules_mode:
+        from backend.powers.registry import get_power_source, is_strict_power_source_allowed
+        all_birds = [
+            b for b in bird_reg.all_birds
+            if is_strict_power_source_allowed(get_power_source(b))
+        ]
+    else:
+        all_birds = list(bird_reg.all_birds)
+    if len(all_birds) < (num_players * 5 + 3):
+        raise ValueError(
+            "Not enough strict-certified birds to initialize training game "
+            f"(have {len(all_birds)}, need at least {num_players * 5 + 3})"
+        )
     random.shuffle(all_birds)
     all_bonus = list(bonus_reg.all_cards)
 
@@ -243,7 +267,11 @@ def evaluate_population(population: list[Individual],
     # Pair adjacent individuals
     for i in range(0, len(population) - 1, 2):
         for _ in range(config.games_per_matchup):
-            game = create_training_game(config.num_players, board_type)
+            game = create_training_game(
+                config.num_players,
+                board_type,
+                strict_rules_mode=config.strict_rules_mode,
+            )
 
             # Assign weights: Player_1 uses population[i], Player_2 uses population[i+1]
             pw: dict[str, HeuristicWeights] = {}
@@ -382,6 +410,7 @@ def main():
     parser.add_argument("--mutation-rate", type=float, default=0.3)
     parser.add_argument("--mutation-sigma", type=float, default=0.15)
     parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--strict-rules-only", action="store_true")
     parser.add_argument("--output", default="training_results.json")
     args = parser.parse_args()
 
@@ -398,6 +427,7 @@ def main():
         mutation_sigma=args.mutation_sigma,
         seed=args.seed,
         output_path=args.output,
+        strict_rules_mode=args.strict_rules_only,
     )
 
     print(f"Starting self-play training: {config.population_size} individuals, "

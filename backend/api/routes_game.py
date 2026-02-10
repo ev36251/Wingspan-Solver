@@ -22,11 +22,17 @@ from backend.engine.scoring import calculate_score, calculate_all_scores
 from backend.api.schemas import (
     CreateGameRequest, GameStateSchema, PlayBirdRequest, GainFoodRequest,
     LayEggsRequest, DrawCardsRequest, AllScoresResponse, LegalMovesResponse,
-    LegalMoveSchema, ActionResultSchema,
+    LegalMoveSchema, ActionResultSchema, QueuePowerChoiceRequest, QueuePowerChoicesRequest,
 )
 from backend.api.serializers import (
     game_state_to_schema, score_breakdown_to_schema, action_result_to_schema,
     schema_to_food_payment, schema_to_egg_distribution,
+)
+from backend.powers.choices import (
+    queue_power_choice,
+    queue_many_power_choices,
+    power_choice_queue_summary,
+    power_choice_queue_snapshot,
 )
 
 router = APIRouter()
@@ -162,7 +168,12 @@ async def create_game(req: CreateGameRequest) -> dict:
             round_goals.append(found)
 
     board_type = BoardType(req.board_type)
-    game = create_new_game(req.player_names, round_goals, board_type)
+    game = create_new_game(
+        req.player_names,
+        round_goals,
+        board_type,
+        strict_rules_mode=req.strict_rules_mode,
+    )
     _init_deck_cards(game, bird_reg)
     _refill_tray(game)
 
@@ -290,12 +301,45 @@ async def update_game_state(game_id: str, state: GameStateSchema) -> dict:
     game.card_tray = tray
     game.round_goals = round_goals
     game.round_goal_scores = state.round_goal_scores
+    game.strict_rules_mode = state.strict_rules_mode
     _init_deck_cards(game, bird_reg)
     # Preserve externally provided deck_remaining when no deck model is needed.
     if state.deck_remaining >= 0:
         game.deck_remaining = min(game.deck_remaining, state.deck_remaining)
 
     return game_state_to_schema(game).model_dump()
+
+
+@router.post("/{game_id}/power-choice")
+async def add_power_choice(game_id: str, req: QueuePowerChoiceRequest) -> dict:
+    game = _get_game(game_id)
+    try:
+        queue_power_choice(game, req.player_name, req.bird_name, req.choice)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"queued": True, "player_name": req.player_name, "bird_name": req.bird_name}
+
+
+@router.post("/{game_id}/power-choices")
+async def add_power_choices(game_id: str, req: QueuePowerChoicesRequest) -> dict:
+    game = _get_game(game_id)
+    items = [
+        {"player_name": i.player_name, "bird_name": i.bird_name, "choice": i.choice}
+        for i in req.items
+    ]
+    try:
+        queued = queue_many_power_choices(game, items)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"queued": queued, "queue_sizes": power_choice_queue_summary(game)}
+
+
+@router.get("/{game_id}/power-choices")
+async def get_power_choices(game_id: str, full: bool = False) -> dict:
+    game = _get_game(game_id)
+    if full:
+        return {"queue": power_choice_queue_snapshot(game)}
+    return {"queue_sizes": power_choice_queue_summary(game)}
 
 
 @router.get("/{game_id}/legal-moves", response_model=LegalMovesResponse)

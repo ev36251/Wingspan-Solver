@@ -30,6 +30,7 @@ from backend.engine_search import EngineConfig, search_best_move
 from backend.ml.factorized_policy import encode_factorized_targets, ACTION_TYPE_TO_ID
 from backend.ml.factorized_inference import FactorizedPolicyModel, score_move_with_factorized_model
 from backend.ml.state_encoder import StateEncoder
+from backend.powers.registry import get_power_source, is_strict_power_source_allowed
 
 
 @dataclass
@@ -196,6 +197,10 @@ def generate_bc_dataset(
     engine_time_budget_ms: int = 25,
     engine_num_determinizations: int = 0,
     engine_max_rollout_depth: int = 24,
+    strict_rules_only: bool = True,
+    reject_non_strict_powers: bool = True,
+    max_round: int = 4,
+    emit_score_breakdown: bool = True,
 ) -> dict:
     if seed is not None:
         random.seed(seed)
@@ -215,15 +220,33 @@ def generate_bc_dataset(
     all_scores: list[int] = []
     engine_teacher_calls = 0
     engine_teacher_applied = 0
+    strict_rejected_games = 0
 
     with outp.open("w", encoding="utf-8") as f:
         for g in range(1, games + 1):
-            game = create_training_game(players, board_type)
+            game = create_training_game(
+                players,
+                board_type,
+                strict_rules_mode=strict_rules_only,
+            )
             turns = 0
             pending: list[_PendingDecision] = []
             ordinals = [0 for _ in range(players)]
+            strict_violations: list[str] = []
 
             while not game.is_game_over and turns < max_turns:
+                if game.current_round > max_round:
+                    break
+
+                if reject_non_strict_powers:
+                    for pl in game.players:
+                        for b in pl.board.all_birds():
+                            src = get_power_source(b)
+                            if not is_strict_power_source_allowed(src):
+                                strict_violations.append(f"{b.name}:{src}")
+                    if strict_violations:
+                        break
+
                 p = game.current_player
                 pi = game.current_player_idx
 
@@ -300,6 +323,9 @@ def generate_bc_dataset(
                 turns += 1
 
             finals = [int(calculate_score(game, pl).total) for pl in game.players]
+            if reject_non_strict_powers and strict_violations:
+                strict_rejected_games += 1
+                continue
             all_scores.extend(finals)
 
             # Build fast lookup for n-step bootstrap from future own decisions.
@@ -385,6 +411,11 @@ def generate_bc_dataset(
             "engine_teacher_calls": engine_teacher_calls,
             "engine_teacher_applied": engine_teacher_applied,
         },
+        "strict_rules_only": strict_rules_only,
+        "reject_non_strict_powers": reject_non_strict_powers,
+        "max_round": max_round,
+        "emit_score_breakdown": emit_score_breakdown,
+        "strict_rejected_games": strict_rejected_games,
         "mean_player_score": round(sum(all_scores) / max(1, len(all_scores)), 3),
     }
     Path(out_meta).parent.mkdir(parents=True, exist_ok=True)
@@ -414,6 +445,13 @@ def main() -> None:
     parser.add_argument("--engine-time-budget-ms", type=int, default=25)
     parser.add_argument("--engine-num-determinizations", type=int, default=0)
     parser.add_argument("--engine-max-rollout-depth", type=int, default=24)
+    parser.set_defaults(strict_rules_only=True, reject_non_strict_powers=True)
+    parser.add_argument("--strict-rules-only", dest="strict_rules_only", action="store_true")
+    parser.add_argument("--allow-non-strict-rules", dest="strict_rules_only", action="store_false")
+    parser.add_argument("--reject-non-strict-powers", dest="reject_non_strict_powers", action="store_true")
+    parser.add_argument("--allow-non-strict-powers", dest="reject_non_strict_powers", action="store_false")
+    parser.add_argument("--max-round", type=int, default=4, choices=[1, 2, 3, 4])
+    parser.add_argument("--emit-score-breakdown", action="store_true")
     args = parser.parse_args()
 
     meta = generate_bc_dataset(
@@ -437,6 +475,10 @@ def main() -> None:
         engine_time_budget_ms=args.engine_time_budget_ms,
         engine_num_determinizations=args.engine_num_determinizations,
         engine_max_rollout_depth=args.engine_max_rollout_depth,
+        strict_rules_only=args.strict_rules_only,
+        reject_non_strict_powers=args.reject_non_strict_powers,
+        max_round=args.max_round,
+        emit_score_breakdown=args.emit_score_breakdown,
     )
     print(
         f"bc dataset complete | samples={meta['samples']} | feature_dim={meta['feature_dim']}"

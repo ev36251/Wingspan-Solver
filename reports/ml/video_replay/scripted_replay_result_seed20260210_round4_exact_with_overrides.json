@@ -1,0 +1,81 @@
+{
+  "seed": 20260210,
+  "turns": 52,
+  "script_steps_total": 26,
+  "script_steps_consumed": 26,
+  "divergence_count": 0,
+  "divergences": [],
+  "you_score": {
+    "bird_vp": 59,
+    "eggs": 6,
+    "cached_food": 3,
+    "tucked_cards": 17,
+    "bonus_cards": 9,
+    "round_goals": 20,
+    "nectar": 5,
+    "total": 119
+  },
+  "opp_score": {
+    "bird_vp": 26,
+    "eggs": 21,
+    "cached_food": 1,
+    "tucked_cards": 0,
+    "bonus_cards": 4,
+    "round_goals": 21,
+    "nectar": 12,
+    "total": 85
+  },
+  "you_birds": [
+    "Violet-Green Swallow",
+    "Wood Duck",
+    "Great Hornbill",
+    "Baltimore Oriole",
+    "Golden Pheasant",
+    "Twite",
+    "Lesser Whitethroat",
+    "Magpie-Lark",
+    "Forster's Tern",
+    "Mandarin Duck",
+    "Roseate Spoonbill",
+    "Trumpeter Swan"
+  ],
+  "opp_birds": [
+    "Spotted Dove",
+    "Lincoln's Sparrow",
+    "Great Hornbill",
+    "Red-Wattled Lapwing",
+    "Golden Pheasant",
+    "Willie-Wagtail",
+    "Squacco Heron"
+  ],
+  "opp_sri_lanka_blue_magpie_tucked_cards": 0,
+  "video_bird_overrides": {
+    "Mandarin Duck": {
+      "food_cost": [
+        "invertebrate",
+        "invertebrate",
+        "invertebrate"
+      ],
+      "food_total": 3,
+      "is_or": false
+    },
+    "Trumpeter Swan": {
+      "food_cost": [
+        "fish",
+        "seed",
+        "wild"
+      ],
+      "food_total": 3,
+      "is_or": false
+    },
+    "Snowy Owl": {
+      "food_cost": [
+        "rodent",
+        "fruit",
+        "fish"
+      ],
+      "food_total": 3,
+      "is_or": false
+    }
+  }
+}

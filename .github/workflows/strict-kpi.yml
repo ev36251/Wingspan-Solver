@@ -1,0 +1,58 @@
+name: strict-kpi
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  strict-kpi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[dev]"
+
+      - name: Run strict KPI pipeline
+        run: |
+          python -m backend.ml.strict_kpi_runner \
+            --out reports/ml/strict_kpi_ci_candidate.json \
+            --players 2 \
+            --board-type oceania \
+            --round1-games 20 \
+            --smoke-games 5 \
+            --max-turns 120 \
+            --seed 42 \
+            --min-round1-pct-15-30 0.2 \
+            --max-round1-strict-rejected-games 0 \
+            --max-smoke-strict-rejected-games 0
+
+      - name: Compare against strict KPI baseline
+        run: |
+          python -m backend.ml.strict_kpi_compare \
+            --candidate reports/ml/strict_kpi_ci_candidate.json \
+            --baseline reports/ml/baselines/strict_kpi_baseline.json \
+            --min-round1-pct-15-30 0.2 \
+            --max-round1-strict-rejected-games 0 \
+            --max-smoke-strict-rejected-games 0 \
+            --min-strict-certified-birds 50 \
+            --require-non-regression \
+            --mean-score-tolerance 0.5 \
+            --out reports/ml/strict_kpi_ci_compare.json
+
+      - name: Upload KPI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: strict-kpi-artifacts
+          path: |
+            reports/ml/strict_kpi_ci_candidate.json
+            reports/ml/strict_kpi_ci_compare.json

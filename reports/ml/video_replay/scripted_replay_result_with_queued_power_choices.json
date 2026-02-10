@@ -1,0 +1,88 @@
+{
+  "seed": 20260210,
+  "turns": 52,
+  "script_steps_total": 26,
+  "script_steps_consumed": 26,
+  "divergence_count": 1,
+  "divergences": [
+    {
+      "turn": 24,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "r2t5 | wanted=play_bird:Twite:Habitat.GRASSLAND hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Great Hornbill', 'Roseate Spoonbill', 'Blue-Winged Warbler', 'Wood Duck', 'Scaly-Breasted Munia', 'Peaceful Dove', 'American White Pelican', 'Mandarin Duck', 'Many-Colored Fruit-Dove', 'Black Drongo', \"Montagu's Harrier\", 'Sandhill Crane'] food={inv=2,seed=4,fish=0,fruit=2,rod=0,nectar=2} legal_plays=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Great Hornbill', 'Roseate Spoonbill', 'Blue-Winged Warbler', 'Blue-Winged Warbler', 'Wood Duck']"
+    }
+  ],
+  "you_score": {
+    "bird_vp": 66,
+    "eggs": 9,
+    "cached_food": 1,
+    "tucked_cards": 17,
+    "bonus_cards": 6,
+    "round_goals": 22,
+    "nectar": 7,
+    "total": 128
+  },
+  "opp_score": {
+    "bird_vp": 39,
+    "eggs": 14,
+    "cached_food": 2,
+    "tucked_cards": 0,
+    "bonus_cards": 4,
+    "round_goals": 19,
+    "nectar": 12,
+    "total": 90
+  },
+  "you_birds": [
+    "Violet-Green Swallow",
+    "Wood Duck",
+    "Great Hornbill",
+    "Baltimore Oriole",
+    "Golden Pheasant",
+    "Lesser Whitethroat",
+    "Magpie-Lark",
+    "Forster's Tern",
+    "Trumpeter Swan",
+    "Mandarin Duck",
+    "Roseate Spoonbill",
+    "Trumpeter Swan"
+  ],
+  "opp_birds": [
+    "Sri Lanka Blue-Magpie",
+    "Broad-Winged Hawk",
+    "Red-Wattled Lapwing",
+    "Spotted Dove",
+    "Golden Pheasant",
+    "White Stork",
+    "Black-Crowned Night-Heron"
+  ],
+  "opp_sri_lanka_blue_magpie_tucked_cards": 0,
+  "video_bird_overrides": {
+    "Mandarin Duck": {
+      "food_cost": [
+        "invertebrate",
+        "invertebrate",
+        "invertebrate"
+      ],
+      "food_total": 3,
+      "is_or": false
+    },
+    "Trumpeter Swan": {
+      "food_cost": [
+        "fish",
+        "seed",
+        "wild"
+      ],
+      "food_total": 3,
+      "is_or": false
+    },
+    "Snowy Owl": {
+      "food_cost": [
+        "rodent",
+        "fruit",
+        "fish"
+      ],
+      "food_total": 3,
+      "is_or": false
+    }
+  }
+}

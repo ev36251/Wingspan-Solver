@@ -1,0 +1,45 @@
+{
+  "passed": false,
+  "candidate_path": "reports/ml/next_strict_run/iter_001/strict_kpi_candidate.json",
+  "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+  "checks": [
+    {
+      "name": "min_round1_pct_15_30",
+      "passed": true,
+      "detail": "0.8000 >= 0.2000"
+    },
+    {
+      "name": "max_round1_strict_rejected_games",
+      "passed": true,
+      "detail": "0 <= 0"
+    },
+    {
+      "name": "max_smoke_strict_rejected_games",
+      "passed": true,
+      "detail": "0 <= 0"
+    },
+    {
+      "name": "min_strict_certified_birds",
+      "passed": true,
+      "detail": "51 >= 50"
+    },
+    {
+      "name": "non_regression_round1_mean",
+      "passed": false,
+      "detail": "19.350 >= 20.200"
+    },
+    {
+      "name": "non_regression_smoke_mean_player_score",
+      "passed": true,
+      "detail": "65.000 >= 59.700"
+    }
+  ],
+  "candidate_summary": {
+    "round1_mean": 19.35,
+    "round1_pct_15_30": 0.8,
+    "round1_strict_rejected_games": 0,
+    "smoke_mean_player_score": 65.0,
+    "smoke_strict_rejected_games": 0,
+    "strict_certified_birds": 51
+  }
+}

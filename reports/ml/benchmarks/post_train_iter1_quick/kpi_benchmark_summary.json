@@ -1,0 +1,28 @@
+{
+  "board_type": "oceania",
+  "players": 2,
+  "round1_games": 20,
+  "full_games": 2,
+  "max_turns": 120,
+  "strict_rules_only": true,
+  "reject_non_strict_powers": true,
+  "round1": {
+    "samples": 40,
+    "strict_rejected_games": 0,
+    "mean_total": 23.275,
+    "pct_15_30": 0.625
+  },
+  "full_game": {
+    "sample_size_player_scores": 4,
+    "mean_player_score": 63.0,
+    "mean_winner_score": 68.0,
+    "rate_ge_100": 0.0,
+    "rate_ge_120": 0.0,
+    "max_winner_score": 77,
+    "failed_games": 0
+  },
+  "artifacts": {
+    "round1_benchmark": "reports/ml/benchmarks/post_train_iter1_quick/round1_benchmark.json",
+    "full_game_benchmark": "reports/ml/benchmarks/post_train_iter1_quick/full_game_benchmark.json"
+  }
+}

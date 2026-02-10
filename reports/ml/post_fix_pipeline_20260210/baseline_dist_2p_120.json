@@ -1,0 +1,26 @@
+{
+  "games": 120,
+  "model": "reports/ml/factorized_bc_2p_v1.npz",
+  "nn_wins": 2,
+  "heuristic_wins": 118,
+  "ties": 0,
+  "nn": {
+    "mean": 15.217,
+    "p50": 14,
+    "p90": 23,
+    "p95": 25,
+    "max": 36,
+    "rate_ge_100": 0.0,
+    "rate_ge_120": 0.0
+  },
+  "heuristic": {
+    "mean": 48.508,
+    "p50": 47,
+    "p90": 67,
+    "p95": 76,
+    "max": 86,
+    "rate_ge_100": 0.0,
+    "rate_ge_120": 0.0
+  },
+  "nn_mean_margin": -33.292
+}

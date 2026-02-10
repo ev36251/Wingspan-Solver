@@ -28,6 +28,7 @@ from backend.solver.simulation import (
     execute_move_on_sim,
     pick_weighted_random_move,
 )
+from backend.powers.registry import get_power_source, is_strict_power_source_allowed
 from backend.ml.action_codec import ActionCodec
 from backend.ml.replay_buffer import JsonlReplayWriter, TrainingSample
 from backend.ml.state_encoder import StateEncoder
@@ -146,13 +147,33 @@ def _play_one_game(
     teacher_policy: str,
     proposal_top_k: int,
     lookahead_depth: int,
+    strict_rules_only: bool = True,
+    reject_non_strict_powers: bool = True,
+    max_round: int = 4,
 ) -> tuple[list[TrainingSample], dict]:
-    game = create_training_game(num_players, board_type)
+    game = create_training_game(
+        num_players,
+        board_type,
+        strict_rules_mode=strict_rules_only,
+    )
 
     pending: list[_PendingDecision] = []
     turns = 0
+    strict_violations: list[str] = []
 
     while not game.is_game_over and turns < max_turns:
+        if game.current_round > max_round:
+            break
+
+        if reject_non_strict_powers:
+            for p in game.players:
+                for b in p.board.all_birds():
+                    src = get_power_source(b)
+                    if not is_strict_power_source_allowed(src):
+                        strict_violations.append(f"{b.name}:{src}")
+            if strict_violations:
+                break
+
         player = game.current_player
         player_idx = game.current_player_idx
 
@@ -172,14 +193,20 @@ def _play_one_game(
         state_vec = encoder.encode(game, player_idx)
         legal_action_ids = action_codec.encode_moves(moves)
 
-        move = _pick_teacher_move(
-            game=game,
-            player=player,
-            moves=moves,
-            teacher_policy=teacher_policy,
-            proposal_top_k=proposal_top_k,
-            lookahead_depth=lookahead_depth,
-        )
+        try:
+            move = _pick_teacher_move(
+                game=game,
+                player=player,
+                moves=moves,
+                teacher_policy=teacher_policy,
+                proposal_top_k=proposal_top_k,
+                lookahead_depth=lookahead_depth,
+            )
+        except RuntimeError as e:
+            if "Strict rules mode rejected" in str(e):
+                strict_violations.append(str(e))
+                break
+            raise
         action_id = action_codec.encode_move(move)
 
         pending.append(
@@ -194,7 +221,13 @@ def _play_one_game(
             )
         )
 
-        success = execute_move_on_sim(game, player, move)
+        try:
+            success = execute_move_on_sim(game, player, move)
+        except RuntimeError as e:
+            if "Strict rules mode rejected" in str(e):
+                strict_violations.append(str(e))
+                break
+            raise
 
         if success:
             game.advance_turn()
@@ -203,7 +236,15 @@ def _play_one_game(
             fallback_executed = False
             for m in moves:
                 if m.action_type in (ActionType.GAIN_FOOD, ActionType.LAY_EGGS):
-                    if execute_move_on_sim(game, player, m):
+                    try:
+                        ok_fb = execute_move_on_sim(game, player, m)
+                    except RuntimeError as e:
+                        if "Strict rules mode rejected" in str(e):
+                            strict_violations.append(str(e))
+                            ok_fb = False
+                        else:
+                            raise
+                    if ok_fb:
                         game.advance_turn()
                         _refill_tray(game)
                         fallback_executed = True
@@ -238,6 +279,12 @@ def _play_one_game(
         "turns": turns,
         "scores": [int(calculate_score(game, p).total) for p in game.players],
         "winner_score": max(int(calculate_score(game, p).total) for p in game.players),
+        "score_breakdown": [
+            calculate_score(game, p).as_dict()
+            for p in game.players
+        ],
+        "strict_certified": len(strict_violations) == 0,
+        "strict_violations": strict_violations,
     }
     return samples, game_summary
 
@@ -253,6 +300,10 @@ def generate_dataset(
     teacher_policy: str = "lookahead",
     proposal_top_k: int = 6,
     lookahead_depth: int = 2,
+    strict_rules_only: bool = True,
+    reject_non_strict_powers: bool = True,
+    max_round: int = 4,
+    emit_score_breakdown: bool = True,
 ) -> dict:
     if seed is not None:
         random.seed(seed)
@@ -267,6 +318,7 @@ def generate_dataset(
     all_scores: list[int] = []
     winner_scores: list[int] = []
     sample_count = 0
+    strict_rejected_games = 0
 
     for g in range(1, games + 1):
         samples, summary = _play_one_game(
@@ -278,7 +330,13 @@ def generate_dataset(
             teacher_policy=teacher_policy,
             proposal_top_k=proposal_top_k,
             lookahead_depth=lookahead_depth,
+            strict_rules_only=strict_rules_only,
+            reject_non_strict_powers=reject_non_strict_powers,
+            max_round=max_round,
         )
+        if reject_non_strict_powers and not summary.get("strict_certified", False):
+            strict_rejected_games += 1
+            continue
         writer.write_many(samples)
         sample_count += len(samples)
 
@@ -307,6 +365,11 @@ def generate_dataset(
         "teacher_policy": teacher_policy,
         "proposal_top_k": proposal_top_k,
         "lookahead_depth": lookahead_depth,
+        "strict_rules_only": strict_rules_only,
+        "reject_non_strict_powers": reject_non_strict_powers,
+        "max_round": max_round,
+        "emit_score_breakdown": emit_score_breakdown,
+        "strict_rejected_games": strict_rejected_games,
         "reward_weights": {
             "win": REWARD_WIN_WEIGHT,
             "score": REWARD_SCORE_WEIGHT,
@@ -339,6 +402,13 @@ def main() -> None:
     )
     parser.add_argument("--proposal-top-k", type=int, default=6)
     parser.add_argument("--lookahead-depth", type=int, default=2, choices=[0, 1, 2])
+    parser.set_defaults(strict_rules_only=True, reject_non_strict_powers=True)
+    parser.add_argument("--strict-rules-only", dest="strict_rules_only", action="store_true")
+    parser.add_argument("--allow-non-strict-rules", dest="strict_rules_only", action="store_false")
+    parser.add_argument("--reject-non-strict-powers", dest="reject_non_strict_powers", action="store_true")
+    parser.add_argument("--allow-non-strict-powers", dest="reject_non_strict_powers", action="store_false")
+    parser.add_argument("--max-round", type=int, default=4, choices=[1, 2, 3, 4])
+    parser.add_argument("--emit-score-breakdown", action="store_true")
     args = parser.parse_args()
 
     meta = generate_dataset(
@@ -352,6 +422,10 @@ def main() -> None:
         teacher_policy=args.teacher_policy,
         proposal_top_k=args.proposal_top_k,
         lookahead_depth=args.lookahead_depth,
+        strict_rules_only=args.strict_rules_only,
+        reject_non_strict_powers=args.reject_non_strict_powers,
+        max_round=args.max_round,
+        emit_score_breakdown=args.emit_score_breakdown,
     )
 
     print(

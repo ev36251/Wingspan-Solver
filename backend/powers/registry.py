@@ -28,6 +28,21 @@ from backend.powers.templates.unique import (
     CopyNeighborBonusCard, TradeFoodForAny, RepeatPredatorPower,
     CopyNeighborWhitePower, ConditionalCacheFromNeighbor,
 )
+from backend.powers.templates.strict import (
+    DrawThenDiscardFromHand,
+    AllPlayersLayEggsSelfBonus,
+    TuckThenCacheFromSupply,
+    EndRoundMandarinDuck,
+    SnowyOwlBonusThenChoice,
+    CommonNightingaleChooseFoodAllPlayers,
+    RedBelliedWoodpeckerSeedFromFeeder,
+    WillieWagtailDrawTrayNest,
+    WhiteStorkResetTrayThenDraw,
+    PinkEaredDuckDrawKeepGive,
+    CrestedLarkDiscardSeedLayEgg,
+    BlackHeadedGullStealWild,
+    BlackDrongoDiscardTrayLayEgg,
+)
 
 
 # Food type text -> FoodType mapping
@@ -110,6 +125,32 @@ _MANUAL_OVERRIDES: dict[str, PowerEffect] = {
 }
 
 
+# Explicit per-card powers for high-impact competitive lines.
+# These definitions are treated as strict source of truth for listed birds.
+_STRICT_CARD_POWERS: dict[str, callable] = {
+    "Forster's Tern": lambda: DrawThenDiscardFromHand(draw=1, discard=1),
+    "Wood Duck": lambda: DrawThenDiscardFromHand(draw=2, discard=1),
+    "Violet-Green Swallow": lambda: TuckFromHand(tuck_count=1, draw_count=1),
+    "Golden Pheasant": lambda: AllPlayersLayEggsSelfBonus(all_players_count=2, self_bonus_count=2),
+    "Twite": lambda: TuckFromDeck(count=2),
+    "Lesser Whitethroat": lambda: EndOfRoundLayEggs(count_per_bird=1, habitat_filter=Habitat.GRASSLAND),
+    "Mandarin Duck": lambda: EndRoundMandarinDuck(),
+    "Great Hornbill": lambda: TuckThenCacheFromSupply(cache_food_type=FoodType.FRUIT),
+    "Magpie-Lark": lambda: PlayAdditionalBird(habitat_filter=Habitat.GRASSLAND),
+    "Roseate Spoonbill": lambda: DrawBonusCards(draw=2, keep=1),
+    "Baltimore Oriole": lambda: GainFoodFromSupply(food_types=[FoodType.FRUIT], count=1, all_players=True),
+    "Snowy Owl": lambda: SnowyOwlBonusThenChoice(),
+    "Common Nightingale": lambda: CommonNightingaleChooseFoodAllPlayers(),
+    "Red-Bellied Woodpecker": lambda: RedBelliedWoodpeckerSeedFromFeeder(),
+    "Willie-Wagtail": lambda: WillieWagtailDrawTrayNest(),
+    "White Stork": lambda: WhiteStorkResetTrayThenDraw(),
+    "Pink-Eared Duck": lambda: PinkEaredDuckDrawKeepGive(),
+    "Crested Lark": lambda: CrestedLarkDiscardSeedLayEgg(),
+    "Black-Headed Gull": lambda: BlackHeadedGullStealWild(),
+    "Black Drongo": lambda: BlackDrongoDiscardTrayLayEgg(),
+}
+
+
 def _extract_food_type(text: str) -> FoodType | None:
     """Extract first food type mentioned in text."""
     for name, ft in FOOD_MAP.items():
@@ -155,6 +196,11 @@ def parse_power(bird: Bird) -> PowerEffect:
     Checks manual overrides first, then tries regex patterns in priority
     order. Returns FallbackPower if no pattern matches.
     """
+    # Strict per-card mapping for known high-impact birds.
+    strict = _STRICT_CARD_POWERS.get(bird.name)
+    if strict is not None:
+        return strict()
+
     # Check manual overrides first (14 unique birds)
     if bird.name in _MANUAL_OVERRIDES:
         return _MANUAL_OVERRIDES[bird.name]
@@ -472,6 +518,38 @@ def get_power(bird: Bird) -> PowerEffect:
     if bird.name not in _power_cache:
         _power_cache[bird.name] = parse_power(bird)
     return _power_cache[bird.name]
+
+
+def get_power_source(bird: Bird) -> str:
+    """Return mapping source for a bird power.
+
+    One of: strict, manual, no_power, fallback, parsed
+    """
+    if bird.name in _STRICT_CARD_POWERS:
+        return "strict"
+    if bird.name in _MANUAL_OVERRIDES:
+        return "manual"
+    power = get_power(bird)
+    if isinstance(power, NoPower):
+        return "no_power"
+    if isinstance(power, FallbackPower):
+        return "fallback"
+    return "parsed"
+
+
+def is_strict_power_source_allowed(source: str) -> bool:
+    return source in {"strict", "manual", "no_power"}
+
+
+def assert_power_allowed_for_strict_mode(game_state, bird: Bird) -> None:
+    """Raise if strict rules mode is enabled and this bird uses non-strict mapping."""
+    if not getattr(game_state, "strict_rules_mode", False):
+        return
+    source = get_power_source(bird)
+    if not is_strict_power_source_allowed(source):
+        raise RuntimeError(
+            f"Strict rules mode rejected non-strict power mapping for '{bird.name}' (source={source})"
+        )
 
 
 def clear_cache() -> None:

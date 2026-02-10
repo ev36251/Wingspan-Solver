@@ -12,7 +12,7 @@ from backend.models.enums import ActionType, FoodType, Habitat, PowerColor
 from backend.models.game_state import GameState
 from backend.models.player import Player
 from backend.engine.rules import can_play_bird, can_gain_food, can_lay_eggs, can_draw_cards
-from backend.powers.registry import get_power
+from backend.powers.registry import get_power, assert_power_allowed_for_strict_mode
 from backend.powers.base import PowerContext, PowerResult, NoPower
 
 
@@ -65,6 +65,7 @@ def activate_row(game_state: GameState, player: Player,
     for i, slot in reversed(occupied):
         if slot.bird.color != PowerColor.BROWN:
             continue
+        assert_power_allowed_for_strict_mode(game_state, slot.bird)
         power = get_power(slot.bird)
         if isinstance(power, NoPower):
             continue
@@ -211,6 +212,7 @@ def execute_play_bird(
 
     # Execute "when played" (white) powers immediately
     if bird.color == PowerColor.WHITE:
+        assert_power_allowed_for_strict_mode(game_state, bird)
         power = get_power(bird)
         if not isinstance(power, NoPower):
             ctx = PowerContext(
@@ -232,6 +234,8 @@ def execute_play_bird(
         bird_played=bird.name, habitat=habitat,
         power_activations=power_acts,
     )
+    # Track cubes spent on the "play a bird" action for round-goal scoring.
+    player.play_bird_actions_this_round += 1
     from backend.engine.timed_powers import trigger_between_turn_powers
     trigger_between_turn_powers(game_state, trigger_player=player, trigger_action=ActionType.PLAY_BIRD)
     return result
@@ -309,6 +313,7 @@ def execute_play_bird_discounted(
 
     power_acts: list[PowerActivation] = []
     if bird.color == PowerColor.WHITE:
+        assert_power_allowed_for_strict_mode(game_state, bird)
         power = get_power(bird)
         if not isinstance(power, NoPower):
             ctx = PowerContext(

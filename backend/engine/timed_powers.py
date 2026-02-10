@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from backend.models.enums import ActionType, PowerColor
 from backend.powers.base import PowerContext, NoPower, FallbackPower
-from backend.powers.registry import get_power
+from backend.powers.registry import get_power, assert_power_allowed_for_strict_mode
 
 
 def _iter_occupied_slots(player):
@@ -46,6 +46,7 @@ def trigger_between_turn_powers(game_state, trigger_player, trigger_action: Acti
             bird = slot.bird
             if bird.color != PowerColor.PINK:
                 continue
+            assert_power_allowed_for_strict_mode(game_state, bird)
             if not _pink_matches_action(bird.power_text or "", trigger_action):
                 continue
             power = get_power(bird)
@@ -78,6 +79,7 @@ def trigger_end_of_round_powers(game_state, round_num: int) -> int:
             is_round_power = (bird.color == PowerColor.TEAL) or ("end of round" in text)
             if not is_round_power:
                 continue
+            assert_power_allowed_for_strict_mode(game_state, bird)
             power = get_power(bird)
             if isinstance(power, (NoPower, FallbackPower)):
                 continue
@@ -108,6 +110,7 @@ def trigger_end_of_game_powers(game_state) -> int:
             is_game_power = (bird.color == PowerColor.YELLOW) or ("end of game" in text)
             if not is_game_power:
                 continue
+            assert_power_allowed_for_strict_mode(game_state, bird)
             power = get_power(bird)
             if isinstance(power, (NoPower, FallbackPower)):
                 continue
@@ -125,4 +128,3 @@ def trigger_end_of_game_powers(game_state) -> int:
 
     setattr(game_state, "_end_game_powers_resolved", True)
     return activated
-

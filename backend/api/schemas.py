@@ -132,6 +132,8 @@ class GameStateSchema(BaseModel):
     card_tray: CardTraySchema = Field(default_factory=CardTraySchema)
     round_goals: list[str] = Field(default_factory=list)  # Goal descriptions
     round_goal_scores: dict[int, dict[str, int]] = Field(default_factory=dict)
+    strict_rules_mode: bool = False
+    power_choice_queue_sizes: dict[str, int] = Field(default_factory=dict)
     deck_remaining: int = 0
 
 
@@ -141,6 +143,17 @@ class CreateGameRequest(BaseModel):
     player_names: list[str] = Field(..., min_length=1, max_length=5)
     board_type: str = "base"  # "base" or "oceania"
     round_goals: list[str] | None = None  # Goal descriptions
+    strict_rules_mode: bool = False
+
+
+class QueuePowerChoiceRequest(BaseModel):
+    player_name: str
+    bird_name: str
+    choice: dict = Field(default_factory=dict)
+
+
+class QueuePowerChoicesRequest(BaseModel):
+    items: list[QueuePowerChoiceRequest] = Field(default_factory=list)
 
 
 class PlayBirdRequest(BaseModel):

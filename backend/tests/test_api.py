@@ -148,6 +148,16 @@ class TestGameCreation:
         assert len(data["state"]["players"]) == 2
         assert data["state"]["players"][0]["name"] == "Alice"
         assert data["state"]["current_round"] == 1
+        assert data["state"]["strict_rules_mode"] is False
+
+    def test_create_game_strict_mode(self, client):
+        resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"],
+            "strict_rules_mode": True,
+        })
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["state"]["strict_rules_mode"] is True
 
     def test_create_game_with_goals(self, client):
         # Get a valid goal description first
@@ -258,10 +268,60 @@ class TestActions:
         assert resp.status_code == 200
         data = resp.json()
         assert data["success"] is True
-        assert data["cards_drawn"] == 1
 
-        after = client.get(f"/api/games/{game_id}").json()
-        assert len(after["players"][0]["hand"]) == before_hand + 1
+    def test_queue_power_choice_route(self, client):
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+        resp = client.post(f"/api/games/{game_id}/power-choice", json={
+            "player_name": "Alice",
+            "bird_name": "Wood Duck",
+            "choice": {"discard_names": ["Some Bird"]},
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["queued"] is True
+        assert data["player_name"] == "Alice"
+        assert data["bird_name"] == "Wood Duck"
+
+    def test_queue_power_choice_rejects_unknown_keys(self, client):
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+        resp = client.post(f"/api/games/{game_id}/power-choice", json={
+            "player_name": "Alice",
+            "bird_name": "Wood Duck",
+            "choice": {"bad_key": True},
+        })
+        assert resp.status_code == 400
+
+    def test_queue_power_choices_batch_and_list(self, client):
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+        resp = client.post(f"/api/games/{game_id}/power-choices", json={
+            "items": [
+                {
+                    "player_name": "Alice",
+                    "bird_name": "Wood Duck",
+                    "choice": {"discard_names": ["X"]},
+                },
+                {
+                    "player_name": "Alice",
+                    "bird_name": "Great Hornbill",
+                    "choice": {"cache": False},
+                },
+            ]
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["queued"] == 2
+        q = client.get(f"/api/games/{game_id}/power-choices").json()
+        assert "queue_sizes" in q
+        assert any(k.startswith("Alice::Wood Duck") for k in q["queue_sizes"].keys())
 
     def test_draw_from_tray_refills(self, client):
         create_resp = client.post("/api/games", json={

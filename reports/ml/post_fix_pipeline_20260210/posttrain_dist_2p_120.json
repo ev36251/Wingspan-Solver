@@ -1,0 +1,26 @@
+{
+  "games": 120,
+  "model": "reports/ml/post_fix_pipeline_20260210/auto_improve_iter1/best_model.npz",
+  "nn_wins": 4,
+  "heuristic_wins": 116,
+  "ties": 0,
+  "nn": {
+    "mean": 25.125,
+    "p50": 23,
+    "p90": 38,
+    "p95": 46,
+    "max": 57,
+    "rate_ge_100": 0.0,
+    "rate_ge_120": 0.0
+  },
+  "heuristic": {
+    "mean": 49.217,
+    "p50": 48,
+    "p90": 70,
+    "p95": 80,
+    "max": 101,
+    "rate_ge_100": 0.0083,
+    "rate_ge_120": 0.0
+  },
+  "nn_mean_margin": -24.092
+}

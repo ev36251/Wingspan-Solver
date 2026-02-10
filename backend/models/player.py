@@ -82,6 +82,8 @@ class Player:
     action_cubes_remaining: int = 0
     unknown_hand_count: int = 0  # Face-down cards (count only, identity unknown)
     unknown_bonus_count: int = 0  # Bonus cards held (count only, identity unknown)
+    # Current-round count of times the player took the main "play a bird" action.
+    play_bird_actions_this_round: int = 0
 
     @property
     def total_birds(self) -> int:

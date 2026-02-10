@@ -1,0 +1,122 @@
+{
+  "seed": 20260210,
+  "turns": 52,
+  "script_steps_total": 25,
+  "script_steps_consumed": 25,
+  "divergence_count": 12,
+  "divergences": [
+    {
+      "turn": 10,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Golden Pheasant:Habitat.FOREST hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'White Stork', 'Willie-Wagtail', 'Golden Pheasant', 'Wood Duck', 'Roseate Spoonbill', 'Twite', 'Mandarin Duck'] food={inv=1,seed=0,fish=0,fruit=0,rod=1,nectar=1} legal_plays=['White Stork', 'Willie-Wagtail', 'Willie-Wagtail', 'Golden Pheasant']"
+    },
+    {
+      "turn": 12,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Wood Duck:Habitat.FOREST hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Willie-Wagtail', 'Golden Pheasant', 'Wood Duck', 'Roseate Spoonbill', 'Twite', 'Mandarin Duck'] food={inv=0,seed=0,fish=0,fruit=0,rod=0,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 18,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Twite:Habitat.GRASSLAND hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Willie-Wagtail', 'Golden Pheasant', 'Wood Duck', 'Roseate Spoonbill', 'Twite', 'Lesser Whitethroat', 'Blue-Winged Warbler'] food={inv=1,seed=0,fish=0,fruit=0,rod=0,nectar=1} legal_plays=['Willie-Wagtail', 'Willie-Wagtail', 'Willie-Wagtail', 'Lesser Whitethroat', 'Lesser Whitethroat', 'Blue-Winged Warbler', 'Blue-Winged Warbler']"
+    },
+    {
+      "turn": 20,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Lesser Whitethroat:Habitat.GRASSLAND hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Golden Pheasant', 'Wood Duck', 'Roseate Spoonbill', 'Twite', 'Lesser Whitethroat', 'Blue-Winged Warbler'] food={inv=0,seed=0,fish=0,fruit=0,rod=0,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 22,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Mandarin Duck:Habitat.WETLAND hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Golden Pheasant', 'Wood Duck', 'Roseate Spoonbill', 'Twite', 'Lesser Whitethroat', 'Blue-Winged Warbler'] food={inv=0,seed=0,fish=0,fruit=2,rod=0,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 28,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Great Hornbill:Habitat.FOREST hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Golden Pheasant', 'Wood Duck', 'Roseate Spoonbill', 'Twite', 'Lesser Whitethroat', 'Blue-Winged Warbler', 'White Stork'] food={inv=2,seed=3,fish=1,fruit=2,rod=0,nectar=0} legal_plays=['Trumpeter Swan', 'Trumpeter Swan', 'Trumpeter Swan', 'Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Golden Pheasant', 'Golden Pheasant']"
+    },
+    {
+      "turn": 32,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:White Stork:Habitat.FOREST hand=['Baltimore Oriole', 'Black-Tailed Godwit', 'Golden Pheasant', 'Wood Duck', 'Roseate Spoonbill', 'Twite', 'Lesser Whitethroat', 'Blue-Winged Warbler', 'White Stork'] food={inv=1,seed=1,fish=1,fruit=2,rod=0,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 40,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Black-Tailed Godwit:Habitat.WETLAND hand=['Baltimore Oriole', 'Black-Tailed Godwit', 'Golden Pheasant', 'Wood Duck', 'Twite', 'Lesser Whitethroat', 'Blue-Winged Warbler', 'White Stork'] food={inv=0,seed=0,fish=1,fruit=2,rod=0,nectar=0} legal_plays=['Golden Pheasant', 'Golden Pheasant']"
+    },
+    {
+      "turn": 44,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Trumpeter Swan:Habitat.WETLAND hand=['Baltimore Oriole', 'Black-Tailed Godwit', 'Wood Duck', 'Twite', 'Lesser Whitethroat', 'Blue-Winged Warbler', 'White Stork'] food={inv=0,seed=0,fish=0,fruit=0,rod=0,nectar=2} legal_plays=['Twite', 'Lesser Whitethroat', 'Lesser Whitethroat', 'Blue-Winged Warbler', 'Blue-Winged Warbler']"
+    },
+    {
+      "turn": 46,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Baltimore Oriole:Habitat.FOREST hand=['Baltimore Oriole', 'Black-Tailed Godwit', 'Wood Duck', 'Lesser Whitethroat', 'Blue-Winged Warbler', 'White Stork'] food={inv=0,seed=0,fish=0,fruit=0,rod=0,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 48,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Magpie-Lark:Habitat.GRASSLAND hand=['Baltimore Oriole', 'Black-Tailed Godwit', 'Wood Duck', 'Lesser Whitethroat', 'Blue-Winged Warbler', 'White Stork'] food={inv=1,seed=0,fish=1,fruit=0,rod=0,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 51,
+      "actor": "opp",
+      "reason": "chosen_move_failed_execution",
+      "note": "Play Great Hornbill in forest (pay 1 fruit, 2 nectar)"
+    }
+  ],
+  "you_score": {
+    "bird_vp": 39,
+    "eggs": 1,
+    "cached_food": 0,
+    "tucked_cards": 15,
+    "bonus_cards": 6,
+    "round_goals": 18,
+    "nectar": 10,
+    "total": 89
+  },
+  "opp_score": {
+    "bird_vp": 34,
+    "eggs": 3,
+    "cached_food": 1,
+    "tucked_cards": 0,
+    "bonus_cards": 4,
+    "round_goals": 22,
+    "nectar": 9,
+    "total": 73
+  },
+  "you_birds": [
+    "Violet-Green Swallow",
+    "Willie-Wagtail",
+    "Golden Pheasant",
+    "White Stork",
+    "Twite",
+    "Lesser Whitethroat",
+    "Forster's Tern",
+    "Trumpeter Swan",
+    "Roseate Spoonbill"
+  ],
+  "opp_birds": [
+    "Spotted Dove",
+    "Willie-Wagtail",
+    "Oriental Bay-Owl",
+    "Sri Lanka Blue-Magpie",
+    "Red-Wattled Lapwing",
+    "Golden Pheasant",
+    "Black-Crowned Night-Heron"
+  ],
+  "opp_sri_lanka_blue_magpie_tucked_cards": 0
+}

@@ -19,6 +19,8 @@ from backend.ml.evaluate_factorized_bc import evaluate_factorized_vs_heuristic
 from backend.ml.evaluate_factorized_pool import evaluate_against_pool
 from backend.ml.generate_bc_dataset import generate_bc_dataset
 from backend.ml.kpi_gate import run_gate
+from backend.ml.strict_kpi_compare import run_compare as run_strict_kpi_compare
+from backend.ml.strict_kpi_runner import run_strict_kpi
 from backend.ml.train_factorized_bc import train_bc
 
 
@@ -60,6 +62,19 @@ def run_auto_improve_factorized(
     engine_num_determinizations: int,
     engine_max_rollout_depth: int,
     seed: int,
+    strict_rules_only: bool = True,
+    reject_non_strict_powers: bool = True,
+    strict_kpi_gate_enabled: bool = True,
+    strict_kpi_baseline_path: str = "reports/ml/baselines/strict_kpi_baseline.json",
+    strict_kpi_round1_games: int = 10,
+    strict_kpi_smoke_games: int = 3,
+    strict_kpi_max_turns: int = 120,
+    strict_kpi_min_round1_pct_15_30: float = 0.2,
+    strict_kpi_max_round1_strict_rejected_games: int = 0,
+    strict_kpi_max_smoke_strict_rejected_games: int = 0,
+    strict_kpi_min_strict_certified_birds: int = 50,
+    strict_kpi_require_non_regression: bool = False,
+    strict_kpi_mean_score_tolerance: float = 0.5,
     clean_out_dir: bool = True,
 ) -> dict:
     base = Path(out_dir)
@@ -89,6 +104,8 @@ def run_auto_improve_factorized(
         gate_path = iter_dir / "promotion_gate_eval.json"
         pool_eval_path = iter_dir / "pool_eval.json"
         kpi_gate_path = iter_dir / "kpi_gate.json"
+        strict_kpi_candidate_path = iter_dir / "strict_kpi_candidate.json"
+        strict_kpi_compare_path = iter_dir / "strict_kpi_compare.json"
 
         ds_meta = generate_bc_dataset(
             out_jsonl=str(dataset_jsonl),
@@ -111,6 +128,8 @@ def run_auto_improve_factorized(
             engine_time_budget_ms=engine_time_budget_ms,
             engine_num_determinizations=engine_num_determinizations,
             engine_max_rollout_depth=engine_max_rollout_depth,
+            strict_rules_only=strict_rules_only,
+            reject_non_strict_powers=reject_non_strict_powers,
         )
 
         tr = train_bc(
@@ -182,6 +201,38 @@ def run_auto_improve_factorized(
         )
         kpi_gate_path.write_text(json.dumps(kpi_gate, indent=2), encoding="utf-8")
 
+        strict_kpi_compare: dict
+        if strict_kpi_gate_enabled:
+            run_strict_kpi(
+                out_path=str(strict_kpi_candidate_path),
+                players=players,
+                board_type=board_type,
+                round1_games=strict_kpi_round1_games,
+                smoke_games=strict_kpi_smoke_games,
+                max_turns=strict_kpi_max_turns,
+                seed=iter_seed + 4242,
+                min_round1_pct_15_30=strict_kpi_min_round1_pct_15_30,
+                max_round1_strict_rejected_games=strict_kpi_max_round1_strict_rejected_games,
+                max_smoke_strict_rejected_games=strict_kpi_max_smoke_strict_rejected_games,
+            )
+            strict_kpi_compare = run_strict_kpi_compare(
+                candidate_path=str(strict_kpi_candidate_path),
+                baseline_path=str(strict_kpi_baseline_path),
+                min_round1_pct_15_30=strict_kpi_min_round1_pct_15_30,
+                max_round1_strict_rejected_games=strict_kpi_max_round1_strict_rejected_games,
+                max_smoke_strict_rejected_games=strict_kpi_max_smoke_strict_rejected_games,
+                min_strict_certified_birds=strict_kpi_min_strict_certified_birds,
+                require_non_regression=strict_kpi_require_non_regression,
+                mean_score_tolerance=strict_kpi_mean_score_tolerance,
+            )
+            strict_kpi_compare_path.write_text(json.dumps(strict_kpi_compare, indent=2), encoding="utf-8")
+        else:
+            strict_kpi_compare = {
+                "passed": True,
+                "skipped": True,
+                "reason": "strict_kpi_gate_disabled",
+            }
+
         gate_games = max(1, int(gate_dict.get("games", 0)))
         gate_win_rate = float(gate_dict.get("nn_wins", 0)) / gate_games
         gate_mean_score = float(gate_dict.get("nn_mean_score", 0.0))
@@ -194,7 +245,12 @@ def run_auto_improve_factorized(
             and gate_ge120 >= min_gate_rate_ge_120
         )
         gate_secondary_pass = gate_win_rate >= min_gate_win_rate
-        promoted = gate_primary_pass and gate_secondary_pass and bool(kpi_gate["passed"])
+        promoted = (
+            gate_primary_pass
+            and gate_secondary_pass
+            and bool(kpi_gate["passed"])
+            and bool(strict_kpi_compare.get("passed", False))
+        )
 
         row = {
             "iteration": i,
@@ -222,6 +278,7 @@ def run_auto_improve_factorized(
             },
             "pool_eval": pool_eval,
             "kpi_gate": kpi_gate,
+            "strict_kpi_gate": strict_kpi_compare,
         }
         history.append(row)
 
@@ -273,6 +330,19 @@ def run_auto_improve_factorized(
                 "engine_time_budget_ms": engine_time_budget_ms,
                 "engine_num_determinizations": engine_num_determinizations,
                 "engine_max_rollout_depth": engine_max_rollout_depth,
+                "strict_rules_only": strict_rules_only,
+                "reject_non_strict_powers": reject_non_strict_powers,
+                "strict_kpi_gate_enabled": strict_kpi_gate_enabled,
+                "strict_kpi_baseline_path": strict_kpi_baseline_path,
+                "strict_kpi_round1_games": strict_kpi_round1_games,
+                "strict_kpi_smoke_games": strict_kpi_smoke_games,
+                "strict_kpi_max_turns": strict_kpi_max_turns,
+                "strict_kpi_min_round1_pct_15_30": strict_kpi_min_round1_pct_15_30,
+                "strict_kpi_max_round1_strict_rejected_games": strict_kpi_max_round1_strict_rejected_games,
+                "strict_kpi_max_smoke_strict_rejected_games": strict_kpi_max_smoke_strict_rejected_games,
+                "strict_kpi_min_strict_certified_birds": strict_kpi_min_strict_certified_birds,
+                "strict_kpi_require_non_regression": strict_kpi_require_non_regression,
+                "strict_kpi_mean_score_tolerance": strict_kpi_mean_score_tolerance,
                 "seed": seed,
             },
             "best": best,
@@ -285,7 +355,7 @@ def run_auto_improve_factorized(
             f"eval_wins={ev_dict['nn_wins']}/{ev_dict['games']} margin={ev_dict['nn_mean_margin']:.2f} | "
             f"gate_wins={gate_dict['nn_wins']}/{promotion_games} | "
             f"pool_win={pool_eval['summary']['nn_win_rate']:.3f} ge100={pool_eval['summary']['nn_rate_ge_100']:.3f} | "
-            f"kpi_pass={kpi_gate['passed']} promoted={promoted}"
+            f"kpi_pass={kpi_gate['passed']} strict_kpi_pass={strict_kpi_compare.get('passed', False)} promoted={promoted}"
         )
 
     return json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -330,6 +400,26 @@ def main() -> None:
     parser.add_argument("--engine-time-budget-ms", type=int, default=25)
     parser.add_argument("--engine-num-determinizations", type=int, default=0)
     parser.add_argument("--engine-max-rollout-depth", type=int, default=24)
+    parser.set_defaults(strict_rules_only=True, reject_non_strict_powers=True)
+    parser.add_argument("--strict-rules-only", dest="strict_rules_only", action="store_true")
+    parser.add_argument("--allow-non-strict-rules", dest="strict_rules_only", action="store_false")
+    parser.add_argument("--reject-non-strict-powers", dest="reject_non_strict_powers", action="store_true")
+    parser.add_argument("--allow-non-strict-powers", dest="reject_non_strict_powers", action="store_false")
+    parser.set_defaults(strict_kpi_gate_enabled=True)
+    parser.add_argument("--strict-kpi-gate-enabled", dest="strict_kpi_gate_enabled", action="store_true")
+    parser.add_argument("--disable-strict-kpi-gate", dest="strict_kpi_gate_enabled", action="store_false")
+    parser.add_argument("--strict-kpi-baseline", default="reports/ml/baselines/strict_kpi_baseline.json")
+    parser.add_argument("--strict-kpi-round1-games", type=int, default=10)
+    parser.add_argument("--strict-kpi-smoke-games", type=int, default=3)
+    parser.add_argument("--strict-kpi-max-turns", type=int, default=120)
+    parser.add_argument("--strict-kpi-min-round1-pct-15-30", type=float, default=0.2)
+    parser.add_argument("--strict-kpi-max-round1-strict-rejected-games", type=int, default=0)
+    parser.add_argument("--strict-kpi-max-smoke-strict-rejected-games", type=int, default=0)
+    parser.add_argument("--strict-kpi-min-strict-certified-birds", type=int, default=50)
+    parser.set_defaults(strict_kpi_require_non_regression=False)
+    parser.add_argument("--strict-kpi-require-non-regression", dest="strict_kpi_require_non_regression", action="store_true")
+    parser.add_argument("--strict-kpi-disable-non-regression", dest="strict_kpi_require_non_regression", action="store_false")
+    parser.add_argument("--strict-kpi-mean-score-tolerance", type=float, default=0.5)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
@@ -371,6 +461,19 @@ def main() -> None:
         engine_time_budget_ms=args.engine_time_budget_ms,
         engine_num_determinizations=args.engine_num_determinizations,
         engine_max_rollout_depth=args.engine_max_rollout_depth,
+        strict_rules_only=args.strict_rules_only,
+        reject_non_strict_powers=args.reject_non_strict_powers,
+        strict_kpi_gate_enabled=args.strict_kpi_gate_enabled,
+        strict_kpi_baseline_path=args.strict_kpi_baseline,
+        strict_kpi_round1_games=args.strict_kpi_round1_games,
+        strict_kpi_smoke_games=args.strict_kpi_smoke_games,
+        strict_kpi_max_turns=args.strict_kpi_max_turns,
+        strict_kpi_min_round1_pct_15_30=args.strict_kpi_min_round1_pct_15_30,
+        strict_kpi_max_round1_strict_rejected_games=args.strict_kpi_max_round1_strict_rejected_games,
+        strict_kpi_max_smoke_strict_rejected_games=args.strict_kpi_max_smoke_strict_rejected_games,
+        strict_kpi_min_strict_certified_birds=args.strict_kpi_min_strict_certified_birds,
+        strict_kpi_require_non_regression=args.strict_kpi_require_non_regression,
+        strict_kpi_mean_score_tolerance=args.strict_kpi_mean_score_tolerance,
         seed=args.seed,
     )
 

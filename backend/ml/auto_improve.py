@@ -1,24 +1,11 @@
-"""Legacy auto-improve entrypoint bridged to factorized training.
-
-This module keeps the historical `run_auto_improve` API stable while routing
-all training to the factorized BC improvement loop.
-"""
+"""Direct auto-improve entrypoint for the strict factorized pipeline only."""
 
 from __future__ import annotations
 
 import argparse
-import json
-import shutil
-from pathlib import Path
 
 from backend.models.enums import BoardType
 from backend.ml.auto_improve_factorized import run_auto_improve_factorized
-
-
-def _best_history_row(history: list[dict]) -> dict | None:
-    if not history:
-        return None
-    return max(history, key=lambda r: float((r.get("eval_summary") or {}).get("nn_mean_margin", -1e30)))
 
 
 def run_auto_improve(
@@ -37,18 +24,12 @@ def run_auto_improve(
     eval_games: int,
     seed: int,
     clean_out_dir: bool = True,
-    teacher_policy: str = "lookahead",
     proposal_top_k: int = 6,
     lookahead_depth: int = 2,
+    strict_kpi_gate_enabled: bool = True,
 ) -> dict:
-    """Compatibility wrapper.
-
-    Legacy knobs that do not apply to factorized training (`teacher_policy`) are
-    accepted but ignored.
-    """
-    del teacher_policy
-
-    fac_manifest = run_auto_improve_factorized(
+    """Retained API name, but runs only the factorized strict pipeline."""
+    return run_auto_improve_factorized(
         out_dir=out_dir,
         iterations=iterations,
         players=players,
@@ -85,59 +66,23 @@ def run_auto_improve(
         engine_time_budget_ms=25,
         engine_num_determinizations=0,
         engine_max_rollout_depth=24,
+        strict_rules_only=True,
+        reject_non_strict_powers=True,
+        strict_kpi_gate_enabled=strict_kpi_gate_enabled,
         seed=seed,
         clean_out_dir=clean_out_dir,
     )
 
-    out_base = Path(out_dir)
-    best_row = fac_manifest.get("best") or _best_history_row(fac_manifest.get("history", []))
-    if best_row is None:
-        raise ValueError("Factorized auto-improve produced no history rows")
-
-    src_model = Path(best_row["model"])
-    src_meta = Path(best_row["dataset_meta"])
-    best_model = out_base / "best_model.npz"
-    best_meta = out_base / "best_dataset.meta.json"
-    if src_model.exists():
-        shutil.copy2(src_model, best_model)
-    if src_meta.exists():
-        shutil.copy2(src_meta, best_meta)
-
-    compat_best = {
-        "iteration": best_row.get("iteration"),
-        "primary_score": round(float((best_row.get("eval_summary") or {}).get("nn_mean_margin", 0.0)), 6),
-        "eval_summary": best_row.get("eval_summary"),
-        "model": str(best_model),
-        "dataset_meta": str(best_meta),
-        "source": "factorized_promoted" if fac_manifest.get("best") else "factorized_best_eval",
-    }
-    compat_manifest = {
-        "version": 2,
-        "mode": "factorized_bridge",
-        "legacy_entrypoint": "backend.ml.auto_improve",
-        "factorized_manifest_path": str(out_base / "auto_improve_factorized_manifest.json"),
-        "config": fac_manifest.get("config"),
-        "best": compat_best,
-        "history": fac_manifest.get("history", []),
-    }
-
-    compat_path = out_base / "auto_improve_manifest.json"
-    compat_path.write_text(json.dumps(compat_manifest, indent=2), encoding="utf-8")
-    return compat_manifest
-
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Legacy auto-improve CLI (now bridged to factorized training)"
-    )
-    parser.add_argument("--out-dir", default="reports/ml/auto_improve")
+    parser = argparse.ArgumentParser(description="Auto-improve factorized strict training")
+    parser.add_argument("--out-dir", default="reports/ml/auto_improve_factorized")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--iterations", type=int, default=5)
     parser.add_argument("--players", type=int, default=2, choices=[2])
     parser.add_argument("--board-type", default="oceania", choices=["base", "oceania"])
     parser.add_argument("--max-turns", type=int, default=220)
     parser.add_argument("--games-per-iter", type=int, default=120)
-    parser.add_argument("--teacher-policy", default="lookahead")
     parser.add_argument("--proposal-top-k", type=int, default=6)
     parser.add_argument("--lookahead-depth", type=int, default=2, choices=[0, 1, 2])
     parser.add_argument("--train-epochs", type=int, default=8)
@@ -147,13 +92,11 @@ def main() -> None:
     parser.add_argument("--value-weight", type=float, default=0.5)
     parser.add_argument("--val-split", type=float, default=0.1)
     parser.add_argument("--eval-games", type=int, default=100)
+    parser.set_defaults(strict_kpi_gate_enabled=True)
+    parser.add_argument("--strict-kpi-gate-enabled", dest="strict_kpi_gate_enabled", action="store_true")
+    parser.add_argument("--disable-strict-kpi-gate", dest="strict_kpi_gate_enabled", action="store_false")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
-
-    print(
-        "NOTICE: backend.ml.auto_improve now routes to factorized training. "
-        "Use backend.ml.auto_improve_factorized directly for full control."
-    )
 
     manifest = run_auto_improve(
         out_dir=args.out_dir,
@@ -171,17 +114,13 @@ def main() -> None:
         eval_games=args.eval_games,
         seed=args.seed,
         clean_out_dir=not args.resume,
-        teacher_policy=args.teacher_policy,
         proposal_top_k=args.proposal_top_k,
         lookahead_depth=args.lookahead_depth,
+        strict_kpi_gate_enabled=args.strict_kpi_gate_enabled,
     )
 
-    best = manifest.get("best") or {}
-    print(
-        "auto-improve (factorized bridge) complete | "
-        f"best_iter={best.get('iteration')} | "
-        f"best_margin={(best.get('eval_summary') or {}).get('nn_mean_margin')}"
-    )
+    best = manifest.get("best")
+    print(f"auto-improve complete | best_promoted={'yes' if best else 'no'}")
 
 
 if __name__ == "__main__":

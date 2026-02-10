@@ -1,0 +1,47 @@
+{
+  "replay_seed_20260210": {
+    "seed": 20260210,
+    "you_score": {
+      "bird_vp": 59,
+      "eggs": 11,
+      "cached_food": 2,
+      "tucked_cards": 23,
+      "bonus_cards": 6,
+      "round_goals": 22,
+      "nectar": 5,
+      "total": 128
+    },
+    "opp_score": {
+      "bird_vp": 43,
+      "eggs": 8,
+      "cached_food": 4,
+      "tucked_cards": 0,
+      "bonus_cards": 0,
+      "round_goals": 19,
+      "nectar": 7,
+      "total": 81
+    }
+  },
+  "constructed_oceania_fixture": {
+    "alice_score": {
+      "bird_vp": 8,
+      "eggs": 3,
+      "cached_food": 2,
+      "tucked_cards": 3,
+      "bonus_cards": 2,
+      "round_goals": 6,
+      "nectar": 8,
+      "total": 32
+    },
+    "bob_score": {
+      "bird_vp": 0,
+      "eggs": 0,
+      "cached_food": 0,
+      "tucked_cards": 0,
+      "bonus_cards": 0,
+      "round_goals": 6,
+      "nectar": 10,
+      "total": 16
+    }
+  }
+}

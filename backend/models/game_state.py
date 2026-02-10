@@ -35,9 +35,13 @@ class GameState:
     round_goals: list[Goal] = field(default_factory=list)  # 4 goals, one per round
     # round -> {player_name: score}
     round_goal_scores: dict[int, dict[str, int]] = field(default_factory=dict)
+    strict_rules_mode: bool = False
     deck_remaining: int = 0
     discard_pile_count: int = 0
     move_history: list[MoveRecord] = field(default_factory=list)
+    # Optional deterministic choices for power resolution.
+    # Key: "<player_name>::<bird_name>" -> FIFO list of choice payload dicts.
+    power_choice_queues: dict[str, list[dict]] = field(default_factory=dict)
     _end_game_powers_resolved: bool = False
 
     @property
@@ -117,17 +121,21 @@ class GameState:
         from backend.engine.timed_powers import trigger_end_of_round_powers
         trigger_end_of_round_powers(self, self.current_round)
 
-        # Then discard nectar from all player supplies (Oceania rule).
-        if self.board_type == BoardType.OCEANIA:
-            for p in self.players:
-                p.food_supply.nectar = 0
-
         # Finally score the round goal for this round.
         if 1 <= self.current_round <= len(self.round_goals):
             from backend.engine.scoring import compute_round_goal_scores
             scores = compute_round_goal_scores(self, self.current_round)
             if scores:
                 self.round_goal_scores[self.current_round] = scores
+
+        # Round-end cleanup happens after goal scoring.
+        if self.board_type == BoardType.OCEANIA:
+            for p in self.players:
+                p.food_supply.nectar = 0
+
+        # Reset per-round action trackers after round scoring completes.
+        for p in self.players:
+            p.play_bird_actions_this_round = 0
 
         self.current_round += 1
         self.turn_in_round = 1
@@ -170,7 +178,8 @@ class GameState:
 
 def create_new_game(player_names: list[str],
                     round_goals: list[Goal] | None = None,
-                    board_type: BoardType = BoardType.BASE) -> GameState:
+                    board_type: BoardType = BoardType.BASE,
+                    strict_rules_mode: bool = False) -> GameState:
     """Create a fresh game state with players and initial setup."""
     players = [Player(name=name) for name in player_names]
 
@@ -188,4 +197,5 @@ def create_new_game(player_names: list[str],
         board_type=board_type,
         birdfeeder=Birdfeeder(board_type=board_type),
         round_goals=round_goals or [],
+        strict_rules_mode=strict_rules_mode,
     )

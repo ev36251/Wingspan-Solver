@@ -56,6 +56,8 @@ def test_generate_dataset_smoke(tmp_path: Path) -> None:
     assert info["samples"] > 0
     assert info["feature_dim"] > 0
     assert info["action_space"]["num_actions"] > 0
+    assert info["strict_rules_only"] is True
+    assert info["reject_non_strict_powers"] is True
 
     lines = out.read_text(encoding="utf-8").strip().splitlines()
     assert len(lines) == info["samples"]

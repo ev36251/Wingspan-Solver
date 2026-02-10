@@ -1,0 +1,33 @@
+{
+  "candidate_path": "reports/ml/sweeps/seed_50/iter_001/pool_eval.json",
+  "baseline_path": null,
+  "passed": true,
+  "checks": [
+    {
+      "name": "min_win_rate",
+      "passed": true,
+      "detail": "0.8250 >= 0.0000"
+    },
+    {
+      "name": "min_mean_score",
+      "passed": true,
+      "detail": "62.400 >= 0.000"
+    },
+    {
+      "name": "min_rate_ge_100",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    },
+    {
+      "name": "min_rate_ge_120",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    }
+  ],
+  "candidate_summary": {
+    "nn_win_rate": 0.825,
+    "nn_mean_score": 62.4,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0
+  }
+}

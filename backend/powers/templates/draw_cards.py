@@ -1,7 +1,26 @@
 """Card drawing power templates — covers ~70 birds."""
 
+import random
 from backend.models.enums import FoodType
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
+
+
+def _draw_one_bird(game_state):
+    """Draw one concrete bird card from deck identity model if available."""
+    deck_cards = getattr(game_state, "_deck_cards", None)
+    if isinstance(deck_cards, list) and deck_cards:
+        card = deck_cards.pop()
+        game_state.deck_remaining = max(0, game_state.deck_remaining - 1)
+        return card
+
+    if game_state.deck_remaining <= 0:
+        return None
+    from backend.data.registries import get_bird_registry
+    pool = list(get_bird_registry().all_birds)
+    if not pool:
+        return None
+    game_state.deck_remaining = max(0, game_state.deck_remaining - 1)
+    return random.choice(pool)
 
 
 class DrawCards(PowerEffect):
@@ -20,22 +39,35 @@ class DrawCards(PowerEffect):
         self.all_players = all_players
 
     def execute(self, ctx: PowerContext) -> PowerResult:
-        drawn = 0
+        kept_for_actor = 0
+
+        def _resolve_for_player(p) -> int:
+            seen = []
+            for _ in range(self.draw):
+                card = _draw_one_bird(ctx.game_state)
+                if card is None:
+                    break
+                seen.append(card)
+            keep_n = min(self.keep, len(seen))
+            if keep_n > 0:
+                p.hand.extend(seen[:keep_n])
+            discarded = max(0, len(seen) - keep_n)
+            if discarded > 0:
+                ctx.game_state.discard_pile_count += discarded
+            return keep_n
 
         if self.all_players:
             for p in ctx.game_state.players:
-                amount = min(self.keep, ctx.game_state.deck_remaining)
-                ctx.game_state.deck_remaining -= self.draw
+                kept = _resolve_for_player(p)
                 if p.name == ctx.player.name:
-                    drawn = amount
+                    kept_for_actor = kept
         else:
-            drawn = min(self.keep, ctx.game_state.deck_remaining)
-            ctx.game_state.deck_remaining -= self.draw
+            kept_for_actor = _resolve_for_player(ctx.player)
 
-        # In state-input mode, actual cards drawn come from UI
-        # For simulation, we just track counts
-        return PowerResult(cards_drawn=drawn,
-                           description=f"Drew {drawn} cards")
+        return PowerResult(
+            cards_drawn=kept_for_actor,
+            description=f"Drew {kept_for_actor} cards",
+        )
 
     def describe_activation(self, ctx: PowerContext) -> str:
         prefix = "ALL PLAYERS: " if self.all_players else ""

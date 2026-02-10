@@ -83,32 +83,8 @@ def _score_round_goal(game: GameState, round_num: int) -> None:
     if goal is None or goal.description.lower() == "no goal":
         return
 
-    from backend.solver.heuristics import _estimate_goal_progress
-
-    progress = []
-    for p in game.players:
-        progress.append((p.name, _estimate_goal_progress(p, goal)))
-
-    progress.sort(key=lambda x: -x[1])
-    if not progress:
-        return
-
-    # Group ties and share placement points (rounded down)
-    scores: dict[str, int] = {}
-    pos = 1
-    i = 0
-    while i < len(progress):
-        j = i + 1
-        while j < len(progress) and progress[j][1] == progress[i][1]:
-            j += 1
-        group = progress[i:j]
-        placements = list(range(pos, min(pos + len(group), 5)))
-        pool = sum(goal.score_for_placement(pl) for pl in placements)
-        share = int(pool // len(group)) if group else 0
-        for name, _ in group:
-            scores[name] = share
-        pos += len(group)
-        i = j
+    from backend.engine.scoring import compute_round_goal_scores
+    scores = compute_round_goal_scores(game, round_num)
 
     if round_num not in game.round_goal_scores:
         game.round_goal_scores[round_num] = {}
@@ -199,12 +175,6 @@ def execute_move_on_sim_result(
             game, player, move.tray_indices, deck_draws,
             move.bonus_count, move.reset_bonus
         )
-        if result.success and deck_draws > 0:
-            # execute_draw_cards decrements deck_remaining but doesn't add
-            # cards to hand for deck draws (since actual identity is unknown
-            # in real play). For simulation, add concrete card identities so
-            # the simulated player has realistic hand sizes for future turns.
-            _add_random_deck_draws(player, deck_draws)
         return result.success, result
 
     return False, None
@@ -224,10 +194,20 @@ def simulate_playout(game: GameState, max_turns: int = 200,
     If base_weights is provided, it's used for move evaluation during playout.
     """
     sim = deep_copy_game(game)
+    strict_mode = getattr(sim, "strict_rules_mode", False)
     turns = 0
 
     while not sim.is_game_over and turns < max_turns:
         player = sim.current_player
+        if strict_mode:
+            from backend.powers.registry import get_power_source, is_strict_power_source_allowed
+            for p in sim.players:
+                for b in p.board.all_birds():
+                    src = get_power_source(b)
+                    if not is_strict_power_source_allowed(src):
+                        raise RuntimeError(
+                            f"Strict rules mode rejected simulation due to non-strict power mapping: {b.name} ({src})"
+                        )
         if player.action_cubes_remaining <= 0:
             # All players might be exhausted — advance round
             if all(p.action_cubes_remaining <= 0 for p in sim.players):

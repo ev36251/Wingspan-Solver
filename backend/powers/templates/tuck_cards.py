@@ -1,7 +1,26 @@
 """Card tucking power templates — covers ~53 birds."""
 
+import random
 from backend.models.enums import FoodType
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
+
+
+def _draw_one_bird(ctx: PowerContext):
+    """Draw one concrete bird card from deck identity model if available."""
+    deck_cards = getattr(ctx.game_state, "_deck_cards", None)
+    if isinstance(deck_cards, list) and deck_cards:
+        card = deck_cards.pop()
+        ctx.game_state.deck_remaining = max(0, ctx.game_state.deck_remaining - 1)
+        return card
+
+    if ctx.game_state.deck_remaining <= 0:
+        return None
+    from backend.data.registries import get_bird_registry
+    pool = list(get_bird_registry().all_birds)
+    if not pool:
+        return None
+    ctx.game_state.deck_remaining = max(0, ctx.game_state.deck_remaining - 1)
+    return random.choice(pool)
 
 
 class TuckFromHand(PowerEffect):
@@ -42,13 +61,20 @@ class TuckFromHand(PowerEffect):
 
         # Bonus effects
         if self.draw_count > 0 and tucked > 0:
-            result.cards_drawn = self.draw_count
-            ctx.game_state.deck_remaining -= self.draw_count
+            drawn = 0
+            for _ in range(self.draw_count):
+                card = _draw_one_bird(ctx)
+                if card is None:
+                    break
+                ctx.player.hand.append(card)
+                drawn += 1
+            result.cards_drawn = drawn
 
         if self.lay_count > 0 and tucked > 0:
             if slot.can_hold_more_eggs():
-                slot.eggs += min(self.lay_count, slot.eggs_space())
-                result.eggs_laid = min(self.lay_count, slot.eggs_space())
+                laid = min(self.lay_count, slot.eggs_space())
+                slot.eggs += laid
+                result.eggs_laid = laid
 
         if self.food_count > 0 and self.food_type and tucked > 0:
             ctx.player.food_supply.add(self.food_type, self.food_count)

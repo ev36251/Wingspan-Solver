@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "started_at_epoch": 1770761769,
+  "updated_at_epoch": 1770762101,
+  "elapsed_sec": 332.09,
+  "config": {
+    "iterations": 1,
+    "players": 2,
+    "board_type": "oceania",
+    "max_turns": 220,
+    "games_per_iter": 80,
+    "proposal_top_k": 6,
+    "lookahead_depth": 2,
+    "n_step": 2,
+    "gamma": 0.97,
+    "bootstrap_mix": 0.35,
+    "value_target_score_scale": 160.0,
+    "value_target_score_bias": 0.0,
+    "late_round_oversample_factor": 2,
+    "train_epochs": 8,
+    "train_batch": 128,
+    "train_hidden": 192,
+    "train_lr": 0.001,
+    "train_value_weight": 0.5,
+    "val_split": 0.1,
+    "eval_games": 60,
+    "promotion_games": 120,
+    "pool_games_per_opponent": 40,
+    "min_pool_win_rate": 0.0,
+    "min_pool_mean_score": 0.0,
+    "min_pool_rate_ge_100": 0.0,
+    "min_pool_rate_ge_120": 0.0,
+    "require_pool_non_regression": true,
+    "min_gate_win_rate": 0.5,
+    "min_gate_mean_score": 50.0,
+    "min_gate_rate_ge_100": 0.0,
+    "min_gate_rate_ge_120": 0.0,
+    "engine_teacher_prob": 0.15,
+    "engine_time_budget_ms": 25,
+    "engine_num_determinizations": 0,
+    "engine_max_rollout_depth": 24,
+    "strict_rules_only": true,
+    "reject_non_strict_powers": true,
+    "strict_kpi_gate_enabled": true,
+    "strict_kpi_baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+    "strict_kpi_round1_games": 10,
+    "strict_kpi_smoke_games": 3,
+    "strict_kpi_max_turns": 120,
+    "strict_kpi_min_round1_pct_15_30": 0.2,
+    "strict_kpi_max_round1_strict_rejected_games": 0,
+    "strict_kpi_max_smoke_strict_rejected_games": 0,
+    "strict_kpi_min_strict_certified_birds": 50,
+    "strict_kpi_require_non_regression": true,
+    "strict_kpi_mean_score_tolerance": 0.5,
+    "seed": 54
+  },
+  "best": null,
+  "history": [
+    {
+      "iteration": 1,
+      "seed": 1054,
+      "dataset": "reports/ml/sweeps/seed_54/iter_001/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/sweeps/seed_54/iter_001/bc_dataset.meta.json",
+      "model": "reports/ml/sweeps/seed_54/iter_001/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 5920,
+        "mean_player_score": 65.675
+      },
+      "train_summary": {
+        "train_samples": 5328,
+        "val_samples": 592,
+        "last_epoch": {
+          "epoch": 8,
+          "train_loss": 3.205697,
+          "train_action_acc": 0.346471,
+          "train_value_mse": 122.942966,
+          "val_loss": 3.288312,
+          "val_action_acc": 0.347973,
+          "val_value_mse": 118.804027
+        }
+      },
+      "eval_summary": {
+        "games": 60,
+        "nn_wins": 1,
+        "heuristic_wins": 59,
+        "ties": 0,
+        "nn_mean_score": 23.333,
+        "heuristic_mean_score": 50.817,
+        "nn_mean_margin": -27.483,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.0167,
+        "heuristic_rate_ge_120": 0.0
+      },
+      "promotion_gate": {
+        "games": 120,
+        "result": {
+          "games": 120,
+          "nn_wins": 2,
+          "heuristic_wins": 118,
+          "ties": 0,
+          "nn_mean_score": 21.742,
+          "heuristic_mean_score": 50.95,
+          "nn_mean_margin": -29.208,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "heuristic_rate_ge_100": 0.0083,
+          "heuristic_rate_ge_120": 0.0083
+        },
+        "score_primary_pass": false,
+        "win_secondary_pass": false,
+        "win_rate": 0.0167,
+        "promoted": false
+      },
+      "pool_eval": {
+        "model": "reports/ml/sweeps/seed_54/iter_001/factorized_model.npz",
+        "board_type": "oceania",
+        "games_per_opponent": 40,
+        "opponents": [
+          "heuristic"
+        ],
+        "summary": {
+          "games": 40,
+          "nn_wins": 0,
+          "opponent_wins": 40,
+          "ties": 0,
+          "nn_win_rate": 0.0,
+          "nn_mean_score": 21.15,
+          "nn_mean_margin": -30.35,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        },
+        "by_opponent": [
+          {
+            "opponent": "heuristic",
+            "games": 40,
+            "nn_wins": 0,
+            "opponent_wins": 40,
+            "ties": 0,
+            "nn_mean_score": 21.15,
+            "opponent_mean_score": 51.5,
+            "nn_mean_margin": -30.35,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0
+          }
+        ]
+      },
+      "kpi_gate": {
+        "candidate_path": "reports/ml/sweeps/seed_54/iter_001/pool_eval.json",
+        "baseline_path": null,
+        "passed": true,
+        "checks": [
+          {
+            "name": "min_win_rate",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          },
+          {
+            "name": "min_mean_score",
+            "passed": true,
+            "detail": "21.150 >= 0.000"
+          },
+          {
+            "name": "min_rate_ge_100",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          },
+          {
+            "name": "min_rate_ge_120",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          }
+        ],
+        "candidate_summary": {
+          "nn_win_rate": 0.0,
+          "nn_mean_score": 21.15,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        }
+      },
+      "strict_kpi_gate": {
+        "passed": true,
+        "candidate_path": "reports/ml/sweeps/seed_54/iter_001/strict_kpi_candidate.json",
+        "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+        "checks": [
+          {
+            "name": "min_round1_pct_15_30",
+            "passed": true,
+            "detail": "0.8000 >= 0.2000"
+          },
+          {
+            "name": "max_round1_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "max_smoke_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "min_strict_certified_birds",
+            "passed": true,
+            "detail": "51 >= 50"
+          },
+          {
+            "name": "non_regression_round1_mean",
+            "passed": true,
+            "detail": "22.950 >= 20.200"
+          },
+          {
+            "name": "non_regression_smoke_mean_player_score",
+            "passed": true,
+            "detail": "62.667 >= 59.700"
+          }
+        ],
+        "candidate_summary": {
+          "round1_mean": 22.95,
+          "round1_pct_15_30": 0.8,
+          "round1_strict_rejected_games": 0,
+          "smoke_mean_player_score": 62.667,
+          "smoke_strict_rejected_games": 0,
+          "strict_certified_birds": 51
+        }
+      }
+    }
+  ]
+}

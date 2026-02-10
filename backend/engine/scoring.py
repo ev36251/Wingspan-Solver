@@ -336,6 +336,77 @@ def score_round_goals(game_state: GameState, player: Player) -> int:
     return total
 
 
+def _goal_desc_has_any(desc: str, patterns: tuple[str, ...]) -> bool:
+    return any(p in desc for p in patterns)
+
+
+def _count_food_icons_for_goal(player: Player, allowed: set[FoodType]) -> int:
+    total = 0
+    for bird in player.board.all_birds():
+        cost = bird.food_cost
+        if cost.is_or:
+            # OR costs represent one paid token even if multiple icons are shown.
+            if any(ft in allowed for ft in cost.items):
+                total += 1
+            continue
+        total += sum(1 for ft in cost.items if ft in allowed)
+    return total
+
+
+def is_supported_round_goal_description(description: str) -> bool:
+    """Return whether round-goal progress parser supports this description."""
+    desc = description.lower()
+    if desc == "no goal":
+        return True
+
+    habitat_patterns = ("forest", "grassland", "wetland")
+    if any(f"[bird] in [{h}]" in desc for h in habitat_patterns):
+        return True
+    if "total [bird]" in desc or "[bird] in one row" in desc:
+        return True
+    if any(f"[egg] in [{h}]" in desc for h in habitat_patterns):
+        return True
+    if any(f"[egg] in [{n}]" in desc for n in ("bowl", "cavity", "ground", "platform")):
+        return True
+    if _goal_desc_has_any(
+        desc,
+        (
+            "[bowl] [bird] with [egg]",
+            "[cavity] [bird] with [egg]",
+            "[ground] [bird] with [egg]",
+            "[platform] [bird] with [egg]",
+        ),
+    ):
+        return True
+    if any(f"[{n}] [bird]" in desc for n in ("bowl", "cavity", "ground", "platform")):
+        return True
+    if "[bird] worth >4 [feather]" in desc or "[bird] worth ≤3 [feather]" in desc or "[bird] worth <=3 [feather]" in desc:
+        return True
+    if _goal_desc_has_any(
+        desc,
+        (
+            "brown powers",
+            "white & no powers",
+            "[bird_with_tucked_card]",
+            "filled columns",
+            "[beak_pointing_left]",
+            "[beak_pointing_right]",
+            "[bird] with no [egg]",
+            "sets of [egg][egg][egg] in [wetland][grassland][forest]",
+            "[card] in hand",
+            "[wild] in personal supply",
+            "[action_cube_gray] cubes on \"play a bird\"",
+            "food cost of played [bird]",
+            "[fruit] + [seed] in food cost of your birds",
+            "[invertebrate] in food cost of your birds",
+            "[rodent] + [fish] in food cost of your birds",
+        ),
+    ):
+        return True
+
+    return False
+
+
 def _goal_progress_for_round(player: Player, goal) -> float:
     """Estimate round-goal progress for end-of-round placement scoring."""
     desc = goal.description.lower()
@@ -349,6 +420,8 @@ def _goal_progress_for_round(player: Player, goal) -> float:
         return board.total_birds()
     if "[bird] in one row" in desc:
         return max(r.bird_count for r in board.all_rows())
+    if "sets of [egg][egg][egg] in [wetland][grassland][forest]" in desc:
+        return min(board.wetland.total_eggs(), board.grassland.total_eggs(), board.forest.total_eggs())
 
     for hab_name, hab_enum in (("forest", Habitat.FOREST), ("grassland", Habitat.GRASSLAND),
                                ("wetland", Habitat.WETLAND)):
@@ -371,6 +444,23 @@ def _goal_progress_for_round(player: Player, goal) -> float:
             )
 
     for nt in ("bowl", "cavity", "ground", "platform"):
+        if f"[{nt}] [bird] with [egg]" in desc:
+            nest_map = {
+                "bowl": NestType.BOWL,
+                "cavity": NestType.CAVITY,
+                "ground": NestType.GROUND,
+                "platform": NestType.PLATFORM,
+            }
+            return sum(
+                1
+                for r in board.all_rows()
+                for s in r.slots
+                if s.bird
+                and s.eggs > 0
+                and (s.bird.nest_type == nest_map[nt] or s.bird.nest_type == NestType.WILD)
+            )
+
+    for nt in ("bowl", "cavity", "ground", "platform"):
         if f"[{nt}] [bird]" in desc:
             nest_map = {
                 "bowl": NestType.BOWL,
@@ -390,14 +480,32 @@ def _goal_progress_for_round(player: Player, goal) -> float:
 
     if "[bird_with_tucked_card]" in desc:
         return sum(1 for r in board.all_rows() for s in r.slots if s.bird and s.tucked_cards > 0)
+    if "[bird] with no [egg]" in desc:
+        return sum(1 for r in board.all_rows() for s in r.slots if s.bird and s.eggs == 0)
+    if "[card] in hand" in desc:
+        return player.hand_size
+    if "[wild] in personal supply" in desc:
+        return player.food_supply.total()
 
     if "filled columns" in desc:
         return min(r.bird_count for r in board.all_rows())
+    if "[action_cube_gray] cubes on \"play a bird\"" in desc:
+        return player.play_bird_actions_this_round
+    if "food cost of played [bird]" in desc:
+        return sum(b.food_cost.total for b in board.all_birds())
+    if "[fruit] + [seed] in food cost of your birds" in desc:
+        return _count_food_icons_for_goal(player, {FoodType.FRUIT, FoodType.SEED})
+    if "[invertebrate] in food cost of your birds" in desc:
+        return _count_food_icons_for_goal(player, {FoodType.INVERTEBRATE})
+    if "[rodent] + [fish] in food cost of your birds" in desc:
+        return _count_food_icons_for_goal(player, {FoodType.RODENT, FoodType.FISH})
 
     if "[beak_pointing_left]" in desc:
         return sum(1 for b in board.all_birds() if b.beak_direction == BeakDirection.LEFT)
     if "[beak_pointing_right]" in desc:
         return sum(1 for b in board.all_birds() if b.beak_direction == BeakDirection.RIGHT)
+    if "[bird] worth ≤3 [feather]" in desc or "[bird] worth <=3 [feather]" in desc:
+        return sum(1 for b in board.all_birds() if b.victory_points <= 3)
 
     return 0.0
 

@@ -1,0 +1,122 @@
+{
+  "meta": {
+    "games": 50,
+    "players": 2,
+    "board_type": "oceania",
+    "max_steps": 260,
+    "seed": 20260210,
+    "elapsed_sec": 0.63
+  },
+  "power_mapping": {
+    "total_birds": 446,
+    "fallback_count": 0,
+    "coverage_non_fallback": 1.0,
+    "stats_by_power": {
+      "ActivateAllPredators": 1,
+      "CacheFoodFromFeeder": 12,
+      "CacheFoodFromSupply": 19,
+      "ConditionalCacheFromNeighbor": 1,
+      "CopyNeighborBonusCard": 2,
+      "CopyNeighborBrownPower": 3,
+      "CopyNeighborWhitePower": 1,
+      "CountsDoubleForGoal": 3,
+      "DiscardToTuck": 1,
+      "DrawBonusCards": 30,
+      "DrawCards": 47,
+      "DrawFromTray": 6,
+      "EndOfRoundCacheFood": 2,
+      "FewestBirdsGainFood": 1,
+      "FlockingPower": 27,
+      "GainFoodFromFeeder": 22,
+      "GainFoodFromSupply": 51,
+      "GainFoodFromSupplyOrCache": 2,
+      "GainFoodMatchingPrevious": 1,
+      "LayEggs": 65,
+      "LayEggsEachBirdInRow": 2,
+      "MoveBird": 8,
+      "NoPower": 6,
+      "PlaceBirdSideways": 4,
+      "PlayAdditionalBird": 28,
+      "PredatorDice": 20,
+      "PredatorLookAt": 14,
+      "RepeatPower": 2,
+      "RepeatPredatorPower": 1,
+      "ResetFeederGainFood": 17,
+      "RetrieveDiscardedBonusCard": 1,
+      "ScoreBonusCardNow": 1,
+      "TradeFoodForAny": 1,
+      "TuckFromDeck": 4,
+      "TuckFromHand": 40
+    }
+  },
+  "lifecycle_conformance": {
+    "checks_total": 5,
+    "checks_passed": 5,
+    "checks_failed": 0,
+    "all_passed": true,
+    "checks": [
+      {
+        "check_id": "between_turn_pink_trigger_after_action",
+        "passed": true,
+        "detail": "success=True, bob_seed=1"
+      },
+      {
+        "check_id": "round_end_powers_before_round_goal_scoring",
+        "passed": true,
+        "detail": "pre={'Alice': 4, 'Bob': 4}, post={'Alice': 5, 'Bob': 3}, eggs_a=1, eggs_b=0"
+      },
+      {
+        "check_id": "game_end_power_triggers_on_round_4_to_5",
+        "passed": true,
+        "detail": "is_game_over=True, alice_bonus_count=1"
+      },
+      {
+        "check_id": "game_end_power_executes_once_guard",
+        "passed": true,
+        "detail": "manual_trigger_count=0, bonus_before=1, bonus_after=1"
+      },
+      {
+        "check_id": "round_transition_resets_action_cubes",
+        "passed": true,
+        "detail": "round=2, cubes=[7, 7]"
+      }
+    ]
+  },
+  "issues_total": 0,
+  "critical_issues_total": 0,
+  "states_checked": 2650,
+  "conformance_rate": 1.0,
+  "issues_by_rule": {},
+  "issues": [],
+  "move_generation_mismatch_total": 3,
+  "move_generation_mismatch_hints": [
+    {
+      "game_index": 18,
+      "step": 50,
+      "players": 2,
+      "board_type": "oceania",
+      "suite_seed": 20260210,
+      "game_seed": 20260228,
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 38,
+      "step": 38,
+      "players": 2,
+      "board_type": "oceania",
+      "suite_seed": 20260210,
+      "game_seed": 20260248,
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 47,
+      "step": 11,
+      "players": 2,
+      "board_type": "oceania",
+      "suite_seed": 20260210,
+      "game_seed": 20260257,
+      "detail": "1 generated moves failed before first executable move"
+    }
+  ],
+  "winner_score_mean": 46.04
+}

@@ -1,0 +1,99 @@
+{
+  "seed": 20260210,
+  "turns": 52,
+  "script_steps_total": 26,
+  "script_steps_consumed": 26,
+  "divergence_count": 3,
+  "divergences": [
+    {
+      "turn": 6,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "turn4 play swallow in forest, spend nectar + invertebrate | wanted=play_bird:Violet-Green Swallow:Habitat.FOREST hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Golden Pheasant', 'Wood Duck', 'Great Hornbill', 'Roseate Spoonbill', 'Twite'] food={inv=1,seed=1,fish=0,fruit=0,rod=1,nectar=1} legal_plays=['Golden Pheasant', 'Golden Pheasant', 'Twite']"
+    },
+    {
+      "turn": 12,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "turn7 play pheasant in grasslands, spend 2 invertebrates + 1 seed, lay 4 eggs | wanted=play_bird:Golden Pheasant:Habitat.GRASSLAND hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Wood Duck', 'Great Hornbill', 'Roseate Spoonbill', 'Twite', 'Bronzed Cowbird'] food={inv=1,seed=1,fish=0,fruit=0,rod=0,nectar=2} legal_plays=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Wood Duck', 'Wood Duck', 'Great Hornbill', 'Roseate Spoonbill', 'Twite']"
+    },
+    {
+      "turn": 24,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "r2t5 | wanted=play_bird:Twite:Habitat.GRASSLAND hand=['Baltimore Oriole', 'Black-Tailed Godwit', 'Great Hornbill', 'Roseate Spoonbill', 'Broad-Winged Hawk', 'Violet-Green Swallow', 'Scaly-Breasted Munia', 'Peaceful Dove', 'Blue-Winged Warbler', 'Mandarin Duck', 'Desert Wheatear', 'American White Pelican', 'Many-Colored Fruit-Dove', 'Musk Duck'] food={inv=4,seed=2,fish=1,fruit=1,rod=1,nectar=1} legal_plays=['Baltimore Oriole', 'Black-Tailed Godwit', 'Great Hornbill', 'Roseate Spoonbill', 'Broad-Winged Hawk', 'Violet-Green Swallow', 'Violet-Green Swallow', 'Violet-Green Swallow']"
+    }
+  ],
+  "you_score": {
+    "bird_vp": 72,
+    "eggs": 6,
+    "cached_food": 1,
+    "tucked_cards": 6,
+    "bonus_cards": 12,
+    "round_goals": 22,
+    "nectar": 8,
+    "total": 127
+  },
+  "opp_score": {
+    "bird_vp": 27,
+    "eggs": 7,
+    "cached_food": 0,
+    "tucked_cards": 0,
+    "bonus_cards": 7,
+    "round_goals": 19,
+    "nectar": 8,
+    "total": 68
+  },
+  "you_birds": [
+    "Golden Pheasant",
+    "Wood Duck",
+    "Baltimore Oriole",
+    "Great Hornbill",
+    "Baltimore Oriole",
+    "Lesser Whitethroat",
+    "Magpie-Lark",
+    "Forster's Tern",
+    "Trumpeter Swan",
+    "Mandarin Duck",
+    "Roseate Spoonbill",
+    "Trumpeter Swan"
+  ],
+  "opp_birds": [
+    "Golden Pheasant",
+    "Blue-Winged Warbler",
+    "Red-Wattled Lapwing",
+    "Spotted Dove",
+    "Willie-Wagtail",
+    "White Stork"
+  ],
+  "opp_sri_lanka_blue_magpie_tucked_cards": 0,
+  "video_bird_overrides": {
+    "Mandarin Duck": {
+      "food_cost": [
+        "invertebrate",
+        "invertebrate",
+        "invertebrate"
+      ],
+      "food_total": 3,
+      "is_or": false
+    },
+    "Trumpeter Swan": {
+      "food_cost": [
+        "fish",
+        "seed",
+        "wild"
+      ],
+      "food_total": 3,
+      "is_or": false
+    },
+    "Snowy Owl": {
+      "food_cost": [
+        "rodent",
+        "fruit",
+        "fish"
+      ],
+      "food_total": 3,
+      "is_or": false
+    }
+  }
+}

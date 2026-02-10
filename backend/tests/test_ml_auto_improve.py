@@ -20,11 +20,14 @@ def test_auto_improve_smoke(tmp_path: Path) -> None:
         value_weight=0.5,
         val_split=0.2,
         eval_games=2,
+        strict_kpi_gate_enabled=False,
         seed=3,
     )
 
-    assert (out_dir / "auto_improve_manifest.json").exists()
+    assert (out_dir / "auto_improve_factorized_manifest.json").exists()
     assert (out_dir / "best_model.npz").exists()
-    assert manifest["mode"] == "factorized_bridge"
+    assert manifest["config"]["strict_rules_only"] is True
+    assert manifest["config"]["reject_non_strict_powers"] is True
+    assert manifest["config"]["strict_kpi_gate_enabled"] is False
     assert manifest["best"]["iteration"] == 1
     assert len(manifest["history"]) == 1

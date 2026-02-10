@@ -1,0 +1,14 @@
+{
+  "games": 120,
+  "players": 2,
+  "sample_size_player_scores": 240,
+  "mean_player_score": 46.683,
+  "player_p50": 44,
+  "player_p90": 67,
+  "player_p95": 72,
+  "player_max": 99,
+  "rate_ge_100": 0.0,
+  "rate_ge_120": 0.0,
+  "mean_winner_score": 54.167,
+  "max_winner_score": 99
+}

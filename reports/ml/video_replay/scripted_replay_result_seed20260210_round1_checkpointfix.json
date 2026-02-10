@@ -1,0 +1,84 @@
+{
+  "seed": 20260210,
+  "turns": 52,
+  "script_steps_total": 28,
+  "script_steps_consumed": 26,
+  "divergence_count": 6,
+  "divergences": [
+    {
+      "turn": 14,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "turn8 play wood duck in forest, spend nectar + 2 seed and 1 egg from pheasant | wanted=play_bird:Wood Duck:Habitat.FOREST hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'White Stork', 'Wood Duck', 'Roseate Spoonbill', 'Twite', 'Mandarin Duck', 'Blue-Winged Warbler'] food={inv=0,seed=4,fish=0,fruit=0,rod=0,nectar=1} legal_plays=[]"
+    },
+    {
+      "turn": 34,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Great Hornbill:Habitat.FOREST hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'White Stork', 'Wood Duck'] food={inv=1,seed=0,fish=2,fruit=2,rod=0,nectar=0} legal_plays=['Baltimore Oriole', 'White Stork', 'White Stork', 'White Stork', 'White Stork']"
+    },
+    {
+      "turn": 38,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:White Stork:Habitat.FOREST hand=['Trumpeter Swan', 'Black-Tailed Godwit', 'White Stork'] food={inv=0,seed=0,fish=2,fruit=0,rod=0,nectar=1} legal_plays=['White Stork', 'White Stork']"
+    },
+    {
+      "turn": 42,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Roseate Spoonbill:Habitat.WETLAND hand=[] food={inv=0,seed=0,fish=0,fruit=0,rod=0,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 46,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Black-Tailed Godwit:Habitat.WETLAND hand=[] food={inv=0,seed=0,fish=0,fruit=0,rod=0,nectar=2} legal_plays=[]"
+    },
+    {
+      "turn": 50,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Trumpeter Swan:Habitat.WETLAND hand=[] food={inv=1,seed=1,fish=0,fruit=2,rod=0,nectar=2} legal_plays=[]"
+    }
+  ],
+  "you_score": {
+    "bird_vp": 34,
+    "eggs": 8,
+    "cached_food": 0,
+    "tucked_cards": 16,
+    "bonus_cards": 3,
+    "round_goals": 20,
+    "nectar": 8,
+    "total": 89
+  },
+  "opp_score": {
+    "bird_vp": 17,
+    "eggs": 20,
+    "cached_food": 0,
+    "tucked_cards": 2,
+    "bonus_cards": 4,
+    "round_goals": 21,
+    "nectar": 8,
+    "total": 72
+  },
+  "you_birds": [
+    "Violet-Green Swallow",
+    "Baltimore Oriole",
+    "Golden Pheasant",
+    "Twite",
+    "Lesser Whitethroat",
+    "Forster's Tern",
+    "Mandarin Duck",
+    "White Stork"
+  ],
+  "opp_birds": [
+    "Spotted Dove",
+    "Red-Wattled Lapwing",
+    "Golden Pheasant",
+    "Willie-Wagtail",
+    "Violet-Green Swallow",
+    "Squacco Heron"
+  ],
+  "opp_sri_lanka_blue_magpie_tucked_cards": 0
+}

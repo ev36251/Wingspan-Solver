@@ -1,0 +1,45 @@
+name: kpi-benchmarks
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  kpi-benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[dev]"
+
+      - name: Run standardized KPI benchmark suite
+        run: |
+          python -m backend.ml.kpi_benchmark_suite \
+            --out-dir reports/ml/benchmarks/ci \
+            --players 2 \
+            --board-type oceania \
+            --round1-games 20 \
+            --full-games 5 \
+            --max-turns 220 \
+            --strict-rules-only \
+            --reject-non-strict-powers \
+            --seed 42
+
+      - name: Upload KPI benchmark artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kpi-benchmark-artifacts
+          path: |
+            reports/ml/benchmarks/ci/round1_benchmark.json
+            reports/ml/benchmarks/ci/full_game_benchmark.json
+            reports/ml/benchmarks/ci/kpi_benchmark_summary.json

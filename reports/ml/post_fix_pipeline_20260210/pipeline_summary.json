@@ -1,0 +1,171 @@
+{
+  "run_date": "2026-02-10",
+  "conformance": {
+    "critical_issues_total": 0,
+    "conformance_rate": 1.0,
+    "lifecycle_all_passed": true,
+    "winner_score_mean": 46.04
+  },
+  "baseline_eval_200": {
+    "games": 200,
+    "nn_wins": 1,
+    "heuristic_wins": 198,
+    "ties": 1,
+    "nn_mean_score": 15.375,
+    "heuristic_mean_score": 48.225,
+    "nn_mean_margin": -32.85,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0,
+    "heuristic_rate_ge_100": 0.0,
+    "heuristic_rate_ge_120": 0.0
+  },
+  "posttrain_eval_200": {
+    "games": 200,
+    "nn_wins": 9,
+    "heuristic_wins": 190,
+    "ties": 1,
+    "nn_mean_score": 25.62,
+    "heuristic_mean_score": 49.43,
+    "nn_mean_margin": -23.81,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0,
+    "heuristic_rate_ge_100": 0.005,
+    "heuristic_rate_ge_120": 0.0
+  },
+  "delta_post_minus_base_eval_200": {
+    "nn_wins": 8,
+    "nn_mean_score": 10.245,
+    "nn_mean_margin": 9.04,
+    "heuristic_mean_score": 1.205
+  },
+  "baseline_dist_120": {
+    "games": 120,
+    "model": "reports/ml/factorized_bc_2p_v1.npz",
+    "nn_wins": 2,
+    "heuristic_wins": 118,
+    "ties": 0,
+    "nn": {
+      "mean": 15.217,
+      "p50": 14,
+      "p90": 23,
+      "p95": 25,
+      "max": 36,
+      "rate_ge_100": 0.0,
+      "rate_ge_120": 0.0
+    },
+    "heuristic": {
+      "mean": 48.508,
+      "p50": 47,
+      "p90": 67,
+      "p95": 76,
+      "max": 86,
+      "rate_ge_100": 0.0,
+      "rate_ge_120": 0.0
+    },
+    "nn_mean_margin": -33.292
+  },
+  "posttrain_dist_120": {
+    "games": 120,
+    "model": "reports/ml/post_fix_pipeline_20260210/auto_improve_iter1/best_model.npz",
+    "nn_wins": 4,
+    "heuristic_wins": 116,
+    "ties": 0,
+    "nn": {
+      "mean": 25.125,
+      "p50": 23,
+      "p90": 38,
+      "p95": 46,
+      "max": 57,
+      "rate_ge_100": 0.0,
+      "rate_ge_120": 0.0
+    },
+    "heuristic": {
+      "mean": 49.217,
+      "p50": 48,
+      "p90": 70,
+      "p95": 80,
+      "max": 101,
+      "rate_ge_100": 0.0083,
+      "rate_ge_120": 0.0
+    },
+    "nn_mean_margin": -24.092
+  },
+  "delta_post_minus_base_dist_120": {
+    "nn_mean": 9.908,
+    "nn_p50": 9,
+    "nn_p90": 15,
+    "nn_max": 21,
+    "nn_mean_margin": 9.2
+  },
+  "heuristic_selfplay_dist_120": {
+    "games": 120,
+    "players": 2,
+    "sample_size_player_scores": 240,
+    "mean_player_score": 46.683,
+    "player_p50": 44,
+    "player_p90": 67,
+    "player_p95": 72,
+    "player_max": 99,
+    "rate_ge_100": 0.0,
+    "rate_ge_120": 0.0,
+    "mean_winner_score": 54.167,
+    "max_winner_score": 99
+  },
+  "train_iter1": {
+    "dataset_samples": 8880,
+    "dataset_mean_player_score": 56.487,
+    "train_last_epoch": {
+      "epoch": 12,
+      "train_loss": 2.531537,
+      "train_action_acc": 0.461587,
+      "train_value_mse": 131.354144,
+      "val_loss": 2.509393,
+      "val_action_acc": 0.470721,
+      "val_value_mse": 115.583146
+    },
+    "eval_summary": {
+      "games": 120,
+      "nn_wins": 8,
+      "heuristic_wins": 112,
+      "ties": 0,
+      "nn_mean_score": 26.192,
+      "heuristic_mean_score": 50.183,
+      "nn_mean_margin": -23.992,
+      "nn_rate_ge_100": 0.0,
+      "nn_rate_ge_120": 0.0,
+      "heuristic_rate_ge_100": 0.0167,
+      "heuristic_rate_ge_120": 0.0
+    },
+    "promotion_gate": {
+      "games": 120,
+      "result": {
+        "games": 120,
+        "nn_wins": 4,
+        "heuristic_wins": 115,
+        "ties": 1,
+        "nn_mean_score": 25.017,
+        "heuristic_mean_score": 46.375,
+        "nn_mean_margin": -21.358,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.0,
+        "heuristic_rate_ge_120": 0.0
+      },
+      "score_primary_pass": true,
+      "win_secondary_pass": true,
+      "win_rate": 0.0333,
+      "promoted": true
+    },
+    "pool_eval_summary": {
+      "games": 40,
+      "nn_wins": 1,
+      "opponent_wins": 39,
+      "ties": 0,
+      "nn_win_rate": 0.025,
+      "nn_mean_score": 25.8,
+      "nn_mean_margin": -25.375,
+      "nn_rate_ge_100": 0.0,
+      "nn_rate_ge_120": 0.0
+    }
+  }
+}

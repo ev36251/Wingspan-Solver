@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "candidate_path": "reports/ml/sweeps/seed_52/iter_001/strict_kpi_candidate.json",
+  "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+  "checks": [
+    {
+      "name": "min_round1_pct_15_30",
+      "passed": true,
+      "detail": "0.6000 >= 0.2000"
+    },
+    {
+      "name": "max_round1_strict_rejected_games",
+      "passed": true,
+      "detail": "0 <= 0"
+    },
+    {
+      "name": "max_smoke_strict_rejected_games",
+      "passed": true,
+      "detail": "0 <= 0"
+    },
+    {
+      "name": "min_strict_certified_birds",
+      "passed": true,
+      "detail": "51 >= 50"
+    },
+    {
+      "name": "non_regression_round1_mean",
+      "passed": true,
+      "detail": "21.200 >= 20.200"
+    },
+    {
+      "name": "non_regression_smoke_mean_player_score",
+      "passed": true,
+      "detail": "68.333 >= 59.700"
+    }
+  ],
+  "candidate_summary": {
+    "round1_mean": 21.2,
+    "round1_pct_15_30": 0.6,
+    "round1_strict_rejected_games": 0,
+    "smoke_mean_player_score": 68.333,
+    "smoke_strict_rejected_games": 0,
+    "strict_certified_birds": 51
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "2": {
+    "games": 2,
+    "failed_games": 0,
+    "sample_size_player_scores": 4,
+    "mean_player_score": 63.0,
+    "player_p50": 64,
+    "player_p75": 64,
+    "player_p90": 77,
+    "player_p99": 77,
+    "player_max": 77,
+    "rate_ge_100": 0.0,
+    "rate_ge_110": 0.0,
+    "rate_ge_120": 0.0,
+    "rate_ge_135": 0.0,
+    "rate_ge_150": 0.0,
+    "mean_winner_score": 68.0,
+    "max_winner_score": 77,
+    "elapsed_sec": 1690.7
+  },
+  "meta": {
+    "mode": "solver_recommendation_on_sim_state",
+    "board_type": "oceania",
+    "player_counts": [
+      2
+    ],
+    "games_per_count": 2,
+    "max_turns": 120,
+    "total_elapsed_sec": 1690.7
+  }
+}

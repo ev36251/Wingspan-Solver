@@ -1,0 +1,11 @@
+# Wingspan Model Improvement Plan (9 Steps)
+
+1. Expand strict/manual power coverage for high-frequency non-strict birds in training/replay paths. (Completed: first batch)
+2. Add deterministic golden replay tests for known reference games (including 127-point Oceania line). (Completed)
+3. Add CI gate for minimum strict-certified bird count to prevent coverage regressions. (Completed)
+4. Add round-order conformance tests (end-of-round powers, then goals, then cleanup) for both boards. (Completed)
+5. Add score-breakdown parity tests (bird, bonus, round goals, eggs, cache, tuck, nectar) against fixed fixtures. (Completed)
+6. Add standardized round-1 and full-game KPI benchmark jobs and artifact outputs. (Completed)
+7. Retrain only on strict-rules datasets and remove legacy non-strict training path from default pipeline. (Completed)
+8. Add candidate-vs-baseline model promotion gate using strict KPI compare. (Completed)
+9. Retire legacy model artifacts/codepaths after strict model surpasses baseline and passes replay parity suite. (Completed)

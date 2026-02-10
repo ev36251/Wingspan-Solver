@@ -1,0 +1,118 @@
+{
+  "seed": 20260210,
+  "turns": 52,
+  "script_steps_total": 24,
+  "script_steps_consumed": 24,
+  "divergence_count": 12,
+  "divergences": [
+    {
+      "turn": 8,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Golden Pheasant:Habitat.FOREST hand=['Scaled Quail', 'Willie-Wagtail', 'Golden Pheasant', 'Wood Duck', 'Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit'] food={inv=1,seed=0,fish=0,fruit=0,rod=1,nectar=1} legal_plays=['Scaled Quail', 'Willie-Wagtail', 'Willie-Wagtail', 'Golden Pheasant']"
+    },
+    {
+      "turn": 10,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Wood Duck:Habitat.FOREST hand=['Willie-Wagtail', 'Golden Pheasant', 'Wood Duck', 'Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit'] food={inv=1,seed=0,fish=0,fruit=0,rod=1,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 16,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Twite:Habitat.GRASSLAND hand=['Willie-Wagtail', 'Golden Pheasant', 'Wood Duck', 'Trumpeter Swan', 'Baltimore Oriole', 'Lesser Whitethroat', 'Blue-Winged Warbler', 'Mandarin Duck', 'Roseate Spoonbill'] food={inv=2,seed=1,fish=0,fruit=1,rod=1,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 18,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Lesser Whitethroat:Habitat.GRASSLAND hand=['Willie-Wagtail', 'Golden Pheasant', 'Wood Duck', 'Trumpeter Swan', 'Baltimore Oriole', 'Lesser Whitethroat', 'Blue-Winged Warbler', 'Mandarin Duck'] food={inv=2,seed=1,fish=0,fruit=1,rod=2,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 20,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Mandarin Duck:Habitat.WETLAND hand=['Willie-Wagtail', 'Golden Pheasant', 'Wood Duck', 'Trumpeter Swan', 'Baltimore Oriole', 'Lesser Whitethroat', 'Blue-Winged Warbler'] food={inv=4,seed=1,fish=0,fruit=1,rod=2,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 26,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Great Hornbill:Habitat.FOREST hand=['Willie-Wagtail', 'Golden Pheasant', 'Wood Duck', 'Trumpeter Swan', 'Baltimore Oriole', 'Lesser Whitethroat'] food={inv=5,seed=0,fish=0,fruit=4,rod=2,nectar=1} legal_plays=['Willie-Wagtail', 'Willie-Wagtail', 'Willie-Wagtail', 'Willie-Wagtail', 'Willie-Wagtail', 'Willie-Wagtail', 'Willie-Wagtail', 'Willie-Wagtail']"
+    },
+    {
+      "turn": 30,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:White Stork:Habitat.FOREST hand=['Golden Pheasant', 'Wood Duck', 'Trumpeter Swan', 'Baltimore Oriole'] food={inv=2,seed=0,fish=0,fruit=4,rod=2,nectar=0} legal_plays=['Golden Pheasant', 'Golden Pheasant', 'Baltimore Oriole']"
+    },
+    {
+      "turn": 34,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Roseate Spoonbill:Habitat.WETLAND hand=['Trumpeter Swan', 'Baltimore Oriole'] food={inv=2,seed=0,fish=0,fruit=1,rod=2,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 38,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Black-Tailed Godwit:Habitat.WETLAND hand=[] food={inv=2,seed=1,fish=0,fruit=2,rod=2,nectar=1} legal_plays=[]"
+    },
+    {
+      "turn": 42,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Trumpeter Swan:Habitat.WETLAND hand=[] food={inv=2,seed=1,fish=0,fruit=4,rod=2,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 44,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Baltimore Oriole:Habitat.FOREST hand=[] food={inv=2,seed=1,fish=0,fruit=6,rod=2,nectar=0} legal_plays=[]"
+    },
+    {
+      "turn": 46,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "wanted=play_bird:Magpie-Lark:Habitat.GRASSLAND hand=[] food={inv=2,seed=3,fish=0,fruit=6,rod=2,nectar=0} legal_plays=[]"
+    }
+  ],
+  "you_score": {
+    "bird_vp": 14,
+    "eggs": 6,
+    "cached_food": 0,
+    "tucked_cards": 12,
+    "bonus_cards": 0,
+    "round_goals": 19,
+    "nectar": 4,
+    "total": 55
+  },
+  "opp_score": {
+    "bird_vp": 41,
+    "eggs": 15,
+    "cached_food": 5,
+    "tucked_cards": 0,
+    "bonus_cards": 4,
+    "round_goals": 21,
+    "nectar": 10,
+    "total": 96
+  },
+  "you_birds": [
+    "Violet-Green Swallow",
+    "Scaled Quail",
+    "Golden Pheasant",
+    "Forster's Tern",
+    "Willie-Wagtail"
+  ],
+  "opp_birds": [
+    "Sri Lanka Blue-Magpie",
+    "Blue-Winged Warbler",
+    "Red-Wattled Lapwing",
+    "Golden Pheasant",
+    "Willie-Wagtail",
+    "Red-Headed Woodpecker",
+    "Bald Eagle"
+  ],
+  "opp_sri_lanka_blue_magpie_tucked_cards": 0
+}

@@ -1,0 +1,33 @@
+{
+  "model": "reports/ml/next_strict_run3/iter_001/factorized_model.npz",
+  "board_type": "oceania",
+  "games_per_opponent": 60,
+  "opponents": [
+    "heuristic"
+  ],
+  "summary": {
+    "games": 60,
+    "nn_wins": 47,
+    "opponent_wins": 13,
+    "ties": 0,
+    "nn_win_rate": 0.7833,
+    "nn_mean_score": 61.2,
+    "nn_mean_margin": 11.417,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0
+  },
+  "by_opponent": [
+    {
+      "opponent": "heuristic",
+      "games": 60,
+      "nn_wins": 47,
+      "opponent_wins": 13,
+      "ties": 0,
+      "nn_mean_score": 61.2,
+      "opponent_mean_score": 49.783,
+      "nn_mean_margin": 11.417,
+      "nn_rate_ge_100": 0.0,
+      "nn_rate_ge_120": 0.0
+    }
+  ]
+}

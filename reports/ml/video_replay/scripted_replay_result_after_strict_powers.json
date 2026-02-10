@@ -1,0 +1,109 @@
+{
+  "seed": 20260210,
+  "turns": 52,
+  "script_steps_total": 26,
+  "script_steps_consumed": 26,
+  "divergence_count": 4,
+  "divergences": [
+    {
+      "turn": 6,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "turn4 play swallow in forest, spend nectar + invertebrate | wanted=play_bird:Violet-Green Swallow:Habitat.FOREST hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Golden Pheasant', 'Wood Duck', 'Great Hornbill', 'Roseate Spoonbill', 'Twite'] food={inv=1,seed=1,fish=0,fruit=0,rod=1,nectar=1} legal_plays=['Golden Pheasant', 'Golden Pheasant', 'Twite']"
+    },
+    {
+      "turn": 12,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "turn7 play pheasant in grasslands, spend 2 invertebrates + 1 seed, lay 4 eggs | wanted=play_bird:Golden Pheasant:Habitat.GRASSLAND hand=['Trumpeter Swan', 'Baltimore Oriole', 'Black-Tailed Godwit', 'Wood Duck', 'Great Hornbill', 'Roseate Spoonbill', 'Twite', 'Bronzed Cowbird'] food={inv=1,seed=0,fish=1,fruit=0,rod=0,nectar=1} legal_plays=['Trumpeter Swan', 'Roseate Spoonbill', 'Bronzed Cowbird']"
+    },
+    {
+      "turn": 24,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "r2t5 | wanted=play_bird:Twite:Habitat.GRASSLAND hand=['Baltimore Oriole', 'Black-Tailed Godwit', 'Great Hornbill', 'Roseate Spoonbill', 'Broad-Winged Hawk', 'Violet-Green Swallow', 'Scaly-Breasted Munia', 'Peaceful Dove', 'Blue-Winged Warbler', 'Mandarin Duck', 'Desert Wheatear', 'American White Pelican', \"Montagu's Harrier\", \"Abbott's Booby\"] food={inv=3,seed=0,fish=1,fruit=1,rod=0,nectar=0} legal_plays=['Violet-Green Swallow', 'Violet-Green Swallow', 'Violet-Green Swallow', 'Blue-Winged Warbler', 'Blue-Winged Warbler', 'Mandarin Duck', 'Mandarin Duck', 'Desert Wheatear']"
+    },
+    {
+      "turn": 50,
+      "actor": "you",
+      "reason": "scripted_move_not_legal",
+      "note": "r4t5 play Trumpeter Swan with nectar+seed+fish and eggs from Swallow+Magpie-Lark | wanted=play_bird:Trumpeter Swan:Habitat.WETLAND hand=['Blue-Winged Warbler', 'American White Pelican', \"Montagu's Harrier\", \"Abbott's Booby\", 'Eastern Rosella', 'Green Pygmy-Goose', 'Northern Goshawk', 'Green Pheasant', 'White Stork', 'Forest Owlet', 'Philippine Eagle', 'White-Bellied Sea-Eagle', 'Trumpeter Swan', 'Great Blue Heron', 'Snowy Owl', 'White-Faced Ibis'] food={inv=0,seed=1,fish=1,fruit=1,rod=1,nectar=1} legal_plays=[\"Montagu's Harrier\", 'Eastern Rosella', 'Eastern Rosella', 'Northern Goshawk', 'Green Pheasant', 'White Stork', 'Forest Owlet', 'Philippine Eagle']"
+    }
+  ],
+  "you_score": {
+    "bird_vp": 61,
+    "eggs": 10,
+    "cached_food": 2,
+    "tucked_cards": 6,
+    "bonus_cards": 6,
+    "round_goals": 20,
+    "nectar": 11,
+    "total": 116
+  },
+  "opp_score": {
+    "bird_vp": 42,
+    "eggs": 6,
+    "cached_food": 4,
+    "tucked_cards": 0,
+    "bonus_cards": 7,
+    "round_goals": 20,
+    "nectar": 8,
+    "total": 87
+  },
+  "you_birds": [
+    "Wood Duck",
+    "Great Hornbill",
+    "Baltimore Oriole",
+    "Golden Pheasant",
+    "Lesser Whitethroat",
+    "Magpie-Lark",
+    "Montagu's Harrier",
+    "Forster's Tern",
+    "Trumpeter Swan",
+    "Violet-Green Swallow",
+    "Mandarin Duck",
+    "Roseate Spoonbill"
+  ],
+  "opp_birds": [
+    "Spotted Dove",
+    "Many-Colored Fruit-Dove",
+    "Red Kite",
+    "Great Crested Flycatcher",
+    "Red-Wattled Lapwing",
+    "Golden Pheasant",
+    "Loggerhead Shrike",
+    "White Stork",
+    "Bald Eagle",
+    "Musk Duck"
+  ],
+  "opp_sri_lanka_blue_magpie_tucked_cards": 0,
+  "video_bird_overrides": {
+    "Mandarin Duck": {
+      "food_cost": [
+        "invertebrate",
+        "invertebrate",
+        "invertebrate"
+      ],
+      "food_total": 3,
+      "is_or": false
+    },
+    "Trumpeter Swan": {
+      "food_cost": [
+        "fish",
+        "seed",
+        "wild"
+      ],
+      "food_total": 3,
+      "is_or": false
+    },
+    "Snowy Owl": {
+      "food_cost": [
+        "rodent",
+        "fruit",
+        "fish"
+      ],
+      "food_total": 3,
+      "is_or": false
+    }
+  }
+}

@@ -17,6 +17,7 @@ from backend.api.schemas import (
     PlayerSchema, BirdfeederSchema, CardTraySchema, GameStateSchema,
     ScoreBreakdownSchema, ActionResultSchema,
 )
+from backend.powers.choices import power_choice_queue_summary
 
 
 def bird_to_schema(bird: Bird) -> BirdSchema:
@@ -142,6 +143,8 @@ def game_state_to_schema(gs: GameState) -> GameStateSchema:
         card_tray=card_tray_to_schema(gs.card_tray),
         round_goals=[g.description for g in gs.round_goals],
         round_goal_scores=gs.round_goal_scores,
+        strict_rules_mode=gs.strict_rules_mode,
+        power_choice_queue_sizes=power_choice_queue_summary(gs),
         deck_remaining=gs.deck_remaining,
     )
 

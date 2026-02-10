@@ -1,0 +1,190 @@
+{
+  "generated_at_epoch": 1770762132,
+  "champion_before": "reports/ml/champions/champion_oceania_strict_v1.npz",
+  "champion_after": "reports/ml/champions/champion_oceania_strict_v2.npz",
+  "seeds": [
+    {
+      "seed": 50,
+      "eval": {
+        "games": 60,
+        "nn_wins": 44,
+        "opp_wins": 14,
+        "ties": 2,
+        "nn_mean_score": 61.2,
+        "opp_mean_score": 48.05,
+        "nn_mean_margin": 13.15
+      },
+      "gate": {
+        "games": 120,
+        "nn_wins": 85,
+        "opp_wins": 34,
+        "ties": 1,
+        "nn_mean_score": 62.342,
+        "opp_mean_score": 49.158,
+        "nn_mean_margin": 13.183
+      },
+      "pool_vs_champion_40": [
+        {
+          "opponent": "heuristic",
+          "games": 40,
+          "nn_wins": 30,
+          "opponent_wins": 7,
+          "ties": 3,
+          "nn_mean_score": 60.25,
+          "opponent_mean_score": 47.375,
+          "nn_mean_margin": 12.875,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        },
+        {
+          "opponent": "reports/ml/champions/champion_oceania_strict_v1.npz",
+          "games": 40,
+          "nn_wins": 21,
+          "opponent_wins": 17,
+          "ties": 2,
+          "nn_mean_score": 56.575,
+          "opponent_mean_score": 53.75,
+          "nn_mean_margin": 2.825,
+          "nn_rate_ge_100": 0.025,
+          "nn_rate_ge_120": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 51,
+      "eval": {
+        "games": 60,
+        "nn_wins": 33,
+        "opp_wins": 27,
+        "ties": 0,
+        "nn_mean_score": 53.15,
+        "opp_mean_score": 51.567,
+        "nn_mean_margin": 1.583
+      },
+      "gate": {
+        "games": 120,
+        "nn_wins": 71,
+        "opp_wins": 48,
+        "ties": 1,
+        "nn_mean_score": 52.975,
+        "opp_mean_score": 48.992,
+        "nn_mean_margin": 3.983
+      },
+      "pool_vs_champion_40": [
+        {
+          "opponent": "heuristic",
+          "games": 40,
+          "nn_wins": 21,
+          "opponent_wins": 18,
+          "ties": 1,
+          "nn_mean_score": 52.4,
+          "opponent_mean_score": 49.7,
+          "nn_mean_margin": 2.7,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        },
+        {
+          "opponent": "reports/ml/champions/champion_oceania_strict_v1.npz",
+          "games": 40,
+          "nn_wins": 11,
+          "opponent_wins": 29,
+          "ties": 0,
+          "nn_mean_score": 48.4,
+          "opponent_mean_score": 59.525,
+          "nn_mean_margin": -11.125,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 52,
+      "eval": {
+        "games": 60,
+        "nn_wins": 7,
+        "opp_wins": 52,
+        "ties": 1,
+        "nn_mean_score": 28.55,
+        "opp_mean_score": 46.1,
+        "nn_mean_margin": -17.55
+      },
+      "gate": {
+        "games": 120,
+        "nn_wins": 13,
+        "opp_wins": 107,
+        "ties": 0,
+        "nn_mean_score": 28.183,
+        "opp_mean_score": 49.425,
+        "nn_mean_margin": -21.242
+      }
+    },
+    {
+      "seed": 53,
+      "eval": {
+        "games": 60,
+        "nn_wins": 40,
+        "opp_wins": 20,
+        "ties": 0,
+        "nn_mean_score": 55.533,
+        "opp_mean_score": 48.167,
+        "nn_mean_margin": 7.367
+      },
+      "gate": {
+        "games": 120,
+        "nn_wins": 70,
+        "opp_wins": 48,
+        "ties": 2,
+        "nn_mean_score": 53.542,
+        "opp_mean_score": 49.933,
+        "nn_mean_margin": 3.608
+      },
+      "pool_vs_champion_40": [
+        {
+          "opponent": "heuristic",
+          "games": 40,
+          "nn_wins": 24,
+          "opponent_wins": 16,
+          "ties": 0,
+          "nn_mean_score": 53.85,
+          "opponent_mean_score": 48.9,
+          "nn_mean_margin": 4.95,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        },
+        {
+          "opponent": "reports/ml/champions/champion_oceania_strict_v1.npz",
+          "games": 40,
+          "nn_wins": 15,
+          "opponent_wins": 24,
+          "ties": 1,
+          "nn_mean_score": 52.125,
+          "opponent_mean_score": 59.1,
+          "nn_mean_margin": -6.975,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        }
+      ]
+    },
+    {
+      "seed": 54,
+      "eval": {
+        "games": 60,
+        "nn_wins": 1,
+        "opp_wins": 59,
+        "ties": 0,
+        "nn_mean_score": 23.333,
+        "opp_mean_score": 50.817,
+        "nn_mean_margin": -27.483
+      },
+      "gate": {
+        "games": 120,
+        "nn_wins": 2,
+        "opp_wins": 118,
+        "ties": 0,
+        "nn_mean_score": 21.742,
+        "opp_mean_score": 50.95,
+        "nn_mean_margin": -29.208
+      }
+    }
+  ]
+}

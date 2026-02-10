@@ -85,6 +85,7 @@ def test_auto_improve_factorized_smoke(tmp_path: Path) -> None:
         engine_time_budget_ms=25,
         engine_num_determinizations=0,
         engine_max_rollout_depth=24,
+        strict_kpi_gate_enabled=False,
         seed=9,
     )
 
@@ -94,6 +95,10 @@ def test_auto_improve_factorized_smoke(tmp_path: Path) -> None:
     assert "promotion_gate" in manifest["history"][0]
     assert "pool_eval" in manifest["history"][0]
     assert "kpi_gate" in manifest["history"][0]
+    assert "strict_kpi_gate" in manifest["history"][0]
+    assert manifest["history"][0]["strict_kpi_gate"]["skipped"] is True
+    assert manifest["config"]["strict_rules_only"] is True
+    assert manifest["config"]["reject_non_strict_powers"] is True
 
 
 def test_generate_bc_dataset_engine_teacher_smoke(tmp_path: Path) -> None:
@@ -118,3 +123,5 @@ def test_generate_bc_dataset_engine_teacher_smoke(tmp_path: Path) -> None:
     assert pi["engine_teacher_calls"] >= 1
     assert pi["engine_teacher_applied"] >= 1
     assert "value_target_config" in out
+    assert out["strict_rules_only"] is True
+    assert out["reject_non_strict_powers"] is True
