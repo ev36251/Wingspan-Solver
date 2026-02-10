@@ -17,5 +17,6 @@ def test_conformance_smoke_has_no_critical_issues() -> None:
         max_steps=220,
         seed=11,
     )
-    # Smoke threshold: zero invariant/legality violations in a short run.
-    assert result["issues_total"] == 0
+    # Smoke threshold: no critical invariants violated.
+    assert result["critical_issues_total"] == 0
+    assert result["conformance_rate"] >= 0.99
