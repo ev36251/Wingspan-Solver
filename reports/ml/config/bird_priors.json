@@ -1,0 +1,31 @@
+{
+  "enabled": true,
+  "tier_values": {
+    "god": 1.0,
+    "tier0": 0.7,
+    "tier1": 0.4,
+    "tier2": 0.1,
+    "underused": -0.15
+  },
+  "phase_scale": {
+    "1": 1.0,
+    "2": 0.85,
+    "3": 0.6,
+    "4": 0.35
+  },
+  "default_tier": "tier2",
+  "bird_tiers": {
+    "Wood Duck": "god",
+    "Mandarin Duck": "tier0",
+    "Lesser Whitethroat": "tier0",
+    "Twite": "tier1",
+    "Violet-Green Swallow": "tier1",
+    "Roseate Spoonbill": "tier1",
+    "Great Hornbill": "tier1",
+    "Trumpeter Swan": "tier1",
+    "Baltimore Oriole": "tier1",
+    "White Stork": "tier1",
+    "Magpie-Lark": "tier1"
+  },
+  "bird_values": {}
+}

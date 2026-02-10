@@ -18,6 +18,7 @@ from backend.models.player import Player
 from backend.engine.scoring import calculate_score, ScoreBreakdown
 from backend.powers.registry import get_power
 from backend.powers.base import PowerContext, NoPower
+from backend.solver.bird_priors import bird_prior_value
 from backend.solver.move_generator import Move, generate_all_moves
 
 
@@ -692,6 +693,9 @@ def estimate_move_breakdown(
         goal_val = _goal_alignment_value(game, bird, move.habitat, weights)
         if goal_val:
             breakdown["round_goal"] = round(goal_val, 2)
+        prior = bird_prior_value(bird.name, game.current_round)
+        if prior:
+            breakdown["tier_prior"] = round(prior, 2)
 
         # Costs
         nectar_in_payment = move.food_payment.get(FoodType.NECTAR, 0)
@@ -982,6 +986,10 @@ def _evaluate_play_bird(game: GameState, player: Player, move: Move,
 
     # Round goal alignment
     value += _goal_alignment_value(game, bird, move.habitat, weights)
+
+    # Data-driven bird strength prior (tier + per-bird overrides).
+    # Keep this additive and small so board context still dominates.
+    value += bird_prior_value(bird.name, game.current_round)
 
     # Grassland egg synergy: high-egg birds in grassland benefit from lay-eggs engine
     if move.habitat == Habitat.GRASSLAND and bird.egg_limit >= 3:
