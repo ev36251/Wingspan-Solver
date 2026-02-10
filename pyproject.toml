@@ -19,3 +19,6 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["backend/tests"]
 pythonpath = ["."]
+filterwarnings = [
+    "ignore:datetime.datetime.utcnow\\(\\) is deprecated.*:DeprecationWarning:openpyxl\\.packaging\\.core",
+]
