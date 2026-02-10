@@ -436,6 +436,7 @@ def _evaluate_option(
     # Check which birds can be played with available food
     playable, remaining_food = _play_birds_greedily(birds, food_dict)
     playable_names = {b.name for b in playable}
+    unplayable_count = max(0, len(birds) - len(playable))
 
     # 1. Bird VP value
     for bird in birds:
@@ -447,6 +448,25 @@ def _evaluate_option(
 
     # 2. Playability bonus
     score += len(playable) * 3.0
+    score -= unplayable_count * 1.2
+
+    # 2b. Draft shape preference:
+    # In strong play, 2-3 birds is often best because it preserves food tempo.
+    keep_count = len(birds)
+    if keep_count == 0:
+        score += 1.0
+    elif keep_count == 1:
+        score += 2.0
+    elif keep_count in (2, 3):
+        score += 4.0
+    elif keep_count == 4:
+        score -= 2.0
+    else:  # 5 birds
+        score -= 4.0
+
+    # Extra penalty when hand is overloaded but food can't support it.
+    if keep_count >= 4 and len(playable) <= 2:
+        score -= 2.5
 
     # 3. Engine value (brown powers activated many times)
     for bird in birds:
@@ -500,6 +520,14 @@ def _evaluate_option(
         habitats_covered.update(bird.habitats)
     score += len(habitats_covered) * 0.5
 
+    # 9b. Encourage "wetland dig" openings when taking a lean hand.
+    playable_wetlands = [
+        b for b in playable
+        if Habitat.WETLAND in b.habitats
+    ]
+    if keep_count <= 3 and playable_wetlands:
+        score += 2.0
+
     # 10. Food diversity of remaining supply (flexibility)
     remaining_types = sum(1 for v in remaining_food.values() if v > 0)
     score += remaining_types * 0.3
@@ -552,8 +580,13 @@ def _evaluate_option(
             w = weights[i] if i < len(weights) else 0.0
             expected_tray += val * w
 
-        # Slightly boost tray impact to be more aggressive about face-up picks
-        score += expected_tray * 1.2
+        # Lean starts benefit more from tray access; overloaded starts less.
+        tray_mult = 1.2
+        if keep_count <= 2:
+            tray_mult = 1.5
+        elif keep_count >= 4:
+            tray_mult = 0.9
+        score += expected_tray * tray_mult
 
     return score
 
