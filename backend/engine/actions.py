@@ -1,5 +1,6 @@
 """Execute the four core Wingspan actions."""
 
+import random
 from dataclasses import dataclass, field
 from backend.config import (
     EGG_COST_BY_COLUMN,
@@ -123,6 +124,25 @@ def _pay_bonus_cost(player: Player, cost_options: tuple[str, ...]) -> bool:
                 player.food_supply.spend(FoodType.NECTAR, 1)
                 return True
     return False
+
+
+def _draw_bird_from_deck(game_state: GameState):
+    """Draw one bird identity from the game's deck model if available."""
+    deck_cards = getattr(game_state, "_deck_cards", None)
+    if isinstance(deck_cards, list) and deck_cards:
+        card = deck_cards.pop()
+        game_state.deck_remaining = max(0, game_state.deck_remaining - 1)
+        return card
+
+    # Fallback for games without initialized deck identities.
+    if game_state.deck_remaining <= 0:
+        return None
+    from backend.data.registries import get_bird_registry
+    pool = list(get_bird_registry().all_birds)
+    if not pool:
+        return None
+    game_state.deck_remaining = max(0, game_state.deck_remaining - 1)
+    return random.choice(pool)
 
 
 def execute_play_bird(
@@ -513,14 +533,12 @@ def execute_draw_cards(
 
     # Draw remaining from deck
     while drawn < card_count and from_deck_count > 0:
-        if game_state.deck_remaining > 0:
-            # In actual play, we'd draw a specific card from the deck.
-            # For state-input mode, the user tells us what was drawn.
-            game_state.deck_remaining -= 1
-            from_deck_count -= 1
-            drawn += 1
-        else:
+        card = _draw_bird_from_deck(game_state)
+        if not card:
             break
+        player.hand.append(card)
+        from_deck_count -= 1
+        drawn += 1
 
     # Activate brown powers in the wetland row (right to left)
     power_acts = activate_row(game_state, player, Habitat.WETLAND)

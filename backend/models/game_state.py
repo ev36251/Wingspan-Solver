@@ -112,6 +112,13 @@ class GameState:
 
         On Oceania boards, all nectar in player supplies is discarded.
         """
+        # Award end-of-round goal points before moving to next round.
+        if 1 <= self.current_round <= len(self.round_goals):
+            from backend.engine.scoring import compute_round_goal_scores
+            scores = compute_round_goal_scores(self, self.current_round)
+            if scores:
+                self.round_goal_scores[self.current_round] = scores
+
         # Discard nectar from all player supplies (Oceania rule)
         if self.board_type == BoardType.OCEANIA:
             for p in self.players:

@@ -37,6 +37,11 @@ def bonus_reg(regs):
     return regs[1]
 
 
+@pytest.fixture(scope="module")
+def goal_reg(regs):
+    return regs[2]
+
+
 @pytest.fixture
 def game():
     return create_new_game(["Alice", "Bob"])
@@ -256,6 +261,27 @@ class TestActions:
 # --- Scoring ---
 
 class TestScoring:
+    def test_round_goal_scored_on_advance_round(self, bird_reg, goal_reg):
+        # Pick a simple bird-count goal if available.
+        goal = next((g for g in goal_reg.all_goals if "[bird] in [forest]" in g.description.lower()), None)
+        if goal is None:
+            pytest.skip("No simple forest bird count goal found")
+
+        game = create_new_game(["Alice", "Bob"], round_goals=[goal])
+        alice = game.players[0]
+        bob = game.players[1]
+        forest_birds = [b for b in bird_reg.all_birds if Habitat.FOREST in b.habitats]
+        if len(forest_birds) < 3:
+            pytest.skip("Not enough forest birds to validate round-goal scoring")
+        alice.board.forest.slots[0].bird = forest_birds[0]
+        bob.board.forest.slots[0].bird = forest_birds[1]
+        bob.board.forest.slots[1].bird = forest_birds[2]
+
+        # End round 1
+        game.advance_round()
+        assert 1 in game.round_goal_scores
+        assert game.round_goal_scores[1]["Bob"] >= game.round_goal_scores[1]["Alice"]
+
     def test_empty_board_score(self, game):
         player = game.players[0]
         breakdown = calculate_score(game, player)

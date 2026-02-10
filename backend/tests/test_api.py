@@ -248,6 +248,9 @@ class TestActions:
         })
         game_id = create_resp.json()["game_id"]
 
+        before = client.get(f"/api/games/{game_id}").json()
+        before_hand = len(before["players"][0]["hand"])
+
         resp = client.post(f"/api/games/{game_id}/draw-cards", json={
             "from_tray_indices": [],
             "from_deck_count": 1,
@@ -256,6 +259,28 @@ class TestActions:
         data = resp.json()
         assert data["success"] is True
         assert data["cards_drawn"] == 1
+
+        after = client.get(f"/api/games/{game_id}").json()
+        assert len(after["players"][0]["hand"]) == before_hand + 1
+
+    def test_draw_from_tray_refills(self, client):
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+        state = client.get(f"/api/games/{game_id}").json()
+        assert len(state["card_tray"]["face_up"]) == 3
+
+        resp = client.post(f"/api/games/{game_id}/draw-cards", json={
+            "from_tray_indices": [0],
+            "from_deck_count": 0,
+        })
+        assert resp.status_code == 200
+        assert resp.json()["success"] is True
+
+        after = client.get(f"/api/games/{game_id}").json()
+        # Tray should auto-refill after successful action.
+        assert len(after["card_tray"]["face_up"]) == 3
 
 
 # --- Solver placeholder routes ---

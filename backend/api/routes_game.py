@@ -1,6 +1,7 @@
 """Game state management routes."""
 
 import uuid
+import random
 from fastapi import APIRouter, HTTPException
 
 from backend.data.registries import get_bird_registry, get_bonus_registry, get_goal_registry
@@ -38,6 +39,45 @@ def _get_game(game_id: str) -> GameState:
     if game_id not in _games:
         raise HTTPException(404, f"Game '{game_id}' not found")
     return _games[game_id]
+
+
+def _init_deck_cards(game: GameState, bird_reg) -> None:
+    """Build a concrete deck list from birds not visible/played/in-hand."""
+    used_names = set()
+
+    for p in game.players:
+        used_names.update(b.name for b in p.hand)
+        for row in p.board.all_rows():
+            for slot in row.slots:
+                if slot.bird:
+                    used_names.add(slot.bird.name)
+    used_names.update(b.name for b in game.card_tray.face_up)
+
+    deck = [b for b in bird_reg.all_birds if b.name not in used_names]
+    random.shuffle(deck)
+    setattr(game, "_deck_cards", deck)
+    game.deck_remaining = len(deck)
+
+
+def _draw_from_game_deck(game: GameState):
+    deck = getattr(game, "_deck_cards", None)
+    if not isinstance(deck, list):
+        return None
+    if not deck:
+        return None
+    card = deck.pop()
+    game.deck_remaining = len(deck)
+    return card
+
+
+def _refill_tray(game: GameState) -> None:
+    """Refill face-up tray to 3 from deck."""
+    need = game.card_tray.needs_refill()
+    for _ in range(need):
+        card = _draw_from_game_deck(game)
+        if not card:
+            break
+        game.card_tray.add_card(card)
 
 
 def _record_move(game: GameState, action_type: str, description: str) -> None:
@@ -123,8 +163,8 @@ async def create_game(req: CreateGameRequest) -> dict:
 
     board_type = BoardType(req.board_type)
     game = create_new_game(req.player_names, round_goals, board_type)
-    # Set initial deck size (all birds minus tray and hands)
-    game.deck_remaining = len(bird_reg) - game.card_tray.count
+    _init_deck_cards(game, bird_reg)
+    _refill_tray(game)
 
     game_id = uuid.uuid4().hex[:8]
     _games[game_id] = game
@@ -250,7 +290,10 @@ async def update_game_state(game_id: str, state: GameStateSchema) -> dict:
     game.card_tray = tray
     game.round_goals = round_goals
     game.round_goal_scores = state.round_goal_scores
-    game.deck_remaining = state.deck_remaining
+    _init_deck_cards(game, bird_reg)
+    # Preserve externally provided deck_remaining when no deck model is needed.
+    if state.deck_remaining >= 0:
+        game.deck_remaining = min(game.deck_remaining, state.deck_remaining)
 
     return game_state_to_schema(game).model_dump()
 
@@ -347,6 +390,7 @@ async def play_bird(game_id: str, req: PlayBirdRequest) -> ActionResultSchema:
         _record_move(game, ActionType.PLAY_BIRD.value,
                      f"Play {bird.name} in {habitat.value}")
         game.advance_turn()
+        _refill_tray(game)
     return action_result_to_schema(result)
 
 
@@ -359,6 +403,7 @@ async def gain_food(game_id: str, req: GainFoodRequest) -> ActionResultSchema:
     if result.success:
         _record_move(game, ActionType.GAIN_FOOD.value, "Gain food from birdfeeder")
         game.advance_turn()
+        _refill_tray(game)
     return action_result_to_schema(result)
 
 
@@ -371,6 +416,7 @@ async def lay_eggs(game_id: str, req: LayEggsRequest) -> ActionResultSchema:
     if result.success:
         _record_move(game, ActionType.LAY_EGGS.value, "Lay eggs")
         game.advance_turn()
+        _refill_tray(game)
     return action_result_to_schema(result)
 
 
@@ -382,6 +428,7 @@ async def draw_cards(game_id: str, req: DrawCardsRequest) -> ActionResultSchema:
     if result.success:
         _record_move(game, ActionType.DRAW_CARDS.value, "Draw cards")
         game.advance_turn()
+        _refill_tray(game)
     return action_result_to_schema(result)
 
 

@@ -4,7 +4,7 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Callable
 
-from backend.models.enums import FoodType, Habitat, NestType, PowerColor
+from backend.models.enums import FoodType, Habitat, NestType, PowerColor, BeakDirection
 from backend.models.game_state import GameState
 from backend.models.player import Player
 
@@ -334,6 +334,105 @@ def score_round_goals(game_state: GameState, player: Player) -> int:
     for round_num, scores in game_state.round_goal_scores.items():
         total += scores.get(player.name, 0)
     return total
+
+
+def _goal_progress_for_round(player: Player, goal) -> float:
+    """Estimate round-goal progress for end-of-round placement scoring."""
+    desc = goal.description.lower()
+    board = player.board
+
+    for hab_name, hab_enum in (("forest", Habitat.FOREST), ("grassland", Habitat.GRASSLAND),
+                               ("wetland", Habitat.WETLAND)):
+        if f"[bird] in [{hab_name}]" in desc:
+            return board.get_row(hab_enum).bird_count
+    if "total [bird]" in desc:
+        return board.total_birds()
+    if "[bird] in one row" in desc:
+        return max(r.bird_count for r in board.all_rows())
+
+    for hab_name, hab_enum in (("forest", Habitat.FOREST), ("grassland", Habitat.GRASSLAND),
+                               ("wetland", Habitat.WETLAND)):
+        if f"[egg] in [{hab_name}]" in desc:
+            return board.get_row(hab_enum).total_eggs()
+    for nt in ("bowl", "cavity", "ground", "platform"):
+        if f"[egg] in [{nt}]" in desc:
+            nest_map = {
+                "bowl": NestType.BOWL,
+                "cavity": NestType.CAVITY,
+                "ground": NestType.GROUND,
+                "platform": NestType.PLATFORM,
+            }
+            return sum(
+                s.eggs for r in board.all_rows() for s in r.slots
+                if s.bird and (
+                    s.bird.nest_type == nest_map[nt]
+                    or s.bird.nest_type == NestType.WILD
+                )
+            )
+
+    for nt in ("bowl", "cavity", "ground", "platform"):
+        if f"[{nt}] [bird]" in desc:
+            nest_map = {
+                "bowl": NestType.BOWL,
+                "cavity": NestType.CAVITY,
+                "ground": NestType.GROUND,
+                "platform": NestType.PLATFORM,
+            }
+            return len(board.birds_with_nest(nest_map[nt]))
+
+    if "[bird] worth >4 [feather]" in desc:
+        return sum(1 for b in board.all_birds() if b.victory_points > 4)
+
+    if "brown powers" in desc:
+        return sum(1 for b in board.all_birds() if b.color == PowerColor.BROWN)
+    if "white & no powers" in desc:
+        return sum(1 for b in board.all_birds() if b.color in (PowerColor.WHITE, PowerColor.NONE))
+
+    if "[bird_with_tucked_card]" in desc:
+        return sum(1 for r in board.all_rows() for s in r.slots if s.bird and s.tucked_cards > 0)
+
+    if "filled columns" in desc:
+        return min(r.bird_count for r in board.all_rows())
+
+    if "[beak_pointing_left]" in desc:
+        return sum(1 for b in board.all_birds() if b.beak_direction == BeakDirection.LEFT)
+    if "[beak_pointing_right]" in desc:
+        return sum(1 for b in board.all_birds() if b.beak_direction == BeakDirection.RIGHT)
+
+    return 0.0
+
+
+def compute_round_goal_scores(game_state: GameState, round_num: int) -> dict[str, int]:
+    """Compute per-player points for one round goal, with tie splitting."""
+    if round_num < 1 or round_num > len(game_state.round_goals):
+        return {}
+
+    goal = game_state.round_goals[round_num - 1]
+    if goal.description.lower() == "no goal":
+        return {}
+
+    progress = [(p.name, _goal_progress_for_round(p, goal)) for p in game_state.players]
+    progress.sort(key=lambda x: -x[1])
+    if not progress:
+        return {}
+
+    scores: dict[str, int] = {}
+    pos = 1
+    i = 0
+    while i < len(progress):
+        j = i + 1
+        while j < len(progress) and progress[j][1] == progress[i][1]:
+            j += 1
+        tied = progress[i:j]
+        placements = list(range(pos, min(pos + len(tied), 5)))
+        pool = sum(goal.score_for_placement(pl) for pl in placements)
+        share = int(pool // len(tied)) if tied else 0
+        for name, _ in tied:
+            scores[name] = share
+        pos += len(tied)
+        i = j
+
+    return scores
 
 
 def score_nectar(game_state: GameState, player: Player) -> int:
