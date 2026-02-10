@@ -33,6 +33,9 @@ class FactorizedPolicyModel:
         self.has_value_head = "W_value" in z and "b_value" in z
         self.W_value = z["W_value"] if self.has_value_head else None
         self.b_value = float(z["b_value"][0]) if self.has_value_head else 0.0
+        self.value_prediction_mode = str(self.meta.get("value_prediction_mode", "sigmoid_norm"))
+        self.value_score_scale = float(self.meta.get("value_score_scale", 150.0))
+        self.value_score_bias = float(self.meta.get("value_score_bias", 0.0))
 
     def forward(self, state: np.ndarray) -> tuple[dict[str, np.ndarray], float | None]:
         h_pre = state @ self.W1 + self.b1
@@ -41,8 +44,18 @@ class FactorizedPolicyModel:
         value = None
         if self.has_value_head:
             vr = float(h @ self.W_value + self.b_value)
-            value = 1.0 / (1.0 + np.exp(-vr))
+            if self.value_prediction_mode == "score_linear":
+                value = vr
+            else:
+                value = 1.0 / (1.0 + np.exp(-vr))
         return logits, value
+
+    def value_to_expected_score(self, value: float | None) -> float:
+        if value is None:
+            return 0.0
+        if self.value_prediction_mode == "score_linear":
+            return float(value)
+        return float(self.value_score_bias + self.value_score_scale * float(value))
 
 
 def score_move_with_factorized_model(

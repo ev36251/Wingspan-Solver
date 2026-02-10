@@ -1,0 +1,33 @@
+{
+  "candidate_path": "reports/ml/auto_improve_factorized_phase3_long/iter_001/pool_eval.json",
+  "baseline_path": null,
+  "passed": false,
+  "checks": [
+    {
+      "name": "min_win_rate",
+      "passed": false,
+      "detail": "0.3250 >= 0.4800"
+    },
+    {
+      "name": "min_mean_score",
+      "passed": false,
+      "detail": "37.375 >= 70.000"
+    },
+    {
+      "name": "min_rate_ge_100",
+      "passed": false,
+      "detail": "0.0000 >= 0.0800"
+    },
+    {
+      "name": "min_rate_ge_120",
+      "passed": false,
+      "detail": "0.0000 >= 0.0100"
+    }
+  ],
+  "candidate_summary": {
+    "nn_win_rate": 0.325,
+    "nn_mean_score": 37.375,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0
+  }
+}

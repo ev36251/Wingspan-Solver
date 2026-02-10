@@ -137,16 +137,20 @@ def create_training_game(num_players: int, board_type: BoardType) -> GameState:
                    FoodType.FRUIT, FoodType.RODENT]:
             player.food_supply.add(ft, 1)
 
-    # Set up card tray
+    # Set up card tray from deck top
     tray_count = min(3, len(all_birds) - idx)
     for _ in range(tray_count):
         if idx < len(all_birds):
             game.card_tray.add_card(all_birds[idx])
             idx += 1
 
+    # Keep finite deck identities for higher-fidelity simulation.
+    game._deck_cards = list(all_birds[idx:])  # type: ignore[attr-defined]
+    idx = len(all_birds)
+
     # Set up birdfeeder with initial roll
     game.birdfeeder.reroll()
-    game.deck_remaining = max(0, len(all_birds) - idx)
+    game.deck_remaining = max(0, len(getattr(game, "_deck_cards", [])))
 
     return game
 

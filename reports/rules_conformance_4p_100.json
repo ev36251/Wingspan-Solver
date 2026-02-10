@@ -1,0 +1,158 @@
+{
+  "meta": {
+    "games": 100,
+    "players": 4,
+    "board_type": "oceania",
+    "max_steps": 380,
+    "seed": 303,
+    "elapsed_sec": 3.03
+  },
+  "power_mapping": {
+    "total_birds": 446,
+    "fallback_count": 0,
+    "coverage_non_fallback": 1.0,
+    "stats_by_power": {
+      "ActivateAllPredators": 1,
+      "CacheFoodFromFeeder": 12,
+      "CacheFoodFromSupply": 19,
+      "ConditionalCacheFromNeighbor": 1,
+      "CopyNeighborBonusCard": 2,
+      "CopyNeighborBrownPower": 3,
+      "CopyNeighborWhitePower": 1,
+      "CountsDoubleForGoal": 3,
+      "DiscardToTuck": 1,
+      "DrawBonusCards": 30,
+      "DrawCards": 47,
+      "DrawFromTray": 6,
+      "EndOfRoundCacheFood": 2,
+      "FewestBirdsGainFood": 1,
+      "FlockingPower": 27,
+      "GainFoodFromFeeder": 22,
+      "GainFoodFromSupply": 51,
+      "GainFoodFromSupplyOrCache": 2,
+      "GainFoodMatchingPrevious": 1,
+      "LayEggs": 65,
+      "LayEggsEachBirdInRow": 2,
+      "MoveBird": 8,
+      "NoPower": 6,
+      "PlaceBirdSideways": 4,
+      "PlayAdditionalBird": 28,
+      "PredatorDice": 20,
+      "PredatorLookAt": 14,
+      "RepeatPower": 2,
+      "RepeatPredatorPower": 1,
+      "ResetFeederGainFood": 17,
+      "RetrieveDiscardedBonusCard": 1,
+      "ScoreBonusCardNow": 1,
+      "TradeFoodForAny": 1,
+      "TuckFromDeck": 4,
+      "TuckFromHand": 40
+    }
+  },
+  "issues_total": 14,
+  "issues_by_rule": {
+    "legal_move_failed": 12,
+    "negative_action_cubes": 2
+  },
+  "issues": [
+    {
+      "game_index": 1,
+      "step": 77,
+      "player": "Player_2",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play Noisy Miner in grassland (pay 2 nectar, 1 fish)"
+    },
+    {
+      "game_index": 12,
+      "step": 16,
+      "player": "Player_1",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play Noisy Miner in grassland (pay 2 nectar, 1 seed)"
+    },
+    {
+      "game_index": 25,
+      "step": 76,
+      "player": "Player_1",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play Kelp Gull in wetland (pay 1 nectar, 1 invertebrate)"
+    },
+    {
+      "game_index": 30,
+      "step": 82,
+      "player": "Player_3",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play Red-Winged Parrot in forest (pay 1 fruit, 2 nectar)"
+    },
+    {
+      "game_index": 30,
+      "step": 83,
+      "player": "Player_4",
+      "rule_id": "negative_action_cubes",
+      "detail": "negative_action_cubes:Player_3"
+    },
+    {
+      "game_index": 32,
+      "step": 84,
+      "player": "Player_1",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play Turkey Vulture in wetland"
+    },
+    {
+      "game_index": 39,
+      "step": 11,
+      "player": "Player_4",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play Red-Winged Parrot in grassland (pay 1 fruit, 2 nectar)"
+    },
+    {
+      "game_index": 39,
+      "step": 66,
+      "player": "Player_4",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play Red-Winged Parrot in forest (pay 1 seed, 2 nectar)"
+    },
+    {
+      "game_index": 50,
+      "step": 88,
+      "player": "Player_1",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play Red Wattlebird in forest (pay 2 nectar)"
+    },
+    {
+      "game_index": 63,
+      "step": 89,
+      "player": "Player_2",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play Red-Winged Parrot in wetland (pay 1 seed, 2 nectar)"
+    },
+    {
+      "game_index": 68,
+      "step": 94,
+      "player": "Player_3",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play Red-Winged Parrot in wetland (pay 1 fruit, 2 nectar)"
+    },
+    {
+      "game_index": 85,
+      "step": 58,
+      "player": "Player_3",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play Lewin's Honeyeater in forest (pay 2 nectar)"
+    },
+    {
+      "game_index": 85,
+      "step": 59,
+      "player": "Player_4",
+      "rule_id": "negative_action_cubes",
+      "detail": "negative_action_cubes:Player_3"
+    },
+    {
+      "game_index": 98,
+      "step": 74,
+      "player": "Player_3",
+      "rule_id": "legal_move_failed",
+      "detail": "Move failed despite being generated as legal: Play T\u016b\u012b in forest (pay 1 invertebrate, 2 nectar)"
+    }
+  ],
+  "winner_score_mean": 42.8
+}

@@ -226,12 +226,15 @@ def execute_play_bird(
                         result=result,
                     ))
 
-    return ActionResult(
+    result = ActionResult(
         True, ActionType.PLAY_BIRD,
         f"Played {bird.name} in {habitat.value} slot {slot_idx + 1}",
         bird_played=bird.name, habitat=habitat,
         power_activations=power_acts,
     )
+    from backend.engine.timed_powers import trigger_between_turn_powers
+    trigger_between_turn_powers(game_state, trigger_player=player, trigger_action=ActionType.PLAY_BIRD)
+    return result
 
 
 def execute_play_bird_discounted(
@@ -321,12 +324,15 @@ def execute_play_bird_discounted(
                         result=result,
                     ))
 
-    return ActionResult(
+    result = ActionResult(
         True, ActionType.PLAY_BIRD,
         f"Played {bird.name} in {habitat.value} slot {slot_idx + 1}",
         bird_played=bird.name, habitat=habitat,
         power_activations=power_acts,
     )
+    from backend.engine.timed_powers import trigger_between_turn_powers
+    trigger_between_turn_powers(game_state, trigger_player=player, trigger_action=ActionType.PLAY_BIRD)
+    return result
 
 
 def _auto_select_egg_payment(player: Player, count: int) -> list[tuple[Habitat, int]] | None:
@@ -413,13 +419,16 @@ def execute_gain_food(
     # Activate brown powers in the forest row (right to left)
     power_acts = activate_row(game_state, player, Habitat.FOREST)
 
-    return ActionResult(
+    result = ActionResult(
         True, ActionType.GAIN_FOOD,
         f"Gained {taken} food from birdfeeder",
         food_gained=gained, habitat=Habitat.FOREST,
         bonus_activated=bonus_activated,
         power_activations=power_acts,
     )
+    from backend.engine.timed_powers import trigger_between_turn_powers
+    trigger_between_turn_powers(game_state, trigger_player=player, trigger_action=ActionType.GAIN_FOOD)
+    return result
 
 
 def execute_lay_eggs(
@@ -467,13 +476,16 @@ def execute_lay_eggs(
     # Activate brown powers in the grassland row (right to left)
     power_acts = activate_row(game_state, player, Habitat.GRASSLAND)
 
-    return ActionResult(
+    result = ActionResult(
         True, ActionType.LAY_EGGS,
         f"Laid {total_laid} eggs",
         eggs_laid=total_laid, habitat=Habitat.GRASSLAND,
         bonus_activated=bonus_activated,
         power_activations=power_acts,
     )
+    from backend.engine.timed_powers import trigger_between_turn_powers
+    trigger_between_turn_powers(game_state, trigger_player=player, trigger_action=ActionType.LAY_EGGS)
+    return result
 
 
 def execute_draw_cards(
@@ -543,10 +555,13 @@ def execute_draw_cards(
     # Activate brown powers in the wetland row (right to left)
     power_acts = activate_row(game_state, player, Habitat.WETLAND)
 
-    return ActionResult(
+    result = ActionResult(
         True, ActionType.DRAW_CARDS,
         f"Drew {drawn} cards",
         cards_drawn=drawn, habitat=Habitat.WETLAND,
         bonus_activated=bonus_activated,
         power_activations=power_acts,
     )
+    from backend.engine.timed_powers import trigger_between_turn_powers
+    trigger_between_turn_powers(game_state, trigger_player=player, trigger_action=ActionType.DRAW_CARDS)
+    return result

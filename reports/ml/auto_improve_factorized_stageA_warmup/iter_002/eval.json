@@ -1,0 +1,13 @@
+{
+  "games": 20,
+  "nn_wins": 6,
+  "heuristic_wins": 12,
+  "ties": 2,
+  "nn_mean_score": 40.05,
+  "heuristic_mean_score": 47.8,
+  "nn_mean_margin": -7.75,
+  "nn_rate_ge_100": 0.0,
+  "nn_rate_ge_120": 0.0,
+  "heuristic_rate_ge_100": 0.0,
+  "heuristic_rate_ge_120": 0.0
+}

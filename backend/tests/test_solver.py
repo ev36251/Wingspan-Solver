@@ -440,10 +440,58 @@ class TestSolverAPI:
         assert data["reset_type"] == "tray"
         assert data["total_to_gain"] == 2
         assert len(data["recommendations"]) > 0
-        rec = data["recommendations"][0]
+
+    def test_engine_solver_endpoint(self, client):
+        """Engine endpoint should return best move and debug stats."""
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"],
+            "board_type": "oceania",
+        })
+        assert create_resp.status_code == 201
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.post(f"/api/games/{game_id}/solve/engine", json={
+            "time_budget_ms": 1500,
+            "num_determinizations": 8,
+            "max_rollout_depth": 20,
+            "top_k": 3,
+            "return_debug": True,
+            "seed": 5,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "top_k_moves" in data
+        assert len(data["top_k_moves"]) > 0
+        assert data["best_move"] is not None
+        assert data["best_move"]["rank"] == 1
+        assert "search_stats" in data
+        assert data["search_stats"]["simulations"] >= 0
+        assert data["search_stats"]["elapsed_ms"] >= 0
+        rec = data["top_k_moves"][0]
         assert rec["rank"] == 1
         assert rec["description"]
         assert "details" in rec
+
+    def test_engine_solver_auto_determinizations(self, client):
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"],
+            "board_type": "oceania",
+        })
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.post(f"/api/games/{game_id}/solve/engine", json={
+            "time_budget_ms": 2000,
+            "num_determinizations": 0,
+            "max_rollout_depth": 16,
+            "top_k": 2,
+            "return_debug": True,
+            "seed": 9,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        stats = data["search_stats"]
+        assert stats["determinizations_requested"] == 0
+        assert stats["determinizations"] > 0
 
     def test_after_reset_auto_count(self, client):
         """When total_to_gain is 0, should auto-calculate from column."""

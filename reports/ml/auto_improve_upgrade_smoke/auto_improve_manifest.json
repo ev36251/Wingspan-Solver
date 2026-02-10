@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "started_at_epoch": 1770693667,
+  "updated_at_epoch": 1770693690,
+  "elapsed_sec": 23.31,
+  "config": {
+    "iterations": 1,
+    "players": 2,
+    "board_type": "oceania",
+    "max_turns": 220,
+    "games_per_iter": 8,
+    "teacher_policy": "lookahead",
+    "proposal_top_k": 6,
+    "lookahead_depth": 2,
+    "train_epochs": 1,
+    "train_batch": 128,
+    "train_hidden": 192,
+    "train_lr": 0.001,
+    "value_weight": 0.5,
+    "val_split": 0.1,
+    "eval_games": 8,
+    "seed": 42
+  },
+  "best": {
+    "iteration": 1,
+    "primary_score": -32.625,
+    "eval_summary": {
+      "games": 8,
+      "nn_wins": 0,
+      "heuristic_wins": 8,
+      "ties": 0,
+      "nn_mean_score": 18.5,
+      "heuristic_mean_score": 51.125,
+      "nn_mean_margin": -32.625
+    },
+    "model": "reports/ml/auto_improve_upgrade_smoke/best_model.npz",
+    "dataset_meta": "reports/ml/auto_improve_upgrade_smoke/best_dataset.meta.json"
+  },
+  "history": [
+    {
+      "iteration": 1,
+      "seed": 1042,
+      "dataset": "reports/ml/auto_improve_upgrade_smoke/iter_001/dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_upgrade_smoke/iter_001/dataset.meta.json",
+      "model": "reports/ml/auto_improve_upgrade_smoke/iter_001/model.npz",
+      "eval": "reports/ml/auto_improve_upgrade_smoke/iter_001/eval.json",
+      "dataset_summary": {
+        "samples": 416,
+        "mean_player_score": 54.938,
+        "mean_winner_score": 65.75,
+        "actions": 612
+      },
+      "train_summary": {
+        "train_samples": 375,
+        "val_samples": 41,
+        "last_epoch": {
+          "epoch": 1,
+          "train_policy_loss": 3.54733,
+          "train_value_loss": 0.025022,
+          "train_accuracy": 0.042667,
+          "val_policy_loss": 3.748893,
+          "val_value_loss": 0.027895,
+          "val_accuracy": 0.0
+        }
+      },
+      "eval_summary": {
+        "games": 8,
+        "nn_wins": 0,
+        "heuristic_wins": 8,
+        "ties": 0,
+        "nn_mean_score": 18.5,
+        "heuristic_mean_score": 51.125,
+        "nn_mean_margin": -32.625
+      },
+      "primary_score": -32.625
+    }
+  ]
+}

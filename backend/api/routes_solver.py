@@ -19,6 +19,7 @@ from backend.solver.analysis import analyze_game
 from backend.solver.lookahead import lookahead_search
 from backend.solver.move_generator import Move
 from backend.solver.simulation import deep_copy_game, execute_move_on_sim, simulate_playout
+from backend.engine_search import EngineConfig, search_best_move
 
 router = APIRouter()
 
@@ -81,6 +82,33 @@ class LookaheadResponse(BaseModel):
     evaluation_time_ms: float = 0
     depth: int = 2
     beam_width: int = 6
+
+
+class EngineRequest(BaseModel):
+    player_idx: int | None = None
+    time_budget_ms: int = Field(default=15000, ge=1000, le=120000)
+    num_determinizations: int = Field(default=0, ge=0, le=1024)
+    max_rollout_depth: int = Field(default=24, ge=6, le=400)
+    top_k: int = Field(default=5, ge=1, le=10)
+    return_debug: bool = True
+    seed: int = 0
+
+
+class EngineMoveRec(BaseModel):
+    rank: int
+    action_type: str
+    description: str
+    mean_vp: float
+    visit_count: int
+    prior: float
+    ucb: float
+    details: dict = Field(default_factory=dict)
+
+
+class EngineResponse(BaseModel):
+    best_move: SolverMoveRecommendation | None = None
+    top_k_moves: list[EngineMoveRec] = Field(default_factory=list)
+    search_stats: dict = Field(default_factory=dict)
 
 
 class AnalysisResponse(BaseModel):
@@ -443,6 +471,98 @@ async def solve_lookahead(
         evaluation_time_ms=round(elapsed_ms, 1),
         depth=req.depth,
         beam_width=req.beam_width,
+    )
+
+
+@router.post("/{game_id}/solve/engine", response_model=EngineResponse)
+async def solve_engine(
+    game_id: str,
+    req: EngineRequest | None = None,
+) -> EngineResponse:
+    """Analysis-grade best-move search using determinization + MCTS-style root search."""
+    game = _get_game(game_id)
+    if game.is_game_over:
+        raise HTTPException(400, "Game is already over")
+
+    if req is None:
+        req = EngineRequest()
+
+    player_idx = game.current_player_idx if req.player_idx is None else req.player_idx
+    if player_idx < 0 or player_idx >= game.num_players:
+        raise HTTPException(400, f"Invalid player_idx: {player_idx}")
+    player = game.players[player_idx]
+
+    cfg = EngineConfig(
+        time_budget_ms=req.time_budget_ms,
+        num_determinizations=req.num_determinizations,
+        max_rollout_depth=req.max_rollout_depth,
+        top_k=req.top_k,
+        seed=req.seed,
+    )
+    result = search_best_move(game, player_idx=player_idx, cfg=cfg)
+
+    top_k: list[EngineMoveRec] = []
+    for i, s in enumerate(result.top_k_moves, start=1):
+        details = {}
+        if s.move.bird_name:
+            details["bird_name"] = s.move.bird_name
+        if s.move.habitat:
+            details["habitat"] = s.move.habitat.value
+        if s.move.food_payment:
+            details["food_payment"] = {ft.value: c for ft, c in s.move.food_payment.items()}
+        if s.move.food_choices:
+            details["food_choices"] = [ft.value for ft in s.move.food_choices]
+        if s.move.egg_distribution:
+            details["egg_distribution"] = {
+                hab.value: {str(slot_idx): count}
+                for (hab, slot_idx), count in s.move.egg_distribution.items()
+            }
+        if s.move.tray_indices:
+            details["tray_indices"] = s.move.tray_indices
+        if s.move.deck_draws:
+            details["deck_draws"] = s.move.deck_draws
+
+        top_k.append(
+            EngineMoveRec(
+                rank=i,
+                action_type=s.move.action_type.value,
+                description=s.move.description,
+                mean_vp=round(s.mean_vp, 3),
+                visit_count=s.visit_count,
+                prior=s.prior,
+                ucb=s.ucb,
+                details=details,
+            )
+        )
+
+    best = top_k[0] if top_k else None
+    best_move = None
+    if best is not None:
+        best_move = SolverMoveRecommendation(
+            rank=1,
+            action_type=best.action_type,
+            description=best.description,
+            score=best.mean_vp,
+            reasoning="engine_search_expected_final_vp",
+            details=best.details,
+        )
+
+    search_stats = {}
+    if req.return_debug:
+        search_stats = {
+            "nodes": result.nodes,
+            "simulations": result.simulations,
+            "determinizations": result.determinizations,
+            "determinizations_requested": req.num_determinizations,
+            "elapsed_ms": result.elapsed_ms,
+            "player_name": player.name,
+            "player_idx": player_idx,
+        }
+
+    return EngineResponse(
+        best_move=best_move,
+        top_k_moves=top_k,
+        search_stats=search_stats,
     )
 
 

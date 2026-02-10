@@ -19,6 +19,7 @@ from backend.engine.scoring import ScoreBreakdown, calculate_score
 from backend.models.enums import BoardType, FoodType
 from backend.models.game_state import GameState
 from backend.powers.registry import clear_cache, get_registry_stats
+from backend.rules.lifecycle_conformance import run_lifecycle_conformance_checks
 from backend.solver.move_generator import generate_all_moves
 from backend.solver.self_play import create_training_game
 from backend.solver.simulation import _refill_tray, execute_move_on_sim
@@ -30,6 +31,17 @@ class ConformanceIssue:
     step: int
     player: str
     rule_id: str
+    detail: str
+
+
+@dataclass
+class ReplayHint:
+    game_index: int
+    step: int
+    players: int
+    board_type: str
+    suite_seed: int
+    game_seed: int
     detail: str
 
 
@@ -92,11 +104,18 @@ def _validate_state_invariants(game: GameState) -> list[str]:
     return errs
 
 
-def _run_random_game(game_idx: int, num_players: int, board_type: BoardType, max_steps: int, seed: int) -> tuple[list[ConformanceIssue], dict]:
+def _run_random_game(
+    game_idx: int,
+    num_players: int,
+    board_type: BoardType,
+    max_steps: int,
+    seed: int,
+) -> tuple[list[ConformanceIssue], dict]:
     rnd = random.Random(seed)
     game = create_training_game(num_players=num_players, board_type=board_type)
 
     issues: list[ConformanceIssue] = []
+    mismatch_hints: list[ReplayHint] = []
     steps = 0
 
     # Initial sanity
@@ -136,12 +155,14 @@ def _run_random_game(game_idx: int, num_players: int, board_type: BoardType, max
 
         if executed:
             if failed_count > 0:
-                issues.append(
-                    ConformanceIssue(
+                mismatch_hints.append(
+                    ReplayHint(
                         game_index=game_idx,
                         step=steps,
-                        player=p.name,
-                        rule_id="generator_executor_mismatch",
+                        players=num_players,
+                        board_type=board_type.value,
+                        suite_seed=seed - game_idx,
+                        game_seed=seed,
                         detail=f"{failed_count} generated moves failed before first executable move",
                     )
                 )
@@ -173,6 +194,8 @@ def _run_random_game(game_idx: int, num_players: int, board_type: BoardType, max
         "final_round": game.current_round,
         "scores": final_scores,
         "winner_score": max(final_scores.values()) if final_scores else 0,
+        "move_generation_mismatch_count": len(mismatch_hints),
+        "mismatch_hints": [asdict(h) for h in mismatch_hints],
     }
     return issues, summary
 
@@ -207,6 +230,7 @@ def run_conformance_suite(
     all_issues: list[ConformanceIssue] = []
     states_checked = 0
     winner_scores: list[int] = []
+    mismatch_hints_all: list[dict] = []
 
     for i in range(1, games + 1):
         issues, summary = _run_random_game(
@@ -219,6 +243,7 @@ def run_conformance_suite(
         all_issues.extend(issues)
         winner_scores.append(summary["winner_score"])
         states_checked += summary["steps"] + 1
+        mismatch_hints_all.extend(summary.get("mismatch_hints", []))
 
     by_rule: dict[str, int] = {}
     for issue in all_issues:
@@ -259,12 +284,15 @@ def run_conformance_suite(
             "elapsed_sec": round(time.time() - started, 2),
         },
         "power_mapping": power_mapping_report(),
+        "lifecycle_conformance": run_lifecycle_conformance_checks(),
         "issues_total": len(all_issues),
         "critical_issues_total": len(critical_issues),
         "states_checked": states_checked,
         "conformance_rate": round(conformance_rate, 6),
         "issues_by_rule": dict(sorted(by_rule.items(), key=lambda kv: (-kv[1], kv[0]))),
         "issues": [asdict(i) for i in all_issues[:5000]],
+        "move_generation_mismatch_total": len(mismatch_hints_all),
+        "move_generation_mismatch_hints": mismatch_hints_all[:500],
         "winner_score_mean": round(sum(winner_scores) / max(1, len(winner_scores)), 3),
     }
     return result

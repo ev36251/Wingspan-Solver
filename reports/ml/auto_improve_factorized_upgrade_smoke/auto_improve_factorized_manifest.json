@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "started_at_epoch": 1770693695,
+  "updated_at_epoch": 1770693719,
+  "elapsed_sec": 24.45,
+  "config": {
+    "iterations": 1,
+    "players": 2,
+    "board_type": "oceania",
+    "max_turns": 220,
+    "games_per_iter": 8,
+    "proposal_top_k": 6,
+    "lookahead_depth": 2,
+    "n_step": 2,
+    "gamma": 0.97,
+    "bootstrap_mix": 0.35,
+    "train_epochs": 1,
+    "train_batch": 128,
+    "train_hidden": 192,
+    "train_lr": 0.001,
+    "train_value_weight": 0.5,
+    "val_split": 0.1,
+    "eval_games": 8,
+    "promotion_games": 12,
+    "seed": 42
+  },
+  "best": null,
+  "history": [
+    {
+      "iteration": 1,
+      "seed": 1042,
+      "dataset": "reports/ml/auto_improve_factorized_upgrade_smoke/iter_001/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_factorized_upgrade_smoke/iter_001/bc_dataset.meta.json",
+      "model": "reports/ml/auto_improve_factorized_upgrade_smoke/iter_001/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 416,
+        "mean_player_score": 54.938
+      },
+      "train_summary": {
+        "train_samples": 375,
+        "val_samples": 41,
+        "last_epoch": {
+          "epoch": 1,
+          "train_loss": 3.744799,
+          "train_action_acc": 0.293333,
+          "train_value_mse": 0.096141,
+          "val_loss": 3.442261,
+          "val_action_acc": 0.219512,
+          "val_value_mse": 0.117349
+        }
+      },
+      "eval_summary": {
+        "games": 8,
+        "nn_wins": 2,
+        "heuristic_wins": 5,
+        "ties": 1,
+        "nn_mean_score": 35.0,
+        "heuristic_mean_score": 47.375,
+        "nn_mean_margin": -12.375
+      },
+      "promotion_gate": {
+        "games": 12,
+        "result": {
+          "games": 12,
+          "nn_wins": 5,
+          "heuristic_wins": 7,
+          "ties": 0,
+          "nn_mean_score": 41.583,
+          "heuristic_mean_score": 47.833,
+          "nn_mean_margin": -6.25
+        },
+        "promoted": false
+      }
+    }
+  ]
+}

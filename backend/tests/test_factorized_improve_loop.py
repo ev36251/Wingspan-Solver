@@ -60,6 +60,9 @@ def test_auto_improve_factorized_smoke(tmp_path: Path) -> None:
         n_step=1,
         gamma=0.97,
         bootstrap_mix=0.35,
+        value_target_score_scale=160.0,
+        value_target_score_bias=0.0,
+        late_round_oversample_factor=1,
         train_epochs=1,
         train_batch=32,
         train_hidden=64,
@@ -68,6 +71,20 @@ def test_auto_improve_factorized_smoke(tmp_path: Path) -> None:
         val_split=0.2,
         eval_games=2,
         promotion_games=4,
+        pool_games_per_opponent=2,
+        min_pool_win_rate=0.0,
+        min_pool_mean_score=0.0,
+        min_pool_rate_ge_100=0.0,
+        min_pool_rate_ge_120=0.0,
+        require_pool_non_regression=False,
+        min_gate_win_rate=0.0,
+        min_gate_mean_score=0.0,
+        min_gate_rate_ge_100=0.0,
+        min_gate_rate_ge_120=0.0,
+        engine_teacher_prob=0.0,
+        engine_time_budget_ms=25,
+        engine_num_determinizations=0,
+        engine_max_rollout_depth=24,
         seed=9,
     )
 
@@ -75,3 +92,29 @@ def test_auto_improve_factorized_smoke(tmp_path: Path) -> None:
     assert len(manifest["history"]) == 1
     # strict gating field exists
     assert "promotion_gate" in manifest["history"][0]
+    assert "pool_eval" in manifest["history"][0]
+    assert "kpi_gate" in manifest["history"][0]
+
+
+def test_generate_bc_dataset_engine_teacher_smoke(tmp_path: Path) -> None:
+    ds = tmp_path / "bc_engine.jsonl"
+    meta = tmp_path / "bc_engine.meta.json"
+    out = generate_bc_dataset(
+        out_jsonl=str(ds),
+        out_meta=str(meta),
+        games=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        seed=10,
+        lookahead_depth=0,
+        n_step=1,
+        engine_teacher_prob=1.0,
+        engine_time_budget_ms=5,
+        engine_num_determinizations=2,
+        engine_max_rollout_depth=16,
+    )
+    pi = out["policy_improvement"]
+    assert pi["engine_teacher_calls"] >= 1
+    assert pi["engine_teacher_applied"] >= 1
+    assert "value_target_config" in out

@@ -20,3 +20,4 @@ def test_conformance_smoke_has_no_critical_issues() -> None:
     # Smoke threshold: no critical invariants violated.
     assert result["critical_issues_total"] == 0
     assert result["conformance_rate"] >= 0.99
+    assert result["lifecycle_conformance"]["all_passed"] is True

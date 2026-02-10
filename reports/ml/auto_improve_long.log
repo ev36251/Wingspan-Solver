@@ -1,0 +1,14 @@
+game 10/120 | samples=520 | mean_player_score=49.4 | mean_winner_score=54.0
+game 20/120 | samples=1040 | mean_player_score=46.5 | mean_winner_score=52.5
+game 30/120 | samples=1560 | mean_player_score=46.1 | mean_winner_score=53.2
+game 40/120 | samples=2080 | mean_player_score=45.4 | mean_winner_score=52.2
+game 50/120 | samples=2600 | mean_player_score=44.8 | mean_winner_score=51.8
+game 60/120 | samples=3120 | mean_player_score=44.4 | mean_winner_score=51.3
+game 70/120 | samples=3640 | mean_player_score=44.3 | mean_winner_score=52.3
+game 80/120 | samples=4160 | mean_player_score=44.8 | mean_winner_score=52.7
+game 90/120 | samples=4680 | mean_player_score=44.5 | mean_winner_score=52.3
+game 100/120 | samples=5200 | mean_player_score=44.3 | mean_winner_score=52.1
+game 110/120 | samples=5720 | mean_player_score=44.0 | mean_winner_score=51.8
+game 120/120 | samples=6240 | mean_player_score=44.2 | mean_winner_score=51.8
+epoch 1/8 | train_pi=3.3484 train_v=0.1018 train_acc=0.074 | val_pi=3.3441 val_v=0.0999 val_acc=0.081
+epoch 2/8 | train_pi=3.3217 train_v=0.0991 train_acc=0.087 | val_pi=3.3181 val_v=0.0974 val_acc=0.093

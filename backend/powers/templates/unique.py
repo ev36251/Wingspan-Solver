@@ -256,35 +256,31 @@ class CopyNeighborBonusCard(PowerEffect):
         if not neighbor or not neighbor.bonus_cards:
             return PowerResult(executed=False, description="No neighbor bonus cards")
 
-        # Find the best-scoring card (scored against THIS player's birds)
-        from backend.data.registries import get_bonus_registry
-        best_name = None
+        # Find the best-scoring card (scored against THIS player's birds).
+        best_card: BonusCard | None = None
         best_score = 0
-        for bc_name in neighbor.bonus_cards:
-            bc = get_bonus_registry().get(bc_name)
-            if bc:
-                if bc.name in CUSTOM_BONUS_FULL_SCORERS:
-                    score = CUSTOM_BONUS_FULL_SCORERS[bc.name](ctx.player)
-                elif bc.name in CUSTOM_BONUS_COUNTERS:
-                    qualifying = CUSTOM_BONUS_COUNTERS[bc.name](ctx.player)
-                    score = bc.score(qualifying)
-                else:
-                    qualifying = sum(
-                        1 for bird in ctx.player.board.all_birds()
-                        if bc.name in bird.bonus_eligibility
-                    )
-                    score = bc.score(qualifying)
-                if score > best_score:
-                    best_score = score
-                    best_name = bc_name
+        for bc in neighbor.bonus_cards:
+            if bc.name in CUSTOM_BONUS_FULL_SCORERS:
+                score = CUSTOM_BONUS_FULL_SCORERS[bc.name](ctx.player)
+            elif bc.name in CUSTOM_BONUS_COUNTERS:
+                qualifying = CUSTOM_BONUS_COUNTERS[bc.name](ctx.player)
+                score = bc.score(qualifying)
+            else:
+                qualifying = sum(
+                    1 for bird in ctx.player.board.all_birds()
+                    if bc.name in bird.bonus_eligibility
+                )
+                score = bc.score(qualifying)
+            if score > best_score:
+                best_score = score
+                best_card = bc
 
-        if best_name and best_score > 0:
-            # Cache seeds to represent the copied bonus score
-            slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
-            slot.cache_food(FoodType.SEED, best_score)
+        if best_card and best_score > 0:
+            # Keep copied card name unique so repeated triggers do not duplicate.
+            if not any(bc.name == best_card.name for bc in ctx.player.bonus_cards):
+                ctx.player.bonus_cards.append(best_card)
             return PowerResult(
-                food_cached={FoodType.SEED: best_score},
-                description=f"Copied {self.direction} neighbor's '{best_name}': {best_score} pts",
+                description=f"Copied {self.direction} neighbor's '{best_card.name}' as bonus card",
             )
 
         return PowerResult(executed=False,

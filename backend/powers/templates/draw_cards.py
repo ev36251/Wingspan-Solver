@@ -99,10 +99,26 @@ class DrawBonusCards(PowerEffect):
         self.keep = keep
 
     def execute(self, ctx: PowerContext) -> PowerResult:
-        # Bonus card drawing is handled differently from bird cards
-        # For simulation, we just note it happened
-        return PowerResult(cards_drawn=self.keep,
-                           description=f"Drew {self.draw} bonus cards, kept {self.keep}")
+        from backend.data.registries import get_bonus_registry
+
+        reg = get_bonus_registry()
+        all_cards = list(reg.all_cards)
+        kept = 0
+        # Deterministic fallback when no explicit draft choice is modeled:
+        # keep the highest draft-value bonus cards available.
+        ranked = sorted(
+            all_cards,
+            key=lambda bc: (bc.draft_value_pct if bc.draft_value_pct is not None else 0.0),
+            reverse=True,
+        )
+        for bc in ranked[: max(0, self.keep)]:
+            ctx.player.bonus_cards.append(bc)
+            kept += 1
+
+        return PowerResult(
+            cards_drawn=kept,
+            description=f"Drew {self.draw} bonus cards, kept {kept}",
+        )
 
     def describe_activation(self, ctx: PowerContext) -> str:
         if self.keep < self.draw:

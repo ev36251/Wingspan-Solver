@@ -1,0 +1,153 @@
+{
+  "meta": {
+    "games": 150,
+    "players": 3,
+    "board_type": "oceania",
+    "max_steps": 340,
+    "seed": 202,
+    "elapsed_sec": 3.69
+  },
+  "power_mapping": {
+    "total_birds": 446,
+    "fallback_count": 0,
+    "coverage_non_fallback": 1.0,
+    "stats_by_power": {
+      "ActivateAllPredators": 1,
+      "CacheFoodFromFeeder": 12,
+      "CacheFoodFromSupply": 19,
+      "ConditionalCacheFromNeighbor": 1,
+      "CopyNeighborBonusCard": 2,
+      "CopyNeighborBrownPower": 3,
+      "CopyNeighborWhitePower": 1,
+      "CountsDoubleForGoal": 3,
+      "DiscardToTuck": 1,
+      "DrawBonusCards": 30,
+      "DrawCards": 47,
+      "DrawFromTray": 6,
+      "EndOfRoundCacheFood": 2,
+      "FewestBirdsGainFood": 1,
+      "FlockingPower": 27,
+      "GainFoodFromFeeder": 22,
+      "GainFoodFromSupply": 51,
+      "GainFoodFromSupplyOrCache": 2,
+      "GainFoodMatchingPrevious": 1,
+      "LayEggs": 65,
+      "LayEggsEachBirdInRow": 2,
+      "MoveBird": 8,
+      "NoPower": 6,
+      "PlaceBirdSideways": 4,
+      "PlayAdditionalBird": 28,
+      "PredatorDice": 20,
+      "PredatorLookAt": 14,
+      "RepeatPower": 2,
+      "RepeatPredatorPower": 1,
+      "ResetFeederGainFood": 17,
+      "RetrieveDiscardedBonusCard": 1,
+      "ScoreBonusCardNow": 1,
+      "TradeFoodForAny": 1,
+      "TuckFromDeck": 4,
+      "TuckFromHand": 40
+    }
+  },
+  "issues_total": 13,
+  "critical_issues_total": 0,
+  "states_checked": 11850,
+  "conformance_rate": 1.0,
+  "issues_by_rule": {
+    "generator_executor_mismatch": 13
+  },
+  "issues": [
+    {
+      "game_index": 2,
+      "step": 5,
+      "player": "Player_3",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 12,
+      "step": 70,
+      "player": "Player_2",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 14,
+      "step": 55,
+      "player": "Player_2",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 30,
+      "step": 23,
+      "player": "Player_3",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 41,
+      "step": 0,
+      "player": "Player_1",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 44,
+      "step": 76,
+      "player": "Player_2",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 55,
+      "step": 72,
+      "player": "Player_1",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 57,
+      "step": 9,
+      "player": "Player_1",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 69,
+      "step": 0,
+      "player": "Player_1",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 88,
+      "step": 17,
+      "player": "Player_3",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 89,
+      "step": 10,
+      "player": "Player_2",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 110,
+      "step": 39,
+      "player": "Player_1",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    },
+    {
+      "game_index": 119,
+      "step": 72,
+      "player": "Player_1",
+      "rule_id": "generator_executor_mismatch",
+      "detail": "1 generated moves failed before first executable move"
+    }
+  ],
+  "winner_score_mean": 43.493
+}

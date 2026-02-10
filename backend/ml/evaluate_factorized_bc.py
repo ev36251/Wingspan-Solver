@@ -13,9 +13,9 @@ from backend.config import EXCEL_FILE
 from backend.data.registries import load_all
 from backend.engine.scoring import calculate_score
 from backend.models.enums import ActionType, BoardType
-from backend.solver.move_generator import generate_all_moves
+from backend.solver.move_generator import generate_all_moves, Move
 from backend.solver.self_play import create_training_game
-from backend.solver.simulation import _refill_tray, execute_move_on_sim, pick_weighted_random_move
+from backend.solver.simulation import _refill_tray, deep_copy_game, execute_move_on_sim, pick_weighted_random_move
 from backend.ml.factorized_inference import FactorizedPolicyModel, score_move_with_factorized_model
 from backend.ml.state_encoder import StateEncoder
 
@@ -29,6 +29,10 @@ class EvalResult:
     nn_mean_score: float
     heuristic_mean_score: float
     nn_mean_margin: float
+    nn_rate_ge_100: float
+    nn_rate_ge_120: float
+    heuristic_rate_ge_100: float
+    heuristic_rate_ge_120: float
 
 
 def evaluate_factorized_vs_heuristic(
@@ -37,6 +41,7 @@ def evaluate_factorized_vs_heuristic(
     board_type: BoardType = BoardType.OCEANIA,
     max_turns: int = 240,
     seed: int = 0,
+    proposal_top_k: int = 5,
 ) -> EvalResult:
     load_all(EXCEL_FILE)
 
@@ -78,7 +83,30 @@ def evaluate_factorized_vs_heuristic(
             if pi == nn_idx:
                 state = np.asarray(enc.encode(game, pi), dtype=np.float32)
                 logits, _ = model.forward(state)
-                move = max(moves, key=lambda m: score_move_with_factorized_model(logits, m, p))
+                scored = sorted(
+                    ((m, score_move_with_factorized_model(logits, m, p)) for m in moves),
+                    key=lambda x: x[1],
+                    reverse=True,
+                )
+                candidates = [m for m, _ in scored[: max(1, min(proposal_top_k, len(scored)))]]
+                if len(candidates) == 1:
+                    move = candidates[0]
+                else:
+                    reranked: list[tuple[Move, float]] = []
+                    for cand in candidates:
+                        sim = deep_copy_game(game)
+                        sp = sim.players[pi]
+                        if not execute_move_on_sim(sim, sp, cand):
+                            reranked.append((cand, -1e9))
+                            continue
+                        sim.advance_turn()
+                        _refill_tray(sim)
+                        s2 = np.asarray(enc.encode(sim, pi), dtype=np.float32)
+                        _, v2 = model.forward(s2)
+                        score_est = model.value_to_expected_score(v2)
+                        immediate = float(calculate_score(sim, sp).total)
+                        reranked.append((cand, 0.85 * score_est + 0.15 * immediate))
+                    move = max(reranked, key=lambda x: x[1])[0]
             else:
                 move = pick_weighted_random_move(moves, game, p)
 
@@ -130,6 +158,10 @@ def evaluate_factorized_vs_heuristic(
         nn_mean_score=round(sum(nn_scores) / max(1, len(nn_scores)), 3),
         heuristic_mean_score=round(sum(h_scores) / max(1, len(h_scores)), 3),
         nn_mean_margin=round(sum(margins) / max(1, len(margins)), 3),
+        nn_rate_ge_100=round(sum(1 for s in nn_scores if s >= 100) / max(1, len(nn_scores)), 4),
+        nn_rate_ge_120=round(sum(1 for s in nn_scores if s >= 120) / max(1, len(nn_scores)), 4),
+        heuristic_rate_ge_100=round(sum(1 for s in h_scores if s >= 100) / max(1, len(h_scores)), 4),
+        heuristic_rate_ge_120=round(sum(1 for s in h_scores if s >= 120) / max(1, len(h_scores)), 4),
     )
 
 

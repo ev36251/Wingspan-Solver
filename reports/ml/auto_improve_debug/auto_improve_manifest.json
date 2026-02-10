@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "started_at_epoch": 1770690161,
+  "updated_at_epoch": 1770690162,
+  "elapsed_sec": 1.73,
+  "config": {
+    "iterations": 1,
+    "players": 2,
+    "board_type": "oceania",
+    "max_turns": 120,
+    "games_per_iter": 2,
+    "train_epochs": 1,
+    "train_batch": 32,
+    "train_hidden": 64,
+    "train_lr": 0.001,
+    "value_weight": 0.5,
+    "val_split": 0.2,
+    "eval_games": 2,
+    "seed": 1
+  },
+  "best": {
+    "iteration": 1,
+    "primary_score": -31.0,
+    "eval_summary": {
+      "games": 2,
+      "nn_wins": 0,
+      "heuristic_wins": 2,
+      "ties": 0,
+      "nn_mean_score": 22.5,
+      "heuristic_mean_score": 53.5,
+      "nn_mean_margin": -31.0
+    },
+    "model": "reports/ml/auto_improve_debug/best_model.npz",
+    "dataset_meta": "reports/ml/auto_improve_debug/best_dataset.meta.json"
+  },
+  "history": [
+    {
+      "iteration": 1,
+      "seed": 1001,
+      "dataset": "reports/ml/auto_improve_debug/iter_001/dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_debug/iter_001/dataset.meta.json",
+      "model": "reports/ml/auto_improve_debug/iter_001/model.npz",
+      "eval": "reports/ml/auto_improve_debug/iter_001/eval.json",
+      "dataset_summary": {
+        "samples": 104,
+        "mean_player_score": 46.25,
+        "mean_winner_score": 59.0,
+        "actions": 200
+      },
+      "train_summary": {
+        "train_samples": 84,
+        "val_samples": 20,
+        "last_epoch": {
+          "epoch": 1,
+          "train_policy_loss": 3.448119,
+          "train_value_loss": 0.118165,
+          "train_accuracy": 0.047619,
+          "val_policy_loss": 3.17129,
+          "val_value_loss": 0.110325,
+          "val_accuracy": 0.2
+        }
+      },
+      "eval_summary": {
+        "games": 2,
+        "nn_wins": 0,
+        "heuristic_wins": 2,
+        "ties": 0,
+        "nn_mean_score": 22.5,
+        "heuristic_mean_score": 53.5,
+        "nn_mean_margin": -31.0
+      },
+      "primary_score": -31.0
+    }
+  ]
+}

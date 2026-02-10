@@ -16,7 +16,9 @@ from pathlib import Path
 
 from backend.models.enums import BoardType
 from backend.ml.evaluate_factorized_bc import evaluate_factorized_vs_heuristic
+from backend.ml.evaluate_factorized_pool import evaluate_against_pool
 from backend.ml.generate_bc_dataset import generate_bc_dataset
+from backend.ml.kpi_gate import run_gate
 from backend.ml.train_factorized_bc import train_bc
 
 
@@ -32,6 +34,9 @@ def run_auto_improve_factorized(
     n_step: int,
     gamma: float,
     bootstrap_mix: float,
+    value_target_score_scale: float,
+    value_target_score_bias: float,
+    late_round_oversample_factor: int,
     train_epochs: int,
     train_batch: int,
     train_hidden: int,
@@ -40,9 +45,26 @@ def run_auto_improve_factorized(
     val_split: float,
     eval_games: int,
     promotion_games: int,
+    pool_games_per_opponent: int,
+    min_pool_win_rate: float,
+    min_pool_mean_score: float,
+    min_pool_rate_ge_100: float,
+    min_pool_rate_ge_120: float,
+    require_pool_non_regression: bool,
+    min_gate_win_rate: float,
+    min_gate_mean_score: float,
+    min_gate_rate_ge_100: float,
+    min_gate_rate_ge_120: float,
+    engine_teacher_prob: float,
+    engine_time_budget_ms: int,
+    engine_num_determinizations: int,
+    engine_max_rollout_depth: int,
     seed: int,
+    clean_out_dir: bool = True,
 ) -> dict:
     base = Path(out_dir)
+    if clean_out_dir and base.exists():
+        shutil.rmtree(base)
     base.mkdir(parents=True, exist_ok=True)
 
     manifest_path = base / "auto_improve_factorized_manifest.json"
@@ -65,6 +87,8 @@ def run_auto_improve_factorized(
         model_path = iter_dir / "factorized_model.npz"
         eval_path = iter_dir / "eval.json"
         gate_path = iter_dir / "promotion_gate_eval.json"
+        pool_eval_path = iter_dir / "pool_eval.json"
+        kpi_gate_path = iter_dir / "kpi_gate.json"
 
         ds_meta = generate_bc_dataset(
             out_jsonl=str(dataset_jsonl),
@@ -80,6 +104,13 @@ def run_auto_improve_factorized(
             n_step=n_step,
             gamma=gamma,
             bootstrap_mix=bootstrap_mix,
+            value_target_score_scale=value_target_score_scale,
+            value_target_score_bias=value_target_score_bias,
+            late_round_oversample_factor=late_round_oversample_factor,
+            engine_teacher_prob=engine_teacher_prob,
+            engine_time_budget_ms=engine_time_budget_ms,
+            engine_num_determinizations=engine_num_determinizations,
+            engine_max_rollout_depth=engine_max_rollout_depth,
         )
 
         tr = train_bc(
@@ -101,6 +132,7 @@ def run_auto_improve_factorized(
             board_type=board_type,
             max_turns=max_turns,
             seed=iter_seed,
+            proposal_top_k=proposal_top_k,
         )
         ev_dict = ev.__dict__
         eval_path.write_text(json.dumps(ev_dict, indent=2), encoding="utf-8")
@@ -111,11 +143,58 @@ def run_auto_improve_factorized(
             board_type=board_type,
             max_turns=max_turns,
             seed=iter_seed + 777,
+            proposal_top_k=proposal_top_k,
         )
         gate_dict = gate.__dict__
         gate_path.write_text(json.dumps(gate_dict, indent=2), encoding="utf-8")
 
-        promoted = gate_dict["nn_wins"] > gate_dict["heuristic_wins"]
+        # Opponent-pool evaluation: heuristic + current best model (if exists).
+        opponents = ["heuristic"]
+        if best_model_path.exists():
+            opponents.append(str(best_model_path))
+        pool_eval = evaluate_against_pool(
+            model_path=str(model_path),
+            opponents=opponents,
+            games_per_opponent=pool_games_per_opponent,
+            board_type=board_type,
+            max_turns=max_turns,
+            seed=iter_seed + 999,
+            proposal_top_k=proposal_top_k,
+        )
+        pool_eval_path.write_text(json.dumps(pool_eval, indent=2), encoding="utf-8")
+
+        baseline_for_gate = None
+        if best is not None:
+            # Use last accepted best pool eval, if available.
+            best_iter = int(best["iteration"])
+            cand = base / f"iter_{best_iter:03d}" / "pool_eval.json"
+            if cand.exists():
+                baseline_for_gate = str(cand)
+
+        kpi_gate = run_gate(
+            candidate_path=str(pool_eval_path),
+            baseline_path=baseline_for_gate,
+            min_win_rate=min_pool_win_rate,
+            min_mean_score=min_pool_mean_score,
+            min_rate_ge_100=min_pool_rate_ge_100,
+            min_rate_ge_120=min_pool_rate_ge_120,
+            require_non_regression=require_pool_non_regression and baseline_for_gate is not None,
+        )
+        kpi_gate_path.write_text(json.dumps(kpi_gate, indent=2), encoding="utf-8")
+
+        gate_games = max(1, int(gate_dict.get("games", 0)))
+        gate_win_rate = float(gate_dict.get("nn_wins", 0)) / gate_games
+        gate_mean_score = float(gate_dict.get("nn_mean_score", 0.0))
+        gate_ge100 = float(gate_dict.get("nn_rate_ge_100", 0.0))
+        gate_ge120 = float(gate_dict.get("nn_rate_ge_120", 0.0))
+
+        gate_primary_pass = (
+            gate_mean_score >= min_gate_mean_score
+            and gate_ge100 >= min_gate_rate_ge_100
+            and gate_ge120 >= min_gate_rate_ge_120
+        )
+        gate_secondary_pass = gate_win_rate >= min_gate_win_rate
+        promoted = gate_primary_pass and gate_secondary_pass and bool(kpi_gate["passed"])
 
         row = {
             "iteration": i,
@@ -136,8 +215,13 @@ def run_auto_improve_factorized(
             "promotion_gate": {
                 "games": promotion_games,
                 "result": gate_dict,
+                "score_primary_pass": gate_primary_pass,
+                "win_secondary_pass": gate_secondary_pass,
+                "win_rate": round(gate_win_rate, 4),
                 "promoted": promoted,
             },
+            "pool_eval": pool_eval,
+            "kpi_gate": kpi_gate,
         }
         history.append(row)
 
@@ -164,6 +248,9 @@ def run_auto_improve_factorized(
                 "n_step": n_step,
                 "gamma": gamma,
                 "bootstrap_mix": bootstrap_mix,
+                "value_target_score_scale": value_target_score_scale,
+                "value_target_score_bias": value_target_score_bias,
+                "late_round_oversample_factor": late_round_oversample_factor,
                 "train_epochs": train_epochs,
                 "train_batch": train_batch,
                 "train_hidden": train_hidden,
@@ -172,6 +259,20 @@ def run_auto_improve_factorized(
                 "val_split": val_split,
                 "eval_games": eval_games,
                 "promotion_games": promotion_games,
+                "pool_games_per_opponent": pool_games_per_opponent,
+                "min_pool_win_rate": min_pool_win_rate,
+                "min_pool_mean_score": min_pool_mean_score,
+                "min_pool_rate_ge_100": min_pool_rate_ge_100,
+                "min_pool_rate_ge_120": min_pool_rate_ge_120,
+                "require_pool_non_regression": require_pool_non_regression,
+                "min_gate_win_rate": min_gate_win_rate,
+                "min_gate_mean_score": min_gate_mean_score,
+                "min_gate_rate_ge_100": min_gate_rate_ge_100,
+                "min_gate_rate_ge_120": min_gate_rate_ge_120,
+                "engine_teacher_prob": engine_teacher_prob,
+                "engine_time_budget_ms": engine_time_budget_ms,
+                "engine_num_determinizations": engine_num_determinizations,
+                "engine_max_rollout_depth": engine_max_rollout_depth,
                 "seed": seed,
             },
             "best": best,
@@ -182,7 +283,9 @@ def run_auto_improve_factorized(
         print(
             f"iter {i}/{iterations} | samples={ds_meta['samples']} | "
             f"eval_wins={ev_dict['nn_wins']}/{ev_dict['games']} margin={ev_dict['nn_mean_margin']:.2f} | "
-            f"gate_wins={gate_dict['nn_wins']}/{promotion_games} promoted={promoted}"
+            f"gate_wins={gate_dict['nn_wins']}/{promotion_games} | "
+            f"pool_win={pool_eval['summary']['nn_win_rate']:.3f} ge100={pool_eval['summary']['nn_rate_ge_100']:.3f} | "
+            f"kpi_pass={kpi_gate['passed']} promoted={promoted}"
         )
 
     return json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -191,6 +294,7 @@ def run_auto_improve_factorized(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Auto-improve factorized BC with strict gating")
     parser.add_argument("--out-dir", default="reports/ml/auto_improve_factorized")
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument("--iterations", type=int, default=5)
     parser.add_argument("--players", type=int, default=2, choices=[2])
     parser.add_argument("--board-type", default="oceania", choices=["base", "oceania"])
@@ -201,6 +305,9 @@ def main() -> None:
     parser.add_argument("--n-step", type=int, default=2)
     parser.add_argument("--gamma", type=float, default=0.97)
     parser.add_argument("--bootstrap-mix", type=float, default=0.35)
+    parser.add_argument("--value-target-score-scale", type=float, default=160.0)
+    parser.add_argument("--value-target-score-bias", type=float, default=0.0)
+    parser.add_argument("--late-round-oversample-factor", type=int, default=2)
     parser.add_argument("--train-epochs", type=int, default=8)
     parser.add_argument("--train-batch", type=int, default=128)
     parser.add_argument("--train-hidden", type=int, default=192)
@@ -209,11 +316,26 @@ def main() -> None:
     parser.add_argument("--val-split", type=float, default=0.1)
     parser.add_argument("--eval-games", type=int, default=80)
     parser.add_argument("--promotion-games", type=int, default=200)
+    parser.add_argument("--pool-games-per-opponent", type=int, default=60)
+    parser.add_argument("--min-pool-win-rate", type=float, default=0.0)
+    parser.add_argument("--min-pool-mean-score", type=float, default=0.0)
+    parser.add_argument("--min-pool-rate-ge-100", type=float, default=0.0)
+    parser.add_argument("--min-pool-rate-ge-120", type=float, default=0.0)
+    parser.add_argument("--require-pool-non-regression", action="store_true")
+    parser.add_argument("--min-gate-win-rate", type=float, default=0.45)
+    parser.add_argument("--min-gate-mean-score", type=float, default=70.0)
+    parser.add_argument("--min-gate-rate-ge-100", type=float, default=0.08)
+    parser.add_argument("--min-gate-rate-ge-120", type=float, default=0.01)
+    parser.add_argument("--engine-teacher-prob", type=float, default=0.15)
+    parser.add_argument("--engine-time-budget-ms", type=int, default=25)
+    parser.add_argument("--engine-num-determinizations", type=int, default=0)
+    parser.add_argument("--engine-max-rollout-depth", type=int, default=24)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
     manifest = run_auto_improve_factorized(
         out_dir=args.out_dir,
+        clean_out_dir=not args.resume,
         iterations=args.iterations,
         players=args.players,
         board_type=BoardType(args.board_type),
@@ -224,6 +346,9 @@ def main() -> None:
         n_step=args.n_step,
         gamma=args.gamma,
         bootstrap_mix=args.bootstrap_mix,
+        value_target_score_scale=args.value_target_score_scale,
+        value_target_score_bias=args.value_target_score_bias,
+        late_round_oversample_factor=args.late_round_oversample_factor,
         train_epochs=args.train_epochs,
         train_batch=args.train_batch,
         train_hidden=args.train_hidden,
@@ -232,6 +357,20 @@ def main() -> None:
         val_split=args.val_split,
         eval_games=args.eval_games,
         promotion_games=args.promotion_games,
+        pool_games_per_opponent=args.pool_games_per_opponent,
+        min_pool_win_rate=args.min_pool_win_rate,
+        min_pool_mean_score=args.min_pool_mean_score,
+        min_pool_rate_ge_100=args.min_pool_rate_ge_100,
+        min_pool_rate_ge_120=args.min_pool_rate_ge_120,
+        require_pool_non_regression=args.require_pool_non_regression,
+        min_gate_win_rate=args.min_gate_win_rate,
+        min_gate_mean_score=args.min_gate_mean_score,
+        min_gate_rate_ge_100=args.min_gate_rate_ge_100,
+        min_gate_rate_ge_120=args.min_gate_rate_ge_120,
+        engine_teacher_prob=args.engine_teacher_prob,
+        engine_time_budget_ms=args.engine_time_budget_ms,
+        engine_num_determinizations=args.engine_num_determinizations,
+        engine_max_rollout_depth=args.engine_max_rollout_depth,
         seed=args.seed,
     )
 

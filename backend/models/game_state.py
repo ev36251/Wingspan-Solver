@@ -38,6 +38,7 @@ class GameState:
     deck_remaining: int = 0
     discard_pile_count: int = 0
     move_history: list[MoveRecord] = field(default_factory=list)
+    _end_game_powers_resolved: bool = False
 
     @property
     def num_players(self) -> int:
@@ -112,17 +113,21 @@ class GameState:
 
         On Oceania boards, all nectar in player supplies is discarded.
         """
-        # Award end-of-round goal points before moving to next round.
+        # Official timing: resolve round-end powers first.
+        from backend.engine.timed_powers import trigger_end_of_round_powers
+        trigger_end_of_round_powers(self, self.current_round)
+
+        # Then discard nectar from all player supplies (Oceania rule).
+        if self.board_type == BoardType.OCEANIA:
+            for p in self.players:
+                p.food_supply.nectar = 0
+
+        # Finally score the round goal for this round.
         if 1 <= self.current_round <= len(self.round_goals):
             from backend.engine.scoring import compute_round_goal_scores
             scores = compute_round_goal_scores(self, self.current_round)
             if scores:
                 self.round_goal_scores[self.current_round] = scores
-
-        # Discard nectar from all player supplies (Oceania rule)
-        if self.board_type == BoardType.OCEANIA:
-            for p in self.players:
-                p.food_supply.nectar = 0
 
         self.current_round += 1
         self.turn_in_round = 1
@@ -132,6 +137,10 @@ class GameState:
             cubes = self._effective_actions(self.current_round)
             for p in self.players:
                 p.action_cubes_remaining = cubes
+        else:
+            # Resolve end-of-game powers once when the game ends.
+            from backend.engine.timed_powers import trigger_end_of_game_powers
+            trigger_end_of_game_powers(self)
 
     def get_player(self, name: str) -> Player | None:
         """Find a player by name."""

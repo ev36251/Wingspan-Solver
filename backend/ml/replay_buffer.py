@@ -22,11 +22,13 @@ class TrainingSample:
 
 
 class JsonlReplayWriter:
-    """Append-only JSONL writer for model-training samples."""
+    """JSONL writer for model-training samples."""
 
-    def __init__(self, path: str | Path):
+    def __init__(self, path: str | Path, overwrite: bool = False):
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        if overwrite:
+            self.path.write_text("", encoding="utf-8")
 
     def write_many(self, samples: list[TrainingSample]) -> None:
         with self.path.open("a", encoding="utf-8") as f:

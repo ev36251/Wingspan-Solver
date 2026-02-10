@@ -1,0 +1,61 @@
+{
+  "2": {
+    "games": 5,
+    "failed_games": 0,
+    "sample_size_player_scores": 10,
+    "mean_player_score": 0.0,
+    "player_p50": 0,
+    "player_p90": 0,
+    "player_p99": 0,
+    "player_max": 0,
+    "rate_ge_100": 0.0,
+    "rate_ge_110": 0.0,
+    "rate_ge_120": 0.0,
+    "rate_ge_135": 0.0,
+    "rate_ge_150": 0.0,
+    "mean_table_winner_score": 0.0,
+    "max_table_winner_score": 0,
+    "elapsed_sec": 157.1
+  },
+  "3": {
+    "games": 5,
+    "failed_games": 0,
+    "sample_size_player_scores": 15,
+    "mean_player_score": 0.0,
+    "player_p50": 0,
+    "player_p90": 0,
+    "player_p99": 0,
+    "player_max": 0,
+    "rate_ge_100": 0.0,
+    "rate_ge_110": 0.0,
+    "rate_ge_120": 0.0,
+    "rate_ge_135": 0.0,
+    "rate_ge_150": 0.0,
+    "mean_table_winner_score": 0.0,
+    "max_table_winner_score": 0,
+    "elapsed_sec": 297.5
+  },
+  "4": {
+    "games": 5,
+    "failed_games": 0,
+    "sample_size_player_scores": 20,
+    "mean_player_score": 0.0,
+    "player_p50": 0,
+    "player_p90": 0,
+    "player_p99": 0,
+    "player_max": 0,
+    "rate_ge_100": 0.0,
+    "rate_ge_110": 0.0,
+    "rate_ge_120": 0.0,
+    "rate_ge_135": 0.0,
+    "rate_ge_150": 0.0,
+    "mean_table_winner_score": 0.0,
+    "max_table_winner_score": 0,
+    "elapsed_sec": 523.0
+  },
+  "meta": {
+    "mode": "api_top_recommendation_loop",
+    "board_type": "oceania",
+    "total_elapsed_sec": 977.6
+  }
+}

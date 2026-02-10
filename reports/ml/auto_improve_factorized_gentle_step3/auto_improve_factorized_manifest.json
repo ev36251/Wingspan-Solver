@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "started_at_epoch": 1770705998,
+  "updated_at_epoch": 1770706247,
+  "elapsed_sec": 249.17,
+  "config": {
+    "iterations": 1,
+    "players": 2,
+    "board_type": "oceania",
+    "max_turns": 220,
+    "games_per_iter": 24,
+    "proposal_top_k": 6,
+    "lookahead_depth": 1,
+    "n_step": 2,
+    "gamma": 0.98,
+    "bootstrap_mix": 0.35,
+    "value_target_score_scale": 160.0,
+    "value_target_score_bias": 0.0,
+    "late_round_oversample_factor": 1,
+    "train_epochs": 4,
+    "train_batch": 128,
+    "train_hidden": 192,
+    "train_lr": 0.001,
+    "train_value_weight": 0.3,
+    "val_split": 0.1,
+    "eval_games": 24,
+    "promotion_games": 36,
+    "pool_games_per_opponent": 24,
+    "min_pool_win_rate": 0.45,
+    "min_pool_mean_score": 70.0,
+    "min_pool_rate_ge_100": 0.08,
+    "min_pool_rate_ge_120": 0.01,
+    "require_pool_non_regression": true,
+    "min_gate_win_rate": 0.45,
+    "min_gate_mean_score": 70.0,
+    "min_gate_rate_ge_100": 0.08,
+    "min_gate_rate_ge_120": 0.01,
+    "engine_teacher_prob": 0.35,
+    "engine_time_budget_ms": 30,
+    "engine_num_determinizations": 0,
+    "engine_max_rollout_depth": 30,
+    "seed": 5052
+  },
+  "best": null,
+  "history": [
+    {
+      "iteration": 1,
+      "seed": 6052,
+      "dataset": "reports/ml/auto_improve_factorized_gentle_step3/iter_001/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_factorized_gentle_step3/iter_001/bc_dataset.meta.json",
+      "model": "reports/ml/auto_improve_factorized_gentle_step3/iter_001/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 1248,
+        "mean_player_score": 51.229
+      },
+      "train_summary": {
+        "train_samples": 1124,
+        "val_samples": 124,
+        "last_epoch": {
+          "epoch": 4,
+          "train_loss": 3.07293,
+          "train_action_acc": 0.465302,
+          "train_value_mse": 434.490026,
+          "val_loss": 2.875108,
+          "val_action_acc": 0.459677,
+          "val_value_mse": 262.361799
+        }
+      },
+      "eval_summary": {
+        "games": 24,
+        "nn_wins": 2,
+        "heuristic_wins": 22,
+        "ties": 0,
+        "nn_mean_score": 30.958,
+        "heuristic_mean_score": 46.708,
+        "nn_mean_margin": -15.75,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.0,
+        "heuristic_rate_ge_120": 0.0
+      },
+      "promotion_gate": {
+        "games": 36,
+        "result": {
+          "games": 36,
+          "nn_wins": 1,
+          "heuristic_wins": 34,
+          "ties": 1,
+          "nn_mean_score": 29.5,
+          "heuristic_mean_score": 45.528,
+          "nn_mean_margin": -16.028,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "heuristic_rate_ge_100": 0.0,
+          "heuristic_rate_ge_120": 0.0
+        },
+        "score_primary_pass": false,
+        "win_secondary_pass": false,
+        "win_rate": 0.0278,
+        "promoted": false
+      },
+      "pool_eval": {
+        "model": "reports/ml/auto_improve_factorized_gentle_step3/iter_001/factorized_model.npz",
+        "board_type": "oceania",
+        "games_per_opponent": 24,
+        "opponents": [
+          "heuristic"
+        ],
+        "summary": {
+          "games": 24,
+          "nn_wins": 1,
+          "opponent_wins": 22,
+          "ties": 1,
+          "nn_win_rate": 0.0417,
+          "nn_mean_score": 30.292,
+          "nn_mean_margin": -15.792,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        },
+        "by_opponent": [
+          {
+            "opponent": "heuristic",
+            "games": 24,
+            "nn_wins": 1,
+            "opponent_wins": 22,
+            "ties": 1,
+            "nn_mean_score": 30.292,
+            "opponent_mean_score": 46.083,
+            "nn_mean_margin": -15.792,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0
+          }
+        ]
+      },
+      "kpi_gate": {
+        "candidate_path": "reports/ml/auto_improve_factorized_gentle_step3/iter_001/pool_eval.json",
+        "baseline_path": null,
+        "passed": false,
+        "checks": [
+          {
+            "name": "min_win_rate",
+            "passed": false,
+            "detail": "0.0417 >= 0.4500"
+          },
+          {
+            "name": "min_mean_score",
+            "passed": false,
+            "detail": "30.292 >= 70.000"
+          },
+          {
+            "name": "min_rate_ge_100",
+            "passed": false,
+            "detail": "0.0000 >= 0.0800"
+          },
+          {
+            "name": "min_rate_ge_120",
+            "passed": false,
+            "detail": "0.0000 >= 0.0100"
+          }
+        ],
+        "candidate_summary": {
+          "nn_win_rate": 0.0417,
+          "nn_mean_score": 30.292,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "started_at_epoch": 1770691657,
+  "updated_at_epoch": 1770691670,
+  "elapsed_sec": 12.73,
+  "config": {
+    "iterations": 1,
+    "players": 2,
+    "board_type": "oceania",
+    "max_turns": 160,
+    "games_per_iter": 20,
+    "proposal_top_k": 4,
+    "lookahead_depth": 2,
+    "n_step": 2,
+    "gamma": 0.97,
+    "bootstrap_mix": 0.35,
+    "train_epochs": 3,
+    "train_batch": 128,
+    "train_hidden": 128,
+    "train_lr": 0.001,
+    "train_value_weight": 0.5,
+    "val_split": 0.1,
+    "eval_games": 20,
+    "promotion_games": 40,
+    "seed": 42
+  },
+  "best": null,
+  "history": [
+    {
+      "iteration": 1,
+      "seed": 1042,
+      "dataset": "reports/ml/auto_improve_factorized_smoke/iter_001/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_factorized_smoke/iter_001/bc_dataset.meta.json",
+      "model": "reports/ml/auto_improve_factorized_smoke/iter_001/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 1040,
+        "mean_player_score": 50.9
+      },
+      "train_summary": {
+        "train_samples": 936,
+        "val_samples": 104,
+        "last_epoch": {
+          "epoch": 3,
+          "train_loss": 3.794271,
+          "train_action_acc": 0.347222,
+          "train_value_mse": 0.147619,
+          "val_loss": 3.704371,
+          "val_action_acc": 0.346154,
+          "val_value_mse": 0.138838
+        }
+      },
+      "eval_summary": {
+        "games": 20,
+        "nn_wins": 0,
+        "heuristic_wins": 20,
+        "ties": 0,
+        "nn_mean_score": 12.35,
+        "heuristic_mean_score": 40.7,
+        "nn_mean_margin": -28.35
+      },
+      "promotion_gate": {
+        "games": 40,
+        "result": {
+          "games": 40,
+          "nn_wins": 0,
+          "heuristic_wins": 40,
+          "ties": 0,
+          "nn_mean_score": 15.35,
+          "heuristic_mean_score": 44.25,
+          "nn_mean_margin": -28.9
+        },
+        "promoted": false
+      }
+    }
+  ]
+}

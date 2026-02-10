@@ -31,26 +31,48 @@ def _get_sim_bird_pool():
     return _SIM_BIRD_POOL
 
 
-def _add_random_deck_draws(player: Player, count: int) -> None:
-    """Add random birds to a player's hand to simulate deck draws."""
+def _draw_sim_deck_card(game: GameState):
+    """Draw one card from finite deck identities if present, else fallback random."""
+    deck_cards = getattr(game, "_deck_cards", None)
+    if isinstance(deck_cards, list) and deck_cards:
+        card = deck_cards.pop()
+        game.deck_remaining = max(0, len(deck_cards))
+        return card
+    if game.deck_remaining <= 0:
+        return None
     pool = _get_sim_bird_pool()
     if not pool:
-        return
+        return None
+    game.deck_remaining = max(0, game.deck_remaining - 1)
+    return random.choice(pool)
+
+
+def _add_random_deck_draws(player: Player, count: int) -> None:
+    """Add deck draws to hand, preferring finite deck identities when available."""
+    game = getattr(player, "_sim_game_ref", None)
     for _ in range(count):
+        if isinstance(game, GameState):
+            card = _draw_sim_deck_card(game)
+            if card is None:
+                break
+            player.hand.append(card)
+            continue
+        pool = _get_sim_bird_pool()
+        if not pool:
+            return
         player.hand.append(random.choice(pool))
 
 
 def _refill_tray(game: GameState) -> None:
-    """Refill the face-up tray to 3 cards using random deck draws."""
+    """Refill the face-up tray to 3 cards using deck draws."""
     needed = game.card_tray.needs_refill()
     if needed <= 0 or game.deck_remaining <= 0:
         return
-    pool = _get_sim_bird_pool()
-    if not pool:
-        return
     for _ in range(min(needed, game.deck_remaining)):
-        game.card_tray.add_card(random.choice(pool))
-        game.deck_remaining = max(0, game.deck_remaining - 1)
+        card = _draw_sim_deck_card(game)
+        if card is None:
+            break
+        game.card_tray.add_card(card)
 
 
 def _score_round_goal(game: GameState, round_num: int) -> None:
@@ -141,6 +163,8 @@ def execute_move_on_sim_result(
     move: Move,
 ) -> tuple[bool, ActionResult | None]:
     """Execute a move on a simulation game state, returning success and result."""
+    setattr(player, "_sim_game_ref", game)
+
     if move.action_type == ActionType.PLAY_BIRD:
         from backend.data.registries import get_bird_registry
         bird = get_bird_registry().get(move.bird_name)
@@ -178,8 +202,8 @@ def execute_move_on_sim_result(
         if result.success and deck_draws > 0:
             # execute_draw_cards decrements deck_remaining but doesn't add
             # cards to hand for deck draws (since actual identity is unknown
-            # in real play). For simulation, add random birds so the
-            # simulated player has realistic hand sizes for future turns.
+            # in real play). For simulation, add concrete card identities so
+            # the simulated player has realistic hand sizes for future turns.
             _add_random_deck_draws(player, deck_draws)
         return result.success, result
 

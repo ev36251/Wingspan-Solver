@@ -25,5 +25,6 @@ def test_auto_improve_smoke(tmp_path: Path) -> None:
 
     assert (out_dir / "auto_improve_manifest.json").exists()
     assert (out_dir / "best_model.npz").exists()
+    assert manifest["mode"] == "factorized_bridge"
     assert manifest["best"]["iteration"] == 1
     assert len(manifest["history"]) == 1

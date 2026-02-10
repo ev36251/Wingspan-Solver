@@ -19,10 +19,12 @@ from backend.config import EXCEL_FILE
 from backend.data.registries import load_all
 from backend.engine.scoring import calculate_score
 from backend.models.enums import ActionType, BoardType
-from backend.solver.move_generator import generate_all_moves
+from backend.solver.heuristics import _estimate_move_value, dynamic_weights
+from backend.solver.move_generator import generate_all_moves, Move
 from backend.solver.self_play import create_training_game
 from backend.solver.simulation import (
     _refill_tray,
+    deep_copy_game,
     execute_move_on_sim,
     pick_weighted_random_move,
 )
@@ -42,6 +44,11 @@ class _PendingDecision:
     turn_in_round: int
 
 
+REWARD_WIN_WEIGHT = 0.1
+REWARD_SCORE_WEIGHT = 0.7
+REWARD_MARGIN_WEIGHT = 0.2
+
+
 def _compute_outcomes(game) -> dict[int, tuple[float, int, int]]:
     """Return player_idx -> (reward, final_score, won)."""
     finals = [int(calculate_score(game, p).total) for p in game.players]
@@ -57,10 +64,77 @@ def _compute_outcomes(game) -> dict[int, tuple[float, int, int]]:
         score_component = max(0.0, min(1.0, score / 150.0))
         margin_component = max(0.0, min(1.0, (margin + 60.0) / 120.0))
 
-        reward = 0.5 * float(win) + 0.3 * score_component + 0.2 * margin_component
+        reward = (
+            REWARD_WIN_WEIGHT * float(win)
+            + REWARD_SCORE_WEIGHT * score_component
+            + REWARD_MARGIN_WEIGHT * margin_component
+        )
         out[i] = (round(reward, 6), score, win)
 
     return out
+
+
+def _heuristic_score_move(game, player, move: Move) -> float:
+    return float(_estimate_move_value(game, player, move, dynamic_weights(game)))
+
+
+def _rerank_with_lookahead(game, player_idx: int, moves: list[Move], depth: int) -> dict[int, float]:
+    """Evaluate candidate moves with short rollouts and choose by actor final score."""
+    out: dict[int, float] = {}
+    actor_name = game.players[player_idx].name
+
+    for move in moves:
+        sim = deep_copy_game(game)
+        actor = sim.players[player_idx]
+        if actor.name != sim.current_player.name:
+            out[id(move)] = -1e9
+            continue
+
+        if not execute_move_on_sim(sim, actor, move):
+            out[id(move)] = -1e9
+            continue
+
+        sim.advance_turn()
+        _refill_tray(sim)
+
+        if depth >= 2 and not sim.is_game_over:
+            opp = sim.current_player
+            opp_moves = generate_all_moves(sim, opp)
+            if opp_moves:
+                best_opp = max(opp_moves, key=lambda m: _heuristic_score_move(sim, opp, m))
+                if execute_move_on_sim(sim, opp, best_opp):
+                    sim.advance_turn()
+                    _refill_tray(sim)
+
+        actor_after = sim.get_player(actor_name)
+        out[id(move)] = float(calculate_score(sim, actor_after).total) if actor_after else -1e9
+
+    return out
+
+
+def _pick_teacher_move(
+    game,
+    player,
+    moves: list[Move],
+    teacher_policy: str,
+    proposal_top_k: int,
+    lookahead_depth: int,
+) -> Move:
+    if teacher_policy == "epsilon_heuristic":
+        return pick_weighted_random_move(moves, game, player)
+
+    scored = [(m, _heuristic_score_move(game, player, m)) for m in moves]
+    scored.sort(key=lambda x: -x[1])
+    k = max(1, min(proposal_top_k, len(scored)))
+    candidates = [m for m, _ in scored[:k]]
+
+    if teacher_policy == "heuristic_topk":
+        return candidates[0]
+
+    if lookahead_depth > 0 and len(candidates) > 1:
+        look = _rerank_with_lookahead(game, game.current_player_idx, candidates, lookahead_depth)
+        candidates.sort(key=lambda m: (look.get(id(m), -1e9), _heuristic_score_move(game, player, m)), reverse=True)
+    return candidates[0]
 
 
 def _play_one_game(
@@ -69,6 +143,9 @@ def _play_one_game(
     action_codec: ActionCodec,
     encoder: StateEncoder,
     max_turns: int,
+    teacher_policy: str,
+    proposal_top_k: int,
+    lookahead_depth: int,
 ) -> tuple[list[TrainingSample], dict]:
     game = create_training_game(num_players, board_type)
 
@@ -95,7 +172,14 @@ def _play_one_game(
         state_vec = encoder.encode(game, player_idx)
         legal_action_ids = action_codec.encode_moves(moves)
 
-        move = pick_weighted_random_move(moves, game, player)
+        move = _pick_teacher_move(
+            game=game,
+            player=player,
+            moves=moves,
+            teacher_policy=teacher_policy,
+            proposal_top_k=proposal_top_k,
+            lookahead_depth=lookahead_depth,
+        )
         action_id = action_codec.encode_move(move)
 
         pending.append(
@@ -166,13 +250,16 @@ def generate_dataset(
     board_type: BoardType,
     max_turns: int,
     seed: int | None,
+    teacher_policy: str = "lookahead",
+    proposal_top_k: int = 6,
+    lookahead_depth: int = 2,
 ) -> dict:
     if seed is not None:
         random.seed(seed)
 
     load_all(EXCEL_FILE)
 
-    writer = JsonlReplayWriter(output_jsonl)
+    writer = JsonlReplayWriter(output_jsonl, overwrite=True)
     encoder = StateEncoder()
     codec = ActionCodec()
 
@@ -188,6 +275,9 @@ def generate_dataset(
             action_codec=codec,
             encoder=encoder,
             max_turns=max_turns,
+            teacher_policy=teacher_policy,
+            proposal_top_k=proposal_top_k,
+            lookahead_depth=lookahead_depth,
         )
         writer.write_many(samples)
         sample_count += len(samples)
@@ -214,6 +304,14 @@ def generate_dataset(
         "feature_dim": len(encoder.feature_names()),
         "feature_names": encoder.feature_names(),
         "action_space": codec.to_dict(),
+        "teacher_policy": teacher_policy,
+        "proposal_top_k": proposal_top_k,
+        "lookahead_depth": lookahead_depth,
+        "reward_weights": {
+            "win": REWARD_WIN_WEIGHT,
+            "score": REWARD_SCORE_WEIGHT,
+            "margin": REWARD_MARGIN_WEIGHT,
+        },
         "mean_player_score": round(sum(all_scores) / max(1, len(all_scores)), 3),
         "mean_winner_score": round(sum(winner_scores) / max(1, len(winner_scores)), 3),
     }
@@ -234,6 +332,13 @@ def main() -> None:
     parser.add_argument("--out", default="reports/ml/self_play_dataset.jsonl")
     parser.add_argument("--meta", default="reports/ml/self_play_dataset.meta.json")
     parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument(
+        "--teacher-policy",
+        default="lookahead",
+        choices=["epsilon_heuristic", "heuristic_topk", "lookahead"],
+    )
+    parser.add_argument("--proposal-top-k", type=int, default=6)
+    parser.add_argument("--lookahead-depth", type=int, default=2, choices=[0, 1, 2])
     args = parser.parse_args()
 
     meta = generate_dataset(
@@ -244,6 +349,9 @@ def main() -> None:
         board_type=BoardType(args.board_type),
         max_turns=args.max_turns,
         seed=args.seed,
+        teacher_policy=args.teacher_policy,
+        proposal_top_k=args.proposal_top_k,
+        lookahead_depth=args.lookahead_depth,
     )
 
     print(

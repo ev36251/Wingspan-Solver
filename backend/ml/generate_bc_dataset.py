@@ -26,6 +26,7 @@ from backend.solver.heuristics import _estimate_move_value, dynamic_weights
 from backend.solver.move_generator import generate_all_moves, Move
 from backend.solver.self_play import create_training_game
 from backend.solver.simulation import _refill_tray, deep_copy_game, execute_move_on_sim
+from backend.engine_search import EngineConfig, search_best_move
 from backend.ml.factorized_policy import encode_factorized_targets, ACTION_TYPE_TO_ID
 from backend.ml.factorized_inference import FactorizedPolicyModel, score_move_with_factorized_model
 from backend.ml.state_encoder import StateEncoder
@@ -128,7 +129,50 @@ def _select_improved_move(
         look = _rerank_with_lookahead(game, game.current_player_idx, candidates, lookahead_depth)
         candidates.sort(key=lambda m: (look.get(id(m), -1e9), _heuristic_score_move(game, player, m)), reverse=True)
 
+    # Additional value-head reranking for proposal-model candidates.
+    if proposal_model is not None and len(candidates) > 1:
+        value_scores: dict[int, float] = {}
+        for m in candidates:
+            sim = deep_copy_game(game)
+            actor = sim.players[game.current_player_idx]
+            if not execute_move_on_sim(sim, actor, m):
+                value_scores[id(m)] = -1e9
+                continue
+            sim.advance_turn()
+            _refill_tray(sim)
+            state2 = np.asarray(encoder.encode(sim, game.current_player_idx), dtype=np.float32)
+            _, v2 = proposal_model.forward(state2)
+            v_score = proposal_model.value_to_expected_score(v2)
+            immediate = float(calculate_score(sim, actor).total)
+            value_scores[id(m)] = 0.85 * v_score + 0.15 * immediate
+        candidates.sort(
+            key=lambda m: (
+                value_scores.get(id(m), -1e9),
+                _heuristic_score_move(game, player, m),
+            ),
+            reverse=True,
+        )
+
     return candidates[0]
+
+
+def _select_engine_teacher_move(
+    game,
+    player_idx: int,
+    *,
+    time_budget_ms: int,
+    num_determinizations: int,
+    max_rollout_depth: int,
+    seed: int,
+) -> Move | None:
+    cfg = EngineConfig(
+        time_budget_ms=max(1, int(time_budget_ms)),
+        num_determinizations=int(num_determinizations),
+        max_rollout_depth=max(1, int(max_rollout_depth)),
+        seed=int(seed),
+    )
+    result = search_best_move(game, player_idx=player_idx, cfg=cfg)
+    return result.best_move
 
 
 def generate_bc_dataset(
@@ -145,9 +189,19 @@ def generate_bc_dataset(
     n_step: int = 2,
     gamma: float = 0.97,
     bootstrap_mix: float = 0.35,
+    value_target_score_scale: float = 160.0,
+    value_target_score_bias: float = 0.0,
+    late_round_oversample_factor: int = 2,
+    engine_teacher_prob: float = 0.0,
+    engine_time_budget_ms: int = 25,
+    engine_num_determinizations: int = 0,
+    engine_max_rollout_depth: int = 24,
 ) -> dict:
     if seed is not None:
         random.seed(seed)
+    engine_teacher_prob = max(0.0, min(1.0, float(engine_teacher_prob)))
+    value_target_score_scale = max(1.0, float(value_target_score_scale))
+    late_round_oversample_factor = max(1, int(late_round_oversample_factor))
 
     load_all(EXCEL_FILE)
 
@@ -159,6 +213,8 @@ def generate_bc_dataset(
     started = time.time()
     samples = 0
     all_scores: list[int] = []
+    engine_teacher_calls = 0
+    engine_teacher_applied = 0
 
     with outp.open("w", encoding="utf-8") as f:
         for g in range(1, games + 1):
@@ -195,6 +251,20 @@ def generate_bc_dataset(
                     proposal_top_k=proposal_top_k,
                     lookahead_depth=lookahead_depth,
                 )
+
+                if engine_teacher_prob > 0.0 and random.random() < engine_teacher_prob:
+                    engine_teacher_calls += 1
+                    teacher_move = _select_engine_teacher_move(
+                        game=game,
+                        player_idx=pi,
+                        time_budget_ms=engine_time_budget_ms,
+                        num_determinizations=engine_num_determinizations,
+                        max_rollout_depth=engine_max_rollout_depth,
+                        seed=(seed or 0) + g * 10000 + turns,
+                    )
+                    if teacher_move is not None:
+                        best = teacher_move
+                        engine_teacher_applied += 1
 
                 score_now = int(calculate_score(game, p).total)
                 pending.append(
@@ -238,14 +308,17 @@ def generate_bc_dataset(
                 score_by_player_ord[(d.player_index, d.ordinal_for_player)] = d.score_now
 
             for d in pending:
-                final_norm = max(0.0, min(1.0, finals[d.player_index] / 150.0))
+                final_score = float(finals[d.player_index])
 
                 future_ord = d.ordinal_for_player + max(0, n_step)
                 future_score = score_by_player_ord.get((d.player_index, future_ord), finals[d.player_index])
-                bootstrap_norm = max(0.0, min(1.0, future_score / 150.0))
+                bootstrap_score = float(future_score)
 
-                boot = (gamma ** max(0, n_step)) * bootstrap_norm
-                value_target = (1.0 - bootstrap_mix) * final_norm + bootstrap_mix * boot
+                boot = (gamma ** max(0, n_step)) * bootstrap_score
+                value_target_score = (1.0 - bootstrap_mix) * final_score + bootstrap_mix * boot
+                value_target = (
+                    value_target_score - value_target_score_bias
+                ) / value_target_score_scale
                 value_target = max(0.0, min(1.0, value_target))
 
                 row = {
@@ -253,12 +326,17 @@ def generate_bc_dataset(
                     "targets": d.targets,
                     "legal_action_type_mask": d.legal_action_type_mask,
                     "value_target": round(value_target, 6),
+                    "value_target_score": round(value_target_score, 4),
                     "player_index": d.player_index,
                     "round_num": d.round_num,
                     "turn_in_round": d.turn_in_round,
                 }
-                f.write(json.dumps(row, separators=(",", ":")) + "\n")
-                samples += 1
+                copies = 1
+                if d.round_num >= 3:
+                    copies = late_round_oversample_factor
+                for _ in range(copies):
+                    f.write(json.dumps(row, separators=(",", ":")) + "\n")
+                    samples += 1
 
             if g % 10 == 0 or g == games:
                 print(
@@ -292,11 +370,20 @@ def generate_bc_dataset(
             "n_step": n_step,
             "gamma": gamma,
             "bootstrap_mix": bootstrap_mix,
+            "score_scale": value_target_score_scale,
+            "score_bias": value_target_score_bias,
         },
         "policy_improvement": {
             "proposal_model_path": proposal_model_path,
             "proposal_top_k": proposal_top_k,
             "lookahead_depth": lookahead_depth,
+            "engine_teacher_prob": engine_teacher_prob,
+            "engine_time_budget_ms": engine_time_budget_ms,
+            "engine_num_determinizations": engine_num_determinizations,
+            "engine_max_rollout_depth": engine_max_rollout_depth,
+            "late_round_oversample_factor": late_round_oversample_factor,
+            "engine_teacher_calls": engine_teacher_calls,
+            "engine_teacher_applied": engine_teacher_applied,
         },
         "mean_player_score": round(sum(all_scores) / max(1, len(all_scores)), 3),
     }
@@ -320,6 +407,13 @@ def main() -> None:
     parser.add_argument("--n-step", type=int, default=2)
     parser.add_argument("--gamma", type=float, default=0.97)
     parser.add_argument("--bootstrap-mix", type=float, default=0.35)
+    parser.add_argument("--value-target-score-scale", type=float, default=160.0)
+    parser.add_argument("--value-target-score-bias", type=float, default=0.0)
+    parser.add_argument("--late-round-oversample-factor", type=int, default=2)
+    parser.add_argument("--engine-teacher-prob", type=float, default=0.0)
+    parser.add_argument("--engine-time-budget-ms", type=int, default=25)
+    parser.add_argument("--engine-num-determinizations", type=int, default=0)
+    parser.add_argument("--engine-max-rollout-depth", type=int, default=24)
     args = parser.parse_args()
 
     meta = generate_bc_dataset(
@@ -336,6 +430,13 @@ def main() -> None:
         n_step=args.n_step,
         gamma=args.gamma,
         bootstrap_mix=args.bootstrap_mix,
+        value_target_score_scale=args.value_target_score_scale,
+        value_target_score_bias=args.value_target_score_bias,
+        late_round_oversample_factor=args.late_round_oversample_factor,
+        engine_teacher_prob=args.engine_teacher_prob,
+        engine_time_budget_ms=args.engine_time_budget_ms,
+        engine_num_determinizations=args.engine_num_determinizations,
+        engine_max_rollout_depth=args.engine_max_rollout_depth,
     )
     print(
         f"bc dataset complete | samples={meta['samples']} | feature_dim={meta['feature_dim']}"

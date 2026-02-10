@@ -3,10 +3,19 @@
 import pytest
 from backend.config import EXCEL_FILE
 from backend.data.registries import load_all
-from backend.models.enums import FoodType, Habitat, PowerColor, GameSet
+from backend.models.enums import (
+    FoodType,
+    Habitat,
+    PowerColor,
+    GameSet,
+    BeakDirection,
+    NestType,
+)
 from backend.models.board import PlayerBoard, HabitatRow, BirdSlot
+from backend.models.bird import Bird, FoodCost
 from backend.models.birdfeeder import Birdfeeder
 from backend.models.card_tray import CardTray
+from backend.models.goal import Goal
 from backend.models.player import Player, FoodSupply
 from backend.models.game_state import GameState, create_new_game
 from backend.engine.rules import (
@@ -281,6 +290,67 @@ class TestScoring:
         game.advance_round()
         assert 1 in game.round_goal_scores
         assert game.round_goal_scores[1]["Bob"] >= game.round_goal_scores[1]["Alice"]
+
+    def test_round_end_powers_resolve_before_round_goal_scoring(self):
+        goal = Goal(
+            description="[Egg] in [Ground]",
+            game_set=GameSet.CORE,
+            scoring=(0, 1, 3, 5),
+            reverse_description="[Egg] on [Platform] [Bird]",
+        )
+        game = create_new_game(["Alice", "Bob"], round_goals=[goal])
+        alice = game.players[0]
+        bob = game.players[1]
+
+        teal = Bird(
+            name="Teal Round Layer",
+            scientific_name="Teal Round Layer",
+            game_set=GameSet.EUROPEAN,
+            color=PowerColor.TEAL,
+            power_text="At end of round, lay 1 [egg] on each of your [ground] nesting birds.",
+            victory_points=2,
+            nest_type=NestType.BOWL,
+            egg_limit=4,
+            wingspan_cm=20,
+            habitats=frozenset({Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND}),
+            food_cost=FoodCost(items=(FoodType.SEED,), is_or=False, total=1),
+            beak_direction=BeakDirection.LEFT,
+            is_predator=False,
+            is_flocking=False,
+            is_bonus_card_bird=False,
+            bonus_eligibility=frozenset(),
+        )
+        ground = Bird(
+            name="Ground Target",
+            scientific_name="Ground Target",
+            game_set=GameSet.CORE,
+            color=PowerColor.NONE,
+            power_text="",
+            victory_points=1,
+            nest_type=NestType.GROUND,
+            egg_limit=4,
+            wingspan_cm=25,
+            habitats=frozenset({Habitat.GRASSLAND}),
+            food_cost=FoodCost(items=(FoodType.SEED,), is_or=False, total=1),
+            beak_direction=BeakDirection.LEFT,
+            is_predator=False,
+            is_flocking=False,
+            is_bonus_card_bird=False,
+            bonus_eligibility=frozenset(),
+        )
+
+        alice.board.forest.slots[0].bird = teal
+        alice.board.grassland.slots[0].bird = ground
+        alice.board.grassland.slots[0].eggs = 0
+        bob.board.grassland.slots[0].bird = ground
+        bob.board.grassland.slots[0].eggs = 0
+
+        game.advance_round()
+
+        assert alice.board.grassland.slots[0].eggs == 1
+        assert bob.board.grassland.slots[0].eggs == 0
+        assert 1 in game.round_goal_scores
+        assert game.round_goal_scores[1]["Alice"] > game.round_goal_scores[1]["Bob"]
 
     def test_empty_board_score(self, game):
         player = game.players[0]

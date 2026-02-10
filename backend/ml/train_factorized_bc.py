@@ -40,7 +40,11 @@ class BCModel:
             self.head_b[hn] = np.zeros(d, dtype=np.float32)
 
         self.has_value_head = has_value_head
-        self.W_value = rng.normal(0.0, np.sqrt(2.0 / hidden), size=(hidden,)).astype(np.float32) if has_value_head else None
+        self.W_value = (
+            rng.normal(0.0, np.sqrt(2.0 / hidden), size=(hidden,)).astype(np.float32)
+            if has_value_head
+            else None
+        )
         self.b_value = np.float32(0.0)
 
     def forward(self, x: np.ndarray):
@@ -49,8 +53,7 @@ class BCModel:
         logits = {hn: h @ self.head_W[hn] + self.head_b[hn] for hn in self.head_W}
         value = None
         if self.has_value_head:
-            vr = float(h @ self.W_value + self.b_value)
-            value = 1.0 / (1.0 + math.exp(-vr))
+            value = float(h @ self.W_value + self.b_value)
         return h_pre, h, logits, value
 
     def save(self, path: str | Path, metadata: dict) -> None:
@@ -106,7 +109,16 @@ def train_bc(
     if not rows:
         raise ValueError("Empty BC dataset")
 
-    has_value_target = any("value_target" in r for r in rows)
+    has_value_target = any(("value_target_score" in r) or ("value_target" in r) for r in rows)
+    value_target_scale = float(meta.get("value_target_config", {}).get("score_scale", 150.0))
+    value_target_bias = float(meta.get("value_target_config", {}).get("score_bias", 0.0))
+
+    def target_score(row: dict) -> float:
+        if "value_target_score" in row:
+            return float(row["value_target_score"])
+        if "value_target" in row:
+            return float(value_target_bias + value_target_scale * float(row["value_target"]))
+        return 0.0
 
     rnd.shuffle(rows)
     val_n = max(1, int(len(rows) * val_split)) if len(rows) >= 10 else 1
@@ -140,8 +152,8 @@ def train_bc(
                 tv = int(t[hn])
                 total_loss += -math.log(max(1e-9, float(p[tv])))
 
-            if model.has_value_head and "value_target" in r and value_pred is not None:
-                dv = float(value_pred) - float(r["value_target"])
+            if model.has_value_head and value_pred is not None and (("value_target_score" in r) or ("value_target" in r)):
+                dv = float(value_pred) - target_score(r)
                 value_mse += dv * dv
                 value_n += 1
 
@@ -206,13 +218,18 @@ def train_bc(
                     dh += model.head_W[hn] @ d
 
                 # Optional value head regression
-                if model.has_value_head and dWv is not None and "value_target" in r and value_pred is not None:
-                    vt = float(r["value_target"])
+                if (
+                    model.has_value_head
+                    and dWv is not None
+                    and value_pred is not None
+                    and (("value_target_score" in r) or ("value_target" in r))
+                ):
+                    vt = target_score(r)
                     dv = float(value_pred) - vt
                     value_mse_sum += dv * dv
                     value_seen += 1
 
-                    dvr = value_loss_weight * 2.0 * dv * float(value_pred) * (1.0 - float(value_pred))
+                    dvr = value_loss_weight * 2.0 * dv
                     dWv += h * dvr
                     dbv += dvr
                     dh += model.W_value * dvr
@@ -264,6 +281,9 @@ def train_bc(
         "feature_dim": feature_dim,
         "head_dims": head_dims,
         "has_value_head": has_value_target,
+        "value_prediction_mode": "score_linear" if has_value_target else "none",
+        "value_score_scale": value_target_scale,
+        "value_score_bias": value_target_bias,
         "train_samples": len(train_rows),
         "val_samples": len(val),
         "history": history,
