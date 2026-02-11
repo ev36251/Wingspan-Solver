@@ -67,6 +67,13 @@ def run_auto_improve_factorized(
     min_gate_mean_score: float = 70.0,
     min_gate_rate_ge_100: float = 0.08,
     min_gate_rate_ge_120: float = 0.01,
+    champion_self_play_enabled: bool = True,
+    champion_switch_after_first_promotion: bool = True,
+    champion_teacher_source: str = "engine_only",
+    champion_engine_time_budget_ms: int = 50,
+    champion_engine_num_determinizations: int = 8,
+    champion_engine_max_rollout_depth: int = 24,
+    promotion_primary_opponent: str = "champion",
     engine_teacher_prob: float = 0.15,
     engine_time_budget_ms: int = 25,
     engine_num_determinizations: int = 0,
@@ -89,6 +96,11 @@ def run_auto_improve_factorized(
     train_hidden: int | None = None,
     train_lr: float | None = None,
 ) -> dict:
+    if promotion_primary_opponent not in ("heuristic", "champion"):
+        raise ValueError("promotion_primary_opponent must be 'heuristic' or 'champion'")
+    if champion_teacher_source not in ("probabilistic_engine", "engine_only"):
+        raise ValueError("champion_teacher_source must be 'probabilistic_engine' or 'engine_only'")
+
     deprecated_train_args_used: list[str] = []
     if train_hidden is not None:
         train_hidden1 = int(train_hidden)
@@ -132,6 +144,16 @@ def run_auto_improve_factorized(
         strict_kpi_candidate_path = iter_dir / "strict_kpi_candidate.json"
         strict_kpi_compare_path = iter_dir / "strict_kpi_compare.json"
 
+        champion_available = best_model_path.exists()
+        use_champion_mode = (
+            champion_self_play_enabled
+            and champion_available
+            and champion_switch_after_first_promotion
+        )
+        generation_mode = "champion_nn_vs_nn" if use_champion_mode else "bootstrap_mixed"
+        iter_proposal_model_path = str(best_model_path) if use_champion_mode else proposal_model_path
+        iter_opponent_model_path = str(best_model_path) if use_champion_mode else None
+
         ds_meta = generate_bc_dataset(
             out_jsonl=str(dataset_jsonl),
             out_meta=str(dataset_meta),
@@ -140,7 +162,9 @@ def run_auto_improve_factorized(
             board_type=board_type,
             max_turns=max_turns,
             seed=iter_seed,
-            proposal_model_path=proposal_model_path,
+            proposal_model_path=iter_proposal_model_path,
+            opponent_model_path=iter_opponent_model_path,
+            self_play_policy="champion_nn_vs_nn" if use_champion_mode else "mixed",
             proposal_top_k=proposal_top_k,
             lookahead_depth=lookahead_depth,
             n_step=n_step,
@@ -149,10 +173,11 @@ def run_auto_improve_factorized(
             value_target_score_scale=value_target_score_scale,
             value_target_score_bias=value_target_score_bias,
             late_round_oversample_factor=late_round_oversample_factor,
-            engine_teacher_prob=engine_teacher_prob,
-            engine_time_budget_ms=engine_time_budget_ms,
-            engine_num_determinizations=engine_num_determinizations,
-            engine_max_rollout_depth=engine_max_rollout_depth,
+            engine_teacher_prob=engine_teacher_prob if not use_champion_mode else 1.0,
+            teacher_source=champion_teacher_source if use_champion_mode else "probabilistic_engine",
+            engine_time_budget_ms=champion_engine_time_budget_ms if use_champion_mode else engine_time_budget_ms,
+            engine_num_determinizations=champion_engine_num_determinizations if use_champion_mode else engine_num_determinizations,
+            engine_max_rollout_depth=champion_engine_max_rollout_depth if use_champion_mode else engine_max_rollout_depth,
             strict_rules_only=strict_rules_only,
             reject_non_strict_powers=reject_non_strict_powers,
         )
@@ -191,15 +216,50 @@ def run_auto_improve_factorized(
         ev_dict = ev.__dict__
         eval_path.write_text(json.dumps(ev_dict, indent=2), encoding="utf-8")
 
-        gate = evaluate_factorized_vs_heuristic(
-            model_path=str(model_path),
-            games=promotion_games,
-            board_type=board_type,
-            max_turns=max_turns,
-            seed=iter_seed + 777,
-            proposal_top_k=proposal_top_k,
+        use_champion_primary_gate = (
+            promotion_primary_opponent == "champion"
+            and best_model_path.exists()
         )
-        gate_dict = gate.__dict__
+        if use_champion_primary_gate:
+            primary_gate_eval = evaluate_against_pool(
+                model_path=str(model_path),
+                opponents=[str(best_model_path)],
+                games_per_opponent=promotion_games,
+                board_type=board_type,
+                max_turns=max_turns,
+                seed=iter_seed + 777,
+                proposal_top_k=proposal_top_k,
+            )
+            summary = primary_gate_eval["summary"]
+            by_opp = primary_gate_eval.get("by_opponent", [])
+            opp_mean = float(by_opp[0]["opponent_mean_score"]) if by_opp else 0.0
+            gate_dict = {
+                "games": int(summary.get("games", 0)),
+                "nn_wins": int(summary.get("nn_wins", 0)),
+                "opponent_wins": int(summary.get("opponent_wins", 0)),
+                "ties": int(summary.get("ties", 0)),
+                "nn_mean_score": float(summary.get("nn_mean_score", 0.0)),
+                "opponent_mean_score": opp_mean,
+                "nn_mean_margin": float(summary.get("nn_mean_margin", 0.0)),
+                "nn_rate_ge_100": float(summary.get("nn_rate_ge_100", 0.0)),
+                "nn_rate_ge_120": float(summary.get("nn_rate_ge_120", 0.0)),
+                "primary_opponent": "champion",
+                "opponent_spec": str(best_model_path),
+            }
+        else:
+            gate = evaluate_factorized_vs_heuristic(
+                model_path=str(model_path),
+                games=promotion_games,
+                board_type=board_type,
+                max_turns=max_turns,
+                seed=iter_seed + 777,
+                proposal_top_k=proposal_top_k,
+            )
+            gate_dict = gate.__dict__
+            gate_dict["opponent_wins"] = int(gate_dict.get("heuristic_wins", 0))
+            gate_dict["opponent_mean_score"] = float(gate_dict.get("heuristic_mean_score", 0.0))
+            gate_dict["primary_opponent"] = "heuristic"
+            gate_dict["opponent_spec"] = "heuristic"
         gate_path.write_text(json.dumps(gate_dict, indent=2), encoding="utf-8")
 
         # Opponent-pool evaluation: heuristic + current best model (if exists).
@@ -290,6 +350,7 @@ def run_auto_improve_factorized(
         row = {
             "iteration": i,
             "seed": iter_seed,
+            "generation_mode": generation_mode,
             "dataset": str(dataset_jsonl),
             "dataset_meta": str(dataset_meta),
             "model": str(model_path),
@@ -310,6 +371,10 @@ def run_auto_improve_factorized(
                 "win_secondary_pass": gate_secondary_pass,
                 "win_rate": round(gate_win_rate, 4),
                 "promoted": promoted,
+            },
+            "promotion_primary_eval": {
+                "primary_opponent": gate_dict.get("primary_opponent", "heuristic"),
+                "result": gate_dict,
             },
             "pool_eval": pool_eval,
             "kpi_gate": kpi_gate,
@@ -375,6 +440,13 @@ def run_auto_improve_factorized(
                 "min_gate_mean_score": min_gate_mean_score,
                 "min_gate_rate_ge_100": min_gate_rate_ge_100,
                 "min_gate_rate_ge_120": min_gate_rate_ge_120,
+                "champion_self_play_enabled": champion_self_play_enabled,
+                "champion_switch_after_first_promotion": champion_switch_after_first_promotion,
+                "champion_teacher_source": champion_teacher_source,
+                "champion_engine_time_budget_ms": champion_engine_time_budget_ms,
+                "champion_engine_num_determinizations": champion_engine_num_determinizations,
+                "champion_engine_max_rollout_depth": champion_engine_max_rollout_depth,
+                "promotion_primary_opponent": promotion_primary_opponent,
                 "engine_teacher_prob": engine_teacher_prob,
                 "engine_time_budget_ms": engine_time_budget_ms,
                 "engine_num_determinizations": engine_num_determinizations,
@@ -460,6 +532,16 @@ def main() -> None:
     parser.add_argument("--min-gate-mean-score", type=float, default=70.0)
     parser.add_argument("--min-gate-rate-ge-100", type=float, default=0.08)
     parser.add_argument("--min-gate-rate-ge-120", type=float, default=0.01)
+    parser.set_defaults(champion_self_play_enabled=True, champion_switch_after_first_promotion=True)
+    parser.add_argument("--champion-self-play-enabled", dest="champion_self_play_enabled", action="store_true")
+    parser.add_argument("--disable-champion-self-play", dest="champion_self_play_enabled", action="store_false")
+    parser.add_argument("--champion-switch-after-first-promotion", dest="champion_switch_after_first_promotion", action="store_true")
+    parser.add_argument("--disable-champion-switch", dest="champion_switch_after_first_promotion", action="store_false")
+    parser.add_argument("--champion-teacher-source", default="engine_only", choices=["probabilistic_engine", "engine_only"])
+    parser.add_argument("--champion-engine-time-budget-ms", type=int, default=50)
+    parser.add_argument("--champion-engine-num-determinizations", type=int, default=8)
+    parser.add_argument("--champion-engine-max-rollout-depth", type=int, default=24)
+    parser.add_argument("--promotion-primary-opponent", default="champion", choices=["heuristic", "champion"])
     parser.add_argument("--engine-teacher-prob", type=float, default=0.15)
     parser.add_argument("--engine-time-budget-ms", type=int, default=25)
     parser.add_argument("--engine-num-determinizations", type=int, default=0)
@@ -531,6 +613,13 @@ def main() -> None:
         min_gate_mean_score=args.min_gate_mean_score,
         min_gate_rate_ge_100=args.min_gate_rate_ge_100,
         min_gate_rate_ge_120=args.min_gate_rate_ge_120,
+        champion_self_play_enabled=args.champion_self_play_enabled,
+        champion_switch_after_first_promotion=args.champion_switch_after_first_promotion,
+        champion_teacher_source=args.champion_teacher_source,
+        champion_engine_time_budget_ms=args.champion_engine_time_budget_ms,
+        champion_engine_num_determinizations=args.champion_engine_num_determinizations,
+        champion_engine_max_rollout_depth=args.champion_engine_max_rollout_depth,
+        promotion_primary_opponent=args.promotion_primary_opponent,
         engine_teacher_prob=args.engine_teacher_prob,
         engine_time_budget_ms=args.engine_time_budget_ms,
         engine_num_determinizations=args.engine_num_determinizations,

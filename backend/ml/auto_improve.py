@@ -32,6 +32,13 @@ def run_auto_improve(
     value_weight: float = 0.5,
     val_split: float = 0.1,
     eval_games: int = 100,
+    champion_self_play_enabled: bool = True,
+    champion_switch_after_first_promotion: bool = True,
+    champion_teacher_source: str = "engine_only",
+    champion_engine_time_budget_ms: int = 50,
+    champion_engine_num_determinizations: int = 8,
+    champion_engine_max_rollout_depth: int = 24,
+    promotion_primary_opponent: str = "champion",
     seed: int = 0,
     clean_out_dir: bool = True,
     proposal_top_k: int = 6,
@@ -84,6 +91,13 @@ def run_auto_improve(
         min_gate_mean_score=0.0,
         min_gate_rate_ge_100=0.0,
         min_gate_rate_ge_120=0.0,
+        champion_self_play_enabled=champion_self_play_enabled,
+        champion_switch_after_first_promotion=champion_switch_after_first_promotion,
+        champion_teacher_source=champion_teacher_source,
+        champion_engine_time_budget_ms=champion_engine_time_budget_ms,
+        champion_engine_num_determinizations=champion_engine_num_determinizations,
+        champion_engine_max_rollout_depth=champion_engine_max_rollout_depth,
+        promotion_primary_opponent=promotion_primary_opponent,
         engine_teacher_prob=0.15,
         engine_time_budget_ms=25,
         engine_num_determinizations=0,
@@ -131,6 +145,16 @@ def main() -> None:
     parser.add_argument("--value-weight", type=float, default=0.5)
     parser.add_argument("--val-split", type=float, default=0.1)
     parser.add_argument("--eval-games", type=int, default=100)
+    parser.set_defaults(champion_self_play_enabled=True, champion_switch_after_first_promotion=True)
+    parser.add_argument("--champion-self-play-enabled", dest="champion_self_play_enabled", action="store_true")
+    parser.add_argument("--disable-champion-self-play", dest="champion_self_play_enabled", action="store_false")
+    parser.add_argument("--champion-switch-after-first-promotion", dest="champion_switch_after_first_promotion", action="store_true")
+    parser.add_argument("--disable-champion-switch", dest="champion_switch_after_first_promotion", action="store_false")
+    parser.add_argument("--champion-teacher-source", default="engine_only", choices=["probabilistic_engine", "engine_only"])
+    parser.add_argument("--champion-engine-time-budget-ms", type=int, default=50)
+    parser.add_argument("--champion-engine-num-determinizations", type=int, default=8)
+    parser.add_argument("--champion-engine-max-rollout-depth", type=int, default=24)
+    parser.add_argument("--promotion-primary-opponent", default="champion", choices=["heuristic", "champion"])
     parser.set_defaults(strict_kpi_gate_enabled=True)
     parser.add_argument("--strict-kpi-gate-enabled", dest="strict_kpi_gate_enabled", action="store_true")
     parser.add_argument("--disable-strict-kpi-gate", dest="strict_kpi_gate_enabled", action="store_false")
@@ -161,6 +185,13 @@ def main() -> None:
         value_weight=args.value_weight,
         val_split=args.val_split,
         eval_games=args.eval_games,
+        champion_self_play_enabled=args.champion_self_play_enabled,
+        champion_switch_after_first_promotion=args.champion_switch_after_first_promotion,
+        champion_teacher_source=args.champion_teacher_source,
+        champion_engine_time_budget_ms=args.champion_engine_time_budget_ms,
+        champion_engine_num_determinizations=args.champion_engine_num_determinizations,
+        champion_engine_max_rollout_depth=args.champion_engine_max_rollout_depth,
+        promotion_primary_opponent=args.promotion_primary_opponent,
         seed=args.seed,
         clean_out_dir=not args.resume,
         proposal_top_k=args.proposal_top_k,

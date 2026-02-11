@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 
 from backend.ml.factorized_policy import RELEVANT_HEADS_BY_ACTION
+from backend.ml.move_features import MOVE_FEATURE_DIM
 
 
 HEAD_NAMES = [
@@ -36,6 +37,7 @@ class BCModel:
         hidden2: int,
         head_dims: dict[str, int],
         has_value_head: bool,
+        has_move_value_head: bool,
         seed: int,
     ):
         rng = np.random.default_rng(seed)
@@ -56,6 +58,13 @@ class BCModel:
             else None
         )
         self.b_value = np.float32(0.0)
+        self.has_move_value_head = has_move_value_head
+        self.W_move_value = (
+            rng.normal(0.0, np.sqrt(2.0 / (feature_dim + MOVE_FEATURE_DIM)), size=(feature_dim + MOVE_FEATURE_DIM,)).astype(np.float32)
+            if has_move_value_head
+            else None
+        )
+        self.b_move_value = np.float32(0.0)
         self.hidden1 = hidden1
         self.hidden2 = hidden2
 
@@ -107,6 +116,9 @@ class BCModel:
         if self.has_value_head and self.W_value is not None:
             out["W_value"] = self.W_value
             out["b_value"] = np.asarray([self.b_value], dtype=np.float32)
+        if self.has_move_value_head and self.W_move_value is not None:
+            out["W_move_value"] = self.W_move_value
+            out["b_move_value"] = np.asarray([self.b_move_value], dtype=np.float32)
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(path, **out)
 
@@ -167,6 +179,9 @@ def train_bc(
     val_split: float = 0.1,
     seed: int = 0,
     value_loss_weight: float = 0.5,
+    move_value_enabled: bool = True,
+    move_value_loss_weight: float = 0.2,
+    move_value_num_negatives: int = 4,
     early_stop_enabled: bool = True,
     early_stop_patience: int = 3,
     early_stop_min_delta: float = 1e-4,
@@ -198,6 +213,10 @@ def train_bc(
         raise ValueError("Empty BC dataset")
 
     has_value_target = any(("value_target_score" in r) or ("value_target" in r) for r in rows)
+    has_move_value_data = any(("move_pos" in r) and ("move_negs" in r) for r in rows)
+    move_value_num_negatives = max(0, int(move_value_num_negatives))
+    move_value_loss_weight = max(0.0, float(move_value_loss_weight))
+    effective_move_value = bool(move_value_enabled and has_move_value_data)
     value_target_scale = float(meta.get("value_target_config", {}).get("score_scale", 150.0))
     value_target_bias = float(meta.get("value_target_config", {}).get("score_bias", 0.0))
 
@@ -213,7 +232,15 @@ def train_bc(
     val = rows[:val_n]
     train_rows = rows[val_n:] if len(rows) > val_n else rows
 
-    model = BCModel(feature_dim, hidden1, hidden2, head_dims, has_value_target, seed)
+    model = BCModel(
+        feature_dim,
+        hidden1,
+        hidden2,
+        head_dims,
+        has_value_target,
+        effective_move_value,
+        seed,
+    )
     early_stop_patience = max(1, int(early_stop_patience))
     early_stop_min_delta = max(0.0, float(early_stop_min_delta))
 
@@ -226,9 +253,12 @@ def train_bc(
             "head_W": {k: v.copy() for k, v in model.head_W.items()},
             "head_b": {k: v.copy() for k, v in model.head_b.items()},
             "b_value": np.float32(model.b_value),
+            "b_move_value": np.float32(model.b_move_value),
         }
         if model.has_value_head and model.W_value is not None:
             snap["W_value"] = model.W_value.copy()
+        if model.has_move_value_head and model.W_move_value is not None:
+            snap["W_move_value"] = model.W_move_value.copy()
         return snap
 
     def _restore_model(snap: dict) -> None:
@@ -242,6 +272,9 @@ def train_bc(
         model.b_value = np.float32(snap["b_value"])
         if model.has_value_head and model.W_value is not None and "W_value" in snap:
             model.W_value[...] = snap["W_value"]
+        model.b_move_value = np.float32(snap["b_move_value"])
+        if model.has_move_value_head and model.W_move_value is not None and "W_move_value" in snap:
+            model.W_move_value[...] = snap["W_move_value"]
 
     def eval_split(split_rows: list[dict]) -> dict:
         total_loss = 0.0
@@ -249,6 +282,11 @@ def train_bc(
         action_correct = 0
         value_mse = 0.0
         value_n = 0
+        move_rank_loss = 0.0
+        move_rank_n = 0
+        move_margin_sum = 0.0
+        move_pair_correct = 0
+        move_pair_total = 0
 
         for r in split_rows:
             x = np.asarray(r["state"], dtype=np.float32)
@@ -273,10 +311,40 @@ def train_bc(
                 value_mse += dv * dv
                 value_n += 1
 
+            if (
+                model.has_move_value_head
+                and model.W_move_value is not None
+                and "move_pos" in r
+                and "move_negs" in r
+                and r["move_negs"]
+            ):
+                pos = np.asarray(r["move_pos"], dtype=np.float32)
+                negs = [np.asarray(nf, dtype=np.float32) for nf in r["move_negs"]]
+                x_pos = np.concatenate([x, pos], axis=0)
+                s_pos = float(x_pos @ model.W_move_value + model.b_move_value)
+                s_negs = []
+                for nf in negs:
+                    x_neg = np.concatenate([x, nf], axis=0)
+                    s_neg = float(x_neg @ model.W_move_value + model.b_move_value)
+                    s_negs.append(s_neg)
+                    delta = s_pos - s_neg
+                    move_rank_loss += float(np.logaddexp(0.0, -delta))
+                    move_rank_n += 1
+                    move_pair_total += 1
+                    if s_pos > s_neg:
+                        move_pair_correct += 1
+                move_margin_sum += s_pos - (sum(s_negs) / max(1, len(s_negs)))
+
+        cls_loss = total_loss / max(1, total)
+        v_mse = value_mse / max(1, value_n) if value_n > 0 else 0.0
+        mv_loss = move_rank_loss / max(1, move_rank_n) if move_rank_n > 0 else 0.0
         return {
-            "loss": total_loss / max(1, total),
+            "loss": cls_loss + (value_loss_weight * v_mse) + (move_value_loss_weight * mv_loss),
             "action_acc": action_correct / max(1, total),
-            "value_mse": value_mse / max(1, value_n) if value_n > 0 else 0.0,
+            "value_mse": v_mse,
+            "move_rank_loss": mv_loss,
+            "move_rank_margin_mean": move_margin_sum / max(1, total),
+            "move_pair_acc": move_pair_correct / max(1, move_pair_total) if move_pair_total > 0 else 0.0,
         }
 
     history: list[dict] = []
@@ -302,6 +370,11 @@ def train_bc(
         action_correct = 0
         value_mse_sum = 0.0
         value_seen = 0
+        move_rank_loss_sum = 0.0
+        move_rank_seen = 0
+        move_margin_sum = 0.0
+        move_pair_correct = 0
+        move_pair_total = 0
 
         for i in range(0, len(train_rows), batch_size):
             batch = train_rows[i:i + batch_size]
@@ -316,6 +389,8 @@ def train_bc(
             dbh = {hn: np.zeros_like(model.head_b[hn]) for hn in HEAD_NAMES}
             dWv = np.zeros_like(model.W_value) if model.has_value_head and model.W_value is not None else None
             dbv = 0.0
+            dWmv = np.zeros_like(model.W_move_value) if model.has_move_value_head and model.W_move_value is not None else None
+            dbmv = 0.0
 
             for r in batch:
                 x = np.asarray(r["state"], dtype=np.float32)
@@ -371,6 +446,46 @@ def train_bc(
                     dbv += dvr
                     dh2_drop += model.W_value * dvr
 
+                # Optional move-value ranking head on concat(state, move_features).
+                if (
+                    model.has_move_value_head
+                    and dWmv is not None
+                    and "move_pos" in r
+                    and "move_negs" in r
+                    and r["move_negs"]
+                ):
+                    pos = np.asarray(r["move_pos"], dtype=np.float32)
+                    negs = [np.asarray(nf, dtype=np.float32) for nf in r["move_negs"]]
+                    x_pos = np.concatenate([x, pos], axis=0)
+                    s_pos = float(x_pos @ model.W_move_value + model.b_move_value)
+                    s_negs: list[float] = []
+                    grad_s_pos = 0.0
+                    grad_s_neg: list[float] = []
+                    for nf in negs:
+                        x_neg = np.concatenate([x, nf], axis=0)
+                        s_neg = float(x_neg @ model.W_move_value + model.b_move_value)
+                        s_negs.append(s_neg)
+                        delta = s_pos - s_neg
+                        move_rank_loss_sum += float(np.logaddexp(0.0, -delta))
+                        move_rank_seen += 1
+                        move_pair_total += 1
+                        if s_pos > s_neg:
+                            move_pair_correct += 1
+                        g = -1.0 / (1.0 + math.exp(delta))  # d/d(delta) softplus(-delta)
+                        grad_s_pos += g
+                        grad_s_neg.append(-g)
+
+                    move_margin_sum += s_pos - (sum(s_negs) / max(1, len(s_negs)))
+                    nneg = max(1, len(negs))
+                    grad_s_pos = move_value_loss_weight * (grad_s_pos / nneg)
+                    dWmv += grad_s_pos * x_pos
+                    dbmv += grad_s_pos
+                    for nf, gs in zip(negs, grad_s_neg):
+                        x_neg = np.concatenate([x, nf], axis=0)
+                        gs_scaled = move_value_loss_weight * (gs / nneg)
+                        dWmv += gs_scaled * x_neg
+                        dbmv += gs_scaled
+
                 dh2 = dh2_drop * mask2
                 dh2[h2_pre <= 0.0] = 0.0
 
@@ -396,11 +511,20 @@ def train_bc(
             if model.has_value_head and dWv is not None and model.W_value is not None:
                 model.W_value -= lr_epoch * dWv * scale
                 model.b_value = np.float32(float(model.b_value - lr_epoch * dbv * scale))
+            if model.has_move_value_head and dWmv is not None and model.W_move_value is not None:
+                model.W_move_value -= lr_epoch * dWmv * scale
+                model.b_move_value = np.float32(float(model.b_move_value - lr_epoch * dbmv * scale))
 
+        train_cls_loss = loss_sum / max(1, seen)
+        train_value_mse = value_mse_sum / max(1, value_seen) if value_seen > 0 else 0.0
+        train_move_rank_loss = move_rank_loss_sum / max(1, move_rank_seen) if move_rank_seen > 0 else 0.0
         train_metrics = {
-            "loss": loss_sum / max(1, seen),
+            "loss": train_cls_loss + (value_loss_weight * train_value_mse) + (move_value_loss_weight * train_move_rank_loss),
             "action_acc": action_correct / max(1, seen),
-            "value_mse": value_mse_sum / max(1, value_seen) if value_seen > 0 else 0.0,
+            "value_mse": train_value_mse,
+            "move_rank_loss": train_move_rank_loss,
+            "move_rank_margin_mean": move_margin_sum / max(1, seen),
+            "move_pair_acc": move_pair_correct / max(1, move_pair_total) if move_pair_total > 0 else 0.0,
         }
         val_metrics = eval_split(val)
 
@@ -410,9 +534,15 @@ def train_bc(
             "train_loss": round(train_metrics["loss"], 6),
             "train_action_acc": round(train_metrics["action_acc"], 6),
             "train_value_mse": round(train_metrics["value_mse"], 6),
+            "train_move_rank_loss": round(train_metrics["move_rank_loss"], 6),
+            "train_move_rank_margin_mean": round(train_metrics["move_rank_margin_mean"], 6),
+            "train_move_pair_acc": round(train_metrics["move_pair_acc"], 6),
             "val_loss": round(val_metrics["loss"], 6),
             "val_action_acc": round(val_metrics["action_acc"], 6),
             "val_value_mse": round(val_metrics["value_mse"], 6),
+            "val_move_rank_loss": round(val_metrics["move_rank_loss"], 6),
+            "val_move_rank_margin_mean": round(val_metrics["move_rank_margin_mean"], 6),
+            "val_move_pair_acc": round(val_metrics["move_pair_acc"], 6),
             "is_best_epoch": False,
         }
         current_val_loss = float(val_metrics["loss"])
@@ -430,8 +560,8 @@ def train_bc(
         epochs_completed = ep
         print(
             f"epoch {ep}/{epochs} | lr={row['lr_epoch']:.6f} | train_loss={row['train_loss']:.4f} train_acc={row['train_action_acc']:.3f} "
-            f"train_v={row['train_value_mse']:.4f} | val_loss={row['val_loss']:.4f} "
-            f"val_acc={row['val_action_acc']:.3f} val_v={row['val_value_mse']:.4f}"
+            f"train_v={row['train_value_mse']:.4f} train_mv={row['train_move_rank_loss']:.4f} | val_loss={row['val_loss']:.4f} "
+            f"val_acc={row['val_action_acc']:.3f} val_v={row['val_value_mse']:.4f} val_mv={row['val_move_rank_loss']:.4f}"
         )
         if early_stop_enabled and no_improve_epochs >= early_stop_patience:
             stopped_early = True
@@ -471,6 +601,13 @@ def train_bc(
         "value_prediction_mode": "score_linear" if has_value_target else "none",
         "value_score_scale": value_target_scale,
         "value_score_bias": value_target_bias,
+        "has_move_value_head": bool(model.has_move_value_head),
+        "move_feature_dim": MOVE_FEATURE_DIM,
+        "move_value_loss_weight": float(move_value_loss_weight),
+        "move_value_training": {
+            "num_negatives": int(move_value_num_negatives),
+            "sampling": "topk_then_random",
+        },
         "train_samples": len(train_rows),
         "val_samples": len(val),
         "history": history,
@@ -505,6 +642,11 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=None, help="Deprecated: maps lr_peak=lr")
     parser.add_argument("--val-split", type=float, default=0.1)
     parser.add_argument("--value-weight", type=float, default=0.5)
+    parser.set_defaults(move_value_enabled=True)
+    parser.add_argument("--move-value-enabled", dest="move_value_enabled", action="store_true")
+    parser.add_argument("--disable-move-value", dest="move_value_enabled", action="store_false")
+    parser.add_argument("--move-value-loss-weight", type=float, default=0.2)
+    parser.add_argument("--move-value-num-negatives", type=int, default=4)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
@@ -529,6 +671,9 @@ def main() -> None:
         val_split=args.val_split,
         seed=args.seed,
         value_loss_weight=args.value_weight,
+        move_value_enabled=args.move_value_enabled,
+        move_value_loss_weight=args.move_value_loss_weight,
+        move_value_num_negatives=args.move_value_num_negatives,
         hidden=args.hidden,
         lr=args.lr,
     )

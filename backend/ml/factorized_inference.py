@@ -10,6 +10,7 @@ import numpy as np
 from backend.models.player import Player
 from backend.solver.move_generator import Move
 from backend.ml.factorized_policy import encode_factorized_targets, RELEVANT_HEADS_BY_ACTION
+from backend.ml.move_features import encode_move_features
 
 
 class FactorizedPolicyModel:
@@ -39,6 +40,9 @@ class FactorizedPolicyModel:
         self.value_prediction_mode = str(self.meta.get("value_prediction_mode", "sigmoid_norm"))
         self.value_score_scale = float(self.meta.get("value_score_scale", 150.0))
         self.value_score_bias = float(self.meta.get("value_score_bias", 0.0))
+        self.has_move_value_head = "W_move_value" in z and "b_move_value" in z
+        self.W_move_value = z["W_move_value"] if self.has_move_value_head else None
+        self.b_move_value = float(z["b_move_value"][0]) if self.has_move_value_head else 0.0
 
     def forward(self, state: np.ndarray) -> tuple[dict[str, np.ndarray], float | None]:
         h1_pre = state @ self.W1 + self.b1
@@ -64,6 +68,22 @@ class FactorizedPolicyModel:
         if self.value_prediction_mode == "score_linear":
             return float(value)
         return float(self.value_score_bias + self.value_score_scale * float(value))
+
+    def score_move(
+        self,
+        state: np.ndarray,
+        move: Move,
+        player: Player,
+        logits: dict[str, np.ndarray] | None = None,
+    ) -> float:
+        """Score a move with move-value head when available, else legacy logits."""
+        if self.has_move_value_head and self.W_move_value is not None:
+            move_f = np.asarray(encode_move_features(move, player), dtype=np.float32)
+            x = np.concatenate([state.astype(np.float32, copy=False), move_f], axis=0)
+            return float(x @ self.W_move_value + self.b_move_value)
+        if logits is None:
+            logits, _ = self.forward(state.astype(np.float32, copy=False))
+        return score_move_with_factorized_model(logits, move, player)
 
 
 def score_move_with_factorized_model(

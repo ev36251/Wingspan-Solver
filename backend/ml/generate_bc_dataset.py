@@ -28,7 +28,8 @@ from backend.solver.self_play import create_training_game
 from backend.solver.simulation import _refill_tray, deep_copy_game, execute_move_on_sim
 from backend.engine_search import EngineConfig, search_best_move
 from backend.ml.factorized_policy import encode_factorized_targets, ACTION_TYPE_TO_ID
-from backend.ml.factorized_inference import FactorizedPolicyModel, score_move_with_factorized_model
+from backend.ml.factorized_inference import FactorizedPolicyModel
+from backend.ml.move_features import MOVE_FEATURE_DIM, encode_move_features
 from backend.ml.state_encoder import StateEncoder
 from backend.powers.registry import get_power_source, is_strict_power_source_allowed
 
@@ -37,6 +38,8 @@ from backend.powers.registry import get_power_source, is_strict_power_source_all
 class _PendingDecision:
     state: list[float]
     targets: dict[str, int]
+    move_pos: list[float]
+    move_negs: list[list[float]]
     legal_action_type_mask: list[int]
     player_index: int
     round_num: int
@@ -57,7 +60,86 @@ def _action_type_mask(moves: list[Move]) -> list[int]:
     return mask
 
 
-def _rerank_with_lookahead(game, player_idx: int, moves: list[Move], depth: int) -> dict[int, float]:
+def _score_move_with_model(
+    model: FactorizedPolicyModel,
+    encoder: StateEncoder,
+    game,
+    player_idx: int,
+    move: Move,
+) -> float:
+    player = game.players[player_idx]
+    state = np.asarray(encoder.encode(game, player_idx), dtype=np.float32)
+    logits, _ = model.forward(state)
+    return float(model.score_move(state, move, player, logits=logits))
+
+
+def _pick_model_move(
+    model: FactorizedPolicyModel,
+    encoder: StateEncoder,
+    game,
+    player_idx: int,
+    proposal_top_k: int,
+) -> Move | None:
+    player = game.players[player_idx]
+    moves = generate_all_moves(game, player)
+    if not moves:
+        return None
+
+    state = np.asarray(encoder.encode(game, player_idx), dtype=np.float32)
+    logits, _ = model.forward(state)
+    scored = sorted(
+        ((m, model.score_move(state, m, player, logits=logits)) for m in moves),
+        key=lambda x: x[1],
+        reverse=True,
+    )
+    k = max(1, min(proposal_top_k, len(scored)))
+    candidates = [m for m, _ in scored[:k]]
+    if len(candidates) == 1:
+        return candidates[0]
+
+    reranked: list[tuple[Move, float]] = []
+    for cand in candidates:
+        sim = deep_copy_game(game)
+        sp = sim.players[player_idx]
+        if not execute_move_on_sim(sim, sp, cand):
+            reranked.append((cand, -1e9))
+            continue
+        sim.advance_turn()
+        _refill_tray(sim)
+        state2 = np.asarray(encoder.encode(sim, player_idx), dtype=np.float32)
+        _, v2 = model.forward(state2)
+        score_est = model.value_to_expected_score(v2)
+        immediate = float(calculate_score(sim, sp).total)
+        reranked.append((cand, 0.85 * score_est + 0.15 * immediate))
+    return max(reranked, key=lambda x: x[1])[0]
+
+
+def _model_for_player(
+    player_idx: int,
+    *,
+    proposal_model: FactorizedPolicyModel | None,
+    opponent_model: FactorizedPolicyModel | None,
+    self_play_policy: str,
+) -> FactorizedPolicyModel | None:
+    if self_play_policy == "champion_nn_vs_nn":
+        if player_idx == 0:
+            return proposal_model
+        return opponent_model if opponent_model is not None else proposal_model
+    return proposal_model
+
+
+def _rerank_with_lookahead(
+    game,
+    player_idx: int,
+    moves: list[Move],
+    depth: int,
+    *,
+    encoder: StateEncoder,
+    proposal_top_k: int,
+    proposal_model: FactorizedPolicyModel | None,
+    opponent_model: FactorizedPolicyModel | None,
+    self_play_policy: str,
+) -> dict[int, float]:
     """Evaluate candidate moves by short lookahead and resulting score."""
     out: dict[int, float] = {}
     actor_name = game.players[player_idx].name
@@ -82,8 +164,25 @@ def _rerank_with_lookahead(game, player_idx: int, moves: list[Move], depth: int)
             p2 = sim.current_player
             moves2 = generate_all_moves(sim, p2)
             if moves2:
-                # Opponent best heuristic response.
-                best2 = max(moves2, key=lambda m: _heuristic_score_move(sim, p2, m))
+                best2: Move | None = None
+                if self_play_policy == "champion_nn_vs_nn":
+                    response_model = _model_for_player(
+                        sim.current_player_idx,
+                        proposal_model=proposal_model,
+                        opponent_model=opponent_model,
+                        self_play_policy=self_play_policy,
+                    )
+                    if response_model is not None:
+                        best2 = _pick_model_move(
+                            response_model,
+                            encoder,
+                            sim,
+                            sim.current_player_idx,
+                            proposal_top_k=proposal_top_k,
+                        )
+                if best2 is None:
+                    best2 = max(moves2, key=lambda m: _heuristic_score_move(sim, p2, m))
+
                 if execute_move_on_sim(sim, p2, best2):
                     sim.advance_turn()
                     _refill_tray(sim)
@@ -98,25 +197,34 @@ def _rerank_with_lookahead(game, player_idx: int, moves: list[Move], depth: int)
     return out
 
 
-def _select_improved_move(
+def _select_policy_move(
     game,
     player,
     moves: list[Move],
     proposal_model: FactorizedPolicyModel | None,
+    opponent_model: FactorizedPolicyModel | None,
     encoder: StateEncoder,
     proposal_top_k: int,
     lookahead_depth: int,
+    self_play_policy: str,
 ) -> Move:
     if not moves:
         raise ValueError("No moves")
 
+    current_model = _model_for_player(
+        game.current_player_idx,
+        proposal_model=proposal_model,
+        opponent_model=opponent_model,
+        self_play_policy=self_play_policy,
+    )
+
     # Proposal phase: model-guided if available, else heuristic-guided.
     scored: list[tuple[Move, float]] = []
-    if proposal_model is not None:
+    if current_model is not None:
         state = np.asarray(encoder.encode(game, game.current_player_idx), dtype=np.float32)
-        logits, _ = proposal_model.forward(state)
+        logits, _ = current_model.forward(state)
         for m in moves:
-            scored.append((m, score_move_with_factorized_model(logits, m, player)))
+            scored.append((m, current_model.score_move(state, m, player, logits=logits)))
     else:
         for m in moves:
             scored.append((m, _heuristic_score_move(game, player, m)))
@@ -127,11 +235,21 @@ def _select_improved_move(
 
     # Improvement phase: short lookahead reranking.
     if lookahead_depth > 0 and len(candidates) > 1:
-        look = _rerank_with_lookahead(game, game.current_player_idx, candidates, lookahead_depth)
+        look = _rerank_with_lookahead(
+            game,
+            game.current_player_idx,
+            candidates,
+            lookahead_depth,
+            encoder=encoder,
+            proposal_top_k=proposal_top_k,
+            proposal_model=proposal_model,
+            opponent_model=opponent_model,
+            self_play_policy=self_play_policy,
+        )
         candidates.sort(key=lambda m: (look.get(id(m), -1e9), _heuristic_score_move(game, player, m)), reverse=True)
 
     # Additional value-head reranking for proposal-model candidates.
-    if proposal_model is not None and len(candidates) > 1:
+    if current_model is not None and len(candidates) > 1:
         value_scores: dict[int, float] = {}
         for m in candidates:
             sim = deep_copy_game(game)
@@ -142,8 +260,8 @@ def _select_improved_move(
             sim.advance_turn()
             _refill_tray(sim)
             state2 = np.asarray(encoder.encode(sim, game.current_player_idx), dtype=np.float32)
-            _, v2 = proposal_model.forward(state2)
-            v_score = proposal_model.value_to_expected_score(v2)
+            _, v2 = current_model.forward(state2)
+            v_score = current_model.value_to_expected_score(v2)
             immediate = float(calculate_score(sim, actor).total)
             value_scores[id(m)] = 0.85 * v_score + 0.15 * immediate
         candidates.sort(
@@ -176,6 +294,69 @@ def _select_engine_teacher_move(
     return result.best_move
 
 
+def _move_key(move: Move) -> tuple:
+    food_pay = tuple(sorted((ft.value, int(c)) for ft, c in move.food_payment.items()))
+    food_choices = tuple(sorted(ft.value for ft in move.food_choices))
+    eggs = tuple(sorted(((h.value, int(i)), int(v)) for (h, i), v in move.egg_distribution.items()))
+    trays = tuple(int(i) for i in move.tray_indices)
+    return (
+        move.action_type.value,
+        move.bird_name,
+        move.habitat.value if move.habitat is not None else None,
+        food_pay,
+        food_choices,
+        eggs,
+        trays,
+        int(move.deck_draws),
+        int(move.bonus_count),
+        bool(move.reset_bonus),
+    )
+
+
+def _sample_negative_move_features(
+    *,
+    moves: list[Move],
+    executed_move: Move,
+    player,
+    player_idx: int,
+    game,
+    encoder: StateEncoder,
+    proposal_model: FactorizedPolicyModel | None,
+    opponent_model: FactorizedPolicyModel | None,
+    self_play_policy: str,
+    num_negatives: int,
+) -> list[list[float]]:
+    if num_negatives <= 0:
+        return []
+
+    exec_key = _move_key(executed_move)
+    candidates = [m for m in moves if _move_key(m) != exec_key]
+    if not candidates:
+        return []
+
+    current_model = _model_for_player(
+        player_idx,
+        proposal_model=proposal_model,
+        opponent_model=opponent_model,
+        self_play_policy=self_play_policy,
+    )
+    scored: list[tuple[Move, float]] = []
+    if current_model is not None:
+        state = np.asarray(encoder.encode(game, player_idx), dtype=np.float32)
+        logits, _ = current_model.forward(state)
+        for m in candidates:
+            scored.append((m, float(current_model.score_move(state, m, player, logits=logits))))
+    else:
+        for m in candidates:
+            scored.append((m, _heuristic_score_move(game, player, m)))
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    top_pool = scored[: max(1, 2 * num_negatives)]
+    k = min(num_negatives, len(top_pool))
+    picked = random.sample(top_pool, k=k) if len(top_pool) > k else top_pool
+    return [encode_move_features(m, player) for m, _ in picked]
+
+
 def generate_bc_dataset(
     out_jsonl: str,
     out_meta: str,
@@ -185,6 +366,8 @@ def generate_bc_dataset(
     max_turns: int,
     seed: int | None,
     proposal_model_path: str | None = None,
+    opponent_model_path: str | None = None,
+    self_play_policy: str = "mixed",
     proposal_top_k: int = 6,
     lookahead_depth: int = 2,
     n_step: int = 2,
@@ -194,6 +377,7 @@ def generate_bc_dataset(
     value_target_score_bias: float = 0.0,
     late_round_oversample_factor: int = 2,
     engine_teacher_prob: float = 0.0,
+    teacher_source: str = "probabilistic_engine",
     engine_time_budget_ms: int = 25,
     engine_num_determinizations: int = 0,
     engine_max_rollout_depth: int = 24,
@@ -201,16 +385,31 @@ def generate_bc_dataset(
     reject_non_strict_powers: bool = True,
     max_round: int = 4,
     emit_score_breakdown: bool = True,
+    move_value_enabled: bool = True,
+    move_value_num_negatives: int = 4,
 ) -> dict:
     if seed is not None:
         random.seed(seed)
+    if self_play_policy not in ("mixed", "champion_nn_vs_nn"):
+        raise ValueError(f"Unsupported self_play_policy: {self_play_policy}")
+    if teacher_source not in ("probabilistic_engine", "engine_only"):
+        raise ValueError(f"Unsupported teacher_source: {teacher_source}")
     engine_teacher_prob = max(0.0, min(1.0, float(engine_teacher_prob)))
     value_target_score_scale = max(1.0, float(value_target_score_scale))
     late_round_oversample_factor = max(1, int(late_round_oversample_factor))
+    move_value_num_negatives = max(0, int(move_value_num_negatives))
 
     load_all(EXCEL_FILE)
 
+    if self_play_policy == "champion_nn_vs_nn" and not proposal_model_path:
+        raise ValueError("self_play_policy='champion_nn_vs_nn' requires proposal_model_path")
     proposal_model = FactorizedPolicyModel(proposal_model_path) if proposal_model_path else None
+    opponent_path = opponent_model_path or proposal_model_path
+    opponent_model = (
+        FactorizedPolicyModel(opponent_path)
+        if self_play_policy == "champion_nn_vs_nn" and opponent_path
+        else None
+    )
     enc = StateEncoder()
     outp = Path(out_jsonl)
     outp.parent.mkdir(parents=True, exist_ok=True)
@@ -220,6 +419,7 @@ def generate_bc_dataset(
     all_scores: list[int] = []
     engine_teacher_calls = 0
     engine_teacher_applied = 0
+    engine_teacher_miss_fallback_used = 0
     move_execute_attempts = 0
     move_execute_successes = 0
     move_execute_fallback_used = 0
@@ -269,17 +469,23 @@ def generate_bc_dataset(
                     turns += 1
                     continue
 
-                best = _select_improved_move(
+                best = _select_policy_move(
                     game=game,
                     player=p,
                     moves=moves,
                     proposal_model=proposal_model,
+                    opponent_model=opponent_model,
                     encoder=enc,
                     proposal_top_k=proposal_top_k,
                     lookahead_depth=lookahead_depth,
+                    self_play_policy=self_play_policy,
                 )
 
-                if engine_teacher_prob > 0.0 and random.random() < engine_teacher_prob:
+                use_engine_teacher = (
+                    teacher_source == "engine_only"
+                    or (engine_teacher_prob > 0.0 and random.random() < engine_teacher_prob)
+                )
+                if use_engine_teacher:
                     engine_teacher_calls += 1
                     teacher_move = _select_engine_teacher_move(
                         game=game,
@@ -292,6 +498,8 @@ def generate_bc_dataset(
                     if teacher_move is not None:
                         best = teacher_move
                         engine_teacher_applied += 1
+                    elif teacher_source == "engine_only":
+                        engine_teacher_miss_fallback_used += 1
 
                 score_now = int(calculate_score(game, p).total)
                 state_now = enc.encode(game, pi)
@@ -299,10 +507,29 @@ def generate_bc_dataset(
                 move_execute_attempts += 1
                 success = execute_move_on_sim(game, p, best)
                 if success:
+                    pos_f = encode_move_features(best, p) if move_value_enabled else []
+                    neg_f = (
+                        _sample_negative_move_features(
+                            moves=moves,
+                            executed_move=best,
+                            player=p,
+                            player_idx=pi,
+                            game=game,
+                            encoder=enc,
+                            proposal_model=proposal_model,
+                            opponent_model=opponent_model,
+                            self_play_policy=self_play_policy,
+                            num_negatives=move_value_num_negatives,
+                        )
+                        if move_value_enabled
+                        else []
+                    )
                     pending.append(
                         _PendingDecision(
                             state=state_now,
                             targets=encode_factorized_targets(best, p),
+                            move_pos=pos_f,
+                            move_negs=neg_f,
                             legal_action_type_mask=mask_now,
                             player_index=pi,
                             round_num=game.current_round,
@@ -319,10 +546,29 @@ def generate_bc_dataset(
                     fallback = False
                     for m in moves:
                         if execute_move_on_sim(game, p, m):
+                            pos_f = encode_move_features(m, p) if move_value_enabled else []
+                            neg_f = (
+                                _sample_negative_move_features(
+                                    moves=moves,
+                                    executed_move=m,
+                                    player=p,
+                                    player_idx=pi,
+                                    game=game,
+                                    encoder=enc,
+                                    proposal_model=proposal_model,
+                                    opponent_model=opponent_model,
+                                    self_play_policy=self_play_policy,
+                                    num_negatives=move_value_num_negatives,
+                                )
+                                if move_value_enabled
+                                else []
+                            )
                             pending.append(
                                 _PendingDecision(
                                     state=state_now,
                                     targets=encode_factorized_targets(m, p),
+                                    move_pos=pos_f,
+                                    move_negs=neg_f,
                                     legal_action_type_mask=mask_now,
                                     player_index=pi,
                                     round_num=game.current_round,
@@ -373,6 +619,8 @@ def generate_bc_dataset(
                 row = {
                     "state": d.state,
                     "targets": d.targets,
+                    "move_pos": d.move_pos,
+                    "move_negs": d.move_negs,
                     "legal_action_type_mask": d.legal_action_type_mask,
                     "value_target": round(value_target, 6),
                     "value_target_score": round(value_target_score, 4),
@@ -404,6 +652,7 @@ def generate_bc_dataset(
         "max_turns": max_turns,
         "samples": samples,
         "feature_dim": len(enc.feature_names()),
+        "move_feature_dim": MOVE_FEATURE_DIM,
         "feature_names": enc.feature_names(),
         "target_heads": {
             "action_type": 4,
@@ -415,6 +664,8 @@ def generate_bc_dataset(
             "play_power_color": 7,
         },
         "has_value_target": True,
+        "move_value_enabled": bool(move_value_enabled),
+        "move_value_num_negatives": int(move_value_num_negatives),
         "value_target_config": {
             "n_step": n_step,
             "gamma": gamma,
@@ -424,15 +675,21 @@ def generate_bc_dataset(
         },
         "policy_improvement": {
             "proposal_model_path": proposal_model_path,
+            "opponent_model_path": opponent_path,
+            "self_play_policy": self_play_policy,
             "proposal_top_k": proposal_top_k,
             "lookahead_depth": lookahead_depth,
+            "teacher_source": teacher_source,
             "engine_teacher_prob": engine_teacher_prob,
             "engine_time_budget_ms": engine_time_budget_ms,
             "engine_num_determinizations": engine_num_determinizations,
             "engine_max_rollout_depth": engine_max_rollout_depth,
             "late_round_oversample_factor": late_round_oversample_factor,
+            "move_value_enabled": bool(move_value_enabled),
+            "move_value_num_negatives": int(move_value_num_negatives),
             "engine_teacher_calls": engine_teacher_calls,
             "engine_teacher_applied": engine_teacher_applied,
+            "engine_teacher_miss_fallback_used": engine_teacher_miss_fallback_used,
             "move_execute_attempts": move_execute_attempts,
             "move_execute_successes": move_execute_successes,
             "move_execute_fallback_used": move_execute_fallback_used,
@@ -460,6 +717,8 @@ def main() -> None:
     parser.add_argument("--meta", default="reports/ml/bc_dataset.meta.json")
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--proposal-model", default=None)
+    parser.add_argument("--opponent-model", default=None)
+    parser.add_argument("--self-play-policy", default="mixed", choices=["mixed", "champion_nn_vs_nn"])
     parser.add_argument("--proposal-top-k", type=int, default=6)
     parser.add_argument("--lookahead-depth", type=int, default=2, choices=[0, 1, 2])
     parser.add_argument("--n-step", type=int, default=2)
@@ -468,7 +727,12 @@ def main() -> None:
     parser.add_argument("--value-target-score-scale", type=float, default=160.0)
     parser.add_argument("--value-target-score-bias", type=float, default=0.0)
     parser.add_argument("--late-round-oversample-factor", type=int, default=2)
+    parser.set_defaults(move_value_enabled=True)
+    parser.add_argument("--move-value-enabled", dest="move_value_enabled", action="store_true")
+    parser.add_argument("--disable-move-value", dest="move_value_enabled", action="store_false")
+    parser.add_argument("--move-value-num-negatives", type=int, default=4)
     parser.add_argument("--engine-teacher-prob", type=float, default=0.0)
+    parser.add_argument("--teacher-source", default="probabilistic_engine", choices=["probabilistic_engine", "engine_only"])
     parser.add_argument("--engine-time-budget-ms", type=int, default=25)
     parser.add_argument("--engine-num-determinizations", type=int, default=0)
     parser.add_argument("--engine-max-rollout-depth", type=int, default=24)
@@ -490,6 +754,8 @@ def main() -> None:
         max_turns=args.max_turns,
         seed=args.seed,
         proposal_model_path=args.proposal_model,
+        opponent_model_path=args.opponent_model,
+        self_play_policy=args.self_play_policy,
         proposal_top_k=args.proposal_top_k,
         lookahead_depth=args.lookahead_depth,
         n_step=args.n_step,
@@ -498,7 +764,10 @@ def main() -> None:
         value_target_score_scale=args.value_target_score_scale,
         value_target_score_bias=args.value_target_score_bias,
         late_round_oversample_factor=args.late_round_oversample_factor,
+        move_value_enabled=args.move_value_enabled,
+        move_value_num_negatives=args.move_value_num_negatives,
         engine_teacher_prob=args.engine_teacher_prob,
+        teacher_source=args.teacher_source,
         engine_time_budget_ms=args.engine_time_budget_ms,
         engine_num_determinizations=args.engine_num_determinizations,
         engine_max_rollout_depth=args.engine_max_rollout_depth,

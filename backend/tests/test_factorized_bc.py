@@ -3,11 +3,16 @@ from pathlib import Path
 import json
 import numpy as np
 
-from backend.models.enums import ActionType, BoardType, FoodType, Habitat
+from backend.models.bird import Bird, FoodCost
+from backend.models.enums import (
+    ActionType, BeakDirection, BoardType, FoodType, GameSet, Habitat, NestType, PowerColor,
+)
+from backend.models.player import Player
 from backend.solver.move_generator import Move
 from backend.ml.factorized_policy import encode_factorized_targets
 from backend.ml.factorized_inference import FactorizedPolicyModel
 from backend.ml.generate_bc_dataset import generate_bc_dataset
+from backend.ml.move_features import MOVE_FEATURE_DIM, encode_move_features
 from backend.ml.train_factorized_bc import train_bc
 
 
@@ -69,6 +74,10 @@ def test_generate_and_train_factorized_bc(tmp_path: Path) -> None:
     assert out["val_samples"] > 0
     assert out["model_arch"] == "mlp_2layer"
     assert out["format_version"] == 3
+    assert out["has_move_value_head"] is True
+    z = np.load(model, allow_pickle=True)
+    assert "W_move_value" in z
+    assert "b_move_value" in z
 
 
 def test_factorized_inference_loads_legacy_and_new(tmp_path: Path) -> None:
@@ -99,6 +108,7 @@ def test_factorized_inference_loads_legacy_and_new(tmp_path: Path) -> None:
     logits_old, value_old = legacy_model.forward(np.zeros((10,), dtype=np.float32))
     assert "action_type" in logits_old
     assert value_old is None
+    assert legacy_model.has_move_value_head is False
 
     ds = tmp_path / "bc.jsonl"
     meta = tmp_path / "bc.meta.json"
@@ -126,6 +136,68 @@ def test_factorized_inference_loads_legacy_and_new(tmp_path: Path) -> None:
     new_model = FactorizedPolicyModel(new_model_path)
     logits_new, _ = new_model.forward(np.zeros((new_model.W1.shape[0],), dtype=np.float32))
     assert "action_type" in logits_new
+    assert new_model.has_move_value_head is True
+
+    p = Player(name="P1")
+    mv = Move(action_type=ActionType.LAY_EGGS, description="lay")
+    state = np.zeros((new_model.W1.shape[0],), dtype=np.float32)
+    score = new_model.score_move(state, mv, p, logits=logits_new)
+    assert np.isfinite(score)
+
+
+def test_encode_move_features_shape_and_blocks() -> None:
+    bird = Bird(
+        name="Test Bird",
+        scientific_name="Testus birdus",
+        game_set=GameSet.CORE,
+        color=PowerColor.BROWN,
+        power_text="",
+        victory_points=7,
+        nest_type=NestType.BOWL,
+        egg_limit=4,
+        wingspan_cm=25,
+        habitats=frozenset({Habitat.FOREST}),
+        food_cost=FoodCost(items=(FoodType.SEED, FoodType.FISH), total=2),
+        beak_direction=BeakDirection.LEFT,
+        is_predator=False,
+        is_flocking=False,
+        is_bonus_card_bird=False,
+        bonus_eligibility=frozenset(),
+    )
+    p = Player(name="P1", hand=[bird])
+
+    play_move = Move(
+        action_type=ActionType.PLAY_BIRD,
+        description="play",
+        bird_name=bird.name,
+        habitat=Habitat.FOREST,
+    )
+    f_play = encode_move_features(play_move, p)
+    assert len(f_play) == MOVE_FEATURE_DIM
+    assert f_play[0] == 1.0  # play action one-hot
+    assert f_play[4] == 0.7  # vp / 10
+    assert f_play[5] == (2.0 / 6.0)  # cost / 6
+    assert f_play[6] == (4.0 / 6.0)  # egg cap / 6
+    assert sum(f_play[7:14]) == 1.0  # power color one-hot
+    assert sum(f_play[14:21]) == 0.0  # gain block off
+
+    gain_move = Move(
+        action_type=ActionType.GAIN_FOOD,
+        description="gain",
+        food_choices=[FoodType.FRUIT, FoodType.SEED],
+    )
+    f_gain = encode_move_features(gain_move, p)
+    assert len(f_gain) == MOVE_FEATURE_DIM
+    assert f_gain[1] == 1.0  # gain action one-hot
+    assert sum(f_gain[4:14]) == 0.0  # play block off
+    assert sum(f_gain[14:21]) == 1.0  # food one-hot on
+
+    eggs_move = Move(action_type=ActionType.LAY_EGGS, description="eggs")
+    draw_move = Move(action_type=ActionType.DRAW_CARDS, description="draw")
+    f_eggs = encode_move_features(eggs_move, p)
+    f_draw = encode_move_features(draw_move, p)
+    assert sum(f_eggs[4:21]) == 0.0
+    assert sum(f_draw[4:21]) == 0.0
 
 
 def test_train_bc_early_stopping_triggers(tmp_path: Path) -> None:
@@ -182,7 +254,7 @@ def test_train_bc_early_stopping_triggers(tmp_path: Path) -> None:
         seed=42,
         early_stop_enabled=True,
         early_stop_patience=1,
-        early_stop_min_delta=10.0,
+        early_stop_min_delta=1e9,
         early_stop_restore_best=True,
     )
     assert out["stopped_early"] is True

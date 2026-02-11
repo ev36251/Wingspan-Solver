@@ -16,7 +16,7 @@ from backend.models.enums import ActionType, BoardType
 from backend.solver.move_generator import generate_all_moves, Move
 from backend.solver.self_play import create_training_game
 from backend.solver.simulation import _refill_tray, deep_copy_game, execute_move_on_sim, pick_weighted_random_move
-from backend.ml.factorized_inference import FactorizedPolicyModel, score_move_with_factorized_model
+from backend.ml.factorized_inference import FactorizedPolicyModel
 from backend.ml.state_encoder import StateEncoder
 
 
@@ -84,7 +84,7 @@ def evaluate_factorized_vs_heuristic(
                 state = np.asarray(enc.encode(game, pi), dtype=np.float32)
                 logits, _ = model.forward(state)
                 scored = sorted(
-                    ((m, score_move_with_factorized_model(logits, m, p)) for m in moves),
+                    ((m, model.score_move(state, m, p, logits=logits)) for m in moves),
                     key=lambda x: x[1],
                     reverse=True,
                 )
