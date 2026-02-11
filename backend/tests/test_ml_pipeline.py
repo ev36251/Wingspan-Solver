@@ -63,3 +63,38 @@ def test_generate_dataset_smoke(tmp_path: Path) -> None:
     assert len(lines) == info["samples"]
 
     assert len(lines) > 0
+
+
+def test_generate_dataset_records_fallback_action_ids(monkeypatch, tmp_path: Path) -> None:
+    import backend.ml.self_play_dataset as mod
+
+    original_exec = mod.execute_move_on_sim
+    seen_keys: set[tuple[int, int, int, int, str]] = set()
+
+    def flaky_exec(game, player, move):
+        key = (id(game), game.current_round, game.turn_in_round, game.current_player_idx, player.name)
+        if key not in seen_keys:
+            seen_keys.add(key)
+            return False
+        return original_exec(game, player, move)
+
+    monkeypatch.setattr(mod, "execute_move_on_sim", flaky_exec)
+
+    out = tmp_path / "dataset_fallback.jsonl"
+    meta = tmp_path / "dataset_fallback.meta.json"
+    info = generate_dataset(
+        output_jsonl=str(out),
+        metadata_path=str(meta),
+        games=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        seed=17,
+        teacher_policy="heuristic_topk",
+        proposal_top_k=1,
+        lookahead_depth=0,
+    )
+    assert info["move_execute_attempts"] >= 1
+    assert info["move_execute_successes"] >= 1
+    assert info["move_execute_fallback_used"] >= 1
+    assert info["move_execute_dropped"] >= 0

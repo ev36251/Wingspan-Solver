@@ -7,6 +7,7 @@ from typing import Callable
 from backend.models.enums import FoodType, Habitat, NestType, PowerColor, BeakDirection
 from backend.models.game_state import GameState
 from backend.models.player import Player
+from backend.models.bonus_card import BonusCard
 
 
 @dataclass
@@ -304,6 +305,26 @@ CUSTOM_BONUS_FULL_SCORERS: dict[str, Callable[[Player], int]] = {
 }
 
 
+def bonus_card_details(player: Player) -> list[tuple[BonusCard, int, int]]:
+    """Return (card, qualifying_count, score) for each bonus card."""
+    details: list[tuple[BonusCard, int, int]] = []
+    for bonus in player.bonus_cards:
+        if bonus.name in CUSTOM_BONUS_FULL_SCORERS:
+            score = CUSTOM_BONUS_FULL_SCORERS[bonus.name](player)
+            details.append((bonus, 0, score))
+        elif bonus.name in CUSTOM_BONUS_COUNTERS:
+            qualifying = CUSTOM_BONUS_COUNTERS[bonus.name](player)
+            details.append((bonus, qualifying, bonus.score(qualifying)))
+        else:
+            qualifying = sum(
+                1
+                for bird in player.board.all_birds()
+                if bonus.name in bird.bonus_eligibility
+            )
+            details.append((bonus, qualifying, bonus.score(qualifying)))
+    return details
+
+
 def score_bonus_cards(player: Player) -> int:
     """Score all bonus cards based on board state.
 
@@ -311,21 +332,7 @@ def score_bonus_cards(player: Player) -> int:
     (eggs, cached food, hand size, etc.), and falls back to spreadsheet
     eligibility columns for the remaining cards.
     """
-    total = 0
-    for bonus in player.bonus_cards:
-        if bonus.name in CUSTOM_BONUS_FULL_SCORERS:
-            total += CUSTOM_BONUS_FULL_SCORERS[bonus.name](player)
-        elif bonus.name in CUSTOM_BONUS_COUNTERS:
-            qualifying = CUSTOM_BONUS_COUNTERS[bonus.name](player)
-            total += bonus.score(qualifying)
-        else:
-            qualifying = sum(
-                1
-                for bird in player.board.all_birds()
-                if bonus.name in bird.bonus_eligibility
-            )
-            total += bonus.score(qualifying)
-    return total
+    return sum(score for _, _, score in bonus_card_details(player))
 
 
 def score_round_goals(game_state: GameState, player: Player) -> int:
@@ -407,7 +414,7 @@ def is_supported_round_goal_description(description: str) -> bool:
     return False
 
 
-def _goal_progress_for_round(player: Player, goal) -> float:
+def goal_progress_for_round(player: Player, goal) -> float:
     """Estimate round-goal progress for end-of-round placement scoring."""
     desc = goal.description.lower()
     board = player.board
@@ -519,7 +526,7 @@ def compute_round_goal_scores(game_state: GameState, round_num: int) -> dict[str
     if goal.description.lower() == "no goal":
         return {}
 
-    progress = [(p.name, _goal_progress_for_round(p, goal)) for p in game_state.players]
+    progress = [(p.name, goal_progress_for_round(p, goal)) for p in game_state.players]
     progress.sort(key=lambda x: -x[1])
     if not progress:
         return {}

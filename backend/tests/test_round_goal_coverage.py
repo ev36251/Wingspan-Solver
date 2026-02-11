@@ -1,7 +1,7 @@
 from backend.config import EXCEL_FILE
 from backend.data.registries import load_all
 from backend.engine.actions import execute_play_bird
-from backend.engine.scoring import _goal_progress_for_round
+from backend.engine.scoring import goal_progress_for_round
 from backend.models.enums import FoodType, Habitat
 from backend.models.game_state import create_new_game
 from backend.rules.rules_gap_audit import run_rules_gap_audit
@@ -29,7 +29,7 @@ def test_goal_nest_bird_with_egg_counts_only_birds_with_eggs() -> None:
     p.board.forest.slots[0].eggs = 1
     p.board.grassland.slots[0].eggs = 0
 
-    assert _goal_progress_for_round(p, goal) == 1
+    assert goal_progress_for_round(p, goal) == 1
 
 
 def test_goal_card_in_hand_and_food_supply_progress() -> None:
@@ -48,8 +48,8 @@ def test_goal_card_in_hand_and_food_supply_progress() -> None:
     p.food_supply.add(FoodType.SEED, 2)
     p.food_supply.add(FoodType.FISH, 1)
 
-    assert _goal_progress_for_round(p, g_cards) == 5
-    assert _goal_progress_for_round(p, g_food) == 3
+    assert goal_progress_for_round(p, g_cards) == 5
+    assert goal_progress_for_round(p, g_food) == 3
 
 
 def test_goal_sets_of_eggs_across_habitats_progress() -> None:
@@ -70,7 +70,7 @@ def test_goal_sets_of_eggs_across_habitats_progress() -> None:
     p.board.grassland.slots[0].eggs = 2
     p.board.wetland.slots[0].eggs = 5
 
-    assert _goal_progress_for_round(p, goal) == 2
+    assert goal_progress_for_round(p, goal) == 2
 
 
 def test_rules_gap_audit_round_goal_support_is_near_complete() -> None:
@@ -116,8 +116,8 @@ def test_goal_action_cube_gray_counts_play_bird_actions_and_resets() -> None:
     r2 = execute_play_bird(game, alice, bird2, Habitat.GRASSLAND, payment_for(bird2))
     assert r1.success and r2.success
 
-    alice_progress = _goal_progress_for_round(alice, goal)
-    bob_progress = _goal_progress_for_round(bob, goal)
+    alice_progress = goal_progress_for_round(alice, goal)
+    bob_progress = goal_progress_for_round(bob, goal)
     assert alice_progress == 2
     assert bob_progress == 0
 

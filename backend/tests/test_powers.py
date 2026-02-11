@@ -205,7 +205,7 @@ class TestTuckFromHand:
         assert result.cards_tucked == 1
         assert result.cards_drawn == 1
         assert player.board.forest.slots[0].tucked_cards == 1
-        assert player.hand_size == 0  # Tucked the one card
+        assert player.hand_size == 1  # Tucked one card, then drew one card
 
     def test_no_cards_to_tuck(self, game, bird_reg):
         player = game.players[0]

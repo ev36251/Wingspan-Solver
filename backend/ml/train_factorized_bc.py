@@ -29,35 +29,78 @@ HEAD_NAMES = [
 
 
 class BCModel:
-    def __init__(self, feature_dim: int, hidden: int, head_dims: dict[str, int], has_value_head: bool, seed: int):
+    def __init__(
+        self,
+        feature_dim: int,
+        hidden1: int,
+        hidden2: int,
+        head_dims: dict[str, int],
+        has_value_head: bool,
+        seed: int,
+    ):
         rng = np.random.default_rng(seed)
-        self.W1 = rng.normal(0.0, np.sqrt(2.0 / feature_dim), size=(feature_dim, hidden)).astype(np.float32)
-        self.b1 = np.zeros(hidden, dtype=np.float32)
+        self.W1 = rng.normal(0.0, np.sqrt(2.0 / feature_dim), size=(feature_dim, hidden1)).astype(np.float32)
+        self.b1 = np.zeros(hidden1, dtype=np.float32)
+        self.W2 = rng.normal(0.0, np.sqrt(2.0 / hidden1), size=(hidden1, hidden2)).astype(np.float32)
+        self.b2 = np.zeros(hidden2, dtype=np.float32)
         self.head_W: dict[str, np.ndarray] = {}
         self.head_b: dict[str, np.ndarray] = {}
         for hn, d in head_dims.items():
-            self.head_W[hn] = rng.normal(0.0, np.sqrt(2.0 / hidden), size=(hidden, d)).astype(np.float32)
+            self.head_W[hn] = rng.normal(0.0, np.sqrt(2.0 / hidden2), size=(hidden2, d)).astype(np.float32)
             self.head_b[hn] = np.zeros(d, dtype=np.float32)
 
         self.has_value_head = has_value_head
         self.W_value = (
-            rng.normal(0.0, np.sqrt(2.0 / hidden), size=(hidden,)).astype(np.float32)
+            rng.normal(0.0, np.sqrt(2.0 / hidden2), size=(hidden2,)).astype(np.float32)
             if has_value_head
             else None
         )
         self.b_value = np.float32(0.0)
+        self.hidden1 = hidden1
+        self.hidden2 = hidden2
 
-    def forward(self, x: np.ndarray):
-        h_pre = x @ self.W1 + self.b1
-        h = np.maximum(h_pre, 0.0)
-        logits = {hn: h @ self.head_W[hn] + self.head_b[hn] for hn in self.head_W}
+    def forward(
+        self,
+        x: np.ndarray,
+        *,
+        train: bool = False,
+        dropout: float = 0.0,
+        rng: np.random.Generator | None = None,
+    ):
+        h1_pre = x @ self.W1 + self.b1
+        h1 = np.maximum(h1_pre, 0.0)
+
+        keep = 1.0 - float(dropout)
+        if train and dropout > 0.0 and rng is not None and keep > 0.0:
+            mask1 = (rng.random(h1.shape, dtype=np.float32) < keep).astype(np.float32) / np.float32(keep)
+            h1_drop = h1 * mask1
+        else:
+            mask1 = np.ones_like(h1, dtype=np.float32)
+            h1_drop = h1
+
+        h2_pre = h1_drop @ self.W2 + self.b2
+        h2 = np.maximum(h2_pre, 0.0)
+        if train and dropout > 0.0 and rng is not None and keep > 0.0:
+            mask2 = (rng.random(h2.shape, dtype=np.float32) < keep).astype(np.float32) / np.float32(keep)
+            h2_drop = h2 * mask2
+        else:
+            mask2 = np.ones_like(h2, dtype=np.float32)
+            h2_drop = h2
+
+        logits = {hn: h2_drop @ self.head_W[hn] + self.head_b[hn] for hn in self.head_W}
         value = None
         if self.has_value_head:
-            value = float(h @ self.W_value + self.b_value)
-        return h_pre, h, logits, value
+            value = float(h2_drop @ self.W_value + self.b_value)
+        return h1_pre, h1, mask1, h1_drop, h2_pre, h2, mask2, h2_drop, logits, value
 
     def save(self, path: str | Path, metadata: dict) -> None:
-        out = {"W1": self.W1, "b1": self.b1, "metadata_json": np.asarray([json.dumps(metadata)], dtype=object)}
+        out = {
+            "W1": self.W1,
+            "b1": self.b1,
+            "W2": self.W2,
+            "b2": self.b2,
+            "metadata_json": np.asarray([json.dumps(metadata)], dtype=object),
+        }
         for hn in self.head_W:
             out[f"W_{hn}"] = self.head_W[hn]
             out[f"b_{hn}"] = self.head_b[hn]
@@ -86,20 +129,65 @@ def _load_rows(path: str | Path) -> list[dict]:
     return rows
 
 
+def _lr_for_epoch(
+    ep: int,
+    *,
+    lr_init: float,
+    lr_peak: float,
+    lr_warmup_epochs: int,
+    lr_decay_every: int,
+    lr_decay_factor: float,
+) -> float:
+    warm = max(0, int(lr_warmup_epochs))
+    if warm > 0 and ep <= warm:
+        if warm == 1:
+            return float(lr_peak)
+        t = float(ep - 1) / float(warm - 1)
+        return float(lr_init + t * (lr_peak - lr_init))
+    if lr_decay_every <= 0:
+        return float(lr_peak)
+    k = max(0, (ep - warm - 1) // lr_decay_every)
+    return float(lr_peak * (lr_decay_factor ** k))
+
+
 def train_bc(
     dataset_jsonl: str,
     meta_json: str,
     out_model: str,
     epochs: int,
     batch_size: int,
-    hidden: int,
-    lr: float,
-    val_split: float,
-    seed: int,
+    hidden1: int = 256,
+    hidden2: int = 128,
+    dropout: float = 0.15,
+    lr_init: float = 1e-4,
+    lr_peak: float = 1e-3,
+    lr_warmup_epochs: int = 2,
+    lr_decay_every: int = 3,
+    lr_decay_factor: float = 0.5,
+    val_split: float = 0.1,
+    seed: int = 0,
     value_loss_weight: float = 0.5,
+    early_stop_enabled: bool = True,
+    early_stop_patience: int = 3,
+    early_stop_min_delta: float = 1e-4,
+    early_stop_restore_best: bool = True,
+    hidden: int | None = None,
+    lr: float | None = None,
 ) -> dict:
     started = time.time()
     rnd = random.Random(seed)
+    np_rng = np.random.default_rng(seed + 17)
+    deprecated_args_used: list[str] = []
+
+    if hidden is not None:
+        hidden1 = int(hidden)
+        hidden2 = int(hidden)
+        deprecated_args_used.append("hidden")
+    if lr is not None:
+        lr_peak = float(lr)
+        deprecated_args_used.append("lr")
+    if deprecated_args_used:
+        print(f"warning: deprecated args used: {', '.join(deprecated_args_used)}")
 
     meta = json.loads(Path(meta_json).read_text(encoding="utf-8"))
     feature_dim = int(meta["feature_dim"])
@@ -125,7 +213,35 @@ def train_bc(
     val = rows[:val_n]
     train_rows = rows[val_n:] if len(rows) > val_n else rows
 
-    model = BCModel(feature_dim, hidden, head_dims, has_value_target, seed)
+    model = BCModel(feature_dim, hidden1, hidden2, head_dims, has_value_target, seed)
+    early_stop_patience = max(1, int(early_stop_patience))
+    early_stop_min_delta = max(0.0, float(early_stop_min_delta))
+
+    def _snapshot_model() -> dict:
+        snap = {
+            "W1": model.W1.copy(),
+            "b1": model.b1.copy(),
+            "W2": model.W2.copy(),
+            "b2": model.b2.copy(),
+            "head_W": {k: v.copy() for k, v in model.head_W.items()},
+            "head_b": {k: v.copy() for k, v in model.head_b.items()},
+            "b_value": np.float32(model.b_value),
+        }
+        if model.has_value_head and model.W_value is not None:
+            snap["W_value"] = model.W_value.copy()
+        return snap
+
+    def _restore_model(snap: dict) -> None:
+        model.W1[...] = snap["W1"]
+        model.b1[...] = snap["b1"]
+        model.W2[...] = snap["W2"]
+        model.b2[...] = snap["b2"]
+        for k in model.head_W:
+            model.head_W[k][...] = snap["head_W"][k]
+            model.head_b[k][...] = snap["head_b"][k]
+        model.b_value = np.float32(snap["b_value"])
+        if model.has_value_head and model.W_value is not None and "W_value" in snap:
+            model.W_value[...] = snap["W_value"]
 
     def eval_split(split_rows: list[dict]) -> dict:
         total_loss = 0.0
@@ -137,7 +253,7 @@ def train_bc(
         for r in split_rows:
             x = np.asarray(r["state"], dtype=np.float32)
             t = r["targets"]
-            _, _, logits, value_pred = model.forward(x)
+            _, _, _, _, _, _, _, _, logits, value_pred = model.forward(x, train=False)
 
             # Always action_type
             p_action = _softmax(logits["action_type"])
@@ -164,8 +280,22 @@ def train_bc(
         }
 
     history: list[dict] = []
+    best_val_loss = float("inf")
+    best_epoch = 0
+    no_improve_epochs = 0
+    stopped_early = False
+    best_snapshot: dict | None = None
+    epochs_completed = 0
 
     for ep in range(1, epochs + 1):
+        lr_epoch = _lr_for_epoch(
+            ep,
+            lr_init=lr_init,
+            lr_peak=lr_peak,
+            lr_warmup_epochs=lr_warmup_epochs,
+            lr_decay_every=lr_decay_every,
+            lr_decay_factor=lr_decay_factor,
+        )
         rnd.shuffle(train_rows)
         seen = 0
         loss_sum = 0.0
@@ -180,6 +310,8 @@ def train_bc(
 
             dW1 = np.zeros_like(model.W1)
             db1 = np.zeros_like(model.b1)
+            dW2 = np.zeros_like(model.W2)
+            db2 = np.zeros_like(model.b2)
             dWh = {hn: np.zeros_like(model.head_W[hn]) for hn in HEAD_NAMES}
             dbh = {hn: np.zeros_like(model.head_b[hn]) for hn in HEAD_NAMES}
             dWv = np.zeros_like(model.W_value) if model.has_value_head and model.W_value is not None else None
@@ -189,10 +321,15 @@ def train_bc(
                 x = np.asarray(r["state"], dtype=np.float32)
                 t = r["targets"]
 
-                h_pre, h, logits, value_pred = model.forward(x)
+                h1_pre, h1, mask1, h1_drop, h2_pre, h2, mask2, h2_drop, logits, value_pred = model.forward(
+                    x,
+                    train=True,
+                    dropout=dropout,
+                    rng=np_rng,
+                )
                 ta = int(t["action_type"])
 
-                dh = np.zeros_like(h)
+                dh2_drop = np.zeros_like(h2_drop)
 
                 # Action head (always)
                 pa = _softmax(logits["action_type"])
@@ -202,9 +339,9 @@ def train_bc(
 
                 da = pa.copy()
                 da[ta] -= 1.0
-                dWh["action_type"] += np.outer(h, da)
+                dWh["action_type"] += np.outer(h2_drop, da)
                 dbh["action_type"] += da
-                dh += model.head_W["action_type"] @ da
+                dh2_drop += model.head_W["action_type"] @ da
 
                 # Relevant sub-heads for this action type
                 for hn in RELEVANT_HEADS_BY_ACTION.get(ta, []):
@@ -213,9 +350,9 @@ def train_bc(
                     loss_sum += -math.log(max(1e-9, float(p[tv])))
                     d = p.copy()
                     d[tv] -= 1.0
-                    dWh[hn] += np.outer(h, d)
+                    dWh[hn] += np.outer(h2_drop, d)
                     dbh[hn] += d
-                    dh += model.head_W[hn] @ d
+                    dh2_drop += model.head_W[hn] @ d
 
                 # Optional value head regression
                 if (
@@ -230,24 +367,35 @@ def train_bc(
                     value_seen += 1
 
                     dvr = value_loss_weight * 2.0 * dv
-                    dWv += h * dvr
+                    dWv += h2_drop * dvr
                     dbv += dvr
-                    dh += model.W_value * dvr
+                    dh2_drop += model.W_value * dvr
 
-                dh[h_pre <= 0.0] = 0.0
-                dW1 += np.outer(x, dh)
-                db1 += dh
+                dh2 = dh2_drop * mask2
+                dh2[h2_pre <= 0.0] = 0.0
+
+                dW2 += np.outer(h1_drop, dh2)
+                db2 += dh2
+
+                dh1_drop = model.W2 @ dh2
+                dh1 = dh1_drop * mask1
+                dh1[h1_pre <= 0.0] = 0.0
+
+                dW1 += np.outer(x, dh1)
+                db1 += dh1
                 seen += 1
 
             scale = 1.0 / max(1, len(batch))
-            model.W1 -= lr * dW1 * scale
-            model.b1 -= lr * db1 * scale
+            model.W1 -= lr_epoch * dW1 * scale
+            model.b1 -= lr_epoch * db1 * scale
+            model.W2 -= lr_epoch * dW2 * scale
+            model.b2 -= lr_epoch * db2 * scale
             for hn in HEAD_NAMES:
-                model.head_W[hn] -= lr * dWh[hn] * scale
-                model.head_b[hn] -= lr * dbh[hn] * scale
+                model.head_W[hn] -= lr_epoch * dWh[hn] * scale
+                model.head_b[hn] -= lr_epoch * dbh[hn] * scale
             if model.has_value_head and dWv is not None and model.W_value is not None:
-                model.W_value -= lr * dWv * scale
-                model.b_value = np.float32(float(model.b_value - lr * dbv * scale))
+                model.W_value -= lr_epoch * dWv * scale
+                model.b_value = np.float32(float(model.b_value - lr_epoch * dbv * scale))
 
         train_metrics = {
             "loss": loss_sum / max(1, seen),
@@ -258,27 +406,66 @@ def train_bc(
 
         row = {
             "epoch": ep,
+            "lr_epoch": round(lr_epoch, 8),
             "train_loss": round(train_metrics["loss"], 6),
             "train_action_acc": round(train_metrics["action_acc"], 6),
             "train_value_mse": round(train_metrics["value_mse"], 6),
             "val_loss": round(val_metrics["loss"], 6),
             "val_action_acc": round(val_metrics["action_acc"], 6),
             "val_value_mse": round(val_metrics["value_mse"], 6),
+            "is_best_epoch": False,
         }
+        current_val_loss = float(val_metrics["loss"])
+        if best_val_loss - current_val_loss >= early_stop_min_delta:
+            best_val_loss = current_val_loss
+            best_epoch = ep
+            no_improve_epochs = 0
+            row["is_best_epoch"] = True
+            if early_stop_restore_best:
+                best_snapshot = _snapshot_model()
+        else:
+            no_improve_epochs += 1
+
         history.append(row)
+        epochs_completed = ep
         print(
-            f"epoch {ep}/{epochs} | train_loss={row['train_loss']:.4f} train_acc={row['train_action_acc']:.3f} "
+            f"epoch {ep}/{epochs} | lr={row['lr_epoch']:.6f} | train_loss={row['train_loss']:.4f} train_acc={row['train_action_acc']:.3f} "
             f"train_v={row['train_value_mse']:.4f} | val_loss={row['val_loss']:.4f} "
             f"val_acc={row['val_action_acc']:.3f} val_v={row['val_value_mse']:.4f}"
         )
+        if early_stop_enabled and no_improve_epochs >= early_stop_patience:
+            stopped_early = True
+            break
+
+    if early_stop_enabled and early_stop_restore_best and best_snapshot is not None:
+        _restore_model(best_snapshot)
 
     result = {
-        "version": 2,
+        "version": 3,
+        "format_version": 3,
         "mode": "factorized_behavioral_cloning",
+        "model_arch": "mlp_2layer",
         "elapsed_sec": round(time.time() - started, 3),
         "dataset": dataset_jsonl,
         "meta": meta_json,
         "feature_dim": feature_dim,
+        "hidden1": int(hidden1),
+        "hidden2": int(hidden2),
+        "dropout": float(dropout),
+        "lr_init": float(lr_init),
+        "lr_peak": float(lr_peak),
+        "lr_warmup_epochs": int(lr_warmup_epochs),
+        "lr_decay_every": int(lr_decay_every),
+        "lr_decay_factor": float(lr_decay_factor),
+        "early_stop_enabled": bool(early_stop_enabled),
+        "early_stop_patience": int(early_stop_patience),
+        "early_stop_min_delta": float(early_stop_min_delta),
+        "early_stop_restore_best": bool(early_stop_restore_best),
+        "stopped_early": bool(stopped_early),
+        "best_val_loss_epoch": int(best_epoch),
+        "best_val_loss": float(best_val_loss if best_epoch > 0 else history[-1]["val_loss"] if history else 0.0),
+        "epochs_completed": int(epochs_completed),
+        "deprecated_args_used": deprecated_args_used,
         "head_dims": head_dims,
         "has_value_head": has_value_target,
         "value_prediction_mode": "score_linear" if has_value_target else "none",
@@ -299,8 +486,23 @@ def main() -> None:
     parser.add_argument("--out", default="reports/ml/factorized_bc_model.npz")
     parser.add_argument("--epochs", type=int, default=6)
     parser.add_argument("--batch-size", type=int, default=128)
-    parser.add_argument("--hidden", type=int, default=192)
-    parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--hidden1", type=int, default=256)
+    parser.add_argument("--hidden2", type=int, default=128)
+    parser.add_argument("--dropout", type=float, default=0.15)
+    parser.add_argument("--lr-init", type=float, default=1e-4)
+    parser.add_argument("--lr-peak", type=float, default=1e-3)
+    parser.add_argument("--lr-warmup-epochs", type=int, default=2)
+    parser.add_argument("--lr-decay-every", type=int, default=3)
+    parser.add_argument("--lr-decay-factor", type=float, default=0.5)
+    parser.set_defaults(early_stop_enabled=True, early_stop_restore_best=True)
+    parser.add_argument("--early-stop-enabled", dest="early_stop_enabled", action="store_true")
+    parser.add_argument("--disable-early-stop", dest="early_stop_enabled", action="store_false")
+    parser.add_argument("--early-stop-patience", type=int, default=3)
+    parser.add_argument("--early-stop-min-delta", type=float, default=1e-4)
+    parser.add_argument("--early-stop-restore-best", dest="early_stop_restore_best", action="store_true")
+    parser.add_argument("--no-early-stop-restore-best", dest="early_stop_restore_best", action="store_false")
+    parser.add_argument("--hidden", type=int, default=None, help="Deprecated: maps hidden1=hidden2=hidden")
+    parser.add_argument("--lr", type=float, default=None, help="Deprecated: maps lr_peak=lr")
     parser.add_argument("--val-split", type=float, default=0.1)
     parser.add_argument("--value-weight", type=float, default=0.5)
     parser.add_argument("--seed", type=int, default=0)
@@ -312,11 +514,23 @@ def main() -> None:
         out_model=args.out,
         epochs=args.epochs,
         batch_size=args.batch_size,
-        hidden=args.hidden,
-        lr=args.lr,
+        hidden1=args.hidden1,
+        hidden2=args.hidden2,
+        dropout=args.dropout,
+        lr_init=args.lr_init,
+        lr_peak=args.lr_peak,
+        lr_warmup_epochs=args.lr_warmup_epochs,
+        lr_decay_every=args.lr_decay_every,
+        lr_decay_factor=args.lr_decay_factor,
+        early_stop_enabled=args.early_stop_enabled,
+        early_stop_patience=args.early_stop_patience,
+        early_stop_min_delta=args.early_stop_min_delta,
+        early_stop_restore_best=args.early_stop_restore_best,
         val_split=args.val_split,
         seed=args.seed,
         value_loss_weight=args.value_weight,
+        hidden=args.hidden,
+        lr=args.lr,
     )
     print(
         f"factorized BC complete | model={args.out} | "

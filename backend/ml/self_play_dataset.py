@@ -160,6 +160,10 @@ def _play_one_game(
     pending: list[_PendingDecision] = []
     turns = 0
     strict_violations: list[str] = []
+    move_execute_attempts = 0
+    move_execute_successes = 0
+    move_execute_fallback_used = 0
+    move_execute_dropped = 0
 
     while not game.is_game_over and turns < max_turns:
         if game.current_round > max_round:
@@ -208,18 +212,7 @@ def _play_one_game(
                 break
             raise
         action_id = action_codec.encode_move(move)
-
-        pending.append(
-            _PendingDecision(
-                state=state_vec,
-                legal_action_ids=legal_action_ids,
-                action_id=action_id,
-                player_index=player_idx,
-                num_players=game.num_players,
-                round_num=game.current_round,
-                turn_in_round=game.turn_in_round,
-            )
-        )
+        move_execute_attempts += 1
 
         try:
             success = execute_move_on_sim(game, player, move)
@@ -230,6 +223,18 @@ def _play_one_game(
             raise
 
         if success:
+            pending.append(
+                _PendingDecision(
+                    state=state_vec,
+                    legal_action_ids=legal_action_ids,
+                    action_id=action_id,
+                    player_index=player_idx,
+                    num_players=game.num_players,
+                    round_num=game.current_round,
+                    turn_in_round=game.turn_in_round,
+                )
+            )
+            move_execute_successes += 1
             game.advance_turn()
             _refill_tray(game)
         else:
@@ -245,11 +250,25 @@ def _play_one_game(
                         else:
                             raise
                     if ok_fb:
+                        pending.append(
+                            _PendingDecision(
+                                state=state_vec,
+                                legal_action_ids=legal_action_ids,
+                                action_id=action_codec.encode_move(m),
+                                player_index=player_idx,
+                                num_players=game.num_players,
+                                round_num=game.current_round,
+                                turn_in_round=game.turn_in_round,
+                            )
+                        )
+                        move_execute_successes += 1
+                        move_execute_fallback_used += 1
                         game.advance_turn()
                         _refill_tray(game)
                         fallback_executed = True
                         break
             if not fallback_executed:
+                move_execute_dropped += 1
                 player.action_cubes_remaining = max(0, player.action_cubes_remaining - 1)
                 game.advance_turn()
                 _refill_tray(game)
@@ -285,6 +304,10 @@ def _play_one_game(
         ],
         "strict_certified": len(strict_violations) == 0,
         "strict_violations": strict_violations,
+        "move_execute_attempts": move_execute_attempts,
+        "move_execute_successes": move_execute_successes,
+        "move_execute_fallback_used": move_execute_fallback_used,
+        "move_execute_dropped": move_execute_dropped,
     }
     return samples, game_summary
 
@@ -319,6 +342,10 @@ def generate_dataset(
     winner_scores: list[int] = []
     sample_count = 0
     strict_rejected_games = 0
+    move_execute_attempts = 0
+    move_execute_successes = 0
+    move_execute_fallback_used = 0
+    move_execute_dropped = 0
 
     for g in range(1, games + 1):
         samples, summary = _play_one_game(
@@ -337,6 +364,10 @@ def generate_dataset(
         if reject_non_strict_powers and not summary.get("strict_certified", False):
             strict_rejected_games += 1
             continue
+        move_execute_attempts += int(summary.get("move_execute_attempts", 0))
+        move_execute_successes += int(summary.get("move_execute_successes", 0))
+        move_execute_fallback_used += int(summary.get("move_execute_fallback_used", 0))
+        move_execute_dropped += int(summary.get("move_execute_dropped", 0))
         writer.write_many(samples)
         sample_count += len(samples)
 
@@ -370,6 +401,10 @@ def generate_dataset(
         "max_round": max_round,
         "emit_score_breakdown": emit_score_breakdown,
         "strict_rejected_games": strict_rejected_games,
+        "move_execute_attempts": move_execute_attempts,
+        "move_execute_successes": move_execute_successes,
+        "move_execute_fallback_used": move_execute_fallback_used,
+        "move_execute_dropped": move_execute_dropped,
         "reward_weights": {
             "win": REWARD_WIN_WEIGHT,
             "score": REWARD_SCORE_WEIGHT,

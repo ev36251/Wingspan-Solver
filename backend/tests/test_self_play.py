@@ -1,6 +1,7 @@
 """Tests for the self-play evolutionary training module."""
 
 import copy
+import random
 import pytest
 from dataclasses import fields
 
@@ -117,9 +118,10 @@ class TestGameCreation:
         game = create_training_game(2, BoardType.OCEANIA)
         assert len(game.players) == 2
         for p in game.players:
-            assert len(p.hand) == 5
+            assert 0 <= len(p.hand) <= 5
             assert len(p.bonus_cards) == 1
-            assert p.food_supply.total() >= 5  # 1 of each + possible nectar
+            assert p.food_supply.total_non_nectar() == (5 - len(p.hand))
+            assert p.food_supply.nectar == 1
             assert p.action_cubes_remaining > 0
         assert len(game.round_goals) == 4
         assert game.birdfeeder.count > 0
@@ -129,11 +131,48 @@ class TestGameCreation:
         game = create_training_game(3, BoardType.BASE)
         assert len(game.players) == 3
         for p in game.players:
-            assert len(p.hand) == 5
+            assert 0 <= len(p.hand) <= 5
+            assert p.food_supply.total_non_nectar() == (5 - len(p.hand))
+            assert p.food_supply.nectar == 0
 
     def test_create_training_game_4_players(self):
         game = create_training_game(4, BoardType.OCEANIA)
         assert len(game.players) == 4
+
+    def test_create_training_game_real5_softmax_draft_fidelity(self):
+        saw_less_than_five = False
+        for seed in range(20):
+            random.seed(seed)
+            game = create_training_game(2, BoardType.OCEANIA, setup_mode="real5_softmax")
+            for p in game.players:
+                assert 0 <= len(p.hand) <= 5
+                assert p.food_supply.total_non_nectar() == (5 - len(p.hand))
+                assert p.food_supply.nectar == 1
+                if len(p.hand) < 5:
+                    saw_less_than_five = True
+        assert saw_less_than_five
+
+    def test_create_training_game_legacy_mode_keeps_five(self):
+        game = create_training_game(2, BoardType.BASE, setup_mode="legacy_fixed5")
+        for p in game.players:
+            assert len(p.hand) == 5
+            assert p.food_supply.total_non_nectar() == 5
+            assert p.food_supply.nectar == 0
+
+    def test_create_training_game_invalid_knobs_are_clamped(self):
+        game = create_training_game(
+            2,
+            BoardType.BASE,
+            setup_mode="real5_softmax",
+            draft_temperature=-1.0,
+            draft_sample_top_k=0,
+        )
+        stats = getattr(game, "_setup_stats")
+        assert stats["setup_mode"] == "real5_softmax"
+        assert stats["draft_fallbacks"] >= 0
+        for p in game.players:
+            assert 0 <= len(p.hand) <= 5
+            assert p.food_supply.total_non_nectar() == (5 - len(p.hand))
 
 
 class TestPlayMatch:

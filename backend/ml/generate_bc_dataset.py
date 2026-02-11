@@ -220,6 +220,10 @@ def generate_bc_dataset(
     all_scores: list[int] = []
     engine_teacher_calls = 0
     engine_teacher_applied = 0
+    move_execute_attempts = 0
+    move_execute_successes = 0
+    move_execute_fallback_used = 0
+    move_execute_dropped = 0
     strict_rejected_games = 0
 
     with outp.open("w", encoding="utf-8") as f:
@@ -290,33 +294,52 @@ def generate_bc_dataset(
                         engine_teacher_applied += 1
 
                 score_now = int(calculate_score(game, p).total)
-                pending.append(
-                    _PendingDecision(
-                        state=enc.encode(game, pi),
-                        targets=encode_factorized_targets(best, p),
-                        legal_action_type_mask=_action_type_mask(moves),
-                        player_index=pi,
-                        round_num=game.current_round,
-                        turn_in_round=game.turn_in_round,
-                        ordinal_for_player=ordinals[pi],
-                        score_now=score_now,
-                    )
-                )
-                ordinals[pi] += 1
-
+                state_now = enc.encode(game, pi)
+                mask_now = _action_type_mask(moves)
+                move_execute_attempts += 1
                 success = execute_move_on_sim(game, p, best)
                 if success:
+                    pending.append(
+                        _PendingDecision(
+                            state=state_now,
+                            targets=encode_factorized_targets(best, p),
+                            legal_action_type_mask=mask_now,
+                            player_index=pi,
+                            round_num=game.current_round,
+                            turn_in_round=game.turn_in_round,
+                            ordinal_for_player=ordinals[pi],
+                            score_now=score_now,
+                        )
+                    )
+                    ordinals[pi] += 1
+                    move_execute_successes += 1
                     game.advance_turn()
                     _refill_tray(game)
                 else:
                     fallback = False
                     for m in moves:
                         if execute_move_on_sim(game, p, m):
+                            pending.append(
+                                _PendingDecision(
+                                    state=state_now,
+                                    targets=encode_factorized_targets(m, p),
+                                    legal_action_type_mask=mask_now,
+                                    player_index=pi,
+                                    round_num=game.current_round,
+                                    turn_in_round=game.turn_in_round,
+                                    ordinal_for_player=ordinals[pi],
+                                    score_now=score_now,
+                                )
+                            )
+                            ordinals[pi] += 1
+                            move_execute_successes += 1
+                            move_execute_fallback_used += 1
                             game.advance_turn()
                             _refill_tray(game)
                             fallback = True
                             break
                     if not fallback:
+                        move_execute_dropped += 1
                         game.advance_turn()
                         _refill_tray(game)
 
@@ -410,6 +433,10 @@ def generate_bc_dataset(
             "late_round_oversample_factor": late_round_oversample_factor,
             "engine_teacher_calls": engine_teacher_calls,
             "engine_teacher_applied": engine_teacher_applied,
+            "move_execute_attempts": move_execute_attempts,
+            "move_execute_successes": move_execute_successes,
+            "move_execute_fallback_used": move_execute_fallback_used,
+            "move_execute_dropped": move_execute_dropped,
         },
         "strict_rules_only": strict_rules_only,
         "reject_non_strict_powers": reject_non_strict_powers,

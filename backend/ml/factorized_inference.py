@@ -17,6 +17,9 @@ class FactorizedPolicyModel:
         z = np.load(path, allow_pickle=True)
         self.W1 = z["W1"]
         self.b1 = z["b1"]
+        self.has_second_layer = "W2" in z and "b2" in z
+        self.W2 = z["W2"] if self.has_second_layer else None
+        self.b2 = z["b2"] if self.has_second_layer else None
 
         meta_json = z["metadata_json"][0]
         if isinstance(meta_json, bytes):
@@ -38,8 +41,13 @@ class FactorizedPolicyModel:
         self.value_score_bias = float(self.meta.get("value_score_bias", 0.0))
 
     def forward(self, state: np.ndarray) -> tuple[dict[str, np.ndarray], float | None]:
-        h_pre = state @ self.W1 + self.b1
-        h = np.maximum(h_pre, 0.0)
+        h1_pre = state @ self.W1 + self.b1
+        h1 = np.maximum(h1_pre, 0.0)
+        if self.has_second_layer and self.W2 is not None and self.b2 is not None:
+            h2_pre = h1 @ self.W2 + self.b2
+            h = np.maximum(h2_pre, 0.0)
+        else:
+            h = h1
         logits = {hn: h @ self.head_W[hn] + self.head_b[hn] for hn in self.head_W}
         value = None
         if self.has_value_head:

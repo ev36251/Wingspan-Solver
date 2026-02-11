@@ -41,27 +41,37 @@ def run_auto_improve_factorized(
     late_round_oversample_factor: int,
     train_epochs: int,
     train_batch: int,
-    train_hidden: int,
-    train_lr: float,
-    train_value_weight: float,
-    val_split: float,
-    eval_games: int,
-    promotion_games: int,
-    pool_games_per_opponent: int,
-    min_pool_win_rate: float,
-    min_pool_mean_score: float,
-    min_pool_rate_ge_100: float,
-    min_pool_rate_ge_120: float,
-    require_pool_non_regression: bool,
-    min_gate_win_rate: float,
-    min_gate_mean_score: float,
-    min_gate_rate_ge_100: float,
-    min_gate_rate_ge_120: float,
-    engine_teacher_prob: float,
-    engine_time_budget_ms: int,
-    engine_num_determinizations: int,
-    engine_max_rollout_depth: int,
-    seed: int,
+    train_hidden1: int = 256,
+    train_hidden2: int = 128,
+    train_dropout: float = 0.15,
+    train_lr_init: float = 1e-4,
+    train_lr_peak: float = 1e-3,
+    train_lr_warmup_epochs: int = 2,
+    train_lr_decay_every: int = 3,
+    train_lr_decay_factor: float = 0.5,
+    train_early_stop_enabled: bool = True,
+    train_early_stop_patience: int = 3,
+    train_early_stop_min_delta: float = 1e-4,
+    train_early_stop_restore_best: bool = True,
+    train_value_weight: float = 0.5,
+    val_split: float = 0.1,
+    eval_games: int = 80,
+    promotion_games: int = 200,
+    pool_games_per_opponent: int = 60,
+    min_pool_win_rate: float = 0.0,
+    min_pool_mean_score: float = 0.0,
+    min_pool_rate_ge_100: float = 0.0,
+    min_pool_rate_ge_120: float = 0.0,
+    require_pool_non_regression: bool = False,
+    min_gate_win_rate: float = 0.45,
+    min_gate_mean_score: float = 70.0,
+    min_gate_rate_ge_100: float = 0.08,
+    min_gate_rate_ge_120: float = 0.01,
+    engine_teacher_prob: float = 0.15,
+    engine_time_budget_ms: int = 25,
+    engine_num_determinizations: int = 0,
+    engine_max_rollout_depth: int = 24,
+    seed: int = 0,
     strict_rules_only: bool = True,
     reject_non_strict_powers: bool = True,
     strict_kpi_gate_enabled: bool = True,
@@ -76,7 +86,22 @@ def run_auto_improve_factorized(
     strict_kpi_require_non_regression: bool = False,
     strict_kpi_mean_score_tolerance: float = 0.5,
     clean_out_dir: bool = True,
+    train_hidden: int | None = None,
+    train_lr: float | None = None,
 ) -> dict:
+    deprecated_train_args_used: list[str] = []
+    if train_hidden is not None:
+        train_hidden1 = int(train_hidden)
+        train_hidden2 = int(train_hidden)
+        deprecated_train_args_used.append("train_hidden")
+    if train_lr is not None:
+        train_lr_peak = float(train_lr)
+        deprecated_train_args_used.append("train_lr")
+    if deprecated_train_args_used:
+        print(
+            f"warning: deprecated auto-improve train args used: {', '.join(deprecated_train_args_used)}"
+        )
+
     base = Path(out_dir)
     if clean_out_dir and base.exists():
         shutil.rmtree(base)
@@ -138,8 +163,18 @@ def run_auto_improve_factorized(
             out_model=str(model_path),
             epochs=train_epochs,
             batch_size=train_batch,
-            hidden=train_hidden,
-            lr=train_lr,
+            hidden1=train_hidden1,
+            hidden2=train_hidden2,
+            dropout=train_dropout,
+            lr_init=train_lr_init,
+            lr_peak=train_lr_peak,
+            lr_warmup_epochs=train_lr_warmup_epochs,
+            lr_decay_every=train_lr_decay_every,
+            lr_decay_factor=train_lr_decay_factor,
+            early_stop_enabled=train_early_stop_enabled,
+            early_stop_patience=train_early_stop_patience,
+            early_stop_min_delta=train_early_stop_min_delta,
+            early_stop_restore_best=train_early_stop_restore_best,
             val_split=val_split,
             seed=iter_seed,
             value_loss_weight=train_value_weight,
@@ -310,8 +345,22 @@ def run_auto_improve_factorized(
                 "late_round_oversample_factor": late_round_oversample_factor,
                 "train_epochs": train_epochs,
                 "train_batch": train_batch,
-                "train_hidden": train_hidden,
-                "train_lr": train_lr,
+                "train_hidden1": train_hidden1,
+                "train_hidden2": train_hidden2,
+                "train_dropout": train_dropout,
+                "train_lr_init": train_lr_init,
+                "train_lr_peak": train_lr_peak,
+                "train_lr_warmup_epochs": train_lr_warmup_epochs,
+                "train_lr_decay_every": train_lr_decay_every,
+                "train_lr_decay_factor": train_lr_decay_factor,
+                "train_early_stop_enabled": train_early_stop_enabled,
+                "train_early_stop_patience": train_early_stop_patience,
+                "train_early_stop_min_delta": train_early_stop_min_delta,
+                "train_early_stop_restore_best": train_early_stop_restore_best,
+                "deprecated_train_args_used": deprecated_train_args_used,
+                # Temporary compatibility keys.
+                "train_hidden": train_hidden1,
+                "train_lr": train_lr_peak,
                 "train_value_weight": train_value_weight,
                 "val_split": val_split,
                 "eval_games": eval_games,
@@ -369,7 +418,7 @@ def main() -> None:
     parser.add_argument("--players", type=int, default=2, choices=[2])
     parser.add_argument("--board-type", default="oceania", choices=["base", "oceania"])
     parser.add_argument("--max-turns", type=int, default=220)
-    parser.add_argument("--games-per-iter", type=int, default=100)
+    parser.add_argument("--games-per-iter", type=int, default=400)
     parser.add_argument("--proposal-top-k", type=int, default=6)
     parser.add_argument("--lookahead-depth", type=int, default=2, choices=[0, 1, 2])
     parser.add_argument("--n-step", type=int, default=2)
@@ -378,10 +427,25 @@ def main() -> None:
     parser.add_argument("--value-target-score-scale", type=float, default=160.0)
     parser.add_argument("--value-target-score-bias", type=float, default=0.0)
     parser.add_argument("--late-round-oversample-factor", type=int, default=2)
-    parser.add_argument("--train-epochs", type=int, default=8)
+    parser.add_argument("--train-epochs", type=int, default=20)
     parser.add_argument("--train-batch", type=int, default=128)
-    parser.add_argument("--train-hidden", type=int, default=192)
-    parser.add_argument("--train-lr", type=float, default=1e-3)
+    parser.add_argument("--train-hidden1", type=int, default=256)
+    parser.add_argument("--train-hidden2", type=int, default=128)
+    parser.add_argument("--train-dropout", type=float, default=0.15)
+    parser.add_argument("--train-lr-init", type=float, default=1e-4)
+    parser.add_argument("--train-lr-peak", type=float, default=1e-3)
+    parser.add_argument("--train-lr-warmup-epochs", type=int, default=2)
+    parser.add_argument("--train-lr-decay-every", type=int, default=3)
+    parser.add_argument("--train-lr-decay-factor", type=float, default=0.5)
+    parser.set_defaults(train_early_stop_enabled=True, train_early_stop_restore_best=True)
+    parser.add_argument("--train-early-stop-enabled", dest="train_early_stop_enabled", action="store_true")
+    parser.add_argument("--disable-train-early-stop", dest="train_early_stop_enabled", action="store_false")
+    parser.add_argument("--train-early-stop-patience", type=int, default=3)
+    parser.add_argument("--train-early-stop-min-delta", type=float, default=1e-4)
+    parser.add_argument("--train-early-stop-restore-best", dest="train_early_stop_restore_best", action="store_true")
+    parser.add_argument("--no-train-early-stop-restore-best", dest="train_early_stop_restore_best", action="store_false")
+    parser.add_argument("--train-hidden", type=int, default=None, help="Deprecated: maps hidden1=hidden2=train-hidden")
+    parser.add_argument("--train-lr", type=float, default=None, help="Deprecated: maps train-lr-peak=train-lr")
     parser.add_argument("--train-value-weight", type=float, default=0.5)
     parser.add_argument("--val-split", type=float, default=0.1)
     parser.add_argument("--eval-games", type=int, default=80)
@@ -441,8 +505,18 @@ def main() -> None:
         late_round_oversample_factor=args.late_round_oversample_factor,
         train_epochs=args.train_epochs,
         train_batch=args.train_batch,
-        train_hidden=args.train_hidden,
-        train_lr=args.train_lr,
+        train_hidden1=args.train_hidden1,
+        train_hidden2=args.train_hidden2,
+        train_dropout=args.train_dropout,
+        train_lr_init=args.train_lr_init,
+        train_lr_peak=args.train_lr_peak,
+        train_lr_warmup_epochs=args.train_lr_warmup_epochs,
+        train_lr_decay_every=args.train_lr_decay_every,
+        train_lr_decay_factor=args.train_lr_decay_factor,
+        train_early_stop_enabled=args.train_early_stop_enabled,
+        train_early_stop_patience=args.train_early_stop_patience,
+        train_early_stop_min_delta=args.train_early_stop_min_delta,
+        train_early_stop_restore_best=args.train_early_stop_restore_best,
         train_value_weight=args.train_value_weight,
         val_split=args.val_split,
         eval_games=args.eval_games,
@@ -475,6 +549,8 @@ def main() -> None:
         strict_kpi_require_non_regression=args.strict_kpi_require_non_regression,
         strict_kpi_mean_score_tolerance=args.strict_kpi_mean_score_tolerance,
         seed=args.seed,
+        train_hidden=args.train_hidden,
+        train_lr=args.train_lr,
     )
 
     best = manifest.get("best")

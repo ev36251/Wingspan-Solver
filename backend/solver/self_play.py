@@ -14,6 +14,7 @@ Usage:
 import argparse
 import copy
 import json
+import math
 import random
 import time
 from dataclasses import dataclass, fields, asdict
@@ -25,6 +26,7 @@ from backend.models.enums import BoardType, ActionType, FoodType
 from backend.models.game_state import create_new_game, GameState
 from backend.models.player import Player
 from backend.engine.scoring import calculate_score
+from backend.solver.setup_advisor import analyze_setup
 from backend.solver.heuristics import HeuristicWeights, DEFAULT_WEIGHTS, dynamic_weights
 from backend.solver.move_generator import Move, generate_all_moves
 from backend.solver.simulation import deep_copy_game, execute_move_on_sim, _refill_tray, _score_round_goal
@@ -111,6 +113,9 @@ def create_training_game(
     num_players: int,
     board_type: BoardType,
     strict_rules_mode: bool = False,
+    setup_mode: str = "real5_softmax",
+    draft_temperature: float = 0.85,
+    draft_sample_top_k: int = 12,
 ) -> GameState:
     """Create a game state suitable for self-play training."""
     bird_reg = get_bird_registry()
@@ -148,25 +153,141 @@ def create_training_game(
         )
     random.shuffle(all_birds)
     all_bonus = list(bonus_reg.all_cards)
+    random.shuffle(all_bonus)
 
     idx = 0
-    for player in game.players:
-        hand_size = min(5, len(all_birds) - idx)
-        player.hand = all_birds[idx:idx + hand_size]
-        idx += hand_size
-        player.bonus_cards = [random.choice(all_bonus)]
+    non_nectar_foods = [
+        FoodType.INVERTEBRATE,
+        FoodType.SEED,
+        FoodType.FISH,
+        FoodType.FRUIT,
+        FoodType.RODENT,
+    ]
+    mode = setup_mode.strip().lower()
 
-        # Starting food: 1 of each non-nectar type
-        for ft in [FoodType.INVERTEBRATE, FoodType.SEED, FoodType.FISH,
-                   FoodType.FRUIT, FoodType.RODENT]:
-            player.food_supply.add(ft, 1)
+    if mode == "legacy_fixed5":
+        for player in game.players:
+            hand_size = min(5, len(all_birds) - idx)
+            player.hand = all_birds[idx:idx + hand_size]
+            idx += hand_size
+            player.bonus_cards = [random.choice(all_bonus)]
 
-    # Set up card tray from deck top
-    tray_count = min(3, len(all_birds) - idx)
-    for _ in range(tray_count):
-        if idx < len(all_birds):
-            game.card_tray.add_card(all_birds[idx])
+            # Starting food: 1 of each non-nectar type
+            for ft in non_nectar_foods:
+                player.food_supply.add(ft, 1)
+        draft_discard_total = 0
+        draft_fallbacks = 0
+    else:
+        if mode != "real5_softmax":
+            mode = "real5_softmax"
+        top_k = max(1, int(draft_sample_top_k))
+        temp = float(draft_temperature)
+        if temp <= 0.0:
+            temp = 0.85
+
+        candidate_hands: list[list] = []
+        for _ in game.players:
+            hand_size = min(5, len(all_birds) - idx)
+            candidate_hands.append(all_birds[idx:idx + hand_size])
+            idx += hand_size
+
+        # Draw tray before setup choice so setup scoring can account for tray access.
+        tray_candidates: list = []
+        tray_count = min(3, len(all_birds) - idx)
+        for _ in range(tray_count):
+            tray_candidates.append(all_birds[idx])
             idx += 1
+
+        if len(all_bonus) < num_players * 2:
+            raise ValueError(
+                "Not enough bonus cards to initialize training game "
+                f"(have {len(all_bonus)}, need at least {num_players * 2})"
+            )
+
+        draft_discard_total = 0
+        draft_fallbacks = 0
+        bonus_idx = 0
+        for pi, player in enumerate(game.players):
+            candidate = candidate_hands[pi]
+            bonus_options = all_bonus[bonus_idx:bonus_idx + 2]
+            bonus_idx += 2
+            recommendations = analyze_setup(
+                birds=candidate,
+                bonus_cards=bonus_options,
+                round_goals=round_goals,
+                top_n=top_k,
+                tray_birds=tray_candidates,
+                turn_order=pi + 1,
+                num_players=game.num_players,
+            )
+
+            selected = None
+            if recommendations:
+                max_score = max(r.score for r in recommendations)
+                weights: list[float] = []
+                for rec in recommendations:
+                    shifted = (float(rec.score) - float(max_score)) / max(1e-6, temp)
+                    weights.append(math.exp(shifted))
+                selected = random.choices(recommendations, weights=weights, k=1)[0]
+
+            if selected is None:
+                # Should not occur; fallback preserves playability.
+                draft_fallbacks += 1
+                player.hand = list(candidate)
+                player.bonus_cards = [bonus_options[0]]
+                for ft in non_nectar_foods:
+                    player.food_supply.add(ft, 1)
+                continue
+
+            by_name: dict[str, list] = {}
+            for b in candidate:
+                by_name.setdefault(b.name, []).append(b)
+
+            kept_birds = []
+            for name in selected.birds_to_keep:
+                pool = by_name.get(name)
+                if pool:
+                    kept_birds.append(pool.pop())
+
+            player.hand = kept_birds
+            draft_discard_total += max(0, len(candidate) - len(kept_birds))
+
+            # Keep base-game/Oceania nectar initialization; only overwrite non-nectar.
+            player.food_supply.invertebrate = 0
+            player.food_supply.seed = 0
+            player.food_supply.fish = 0
+            player.food_supply.fruit = 0
+            player.food_supply.rodent = 0
+            for ft_name, count in selected.food_to_keep.items():
+                try:
+                    ft = FoodType(ft_name)
+                except ValueError:
+                    continue
+                if ft != FoodType.NECTAR and count > 0:
+                    player.food_supply.add(ft, int(count))
+
+            chosen_bonus = next((b for b in bonus_options if b.name == selected.bonus_card), None)
+            player.bonus_cards = [chosen_bonus if chosen_bonus is not None else bonus_options[0]]
+
+        for b in tray_candidates:
+            game.card_tray.add_card(b)
+
+    if mode == "legacy_fixed5":
+        # Set up card tray from deck top.
+        tray_count = min(3, len(all_birds) - idx)
+        for _ in range(tray_count):
+            if idx < len(all_birds):
+                game.card_tray.add_card(all_birds[idx])
+                idx += 1
+
+    game.discard_pile_count = draft_discard_total
+    game._setup_stats = {  # type: ignore[attr-defined]
+        "setup_mode": mode,
+        "draft_temperature": draft_temperature,
+        "draft_sample_top_k": draft_sample_top_k,
+        "draft_discard_total": draft_discard_total,
+        "draft_fallbacks": draft_fallbacks,
+    }
 
     # Keep finite deck identities for higher-fidelity simulation.
     game._deck_cards = list(all_birds[idx:])  # type: ignore[attr-defined]

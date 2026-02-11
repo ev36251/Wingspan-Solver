@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import json
+
 from backend.models.enums import BoardType
 from backend.ml.generate_bc_dataset import generate_bc_dataset
 from backend.ml.train_factorized_bc import train_bc
@@ -29,8 +31,14 @@ def test_factorized_eval_smoke(tmp_path: Path) -> None:
         out_model=str(model),
         epochs=1,
         batch_size=32,
-        hidden=64,
-        lr=1e-3,
+        hidden1=64,
+        hidden2=32,
+        dropout=0.1,
+        lr_init=1e-4,
+        lr_peak=1e-3,
+        lr_warmup_epochs=1,
+        lr_decay_every=3,
+        lr_decay_factor=0.5,
         val_split=0.2,
         seed=8,
     )
@@ -65,8 +73,14 @@ def test_auto_improve_factorized_smoke(tmp_path: Path) -> None:
         late_round_oversample_factor=1,
         train_epochs=1,
         train_batch=32,
-        train_hidden=64,
-        train_lr=1e-3,
+        train_hidden1=64,
+        train_hidden2=32,
+        train_dropout=0.1,
+        train_lr_init=1e-4,
+        train_lr_peak=1e-3,
+        train_lr_warmup_epochs=1,
+        train_lr_decay_every=3,
+        train_lr_decay_factor=0.5,
         train_value_weight=0.5,
         val_split=0.2,
         eval_games=2,
@@ -125,3 +139,44 @@ def test_generate_bc_dataset_engine_teacher_smoke(tmp_path: Path) -> None:
     assert "value_target_config" in out
     assert out["strict_rules_only"] is True
     assert out["reject_non_strict_powers"] is True
+
+
+def test_generate_bc_dataset_records_fallback_targets(monkeypatch, tmp_path: Path) -> None:
+    import backend.ml.generate_bc_dataset as mod
+
+    original_exec = mod.execute_move_on_sim
+    seen_keys: set[tuple[int, int, int, int, str]] = set()
+
+    def flaky_exec(game, player, move):
+        key = (id(game), game.current_round, game.turn_in_round, game.current_player_idx, player.name)
+        if key not in seen_keys:
+            seen_keys.add(key)
+            return False
+        return original_exec(game, player, move)
+
+    monkeypatch.setattr(mod, "execute_move_on_sim", flaky_exec)
+
+    ds = tmp_path / "bc_fallback.jsonl"
+    meta = tmp_path / "bc_fallback.meta.json"
+    out = generate_bc_dataset(
+        out_jsonl=str(ds),
+        out_meta=str(meta),
+        games=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        seed=21,
+        proposal_top_k=1,
+        lookahead_depth=0,
+        engine_teacher_prob=0.0,
+    )
+    pi = out["policy_improvement"]
+    assert pi["move_execute_attempts"] >= 1
+    assert pi["move_execute_successes"] >= 1
+    assert pi["move_execute_fallback_used"] >= 1
+    assert pi["move_execute_dropped"] >= 0
+
+    # Ensure output remained writable/valid JSONL rows.
+    lines = [ln for ln in ds.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    assert len(lines) == out["samples"]
+    _ = json.loads(lines[0])
