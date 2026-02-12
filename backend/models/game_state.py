@@ -1,12 +1,16 @@
 """Full game state for a Wingspan game in progress."""
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 from .player import Player
 from .birdfeeder import Birdfeeder
 from .card_tray import CardTray
 from .goal import Goal
 from backend.config import ACTIONS_PER_ROUND, ROUNDS
 from backend.models.enums import BoardType
+
+if TYPE_CHECKING:
+    from backend.solver.deck_tracker import DeckTracker
 
 
 @dataclass
@@ -38,6 +42,7 @@ class GameState:
     strict_rules_mode: bool = False
     deck_remaining: int = 0
     discard_pile_count: int = 0
+    deck_tracker: "DeckTracker | None" = None
     move_history: list[MoveRecord] = field(default_factory=list)
     # Optional deterministic choices for power resolution.
     # Key: "<player_name>::<bird_name>" -> FIFO list of choice payload dicts.
@@ -192,10 +197,13 @@ def create_new_game(player_names: list[str],
             from backend.models.enums import FoodType
             p.food_supply.add(FoodType.NECTAR, 1)
 
+    from backend.solver.deck_tracker import DeckTracker
+
     return GameState(
         players=players,
         board_type=board_type,
         birdfeeder=Birdfeeder(board_type=board_type),
         round_goals=round_goals or [],
         strict_rules_mode=strict_rules_mode,
+        deck_tracker=DeckTracker(),
     )

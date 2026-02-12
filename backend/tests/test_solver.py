@@ -1,18 +1,22 @@
 """Tests for the heuristic solver: move generation, evaluation, and ranking."""
 
+import numpy as np
 import pytest
 from backend.config import EXCEL_FILE
 from backend.data.registries import load_all
 from backend.models.enums import ActionType, FoodType, Habitat, PowerColor
 from backend.models.game_state import create_new_game
+from backend.ml.action_codec import action_signature
 from backend.solver.move_generator import (
     Move, generate_all_moves, generate_play_bird_moves,
     generate_gain_food_moves, generate_lay_eggs_moves, generate_draw_cards_moves,
 )
+from backend.solver.lookahead import endgame_search, lookahead_search
 from backend.solver.heuristics import (
     evaluate_position, rank_moves, RankedMove, HeuristicWeights,
-    _estimate_engine_value,
+    _estimate_engine_value, detect_strategic_phase, _should_concede_goal,
 )
+from backend.engine_search.is_mcts import _model_priors
 
 
 @pytest.fixture(scope="module")
@@ -28,6 +32,11 @@ def bird_reg(regs):
 @pytest.fixture(scope="module")
 def bonus_reg(regs):
     return regs[1]
+
+
+@pytest.fixture(scope="module")
+def goal_reg(regs):
+    return regs[2]
 
 
 @pytest.fixture
@@ -206,6 +215,106 @@ class TestPositionEvaluation:
         assert engine_val == 0.0
 
 
+class TestStrategicPhase:
+    def test_detect_engine_phase_on_fresh_board(self, game):
+        assert detect_strategic_phase(game, game.current_player) == "engine"
+
+    def test_detect_scoring_phase_round_four(self, game):
+        game.current_round = 4
+        assert detect_strategic_phase(game, game.current_player) == "scoring"
+
+    def test_detect_scoring_phase_point_generators(self, game, bird_reg):
+        player = game.current_player
+        game.current_round = 3
+        point_gens = [
+            b for b in bird_reg.all_birds
+            if b.color == PowerColor.BROWN and any(k in b.power_text.lower() for k in ("tuck", "cache", "flock"))
+        ][:3]
+        assert len(point_gens) == 3
+        player.board.forest.slots[0].bird = point_gens[0]
+        player.board.grassland.slots[0].bird = point_gens[1]
+        player.board.wetland.slots[0].bird = point_gens[2]
+        assert detect_strategic_phase(game, player) == "scoring"
+
+    def test_goal_concession_when_gap_unreachable(self, game, goal_reg, bird_reg):
+        player = game.current_player
+        opp = game.players[1]
+        goal = next(g for g in goal_reg.all_goals if "[bird] in [forest]" in g.description.lower())
+        game.round_goals = [goal]
+        game.current_round = 1
+        player.action_cubes_remaining = 1
+        opp.action_cubes_remaining = 1
+        # Opponent already far ahead on this goal.
+        opp.board.forest.slots[0].bird = bird_reg.get("Trumpeter Swan")
+        opp.board.forest.slots[1].bird = bird_reg.get("American Woodcock")
+        opp.board.forest.slots[2].bird = bird_reg.get("Great Hornbill")
+        opp.board.forest.slots[3].bird = bird_reg.get("Wedge-tailed Eagle")
+        opp.board.forest.slots[4].bird = bird_reg.get("Australian Raven")
+
+        concede_first, pursue_second = _should_concede_goal(game, player, 0)
+        assert concede_first is True
+        assert pursue_second is False
+
+
+class TestEndgameSearch:
+    def test_endgame_search_returns_ranked_moves(self, game):
+        game.current_round = 4
+        for p in game.players:
+            p.action_cubes_remaining = 1
+        game.deck_remaining = 20
+        game.birdfeeder.set_dice([FoodType.SEED, FoodType.FISH, FoodType.FRUIT])
+
+        results = endgame_search(game, game.current_player, max_total_actions=10)
+        assert len(results) > 0
+        assert results[0].rank == 1
+        assert all(r.depth_reached >= 1 for r in results)
+
+
+class TestNNHooks:
+    def test_lookahead_leaf_evaluator_override(self, game):
+        results = lookahead_search(
+            game,
+            player=game.current_player,
+            depth=1,
+            beam_width=4,
+            leaf_evaluator=lambda _g, _p, _w: 42.0,
+        )
+        assert len(results) > 0
+        assert all(abs(r.score - 42.0) < 1e-6 for r in results)
+
+    def test_model_priors_override_heuristic_priors(self, game, bird_reg):
+        class DummyEncoder:
+            def encode(self, _game, _player_idx):
+                return np.zeros(8, dtype=np.float32)
+
+        class DummyModel:
+            def forward(self, _state):
+                return {}, None
+
+            def score_move(self, _state, move, _player, logits=None):
+                if move.action_type == ActionType.PLAY_BIRD:
+                    return 5.0
+                if move.action_type == ActionType.GAIN_FOOD:
+                    return 2.0
+                if move.action_type == ActionType.DRAW_CARDS:
+                    return 1.0
+                return 0.5
+
+        player = game.current_player
+        bird = bird_reg.get("Acorn Woodpecker")
+        player.hand.append(bird)
+        player.food_supply.add(FoodType.SEED, 3)
+        player.food_supply.add(FoodType.INVERTEBRATE, 2)
+
+        moves = generate_all_moves(game, player)
+        priors = _model_priors(game, 0, moves, DummyModel(), DummyEncoder())
+        assert priors is not None
+        assert abs(sum(priors.values()) - 1.0) < 1e-6
+
+        best = max(moves, key=lambda m: priors[action_signature(m)])
+        assert best.action_type == ActionType.PLAY_BIRD
+
+
 # --- Move ranking ---
 
 class TestMoveRanking:
@@ -362,6 +471,37 @@ class TestSolverAPI:
         assert resp.status_code == 200
         assert len(resp.json()["recommendations"]) > 0
 
+    def test_solver_uses_exact_endgame_mode(self, client):
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+        state = client.get(f"/api/games/{game_id}").json()
+        state["current_round"] = 4
+        state["turn_in_round"] = 1
+        for p in state["players"]:
+            p["action_cubes_remaining"] = 1
+        upd = client.put(f"/api/games/{game_id}/state", json=state)
+        assert upd.status_code == 200
+
+        resp = client.post(f"/api/games/{game_id}/solve/heuristic")
+        assert resp.status_code == 200
+        recs = resp.json()["recommendations"]
+        assert len(recs) > 0
+        assert recs[0]["details"]["search_mode"] == "exact_endgame"
+
+    def test_solver_uses_iterative_lookahead_mode(self, client):
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+        resp = client.post(f"/api/games/{game_id}/solve/heuristic")
+        assert resp.status_code == 200
+        recs = resp.json()["recommendations"]
+        assert len(recs) > 0
+        assert recs[0]["details"]["search_mode"] == "lookahead_iterative"
+        assert recs[0]["details"]["score_mode"] == "iterative_lookahead"
+
     def test_solver_game_over(self, client):
         """Solver should return error for finished games."""
         create_resp = client.post("/api/games", json={
@@ -471,6 +611,32 @@ class TestSolverAPI:
         assert rec["rank"] == 1
         assert rec["description"]
         assert "details" in rec
+
+    def test_hybrid_solver_endpoint(self, client):
+        """Hybrid endpoint should return shortlist-constrained engine results."""
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"],
+            "board_type": "oceania",
+        })
+        assert create_resp.status_code == 201
+        game_id = create_resp.json()["game_id"]
+
+        resp = client.post(f"/api/games/{game_id}/solve/hybrid", json={
+            "total_time_budget_ms": 1500,
+            "lookahead_time_budget_ms": 600,
+            "top_candidates": 3,
+            "num_determinizations": 4,
+            "max_rollout_depth": 16,
+            "return_debug": True,
+            "seed": 7,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["best_move"] is not None
+        assert len(data["top_k_moves"]) > 0
+        assert "search_stats" in data
+        assert data["search_stats"]["mode"] == "hybrid"
+        assert data["search_stats"]["shortlist_size"] >= 1
 
     def test_engine_solver_auto_determinizations(self, client):
         create_resp = client.post("/api/games", json={

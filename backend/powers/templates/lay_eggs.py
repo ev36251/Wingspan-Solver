@@ -104,15 +104,26 @@ class LayEggs(PowerEffect):
         return None
 
     def estimate_value(self, ctx: PowerContext) -> float:
+        current_goal = ctx.game_state.current_round_goal()
+        goal_text = current_goal.description.lower() if current_goal else ""
+        goal_factor = 1.2 if "[egg]" in goal_text else 1.0
+        egg_space_total = ctx.egg_space_total or sum(
+            s.eggs_space()
+            for row in ctx.player.board.all_rows()
+            for s in row.slots
+            if s.bird
+        )
+        space_factor = 1.0 + min(0.4, egg_space_total / 25.0)
+
         # Each egg = 1 point
         if self.target == "self":
             slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
             available = slot.eggs_space() if slot.bird else 0
-            return min(self.count, available) * 0.8
+            return min(self.count, available) * 0.8 * goal_factor
         base = self.count * 0.8
         if self.all_players:
             base *= 0.7
-        return base
+        return base * space_factor * goal_factor
 
 
 class LayEggsEachBirdInRow(PowerEffect):
@@ -154,4 +165,14 @@ class LayEggsEachBirdInRow(PowerEffect):
     def estimate_value(self, ctx: PowerContext) -> float:
         row = ctx.player.board.get_row(ctx.habitat)
         birds_in_row = row.bird_count
-        return birds_in_row * 0.7
+        current_goal = ctx.game_state.current_round_goal()
+        goal_text = current_goal.description.lower() if current_goal else ""
+        goal_factor = 1.2 if "[egg]" in goal_text else 1.0
+        egg_space_total = ctx.egg_space_total or sum(
+            s.eggs_space()
+            for r in ctx.player.board.all_rows()
+            for s in r.slots
+            if s.bird
+        )
+        space_factor = 1.0 + min(0.35, egg_space_total / 20.0)
+        return birds_in_row * 0.7 * space_factor * goal_factor

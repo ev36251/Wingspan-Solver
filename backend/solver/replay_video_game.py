@@ -22,6 +22,7 @@ from backend.models.bird import Bird, FoodCost
 from backend.models.enums import ActionType, BoardType, FoodType, Habitat
 from backend.models.game_state import GameState, create_new_game
 from backend.powers.choices import queue_power_choice
+from backend.solver.deck_tracker import DeckTracker
 from backend.solver.move_generator import Move, generate_all_moves
 from backend.solver.simulation import execute_move_on_sim, pick_weighted_random_move, _refill_tray
 
@@ -283,6 +284,9 @@ def _setup_video_state(seed: int) -> tuple[GameState, list[ScriptStep]]:
     rnd.shuffle(deck_rest)
     game._deck_cards = deck_rest + scripted_cards  # pop() draws from end
     game.deck_remaining = len(game._deck_cards)
+    if game.deck_tracker is None:
+        game.deck_tracker = DeckTracker()
+    game.deck_tracker.reset_from_cards(game._deck_cards)
     game.birdfeeder.reroll()
     game._video_bird_overrides = overrides
 

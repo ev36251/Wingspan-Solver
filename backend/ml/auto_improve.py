@@ -42,7 +42,7 @@ def run_auto_improve(
     strict_curriculum_enabled: bool = True,
     strict_fraction_start: float = 1.0,
     strict_fraction_end: float = 0.0,
-    strict_fraction_warmup_iters: int = 1,
+    strict_fraction_warmup_iters: int = 5,
     seed: int = 0,
     clean_out_dir: bool = True,
     proposal_top_k: int = 6,
@@ -168,7 +168,7 @@ def main() -> None:
     parser.add_argument("--disable-strict-curriculum", dest="strict_curriculum_enabled", action="store_false")
     parser.add_argument("--strict-fraction-start", type=float, default=1.0)
     parser.add_argument("--strict-fraction-end", type=float, default=0.0)
-    parser.add_argument("--strict-fraction-warmup-iters", type=int, default=1)
+    parser.add_argument("--strict-fraction-warmup-iters", type=int, default=5)
     parser.set_defaults(strict_kpi_gate_enabled=True)
     parser.add_argument("--strict-kpi-gate-enabled", dest="strict_kpi_gate_enabled", action="store_true")
     parser.add_argument("--disable-strict-kpi-gate", dest="strict_kpi_gate_enabled", action="store_false")

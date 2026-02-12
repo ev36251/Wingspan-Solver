@@ -4,6 +4,30 @@ from backend.models.enums import FoodType
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
 
 
+def _food_pressure_factor(ctx: PowerContext) -> float:
+    """Estimate urgency multiplier for food production powers."""
+    if ctx is None:
+        return 1.0
+    food_total = ctx.food_total or (
+        ctx.player.food_supply.total_non_nectar() + ctx.player.food_supply.get(FoodType.NECTAR)
+    )
+    hand_size = ctx.hand_size or len(ctx.player.hand)
+
+    if hand_size > 0 and food_total <= 1:
+        factor = 1.35
+    elif hand_size > 0 and food_total <= 3:
+        factor = 1.15
+    elif food_total >= 8:
+        factor = 0.7
+    else:
+        factor = 1.0
+
+    actions_remaining = ctx.actions_remaining or ctx.player.action_cubes_remaining
+    if actions_remaining <= 2 and food_total > 4:
+        factor *= 0.85
+    return factor
+
+
 class GainFoodFromSupply(PowerEffect):
     """Gain specific food type(s) from the general supply.
 
@@ -47,6 +71,7 @@ class GainFoodFromSupply(PowerEffect):
         base = self.count * len(self.food_types) * 0.5
         if self.all_players:
             base *= 0.7  # Helping opponents reduces net value
+        base *= _food_pressure_factor(ctx)
         return min(base, 3.0)
 
 
@@ -122,7 +147,7 @@ class GainFoodFromFeeder(PowerEffect):
         base = self.count * 0.6
         if self.may_cache:
             base += 0.3  # Cached food = extra point
-        return base
+        return base * _food_pressure_factor(ctx)
 
 
 class GainFoodFromSupplyOrCache(PowerEffect):
@@ -159,7 +184,7 @@ class GainFoodFromSupplyOrCache(PowerEffect):
         return f"gain and cache {food_names} onto {ctx.bird.name}"
 
     def estimate_value(self, ctx: PowerContext) -> float:
-        return self.count * len(self.food_types) * 0.8
+        return self.count * len(self.food_types) * 0.8 * _food_pressure_factor(ctx)
 
 
 class ResetFeederGainFood(PowerEffect):
@@ -202,4 +227,4 @@ class ResetFeederGainFood(PowerEffect):
         return base
 
     def estimate_value(self, ctx: PowerContext) -> float:
-        return 1.5  # Depends heavily on dice rolls
+        return 1.5 * _food_pressure_factor(ctx)  # Depends heavily on dice rolls

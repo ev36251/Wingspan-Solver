@@ -11,6 +11,8 @@ def _draw_one_bird(ctx: PowerContext):
     if isinstance(deck_cards, list) and deck_cards:
         card = deck_cards.pop()
         ctx.game_state.deck_remaining = max(0, ctx.game_state.deck_remaining - 1)
+        if ctx.game_state.deck_tracker is not None:
+            ctx.game_state.deck_tracker.mark_drawn(card.name)
         return card
 
     if ctx.game_state.deck_remaining <= 0:
@@ -20,7 +22,10 @@ def _draw_one_bird(ctx: PowerContext):
     if not pool:
         return None
     ctx.game_state.deck_remaining = max(0, ctx.game_state.deck_remaining - 1)
-    return random.choice(pool)
+    card = random.choice(pool)
+    if ctx.game_state.deck_tracker is not None:
+        ctx.game_state.deck_tracker.mark_drawn(card.name)
+    return card
 
 
 class TuckFromHand(PowerEffect):
@@ -100,7 +105,18 @@ class TuckFromHand(PowerEffect):
 
     def estimate_value(self, ctx: PowerContext) -> float:
         # Tucked card = 1 point, but costs a card from hand
-        base = self.tuck_count * 0.5  # Net ~0.5 after losing the card
+        hand_size = ctx.hand_size or len(ctx.player.hand)
+        # Small hand means tucking is expensive; large hand means easy conversion.
+        if hand_size <= 1:
+            hand_factor = 0.45
+        elif hand_size <= 3:
+            hand_factor = 0.7
+        elif hand_size >= 8:
+            hand_factor = 1.15
+        else:
+            hand_factor = 1.0
+
+        base = self.tuck_count * 0.5 * hand_factor  # Net ~0.5 after losing the card
         base += self.draw_count * 0.4
         base += self.lay_count * 0.8
         base += self.food_count * 0.5
@@ -118,9 +134,13 @@ class TuckFromDeck(PowerEffect):
 
     def execute(self, ctx: PowerContext) -> PowerResult:
         slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
-        tucked = min(self.count, max(0, ctx.game_state.deck_remaining))
-        slot.tucked_cards += tucked
-        ctx.game_state.deck_remaining -= tucked
+        tucked = 0
+        for _ in range(self.count):
+            card = _draw_one_bird(ctx)
+            if card is None:
+                break
+            slot.tucked_cards += 1
+            tucked += 1
 
         return PowerResult(cards_tucked=tucked,
                            description=f"Tucked {tucked} from deck")
@@ -152,13 +172,13 @@ class DiscardToTuck(PowerEffect):
         self.food_on_success = food_on_success
 
     def execute(self, ctx: PowerContext) -> PowerResult:
-        # Simulation: use probability to determine success
-        import random
         slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
 
         tucked = 0
         for _ in range(self.draw_count):
-            ctx.game_state.deck_remaining -= 1
+            card = _draw_one_bird(ctx)
+            if card is None:
+                break
             if random.random() < self.tuck_probability:
                 slot.tucked_cards += 1
                 tucked += 1

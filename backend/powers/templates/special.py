@@ -1,7 +1,33 @@
 """Special and miscellaneous power templates."""
 
+import random
+
 from backend.models.enums import FoodType, Habitat
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
+
+
+def _draw_one_bird(ctx: PowerContext):
+    """Draw one concrete bird card from deck identity model if available."""
+    deck_cards = getattr(ctx.game_state, "_deck_cards", None)
+    if isinstance(deck_cards, list) and deck_cards:
+        card = deck_cards.pop()
+        ctx.game_state.deck_remaining = max(0, ctx.game_state.deck_remaining - 1)
+        if ctx.game_state.deck_tracker is not None:
+            ctx.game_state.deck_tracker.mark_drawn(card.name)
+        return card
+
+    if ctx.game_state.deck_remaining <= 0:
+        return None
+    from backend.data.registries import get_bird_registry
+
+    pool = list(get_bird_registry().all_birds)
+    if not pool:
+        return None
+    ctx.game_state.deck_remaining = max(0, ctx.game_state.deck_remaining - 1)
+    card = random.choice(pool)
+    if ctx.game_state.deck_tracker is not None:
+        ctx.game_state.deck_tracker.mark_drawn(card.name)
+    return card
 
 
 class RepeatPower(PowerEffect):
@@ -244,8 +270,14 @@ class DiscardEggForBenefit(PowerEffect):
                         ctx.player.food_supply.add(self.food_type, self.food_gain)
                         result.food_gained = {self.food_type: self.food_gain}
                     if self.card_gain:
-                        result.cards_drawn = self.card_gain
-                        ctx.game_state.deck_remaining -= self.card_gain
+                        drawn = 0
+                        for _ in range(self.card_gain):
+                            card = _draw_one_bird(ctx)
+                            if card is None:
+                                break
+                            ctx.player.hand.append(card)
+                            drawn += 1
+                        result.cards_drawn = drawn
                     result.description = f"Discarded {self.egg_cost} egg for benefit"
                     return result
 
@@ -285,9 +317,13 @@ class FlockingPower(PowerEffect):
 
     def execute(self, ctx: PowerContext) -> PowerResult:
         slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
-        tucked = min(self.count, max(0, ctx.game_state.deck_remaining))
-        slot.tucked_cards += tucked
-        ctx.game_state.deck_remaining -= tucked
+        tucked = 0
+        for _ in range(self.count):
+            card = _draw_one_bird(ctx)
+            if card is None:
+                break
+            slot.tucked_cards += 1
+            tucked += 1
         return PowerResult(cards_tucked=tucked,
                            description=f"Flocking: tucked {tucked}")
 

@@ -1,22 +1,27 @@
 """Solver endpoint routes — heuristic, Monte Carlo, max-score, and analysis."""
 
 import copy
+import json
+import os
 import time
+from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from backend.ml.action_codec import action_signature
 from backend.models.enums import FoodType, ActionType, Habitat
 from backend.models.player import Player
 from backend.config import EGG_COST_BY_COLUMN, get_action_column
 from backend.data.registries import get_bird_registry
 from backend.solver.heuristics import (
     rank_moves, _activation_advice, _player_after_bonus,
-    estimate_move_breakdown, dynamic_weights,
+    estimate_move_breakdown, dynamic_weights, evaluate_position,
 )
 from backend.solver.monte_carlo import monte_carlo_evaluate, MCConfig
 from backend.solver.max_score import calculate_max_score
 from backend.solver.analysis import analyze_game
-from backend.solver.lookahead import lookahead_search
+from backend.solver.lookahead import lookahead_search, timed_lookahead_search
+from backend.solver.lookahead import endgame_search
 from backend.solver.move_generator import Move
 from backend.solver.simulation import deep_copy_game, execute_move_on_sim, simulate_playout
 from backend.engine_search import EngineConfig, search_best_move
@@ -25,6 +30,107 @@ router = APIRouter()
 
 # Import game store from routes_game
 from backend.api.routes_game import _get_game
+
+
+_POLICY_MODEL = None
+_STATE_ENCODER = None
+_POLICY_MODEL_PATH: str | None = None
+_POLICY_MODEL_LOAD_TRIED = False
+
+
+def _iter_policy_model_candidates() -> list[Path]:
+    candidates: list[Path] = []
+    env_path = os.getenv("WINGSPAN_POLICY_MODEL")
+    if env_path:
+        candidates.append(Path(env_path))
+
+    candidates.extend(
+        [
+            Path("reports/ml/factorized_bc_model.npz"),
+            Path("reports/ml/champion_factorized_model.npz"),
+        ]
+    )
+
+    ml_reports = Path("reports/ml")
+    if ml_reports.exists():
+        manifests = sorted(
+            ml_reports.glob("auto_improve*/auto_improve_factorized_manifest.json"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        for manifest in manifests[:5]:
+            try:
+                data = json.loads(manifest.read_text())
+            except Exception:
+                continue
+            best = data.get("best") if isinstance(data, dict) else None
+            if isinstance(best, dict):
+                p = best.get("promoted_model_path")
+                if p:
+                    candidates.append(Path(p))
+            iterations = data.get("iterations") if isinstance(data, dict) else None
+            if isinstance(iterations, list) and iterations:
+                model_path = iterations[-1].get("model_path")
+                if model_path:
+                    candidates.append(Path(model_path))
+
+    seen: set[str] = set()
+    out: list[Path] = []
+    for c in candidates:
+        key = str(c)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(c)
+    return out
+
+
+def _get_policy_components():
+    """Lazy-load optional factorized model and state encoder."""
+    global _POLICY_MODEL, _STATE_ENCODER, _POLICY_MODEL_PATH, _POLICY_MODEL_LOAD_TRIED
+    if _POLICY_MODEL_LOAD_TRIED:
+        return _POLICY_MODEL, _STATE_ENCODER
+    _POLICY_MODEL_LOAD_TRIED = True
+
+    try:
+        from backend.ml.factorized_inference import FactorizedPolicyModel
+        from backend.ml.state_encoder import StateEncoder
+    except Exception:
+        return None, None
+
+    for cand in _iter_policy_model_candidates():
+        path = cand if cand.is_absolute() else Path.cwd() / cand
+        if not path.exists():
+            continue
+        try:
+            _POLICY_MODEL = FactorizedPolicyModel(path)
+            _STATE_ENCODER = StateEncoder()
+            _POLICY_MODEL_PATH = str(path)
+            return _POLICY_MODEL, _STATE_ENCODER
+        except Exception:
+            continue
+
+    return None, None
+
+
+def _nn_blended_leaf_value(game, player, weights):
+    """Blend heuristic and policy value head for lookahead leaf evaluation."""
+    model, encoder = _get_policy_components()
+    if model is None or encoder is None or not getattr(model, "has_value_head", False):
+        return None
+    try:
+        player_idx = next((i for i, p in enumerate(game.players) if p.name == player.name), -1)
+        if player_idx < 0:
+            return None
+        state = encoder.encode(game, player_idx).astype("float32", copy=False)
+        _, value = model.forward(state)
+        if value is None:
+            return None
+        nn_leaf = model.value_to_expected_score(value)
+        heuristic_leaf = float(evaluate_position(game, player, weights))
+        return 0.6 * heuristic_leaf + 0.4 * float(nn_leaf)
+    except Exception:
+        return None
 
 
 class SolverMoveRecommendation(BaseModel):
@@ -92,6 +198,17 @@ class EngineRequest(BaseModel):
     top_k: int = Field(default=5, ge=1, le=10)
     return_debug: bool = True
     seed: int = 0
+
+
+class HybridRequest(BaseModel):
+    player_idx: int | None = None
+    total_time_budget_ms: int = Field(default=15000, ge=1000, le=120000)
+    lookahead_time_budget_ms: int = Field(default=2000, ge=500, le=30000)
+    top_candidates: int = Field(default=5, ge=2, le=10)
+    num_determinizations: int = Field(default=0, ge=0, le=1024)
+    max_rollout_depth: int = Field(default=24, ge=6, le=400)
+    seed: int = 0
+    return_debug: bool = True
 
 
 class EngineMoveRec(BaseModel):
@@ -162,13 +279,26 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
 
     start = time.perf_counter()
 
-    # Adaptive lookahead: deeper search in late game when tree is small
-    cubes = player.action_cubes_remaining
-    if game.current_round >= 3 and cubes <= 4:
-        depth = min(3, cubes)
+    total_actions_remaining = sum(max(0, p.action_cubes_remaining) for p in game.players)
+    endgame_threshold = 10
+    if total_actions_remaining <= endgame_threshold:
+        la_results = endgame_search(
+            game,
+            player=player,
+            max_total_actions=endgame_threshold,
+            leaf_evaluator=_nn_blended_leaf_value,
+        )
+        search_mode = "exact_endgame"
     else:
-        depth = 2
-    la_results = lookahead_search(game, player=player, depth=depth, beam_width=5)
+        la_results, iter_depth, iter_beam = timed_lookahead_search(
+            game=game,
+            player=player,
+            time_budget_ms=3000,
+            max_depth=3,
+            base_beam_width=6,
+            leaf_evaluator=_nn_blended_leaf_value,
+        )
+        search_mode = "lookahead_iterative"
     # Also get heuristic reasoning for display
     weights = dynamic_weights(game)
     heuristic_ranked = rank_moves(game, player=player, weights=weights)
@@ -188,7 +318,7 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
         sims_per_move = 30
 
     projections: dict[str, dict[str, float]] = {}
-    if la_results:
+    if la_results and search_mode != "exact_endgame":
         eval_count = min(8, len(la_results))
         projected = []
         for idx, la in enumerate(la_results[:eval_count]):
@@ -287,8 +417,18 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
         details["deck_draws"] = la.move.deck_draws
         details["bonus_count"] = la.move.bonus_count
         details["reset_bonus"] = la.move.reset_bonus
-        details["score_mode"] = "projected_final_score"
-        details["score_target"] = "maximize_end_game_points"
+        details["search_mode"] = search_mode
+        if search_mode == "exact_endgame":
+            details["score_mode"] = "exact_endgame"
+            details["score_target"] = "maximize_minimax_leaf_value"
+        elif search_mode == "lookahead_iterative":
+            details["score_mode"] = "iterative_lookahead"
+            details["iter_depth"] = iter_depth
+            details["iter_beam_width"] = iter_beam
+            details["score_target"] = "maximize_lookahead_position_value"
+        else:
+            details["score_mode"] = "projected_final_score"
+            details["score_target"] = "maximize_end_game_points"
         if la.move.description in projections:
             details["projected_final_score"] = projections[la.move.description]["expected_final_score"]
             details["p100"] = projections[la.move.description]["p100"]
@@ -437,7 +577,7 @@ async def solve_lookahead(
 
     start = time.perf_counter()
     results = lookahead_search(
-        game, depth=req.depth, beam_width=req.beam_width,
+        game, depth=req.depth, beam_width=req.beam_width, leaf_evaluator=_nn_blended_leaf_value,
     )
     elapsed_ms = (time.perf_counter() - start) * 1000
 
@@ -499,7 +639,14 @@ async def solve_engine(
         top_k=req.top_k,
         seed=req.seed,
     )
-    result = search_best_move(game, player_idx=player_idx, cfg=cfg)
+    policy_model, state_encoder = _get_policy_components()
+    result = search_best_move(
+        game,
+        player_idx=player_idx,
+        cfg=cfg,
+        policy_model=policy_model,
+        state_encoder=state_encoder,
+    )
 
     top_k: list[EngineMoveRec] = []
     for i, s in enumerate(result.top_k_moves, start=1):
@@ -557,6 +704,139 @@ async def solve_engine(
             "elapsed_ms": result.elapsed_ms,
             "player_name": player.name,
             "player_idx": player_idx,
+            "using_nn_priors": bool(policy_model is not None and state_encoder is not None),
+            "policy_model_path": _POLICY_MODEL_PATH,
+        }
+
+    return EngineResponse(
+        best_move=best_move,
+        top_k_moves=top_k,
+        search_stats=search_stats,
+    )
+
+
+@router.post("/{game_id}/solve/hybrid", response_model=EngineResponse)
+async def solve_hybrid(
+    game_id: str,
+    req: HybridRequest | None = None,
+) -> EngineResponse:
+    """Hybrid recommendation: timed lookahead shortlist, then MCTS rerank."""
+    game = _get_game(game_id)
+    if game.is_game_over:
+        raise HTTPException(400, "Game is already over")
+
+    if req is None:
+        req = HybridRequest()
+
+    player_idx = game.current_player_idx if req.player_idx is None else req.player_idx
+    if player_idx < 0 or player_idx >= game.num_players:
+        raise HTTPException(400, f"Invalid player_idx: {player_idx}")
+    player = game.players[player_idx]
+
+    t0 = time.perf_counter()
+    la_results, la_depth, la_beam = timed_lookahead_search(
+        game=game,
+        player=player,
+        time_budget_ms=req.lookahead_time_budget_ms,
+        max_depth=3,
+        base_beam_width=max(2, req.top_candidates),
+        leaf_evaluator=_nn_blended_leaf_value,
+    )
+    shortlist = la_results[: req.top_candidates]
+    shortlist_moves = [r.move for r in shortlist]
+    shortlist_by_sig = {action_signature(r.move): r for r in shortlist}
+    la_elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+    remaining_budget = max(1000, req.total_time_budget_ms - int(la_elapsed_ms))
+    cfg = EngineConfig(
+        time_budget_ms=remaining_budget,
+        num_determinizations=req.num_determinizations,
+        max_rollout_depth=req.max_rollout_depth,
+        top_k=req.top_candidates,
+        seed=req.seed,
+    )
+
+    policy_model, state_encoder = _get_policy_components()
+    result = search_best_move(
+        game,
+        player_idx=player_idx,
+        cfg=cfg,
+        root_moves_override=shortlist_moves if shortlist_moves else None,
+        policy_model=policy_model,
+        state_encoder=state_encoder,
+    )
+
+    top_k: list[EngineMoveRec] = []
+    for i, s in enumerate(result.top_k_moves, start=1):
+        details = {}
+        if s.move.bird_name:
+            details["bird_name"] = s.move.bird_name
+        if s.move.habitat:
+            details["habitat"] = s.move.habitat.value
+        if s.move.food_payment:
+            details["food_payment"] = {ft.value: c for ft, c in s.move.food_payment.items()}
+        if s.move.food_choices:
+            details["food_choices"] = [ft.value for ft in s.move.food_choices]
+        if s.move.egg_distribution:
+            details["egg_distribution"] = {
+                hab.value: {str(slot_idx): count}
+                for (hab, slot_idx), count in s.move.egg_distribution.items()
+            }
+        if s.move.tray_indices:
+            details["tray_indices"] = s.move.tray_indices
+        if s.move.deck_draws:
+            details["deck_draws"] = s.move.deck_draws
+
+        sig = action_signature(s.move)
+        la = shortlist_by_sig.get(sig)
+        if la is not None:
+            details["lookahead_rank"] = la.rank
+            details["lookahead_score"] = round(la.score, 3)
+            if la.best_sequence:
+                details["lookahead_plan"] = la.best_sequence[:3]
+
+        top_k.append(
+            EngineMoveRec(
+                rank=i,
+                action_type=s.move.action_type.value,
+                description=s.move.description,
+                mean_vp=round(s.mean_vp, 3),
+                visit_count=s.visit_count,
+                prior=s.prior,
+                ucb=s.ucb,
+                details=details,
+            )
+        )
+
+    best = top_k[0] if top_k else None
+    best_move = None
+    if best is not None:
+        best_move = SolverMoveRecommendation(
+            rank=1,
+            action_type=best.action_type,
+            description=best.description,
+            score=best.mean_vp,
+            reasoning="hybrid_lookahead_then_engine_search",
+            details=best.details,
+        )
+
+    search_stats = {}
+    if req.return_debug:
+        search_stats = {
+            "mode": "hybrid",
+            "lookahead_elapsed_ms": round(la_elapsed_ms, 1),
+            "lookahead_depth_reached": la_depth,
+            "lookahead_beam_width": la_beam,
+            "shortlist_size": len(shortlist_moves),
+            "engine_elapsed_ms": result.elapsed_ms,
+            "engine_nodes": result.nodes,
+            "engine_simulations": result.simulations,
+            "engine_determinizations": result.determinizations,
+            "total_elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 1),
+            "player_name": player.name,
+            "player_idx": player_idx,
+            "using_nn_priors": bool(policy_model is not None and state_encoder is not None),
+            "policy_model_path": _POLICY_MODEL_PATH,
         }
 
     return EngineResponse(

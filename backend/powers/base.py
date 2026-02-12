@@ -17,6 +17,13 @@ class PowerContext:
     # For pink powers: the triggering player and action
     trigger_player: "Player | None" = None
     trigger_action: ActionType | None = None
+    # Precomputed evaluation context (filled by heuristic callers when available)
+    rounds_remaining: int = 0
+    actions_remaining: int = 0
+    hand_size: int = 0
+    food_total: int = 0
+    egg_space_total: int = 0
+    deck_remaining: int = 0
 
 
 @dataclass

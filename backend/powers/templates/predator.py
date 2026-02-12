@@ -5,6 +5,31 @@ from backend.models.enums import FoodType
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
 
 
+def _draw_one_bird(ctx: PowerContext):
+    """Draw one concrete bird card from deck identity model if available."""
+    deck_cards = getattr(ctx.game_state, "_deck_cards", None)
+    if isinstance(deck_cards, list) and deck_cards:
+        card = deck_cards.pop()
+        ctx.game_state.deck_remaining = max(0, ctx.game_state.deck_remaining - 1)
+        if ctx.game_state.deck_tracker is not None:
+            ctx.game_state.deck_tracker.mark_drawn(card.name)
+        return card
+
+    if ctx.game_state.deck_remaining <= 0:
+        return None
+
+    from backend.data.registries import get_bird_registry
+
+    pool = list(get_bird_registry().all_birds)
+    if not pool:
+        return None
+    ctx.game_state.deck_remaining = max(0, ctx.game_state.deck_remaining - 1)
+    card = random.choice(pool)
+    if ctx.game_state.deck_tracker is not None:
+        ctx.game_state.deck_tracker.mark_drawn(card.name)
+    return card
+
+
 class PredatorDice(PowerEffect):
     """Roll dice not in feeder; cache food if match.
 
@@ -78,21 +103,12 @@ class PredatorLookAt(PowerEffect):
         self.wingspan_threshold = wingspan_threshold
 
     def execute(self, ctx: PowerContext) -> PowerResult:
-        if ctx.game_state.deck_remaining <= 0:
+        card = _draw_one_bird(ctx)
+        if card is None:
             return PowerResult(executed=False, description="Deck empty")
 
-        ctx.game_state.deck_remaining -= 1
-
-        # Simulate: estimate probability based on bird database stats
-        # Roughly 50% of birds have wingspan < 75cm
-        success_prob = 0.5
-        if self.wingspan_threshold >= 100:
-            success_prob = 0.7
-        elif self.wingspan_threshold <= 50:
-            success_prob = 0.3
-
         tucked = 0
-        if random.random() < success_prob:
+        if card.wingspan_cm is not None and card.wingspan_cm < self.wingspan_threshold:
             slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
             slot.tucked_cards += 1
             tucked = 1
@@ -101,7 +117,7 @@ class PredatorLookAt(PowerEffect):
                            description=f"Predator look: {'tucked' if tucked else 'discarded'}")
 
     def describe_activation(self, ctx: PowerContext) -> str:
-        prob_pct = int(self._success_prob() * 100)
+        prob_pct = int(self._success_prob(ctx) * 100)
         return f"look at top card; tuck behind {ctx.bird.name} if wingspan < {self.wingspan_threshold}cm (~{prob_pct}%)"
 
     def skip_reason(self, ctx: PowerContext) -> str | None:
@@ -109,12 +125,23 @@ class PredatorLookAt(PowerEffect):
             return "deck is empty"
         return None
 
-    def _success_prob(self) -> float:
+    def _success_prob(self, ctx: PowerContext) -> float:
+        if ctx.game_state.deck_tracker is not None and ctx.game_state.deck_tracker.remaining_count > 0:
+            return max(
+                0.05,
+                min(0.95, ctx.game_state.deck_tracker.predator_success_rate(self.wingspan_threshold)),
+            )
+
+        remaining = ctx.deck_remaining or ctx.game_state.deck_remaining
+        # As the deck thins, predator hits become less reliable on average.
+        deck_factor = max(0.5, min(1.0, remaining / 200.0))
         if self.wingspan_threshold >= 100:
-            return 0.7
+            base = 0.7
         elif self.wingspan_threshold <= 50:
-            return 0.3
-        return 0.5
+            base = 0.3
+        else:
+            base = 0.5
+        return max(0.05, min(0.95, base * deck_factor))
 
     def estimate_value(self, ctx: PowerContext) -> float:
-        return self._success_prob() * 0.9
+        return self._success_prob(ctx) * 0.9

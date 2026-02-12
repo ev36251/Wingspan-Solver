@@ -63,8 +63,15 @@ class CacheFoodFromFeeder(PowerEffect):
         return f"cache all {self.food_type.value} from feeder onto {ctx.bird.name} ({available} available)"
 
     def estimate_value(self, ctx: PowerContext) -> float:
-        # Average ~1 matching die in feeder
-        return 0.8
+        feeder = ctx.game_state.birdfeeder
+        available = sum(
+            1
+            for d in feeder.dice
+            if d == self.food_type or (isinstance(d, tuple) and self.food_type in d)
+        )
+        if available <= 0:
+            return 0.2
+        return min(1.6, 0.6 + available * 0.35)
 
 
 class TradeFood(PowerEffect):
@@ -125,4 +132,10 @@ class TradeFood(PowerEffect):
         return None
 
     def estimate_value(self, ctx: PowerContext) -> float:
+        if self.discard_egg:
+            slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
+            if slot.eggs < self.discard_count:
+                return 0.0
+        elif self.discard_type and not ctx.player.food_supply.has(self.discard_type, self.discard_count):
+            return 0.0
         return (self.gain_count - self.discard_count) * 0.5 + 0.3

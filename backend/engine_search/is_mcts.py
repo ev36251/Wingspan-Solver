@@ -11,6 +11,7 @@ from __future__ import annotations
 import math
 import random
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from backend.engine_search.belief import sample_hidden_state
 from backend.engine_search.time_manager import TimeManager
@@ -20,6 +21,10 @@ from backend.solver.heuristics import rank_moves
 from backend.solver.move_generator import Move, generate_all_moves
 from backend.solver.simulation import execute_move_on_sim, simulate_playout, _refill_tray
 from backend.ml.action_codec import action_signature
+
+if TYPE_CHECKING:
+    from backend.ml.factorized_inference import FactorizedPolicyModel
+    from backend.ml.state_encoder import StateEncoder
 
 
 @dataclass
@@ -64,7 +69,7 @@ def _rollout_score_after_move(
         return None
     game.advance_turn()
     _refill_tray(game)
-    finals = simulate_playout(game, max_turns=max_rollout_depth)
+    finals = simulate_playout(game, max_turns=max_rollout_depth, rollout_policy="fast")
     if player_name not in finals:
         return None
     return float(finals[player_name])
@@ -92,6 +97,36 @@ def _heuristic_priors(game: GameState, player_name: str, moves: list[Move]) -> d
     return priors
 
 
+def _model_priors(
+    game: GameState,
+    player_idx: int,
+    moves: list[Move],
+    policy_model: "FactorizedPolicyModel | None",
+    state_encoder: "StateEncoder | None",
+) -> dict[str, float] | None:
+    """Build priors from a loaded policy model; returns None on failure."""
+    if policy_model is None or state_encoder is None:
+        return None
+    if player_idx < 0 or player_idx >= game.num_players:
+        return None
+
+    try:
+        player = game.players[player_idx]
+        state = state_encoder.encode(game, player_idx).astype("float32", copy=False)
+        logits, _ = policy_model.forward(state)
+        scores = [float(policy_model.score_move(state, m, player, logits=logits)) for m in moves]
+        if not scores:
+            return None
+        smax = max(scores)
+        exps = [math.exp(max(-40.0, min(40.0, s - smax))) for s in scores]
+        denom = sum(exps)
+        if denom <= 0:
+            return None
+        return {action_signature(m): (e / denom) for m, e in zip(moves, exps)}
+    except Exception:
+        return None
+
+
 def infer_num_determinizations(time_budget_ms: int) -> int:
     """Heuristic budget-to-determinizations mapping for root IS-MCTS."""
     if time_budget_ms <= 2_000:
@@ -107,7 +142,14 @@ def infer_num_determinizations(time_budget_ms: int) -> int:
     return 128
 
 
-def search_best_move(game: GameState, player_idx: int, cfg: EngineConfig) -> EngineResult:
+def search_best_move(
+    game: GameState,
+    player_idx: int,
+    cfg: EngineConfig,
+    root_moves_override: list[Move] | None = None,
+    policy_model: "FactorizedPolicyModel | None" = None,
+    state_encoder: "StateEncoder | None" = None,
+) -> EngineResult:
     rng = random.Random(cfg.seed)
     tm = TimeManager(cfg.time_budget_ms)
 
@@ -117,11 +159,13 @@ def search_best_move(game: GameState, player_idx: int, cfg: EngineConfig) -> Eng
         return EngineResult(None, [], 0, 0, 0, tm.elapsed_ms())
 
     player = game.players[player_idx]
-    root_moves = generate_all_moves(game, player)
+    root_moves = root_moves_override if root_moves_override is not None else generate_all_moves(game, player)
     if not root_moves:
         return EngineResult(None, [], 0, 0, 0, tm.elapsed_ms())
 
-    priors = _heuristic_priors(game, player.name, root_moves)
+    priors = _model_priors(game, player_idx, root_moves, policy_model, state_encoder)
+    if priors is None:
+        priors = _heuristic_priors(game, player.name, root_moves)
     stats = RootTransposition()
     root_visits = 0
     simulations = 0

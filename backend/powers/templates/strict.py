@@ -15,6 +15,8 @@ def _draw_one_bird(ctx: PowerContext):
     if isinstance(deck_cards, list) and deck_cards:
         card = deck_cards.pop()
         ctx.game_state.deck_remaining = max(0, ctx.game_state.deck_remaining - 1)
+        if ctx.game_state.deck_tracker is not None:
+            ctx.game_state.deck_tracker.mark_drawn(card.name)
         return card
 
     if ctx.game_state.deck_remaining <= 0:
@@ -24,7 +26,10 @@ def _draw_one_bird(ctx: PowerContext):
     if not pool:
         return None
     ctx.game_state.deck_remaining = max(0, ctx.game_state.deck_remaining - 1)
-    return random.choice(pool)
+    card = random.choice(pool)
+    if ctx.game_state.deck_tracker is not None:
+        ctx.game_state.deck_tracker.mark_drawn(card.name)
+    return card
 
 
 def _refill_tray_from_deck(ctx: PowerContext) -> None:

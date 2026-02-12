@@ -5,12 +5,27 @@ from backend.models.enums import FoodType
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
 
 
+def _draw_context_factor(ctx: PowerContext) -> float:
+    deck_remaining = ctx.deck_remaining or ctx.game_state.deck_remaining
+    deck_factor = max(0.15, min(1.0, deck_remaining / 200.0))
+    hand_size = ctx.hand_size or len(ctx.player.hand)
+    if hand_size >= 12:
+        hand_factor = 0.55
+    elif hand_size >= 8:
+        hand_factor = 0.75
+    else:
+        hand_factor = 1.0
+    return deck_factor * hand_factor
+
+
 def _draw_one_bird(game_state):
     """Draw one concrete bird card from deck identity model if available."""
     deck_cards = getattr(game_state, "_deck_cards", None)
     if isinstance(deck_cards, list) and deck_cards:
         card = deck_cards.pop()
         game_state.deck_remaining = max(0, game_state.deck_remaining - 1)
+        if game_state.deck_tracker is not None:
+            game_state.deck_tracker.mark_drawn(card.name)
         return card
 
     if game_state.deck_remaining <= 0:
@@ -20,7 +35,10 @@ def _draw_one_bird(game_state):
     if not pool:
         return None
     game_state.deck_remaining = max(0, game_state.deck_remaining - 1)
-    return random.choice(pool)
+    card = random.choice(pool)
+    if game_state.deck_tracker is not None:
+        game_state.deck_tracker.mark_drawn(card.name)
+    return card
 
 
 class DrawCards(PowerEffect):
@@ -79,7 +97,7 @@ class DrawCards(PowerEffect):
         base = self.keep * 0.4  # Cards are potential, not points
         if self.all_players:
             base *= 0.7
-        return base
+        return base * _draw_context_factor(ctx)
 
 
 class DrawFromTray(PowerEffect):
@@ -117,7 +135,9 @@ class DrawFromTray(PowerEffect):
         return f"draw {self.count} from tray"
 
     def estimate_value(self, ctx: PowerContext) -> float:
-        return self.count * 0.35
+        hand_size = ctx.hand_size or len(ctx.player.hand)
+        hand_factor = 0.65 if hand_size >= 10 else 1.0
+        return self.count * 0.35 * hand_factor
 
 
 class DrawBonusCards(PowerEffect):

@@ -11,7 +11,9 @@ This catches multi-turn combos like "gain food now → play 9-VP bird next turn"
 that the single-move heuristic would miss.
 """
 
+import time
 from dataclasses import dataclass, field
+from typing import Callable
 
 from backend.models.game_state import GameState
 from backend.models.player import Player
@@ -22,6 +24,7 @@ from backend.solver.heuristics import (
     dynamic_weights, _estimate_goal_progress,
 )
 from backend.solver.simulation import execute_move_on_sim_result, execute_move_on_sim, deep_copy_game
+from backend.engine.scoring import calculate_score
 from backend.engine.actions import execute_play_bird_discounted
 from backend.engine.rules import find_food_payment_options
 from backend.config import EGG_COST_BY_COLUMN
@@ -40,6 +43,26 @@ class LookaheadResult:
     best_sequence: list[str] = field(default_factory=list)
     plan_details: list[dict] = field(default_factory=list)
     heuristic_score: float = 0.0  # Original heuristic score for comparison
+
+
+LeafEvaluator = Callable[[GameState, Player, HeuristicWeights], float | None]
+
+
+def _evaluate_leaf_position(
+    game: GameState,
+    player: Player,
+    weights: HeuristicWeights,
+    leaf_evaluator: LeafEvaluator | None = None,
+) -> float:
+    """Evaluate a leaf, optionally blending external evaluators."""
+    if leaf_evaluator is not None:
+        try:
+            blended = leaf_evaluator(game, player, weights)
+            if blended is not None:
+                return float(blended)
+        except Exception:
+            pass
+    return float(evaluate_position(game, player, weights))
 
 
 def _advance_to_player(game: GameState, player_name: str,
@@ -329,6 +352,7 @@ def lookahead_search(
     beam_width: int = 6,
     weights: HeuristicWeights | None = None,
     _cache: dict | None = None,
+    leaf_evaluator: LeafEvaluator | None = None,
 ) -> list[LookaheadResult]:
     """Rank moves using depth-limited lookahead with beam search.
 
@@ -451,7 +475,7 @@ def lookahead_search(
             if eval_sig in _cache["eval"]:
                 score = _cache["eval"][eval_sig]
             else:
-                score = evaluate_position(sim, sim_player, weights)
+                score = _evaluate_leaf_position(sim, sim_player, weights, leaf_evaluator)
                 _cache["eval"][eval_sig] = score
             results.append(LookaheadResult(
                 move=rm.move, score=score, depth_reached=1,
@@ -472,7 +496,7 @@ def lookahead_search(
             if eval_sig in _cache["eval"]:
                 score = _cache["eval"][eval_sig]
             else:
-                score = evaluate_position(sim, eval_player, weights)
+                score = _evaluate_leaf_position(sim, eval_player, weights, leaf_evaluator)
                 _cache["eval"][eval_sig] = score
             results.append(LookaheadResult(
                 move=rm.move, score=score, depth_reached=1,
@@ -483,7 +507,7 @@ def lookahead_search(
         else:
             # Recurse with reduced depth
             inner = lookahead_search(
-                sim, sim_player, depth - 1, beam_width, weights, _cache
+                sim, sim_player, depth - 1, beam_width, weights, _cache, leaf_evaluator
             )
             if inner:
                 best_inner = inner[0]
@@ -496,7 +520,7 @@ def lookahead_search(
                 if eval_sig in _cache["eval"]:
                     score = _cache["eval"][eval_sig]
                 else:
-                    score = evaluate_position(sim, sim_player, weights)
+                    score = _evaluate_leaf_position(sim, sim_player, weights, leaf_evaluator)
                     _cache["eval"][eval_sig] = score
                 seq = [rm.move.description]
                 plan = [detail]
@@ -514,4 +538,225 @@ def lookahead_search(
     for i, r in enumerate(results):
         r.rank = i + 1
 
+    return results
+
+
+def _adaptive_beam_width(
+    game: GameState,
+    player: Player,
+    base_beam_width: int,
+) -> int:
+    """Choose beam width by phase/branching.
+
+    - Round 1: wider beam (up to 12) to keep strategic options open.
+    - Small branching (<=15 legal moves): full-width evaluation.
+    - Otherwise: base beam.
+    """
+    legal_count = len(generate_all_moves(game, player))
+    if legal_count <= 15:
+        return max(2, legal_count)
+    if game.current_round <= 1:
+        return min(12, max(base_beam_width, 8))
+    return max(2, base_beam_width)
+
+
+def timed_lookahead_search(
+    game: GameState,
+    player: Player | None = None,
+    time_budget_ms: int = 3000,
+    max_depth: int = 3,
+    base_beam_width: int = 6,
+    weights: HeuristicWeights | None = None,
+    leaf_evaluator: LeafEvaluator | None = None,
+) -> tuple[list[LookaheadResult], int, int]:
+    """Iterative deepening lookahead under a wall-clock budget.
+
+    Returns:
+        (best_results, depth_completed, beam_used_for_completed_depth)
+    """
+    if player is None:
+        player = game.current_player
+    if weights is None:
+        weights = dynamic_weights(game)
+
+    start = time.perf_counter()
+    budget_s = max(0.05, time_budget_ms / 1000.0)
+    depth = 1
+    best_results: list[LookaheadResult] = []
+    best_depth = 0
+    best_beam = max(2, base_beam_width)
+
+    while depth <= max_depth:
+        elapsed = time.perf_counter() - start
+        if elapsed >= budget_s:
+            break
+
+        beam_width = _adaptive_beam_width(game, player, base_beam_width)
+        results = lookahead_search(
+            game=game,
+            player=player,
+            depth=depth,
+            beam_width=beam_width,
+            weights=weights,
+            leaf_evaluator=leaf_evaluator,
+        )
+        if not results:
+            break
+
+        best_results = results
+        best_depth = depth
+        best_beam = beam_width
+        depth += 1
+
+    if not best_results:
+        # Fallback to one-ply heuristic ranking.
+        ranked = rank_moves(game, player, weights)
+        best_results = [
+            LookaheadResult(
+                move=rm.move,
+                score=rm.score,
+                rank=rm.rank,
+                depth_reached=1,
+                best_sequence=[rm.move.description],
+                heuristic_score=rm.score,
+            )
+            for rm in ranked[: max(3, base_beam_width)]
+        ]
+        best_depth = 1
+
+    return best_results, best_depth, best_beam
+
+
+def _endgame_leaf_value(
+    game: GameState,
+    player_name: str,
+    weights: HeuristicWeights,
+    leaf_evaluator: LeafEvaluator | None = None,
+) -> float:
+    """Leaf evaluator for endgame minimax."""
+    player = game.get_player(player_name)
+    if not player:
+        return 0.0
+    if game.is_game_over:
+        return float(calculate_score(game, player).total)
+    return _evaluate_leaf_position(game, player, weights, leaf_evaluator)
+
+
+def _endgame_minimax_value(
+    game: GameState,
+    player_name: str,
+    depth_left: int,
+    weights: HeuristicWeights,
+    tt: dict[tuple, tuple[float, list[str]]],
+    leaf_evaluator: LeafEvaluator | None = None,
+) -> tuple[float, list[str]]:
+    """Full-width minimax for late-game positions."""
+    key = (_state_signature(game, player_name), depth_left)
+    if key in tt:
+        return tt[key]
+
+    if depth_left <= 0 or game.is_game_over:
+        result = (_endgame_leaf_value(game, player_name, weights, leaf_evaluator), [])
+        tt[key] = result
+        return result
+
+    actor = game.current_player
+    moves = generate_all_moves(game, actor)
+    if not moves:
+        sim = deep_copy_game(game)
+        sim.advance_turn()
+        result = _endgame_minimax_value(sim, player_name, depth_left - 1, weights, tt, leaf_evaluator)
+        tt[key] = result
+        return result
+
+    maximizing = actor.name == player_name
+    best_score = float("-inf") if maximizing else float("inf")
+    best_seq: list[str] = []
+
+    for move in moves:
+        sim = deep_copy_game(game)
+        sim_actor = sim.current_player
+        if not execute_move_on_sim(sim, sim_actor, move):
+            continue
+        sim.advance_turn()
+        child_score, child_seq = _endgame_minimax_value(
+            sim, player_name, depth_left - 1, weights, tt, leaf_evaluator
+        )
+        better = child_score > best_score if maximizing else child_score < best_score
+        if better:
+            best_score = child_score
+            best_seq = [move.description] + child_seq
+
+    if best_score == float("-inf") or best_score == float("inf"):
+        result = (_endgame_leaf_value(game, player_name, weights, leaf_evaluator), [])
+        tt[key] = result
+        return result
+
+    result = (best_score, best_seq)
+    tt[key] = result
+    return result
+
+
+def endgame_search(
+    game: GameState,
+    player: Player | None = None,
+    max_total_actions: int = 10,
+    weights: HeuristicWeights | None = None,
+    leaf_evaluator: LeafEvaluator | None = None,
+) -> list[LookaheadResult]:
+    """Exact endgame search using full-width minimax with transposition table."""
+    if player is None:
+        player = game.current_player
+    if weights is None:
+        weights = dynamic_weights(game)
+
+    player_name = player.name
+    candidates = rank_moves(game, player, weights)
+    if not candidates:
+        return []
+
+    total_actions = sum(max(0, p.action_cubes_remaining) for p in game.players)
+    depth_budget = max(1, min(max_total_actions, total_actions))
+    tt: dict[tuple, tuple[float, list[str]]] = {}
+    results: list[LookaheadResult] = []
+
+    for rm in candidates:
+        sim = deep_copy_game(game)
+        sim_player = sim.get_player(player_name)
+        if not sim_player or not execute_move_on_sim(sim, sim_player, rm.move):
+            score = _endgame_leaf_value(sim, player_name, weights, leaf_evaluator)
+            results.append(
+                LookaheadResult(
+                    move=rm.move,
+                    score=score,
+                    depth_reached=0,
+                    best_sequence=[rm.move.description],
+                    heuristic_score=rm.score,
+                )
+            )
+            continue
+
+        sim.advance_turn()
+        score, seq = _endgame_minimax_value(
+            sim,
+            player_name=player_name,
+            depth_left=max(0, depth_budget - 1),
+            weights=weights,
+            tt=tt,
+            leaf_evaluator=leaf_evaluator,
+        )
+        full_seq = [rm.move.description] + seq
+        results.append(
+            LookaheadResult(
+                move=rm.move,
+                score=score,
+                depth_reached=min(depth_budget, len(full_seq)),
+                best_sequence=full_seq,
+                heuristic_score=rm.score,
+            )
+        )
+
+    results.sort(key=lambda r: -r.score)
+    for i, r in enumerate(results):
+        r.rank = i + 1
     return results

@@ -34,6 +34,7 @@ from backend.powers.choices import (
     power_choice_queue_summary,
     power_choice_queue_snapshot,
 )
+from backend.solver.deck_tracker import DeckTracker
 
 router = APIRouter()
 
@@ -63,6 +64,9 @@ def _init_deck_cards(game: GameState, bird_reg) -> None:
     random.shuffle(deck)
     setattr(game, "_deck_cards", deck)
     game.deck_remaining = len(deck)
+    if game.deck_tracker is None:
+        game.deck_tracker = DeckTracker()
+    game.deck_tracker.reset_from_cards(deck)
 
 
 def _draw_from_game_deck(game: GameState):
@@ -73,6 +77,8 @@ def _draw_from_game_deck(game: GameState):
         return None
     card = deck.pop()
     game.deck_remaining = len(deck)
+    if game.deck_tracker is not None:
+        game.deck_tracker.mark_drawn(card.name)
     return card
 
 
@@ -306,6 +312,11 @@ async def update_game_state(game_id: str, state: GameStateSchema) -> dict:
     # Preserve externally provided deck_remaining when no deck model is needed.
     if state.deck_remaining >= 0:
         game.deck_remaining = min(game.deck_remaining, state.deck_remaining)
+        modeled_len = len(getattr(game, "_deck_cards", []))
+        if state.deck_remaining != modeled_len:
+            # External state edited deck count without concrete identities.
+            # Disable composition-aware estimates rather than using stale stats.
+            game.deck_tracker = None
 
     return game_state_to_schema(game).model_dump()
 

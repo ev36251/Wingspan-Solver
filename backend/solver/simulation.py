@@ -7,7 +7,7 @@ simplified move execution.
 
 import copy
 import random
-from backend.config import ACTIONS_PER_ROUND, ROUNDS
+from backend.config import ACTIONS_PER_ROUND, ROUNDS, get_action_column
 from backend.models.enums import ActionType, FoodType, Habitat, PowerColor
 from backend.models.game_state import GameState
 from backend.models.player import Player
@@ -37,6 +37,8 @@ def _draw_sim_deck_card(game: GameState):
     if isinstance(deck_cards, list) and deck_cards:
         card = deck_cards.pop()
         game.deck_remaining = max(0, len(deck_cards))
+        if game.deck_tracker is not None:
+            game.deck_tracker.mark_drawn(card.name)
         return card
     if game.deck_remaining <= 0:
         return None
@@ -44,7 +46,10 @@ def _draw_sim_deck_card(game: GameState):
     if not pool:
         return None
     game.deck_remaining = max(0, game.deck_remaining - 1)
-    return random.choice(pool)
+    card = random.choice(pool)
+    if game.deck_tracker is not None:
+        game.deck_tracker.mark_drawn(card.name)
+    return card
 
 
 def _add_random_deck_draws(player: Player, count: int) -> None:
@@ -133,6 +138,65 @@ def pick_weighted_random_move(moves: list[Move], game: GameState,
     return random.choices([m for m, _ in top_n], weights=selection_weights, k=1)[0]
 
 
+def _fast_rollout_score(move: Move, game: GameState, player: Player) -> float:
+    """Lightweight move scoring used for high-throughput rollouts."""
+    if move.action_type == ActionType.PLAY_BIRD:
+        bird = next((b for b in player.hand if b.name == move.bird_name), None)
+        if not bird:
+            return 0.5
+        return float(bird.victory_points) + float(bird.egg_limit) * 0.3
+
+    if move.action_type == ActionType.GAIN_FOOD:
+        bird_count = player.board.forest.bird_count
+        column = get_action_column(game.board_type, Habitat.FOREST, bird_count)
+        food_count = len(move.food_choices) if move.food_choices else (column.base_gain + move.bonus_count)
+        base = float(food_count) * 0.5
+        available_before = player.food_supply.total_non_nectar() + player.food_supply.get(FoodType.NECTAR)
+        available_after = available_before + food_count
+        unlocks = any(
+            b.food_cost.total > available_before and b.food_cost.total <= available_after
+            for b in player.hand
+        )
+        return base + (1.0 if unlocks else 0.0)
+
+    if move.action_type == ActionType.LAY_EGGS:
+        if move.egg_distribution:
+            egg_count = sum(move.egg_distribution.values())
+        else:
+            bird_count = player.board.grassland.bird_count
+            column = get_action_column(game.board_type, Habitat.GRASSLAND, bird_count)
+            egg_count = column.base_gain + move.bonus_count
+        return float(egg_count)
+
+    if move.action_type == ActionType.DRAW_CARDS:
+        card_count = move.deck_draws + len(move.tray_indices)
+        if card_count <= 0:
+            bird_count = player.board.wetland.bird_count
+            column = get_action_column(game.board_type, Habitat.WETLAND, bird_count)
+            card_count = column.base_gain + move.bonus_count
+        return float(card_count) * 0.3
+
+    return 0.0
+
+
+def fast_rollout_move(moves: list[Move], game: GameState, player: Player) -> Move:
+    """Choose a move with a lightweight scoring policy for faster MCTS rollouts."""
+    if not moves:
+        raise ValueError("No moves to pick from")
+    if len(moves) == 1:
+        return moves[0]
+
+    scored = [(m, _fast_rollout_score(m, game, player)) for m in moves]
+    scored.sort(key=lambda x: -x[1])
+    if random.random() < 0.85:
+        return scored[0][0]
+
+    top_n = scored[:min(3, len(scored))]
+    min_score = min(s for _, s in top_n)
+    selection_weights = [max(s - min_score + 0.2, 0.05) for _, s in top_n]
+    return random.choices([m for m, _ in top_n], weights=selection_weights, k=1)[0]
+
+
 def execute_move_on_sim_result(
     game: GameState,
     player: Player,
@@ -186,8 +250,12 @@ def execute_move_on_sim(game: GameState, player: Player, move: Move) -> bool:
     return success
 
 
-def simulate_playout(game: GameState, max_turns: int = 200,
-                     base_weights=None) -> dict[str, int]:
+def simulate_playout(
+    game: GameState,
+    max_turns: int = 200,
+    base_weights=None,
+    rollout_policy: str = "heuristic",
+) -> dict[str, int]:
     """Run a single random playout from the current state to game end.
 
     Returns a dict of {player_name: final_score}.
@@ -224,7 +292,10 @@ def simulate_playout(game: GameState, max_turns: int = 200,
             sim.current_player_idx = (sim.current_player_idx + 1) % sim.num_players
             continue
 
-        move = pick_weighted_random_move(moves, sim, player, base_weights)
+        if rollout_policy == "fast":
+            move = fast_rollout_move(moves, sim, player)
+        else:
+            move = pick_weighted_random_move(moves, sim, player, base_weights)
         success = execute_move_on_sim(sim, player, move)
 
         if success:

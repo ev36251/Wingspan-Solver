@@ -133,6 +133,8 @@ def _draw_bird_from_deck(game_state: GameState):
     if isinstance(deck_cards, list) and deck_cards:
         card = deck_cards.pop()
         game_state.deck_remaining = max(0, game_state.deck_remaining - 1)
+        if game_state.deck_tracker is not None:
+            game_state.deck_tracker.mark_drawn(card.name)
         return card
 
     # Fallback for games without initialized deck identities.
@@ -143,7 +145,10 @@ def _draw_bird_from_deck(game_state: GameState):
     if not pool:
         return None
     game_state.deck_remaining = max(0, game_state.deck_remaining - 1)
-    return random.choice(pool)
+    card = random.choice(pool)
+    if game_state.deck_tracker is not None:
+        game_state.deck_tracker.mark_drawn(card.name)
+    return card
 
 
 def execute_play_bird(

@@ -30,6 +30,7 @@ from backend.solver.setup_advisor import analyze_setup
 from backend.solver.heuristics import HeuristicWeights, DEFAULT_WEIGHTS, dynamic_weights
 from backend.solver.move_generator import Move, generate_all_moves
 from backend.solver.simulation import deep_copy_game, execute_move_on_sim, _refill_tray, _score_round_goal
+from backend.solver.deck_tracker import DeckTracker
 
 
 @dataclass
@@ -296,6 +297,9 @@ def create_training_game(
     # Set up birdfeeder with initial roll
     game.birdfeeder.reroll()
     game.deck_remaining = max(0, len(getattr(game, "_deck_cards", [])))
+    if game.deck_tracker is None:
+        game.deck_tracker = DeckTracker()
+    game.deck_tracker.reset_from_cards(getattr(game, "_deck_cards", []))
 
     return game
 

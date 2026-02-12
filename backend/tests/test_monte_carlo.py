@@ -86,6 +86,14 @@ class TestSimulation:
         # With a bird on board, Alice should score at least the bird VP
         assert scores["Alice"] >= bird.victory_points
 
+    def test_playout_fast_rollout_policy(self, game):
+        """Fast rollout policy should complete and return scores."""
+        game.deck_remaining = 40
+        game.birdfeeder.set_dice([FoodType.SEED, FoodType.FISH, FoodType.FRUIT])
+        scores = simulate_playout(game, max_turns=80, rollout_policy="fast")
+        assert "Alice" in scores
+        assert "Bob" in scores
+
     def test_deep_copy_independence(self, game):
         """Deep copy should be independent of original."""
         copy = deep_copy_game(game)
