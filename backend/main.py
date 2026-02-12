@@ -41,6 +41,13 @@ app.include_router(game_router, prefix="/api/games", tags=["games"])
 app.include_router(solver_router, prefix="/api/games", tags=["solver"])
 app.include_router(setup_router, prefix="/api", tags=["setup"])
 
+try:
+    from backend.api.routes_ml import router as ml_router
+
+    app.include_router(ml_router, prefix="/api", tags=["ml"])
+except ImportError:
+    pass
+
 
 @app.get("/api/health")
 async def health():

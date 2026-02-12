@@ -66,6 +66,9 @@ def encode_move_features(move: Move, player: Player) -> list[float]:
 
     # play block: vp/cost/egg_cap + power_color_one_hot[7]
     bird = _find_hand_bird(move, player)
+    # If the bird cannot be resolved from hand, we intentionally leave the
+    # play-specific block as zeros. This keeps encoding total dimension stable
+    # for edge-case fallback moves without introducing synthetic values.
     if move.action_type == ActionType.PLAY_BIRD and bird is not None:
         f[4] = float(max(0, bird.victory_points)) / 10.0
         f[5] = float(max(0, bird.food_cost.total)) / 6.0
@@ -80,4 +83,3 @@ def encode_move_features(move: Move, player: Player) -> list[float]:
         f[14 + int(food_idx)] = 1.0
 
     return f
-

@@ -1,13 +1,15 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { GameState, Bird, Goal, SolverRecommendation } from '$lib/api/types';
 	import { FOOD_ICONS } from '$lib/api/types';
-	import { createGame, updateGameState, getGoals } from '$lib/api/client';
+	import { createGame, getGame, updateGameState, getGoals } from '$lib/api/client';
 	import GameBoard from '$lib/components/GameBoard.svelte';
 	import SolverPanel from '$lib/components/SolverPanel.svelte';
 	import ScoreSheet from '$lib/components/ScoreSheet.svelte';
 	import SetupAdvisor from '$lib/components/SetupAdvisor.svelte';
 	import MaxScoreBar from '$lib/components/MaxScoreBar.svelte';
 	import BirdSearch from '$lib/components/BirdSearch.svelte';
+	import MLRunsPanel from '$lib/components/MLRunsPanel.svelte';
 
 	let gameId = '';
 	let state: GameState | null = null;
@@ -16,9 +18,12 @@
 	let saving = false;
 	let saveSuccess = false;
 	let saveCounter = 0;
+	let isGameOver = false;
+	let turnStatusText = '';
 
 	// New game form
 	let playerNames = ['Player 1', 'Player 2'];
+	let boardType: 'base' | 'oceania' = 'oceania';
 	let showNewGame = true;
 	let showDraftAdvisor = false;
 	let activePlayerIdx = 0;
@@ -27,6 +32,27 @@
 	let scoreSheet: ScoreSheet;
 	let solverPanel: SolverPanel;
 	let showFeederAdd = false;
+	let didGameOverRefresh = false;
+	const LOCAL_STORAGE_GAME_KEY = 'wingspan_solver_active_game_id';
+
+	const ACTIONS_PER_ROUND = [8, 7, 6, 5];
+
+	$: isGameOver = state !== null && state.current_round > 4;
+	$: turnStatusText = (() => {
+		if (!state) return '';
+		const current = state.players[state.current_player_idx];
+		const cubes = current?.action_cubes_remaining ?? 0;
+		return `Round ${state.current_round} / Turn ${state.turn_in_round} - ${current?.name || 'Player'}'s turn (${cubes} cubes left)`;
+	})();
+
+	$: if (isGameOver && !didGameOverRefresh) {
+		scoreSheet?.refresh();
+		didGameOverRefresh = true;
+	}
+
+	$: if (!isGameOver) {
+		didGameOverRefresh = false;
+	}
 
 	// Drag-and-drop state for player tabs
 	let dragIdx: number | null = null;
@@ -85,6 +111,112 @@
 	}
 	loadGoals();
 
+	function persistGameId(id: string) {
+		try {
+			localStorage.setItem(LOCAL_STORAGE_GAME_KEY, id);
+		} catch {
+			// Ignore storage failures (private mode, quota, etc.)
+		}
+	}
+
+	function clearPersistedGameId() {
+		try {
+			localStorage.removeItem(LOCAL_STORAGE_GAME_KEY);
+		} catch {
+			// Ignore storage failures.
+		}
+	}
+
+	function actionsForRound(roundNum: number): number {
+		if (!state) return 0;
+		const idx = Math.max(0, Math.min(3, roundNum - 1));
+		const base = ACTIONS_PER_ROUND[idx];
+		let noGoalBonus = 0;
+		for (let i = 0; i < roundNum - 1; i += 1) {
+			if ((state.round_goals[i] || '').toLowerCase() === 'no goal') {
+				noGoalBonus += 1;
+			}
+		}
+		return base + noGoalBonus;
+	}
+
+	function advanceRound() {
+		if (!state) return;
+		if (state.board_type === 'oceania') {
+			for (const p of state.players) {
+				p.food_supply.nectar = 0;
+			}
+		}
+		state.current_round += 1;
+		state.turn_in_round = 1;
+		state.current_player_idx = 0;
+		activePlayerIdx = 0;
+
+		if (state.current_round <= 4) {
+			const cubes = actionsForRound(state.current_round);
+			for (const p of state.players) {
+				p.action_cubes_remaining = cubes;
+			}
+		}
+		state = state;
+	}
+
+	function advanceTurn() {
+		if (!state || isGameOver) return;
+		state.turn_in_round += 1;
+		const playerCount = state.players.length;
+		const startIdx = state.current_player_idx;
+		let nextIdx = -1;
+		for (let offset = 1; offset <= playerCount; offset += 1) {
+			const idx = (startIdx + offset) % playerCount;
+			if (state.players[idx].action_cubes_remaining > 0) {
+				nextIdx = idx;
+				break;
+			}
+		}
+		if (nextIdx >= 0) {
+			state.current_player_idx = nextIdx;
+			activePlayerIdx = nextIdx;
+			state = state;
+			return;
+		}
+		advanceRound();
+	}
+
+	async function endTurnAndSave() {
+		if (!state || isGameOver) return;
+		advanceTurn();
+		await saveState();
+	}
+
+	onMount(async () => {
+		let persistedGameId = '';
+		try {
+			persistedGameId = localStorage.getItem(LOCAL_STORAGE_GAME_KEY) || '';
+		} catch {
+			persistedGameId = '';
+		}
+		if (!persistedGameId) return;
+
+		loading = true;
+		error = '';
+		try {
+			const restored = await getGame(persistedGameId);
+			gameId = persistedGameId;
+			state = restored;
+			showNewGame = false;
+			showDraftAdvisor = false;
+			activePlayerIdx = restored.current_player_idx;
+			boardType = restored.board_type === 'base' ? 'base' : 'oceania';
+			initPlayerOrder();
+			syncGoalSelections();
+		} catch {
+			clearPersistedGameId();
+		} finally {
+			loading = false;
+		}
+	});
+
 	async function applySetup(e: CustomEvent<{
 		player_count: number;
 		player_names?: string[];
@@ -105,9 +237,11 @@
 				? inputNames
 				: Array.from({ length: count }, (_, i) => `Player ${i + 1}`);
 			const roundGoals = e.detail.round_goals || [];
-			const created = await createGame(names, roundGoals);
+			const created = await createGame(names, roundGoals, boardType);
 			gameId = created.game_id;
 			state = created.state;
+			persistGameId(gameId);
+			boardType = state.board_type === 'base' ? 'base' : 'oceania';
 
 			// Apply draft selections to Player 1
 			const p0 = state.players[0];
@@ -176,9 +310,11 @@
 				? inputNames
 				: Array.from({ length: count }, (_, i) => `Player ${i + 1}`);
 			const roundGoals = e.detail.round_goals || [];
-			const created = await createGame(names, roundGoals);
+			const created = await createGame(names, roundGoals, boardType);
 			gameId = created.game_id;
 			state = created.state;
+			persistGameId(gameId);
+			boardType = state.board_type === 'base' ? 'base' : 'oceania';
 
 			if (e.detail.tray_cards && e.detail.tray_cards.length > 0) {
 				state.card_tray.face_up = [...e.detail.tray_cards].slice(0, 3);
@@ -279,9 +415,11 @@
 				error = 'Add at least one player';
 				return;
 			}
-			const data = await createGame(names);
+			const data = await createGame(names, undefined, boardType);
 			gameId = data.game_id;
 			state = data.state;
+			persistGameId(gameId);
+			boardType = state.board_type === 'base' ? 'base' : 'oceania';
 			showNewGame = false;
 			activePlayerIdx = 0;
 			initPlayerOrder();
@@ -299,8 +437,10 @@
 		gameId = '';
 		state = null;
 		showNewGame = true;
+		showDraftAdvisor = false;
 		activePlayerIdx = 0;
 		playerOrder = [];
+		clearPersistedGameId();
 	}
 
 	// Save state from header (works even when editor is hidden)
@@ -402,7 +542,10 @@
 	}
 
 	async function applyRecommendation(rec: SolverRecommendation) {
-		if (!state) return;
+		if (!state || isGameOver) return;
+		if (state.current_player_idx !== activePlayerIdx) {
+			state.current_player_idx = activePlayerIdx;
+		}
 		const player = state.players[activePlayerIdx];
 		const details = rec.details as Record<string, any>;
 		if (player.action_cubes_remaining <= 0) {
@@ -529,6 +672,8 @@
 
 		state = state;
 		await saveState();
+		advanceTurn();
+		await saveState();
 	}
 </script>
 
@@ -558,6 +703,20 @@
 				{/each}
 			</div>
 
+			<div class="board-type-section">
+				<div class="board-type-label">Board Type</div>
+				<div class="board-type-options">
+					<label class="board-option">
+						<input type="radio" bind:group={boardType} value="base" />
+						Base
+					</label>
+					<label class="board-option">
+						<input type="radio" bind:group={boardType} value="oceania" />
+						Oceania
+					</label>
+				</div>
+			</div>
+
 			<div class="actions">
 				{#if playerNames.length < 5}
 					<button on:click={addPlayer}>+ Add Player</button>
@@ -577,7 +736,7 @@
 		<div class="game-header">
 			<div class="game-info">
 				<span class="game-id">Game: {gameId}</span>
-<label class="round-selector">
+				<label class="round-selector">
 					Round:
 					<select bind:value={state.current_round} on:change={() => { state = state; }}>
 						{#each [1, 2, 3, 4] as r}
@@ -586,9 +745,6 @@
 					</select>
 					/ 4
 				</label>
-				<span class="turn-info">
-					Current: {state.players[state.current_player_idx]?.name}
-				</span>
 			</div>
 			<MaxScoreBar
 				{gameId}
@@ -596,8 +752,11 @@
 				triggerRefresh={saveCounter}
 			/>
 			<div class="game-actions">
-				<button class="solve-btn" on:click={() => solverPanel?.solve()} disabled={state.current_round > 4}>
+				<button class="solve-btn" on:click={() => solverPanel?.solve()} disabled={isGameOver}>
 					Recommend for {state.players[activePlayerIdx]?.name || 'Player'}
+				</button>
+				<button on:click={endTurnAndSave} disabled={saving || isGameOver}>
+					End Turn
 				</button>
 				<button class="primary" on:click={saveState} disabled={saving} class:saved={saveSuccess}>
 					{saving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save State'}
@@ -605,6 +764,14 @@
 				<button on:click={resetGame}>New Game</button>
 			</div>
 		</div>
+
+		<div class="turn-banner">{turnStatusText}</div>
+
+		{#if isGameOver}
+			<div class="game-over-banner">
+				<strong>Game Over!</strong> Final scores are ready below.
+			</div>
+		{/if}
 
 		<!-- Player tabs (draggable to reorder) -->
 		<div class="player-tabs">
@@ -683,22 +850,25 @@
 				</div>
 
 				<!-- Score Sheet -->
-				<ScoreSheet {gameId} bind:this={scoreSheet} />
+				<ScoreSheet {gameId} gameOver={isGameOver} bind:this={scoreSheet} />
 			</div>
 
-			<div class="side-column">
-				<!-- Solver (top for easy access) -->
-				<SolverPanel
+				<div class="side-column">
+					<!-- Solver (top for easy access) -->
+					<SolverPanel
 					{gameId}
-					disabled={state.current_round > 4}
+					disabled={isGameOver}
 					playerIdx={activePlayerIdx}
 					playerName={state.players[activePlayerIdx]?.name || ''}
 					bind:this={solverPanel}
-					on:apply={(e) => applyRecommendation(e.detail)}
-				/>
+						on:apply={(e) => applyRecommendation(e.detail)}
+					/>
 
-				<!-- Birdfeeder -->
-				<div class="sidebar-panel card">
+					<!-- ML run diagnostics -->
+					<MLRunsPanel />
+
+					<!-- Birdfeeder -->
+					<div class="sidebar-panel card">
 					<div class="panel-header-row">
 						<h4 class="panel-title">Birdfeeder ({state.birdfeeder.dice.length})</h4>
 						<div class="feeder-header-actions">
@@ -921,6 +1091,34 @@
 		justify-content: flex-end;
 	}
 
+	.board-type-section {
+		margin-bottom: 16px;
+		padding: 10px 12px;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: #faf6ef;
+	}
+
+	.board-type-label {
+		font-size: 0.8rem;
+		font-weight: 700;
+		color: var(--text);
+		margin-bottom: 6px;
+	}
+
+	.board-type-options {
+		display: flex;
+		gap: 14px;
+	}
+
+	.board-option {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 0.85rem;
+		color: var(--text);
+	}
+
 	/* Game view */
 	.game-header {
 		display: flex;
@@ -936,6 +1134,7 @@
 		display: flex;
 		gap: 16px;
 		font-size: 0.85rem;
+		flex-wrap: wrap;
 	}
 
 	.round-selector {
@@ -957,8 +1156,25 @@
 		font-family: monospace;
 	}
 
-	.turn-info {
+	.turn-banner {
+		margin-bottom: 12px;
+		padding: 10px 12px;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: #fef9f0;
+		font-size: 0.9rem;
+		font-weight: 600;
 		color: var(--text);
+	}
+
+	.game-over-banner {
+		margin-bottom: 12px;
+		padding: 10px 12px;
+		border: 1px solid #16a34a;
+		border-radius: 8px;
+		background: #ecfdf3;
+		color: #166534;
+		font-size: 0.95rem;
 	}
 
 	.game-actions {

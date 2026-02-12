@@ -3,10 +3,13 @@
 	import type { ScoreBreakdown } from '$lib/api/types';
 
 	export let gameId: string;
+	export let gameOver = false;
 
 	let scores: Record<string, ScoreBreakdown> = {};
 	let loading = false;
 	let error = '';
+	let playerNames: string[] = [];
+	let winnerNames = new Set<string>();
 
 	export async function refresh() {
 		loading = true;
@@ -32,6 +35,11 @@
 	] as const;
 
 	$: playerNames = Object.keys(scores);
+	$: winnerNames = (() => {
+		if (!gameOver || playerNames.length === 0) return new Set<string>();
+		const maxTotal = Math.max(...playerNames.map((name) => scores[name]?.total ?? Number.NEGATIVE_INFINITY));
+		return new Set(playerNames.filter((name) => (scores[name]?.total ?? Number.NEGATIVE_INFINITY) === maxTotal));
+	})();
 </script>
 
 <div class="score-sheet card">
@@ -52,7 +60,7 @@
 				<tr>
 					<th>Category</th>
 					{#each playerNames as name}
-						<th>{name}</th>
+						<th class:winner-col={winnerNames.has(name)}>{name}</th>
 					{/each}
 				</tr>
 			</thead>
@@ -61,14 +69,14 @@
 					<tr>
 						<td>{cat.label}</td>
 						{#each playerNames as name}
-							<td class="score-cell">{scores[name][cat.key]}</td>
+							<td class="score-cell" class:winner-col={winnerNames.has(name)}>{scores[name][cat.key]}</td>
 						{/each}
 					</tr>
 				{/each}
 				<tr class="total-row">
 					<td>Total</td>
 					{#each playerNames as name}
-						<td class="score-cell total">{scores[name].total}</td>
+						<td class="score-cell total" class:winner-col={winnerNames.has(name)}>{scores[name].total}</td>
 					{/each}
 				</tr>
 			</tbody>
@@ -131,6 +139,11 @@
 	.total {
 		color: var(--accent);
 		font-size: 1rem;
+	}
+
+	.winner-col {
+		font-weight: 800;
+		background: #fff7db;
 	}
 
 	.empty {

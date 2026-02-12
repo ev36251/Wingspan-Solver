@@ -42,10 +42,14 @@ export async function getGoals() {
 
 // --- Game endpoints ---
 
-export async function createGame(playerNames: string[], roundGoals?: string[]) {
+export async function createGame(
+	playerNames: string[],
+	roundGoals?: string[],
+	boardType: 'base' | 'oceania' = 'oceania'
+) {
 	return request<{ game_id: string; state: import('./types').GameState }>('/games', {
 		method: 'POST',
-		body: JSON.stringify({ player_names: playerNames, board_type: 'oceania', round_goals: roundGoals })
+		body: JSON.stringify({ player_names: playerNames, board_type: boardType, round_goals: roundGoals })
 	});
 }
 
@@ -171,5 +175,19 @@ export async function solveAfterReset(
 				total_to_gain: totalToGain || 0
 			})
 		}
+		);
+}
+
+// --- ML diagnostics endpoints ---
+
+export async function getMLRunsDashboard(limit = 20, includeIterations = false) {
+	return request<import('./types').MLRunsDashboardResponse>(
+		`/ml/runs/dashboard?limit=${limit}&include_iterations=${includeIterations ? 'true' : 'false'}`
+	);
+}
+
+export async function getMLRunDiagnostics(runName: string, includeIterations = true) {
+	return request<import('./types').MLRunSummary & { iterations?: import('./types').MLLatestIterationSummary[] }>(
+		`/ml/runs/${encodeURIComponent(runName)}/diagnostics?include_iterations=${includeIterations ? 'true' : 'false'}`
 	);
 }

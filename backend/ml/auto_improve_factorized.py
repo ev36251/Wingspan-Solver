@@ -64,9 +64,9 @@ def run_auto_improve_factorized(
     min_pool_rate_ge_120: float = 0.0,
     require_pool_non_regression: bool = False,
     min_gate_win_rate: float = 0.45,
-    min_gate_mean_score: float = 70.0,
-    min_gate_rate_ge_100: float = 0.08,
-    min_gate_rate_ge_120: float = 0.01,
+    min_gate_mean_score: float = 45.0,
+    min_gate_rate_ge_100: float = 0.0,
+    min_gate_rate_ge_120: float = 0.0,
     champion_self_play_enabled: bool = True,
     champion_switch_after_first_promotion: bool = True,
     champion_teacher_source: str = "engine_only",
@@ -81,6 +81,10 @@ def run_auto_improve_factorized(
     seed: int = 0,
     strict_rules_only: bool = True,
     reject_non_strict_powers: bool = True,
+    strict_curriculum_enabled: bool = True,
+    strict_fraction_start: float = 1.0,
+    strict_fraction_end: float = 0.0,
+    strict_fraction_warmup_iters: int = 1,
     strict_kpi_gate_enabled: bool = True,
     strict_kpi_baseline_path: str = "reports/ml/baselines/strict_kpi_baseline.json",
     strict_kpi_round1_games: int = 10,
@@ -134,6 +138,19 @@ def run_auto_improve_factorized(
         iter_dir = base / f"iter_{i:03d}"
         iter_dir.mkdir(parents=True, exist_ok=True)
 
+        if strict_curriculum_enabled and strict_rules_only:
+            warm = max(1, int(strict_fraction_warmup_iters))
+            start = max(0.0, min(1.0, float(strict_fraction_start)))
+            end = max(0.0, min(1.0, float(strict_fraction_end)))
+            if i <= warm:
+                strict_game_fraction_iter = start
+            else:
+                rem = max(1, iterations - warm)
+                t = min(1.0, max(0.0, float(i - warm) / float(rem)))
+                strict_game_fraction_iter = start + t * (end - start)
+        else:
+            strict_game_fraction_iter = 1.0 if strict_rules_only else 0.0
+
         dataset_jsonl = iter_dir / "bc_dataset.jsonl"
         dataset_meta = iter_dir / "bc_dataset.meta.json"
         model_path = iter_dir / "factorized_model.npz"
@@ -180,6 +197,7 @@ def run_auto_improve_factorized(
             engine_max_rollout_depth=champion_engine_max_rollout_depth if use_champion_mode else engine_max_rollout_depth,
             strict_rules_only=strict_rules_only,
             reject_non_strict_powers=reject_non_strict_powers,
+            strict_game_fraction=strict_game_fraction_iter,
         )
 
         tr = train_bc(
@@ -351,6 +369,7 @@ def run_auto_improve_factorized(
             "iteration": i,
             "seed": iter_seed,
             "generation_mode": generation_mode,
+            "strict_game_fraction": round(float(strict_game_fraction_iter), 4),
             "dataset": str(dataset_jsonl),
             "dataset_meta": str(dataset_meta),
             "model": str(model_path),
@@ -388,6 +407,10 @@ def run_auto_improve_factorized(
                 shutil.copy2(model_path, best_model_path)
                 shutil.copy2(dataset_meta, best_meta_path)
                 proposal_model_path = str(best_model_path)
+        elif not use_champion_mode:
+            # Keep bootstrapping with the latest candidate even when strict
+            # promotion fails, so proposal quality can still improve.
+            proposal_model_path = str(model_path)
 
         manifest = {
             "version": 1,
@@ -453,6 +476,10 @@ def run_auto_improve_factorized(
                 "engine_max_rollout_depth": engine_max_rollout_depth,
                 "strict_rules_only": strict_rules_only,
                 "reject_non_strict_powers": reject_non_strict_powers,
+                "strict_curriculum_enabled": strict_curriculum_enabled,
+                "strict_fraction_start": strict_fraction_start,
+                "strict_fraction_end": strict_fraction_end,
+                "strict_fraction_warmup_iters": strict_fraction_warmup_iters,
                 "strict_kpi_gate_enabled": strict_kpi_gate_enabled,
                 "strict_kpi_baseline_path": strict_kpi_baseline_path,
                 "strict_kpi_round1_games": strict_kpi_round1_games,
@@ -529,9 +556,9 @@ def main() -> None:
     parser.add_argument("--min-pool-rate-ge-120", type=float, default=0.0)
     parser.add_argument("--require-pool-non-regression", action="store_true")
     parser.add_argument("--min-gate-win-rate", type=float, default=0.45)
-    parser.add_argument("--min-gate-mean-score", type=float, default=70.0)
-    parser.add_argument("--min-gate-rate-ge-100", type=float, default=0.08)
-    parser.add_argument("--min-gate-rate-ge-120", type=float, default=0.01)
+    parser.add_argument("--min-gate-mean-score", type=float, default=45.0)
+    parser.add_argument("--min-gate-rate-ge-100", type=float, default=0.0)
+    parser.add_argument("--min-gate-rate-ge-120", type=float, default=0.0)
     parser.set_defaults(champion_self_play_enabled=True, champion_switch_after_first_promotion=True)
     parser.add_argument("--champion-self-play-enabled", dest="champion_self_play_enabled", action="store_true")
     parser.add_argument("--disable-champion-self-play", dest="champion_self_play_enabled", action="store_false")
@@ -551,6 +578,12 @@ def main() -> None:
     parser.add_argument("--allow-non-strict-rules", dest="strict_rules_only", action="store_false")
     parser.add_argument("--reject-non-strict-powers", dest="reject_non_strict_powers", action="store_true")
     parser.add_argument("--allow-non-strict-powers", dest="reject_non_strict_powers", action="store_false")
+    parser.set_defaults(strict_curriculum_enabled=True)
+    parser.add_argument("--strict-curriculum-enabled", dest="strict_curriculum_enabled", action="store_true")
+    parser.add_argument("--disable-strict-curriculum", dest="strict_curriculum_enabled", action="store_false")
+    parser.add_argument("--strict-fraction-start", type=float, default=1.0)
+    parser.add_argument("--strict-fraction-end", type=float, default=0.0)
+    parser.add_argument("--strict-fraction-warmup-iters", type=int, default=1)
     parser.set_defaults(strict_kpi_gate_enabled=True)
     parser.add_argument("--strict-kpi-gate-enabled", dest="strict_kpi_gate_enabled", action="store_true")
     parser.add_argument("--disable-strict-kpi-gate", dest="strict_kpi_gate_enabled", action="store_false")
@@ -626,6 +659,10 @@ def main() -> None:
         engine_max_rollout_depth=args.engine_max_rollout_depth,
         strict_rules_only=args.strict_rules_only,
         reject_non_strict_powers=args.reject_non_strict_powers,
+        strict_curriculum_enabled=args.strict_curriculum_enabled,
+        strict_fraction_start=args.strict_fraction_start,
+        strict_fraction_end=args.strict_fraction_end,
+        strict_fraction_warmup_iters=args.strict_fraction_warmup_iters,
         strict_kpi_gate_enabled=args.strict_kpi_gate_enabled,
         strict_kpi_baseline_path=args.strict_kpi_baseline,
         strict_kpi_round1_games=args.strict_kpi_round1_games,

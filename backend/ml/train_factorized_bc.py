@@ -162,6 +162,14 @@ def _lr_for_epoch(
     return float(lr_peak * (lr_decay_factor ** k))
 
 
+def _grad_softplus_neg_delta(delta: float) -> float:
+    """Return d/d(delta) softplus(-delta) with overflow-safe branches."""
+    if delta >= 0.0:
+        exp_neg = math.exp(-delta)
+        return -exp_neg / (1.0 + exp_neg)
+    return -1.0 / (1.0 + math.exp(delta))
+
+
 def train_bc(
     dataset_jsonl: str,
     meta_json: str,
@@ -285,6 +293,7 @@ def train_bc(
         move_rank_loss = 0.0
         move_rank_n = 0
         move_margin_sum = 0.0
+        move_margin_rows = 0
         move_pair_correct = 0
         move_pair_total = 0
 
@@ -334,6 +343,7 @@ def train_bc(
                     if s_pos > s_neg:
                         move_pair_correct += 1
                 move_margin_sum += s_pos - (sum(s_negs) / max(1, len(s_negs)))
+                move_margin_rows += 1
 
         cls_loss = total_loss / max(1, total)
         v_mse = value_mse / max(1, value_n) if value_n > 0 else 0.0
@@ -343,7 +353,7 @@ def train_bc(
             "action_acc": action_correct / max(1, total),
             "value_mse": v_mse,
             "move_rank_loss": mv_loss,
-            "move_rank_margin_mean": move_margin_sum / max(1, total),
+            "move_rank_margin_mean": move_margin_sum / max(1, move_margin_rows),
             "move_pair_acc": move_pair_correct / max(1, move_pair_total) if move_pair_total > 0 else 0.0,
         }
 
@@ -373,6 +383,7 @@ def train_bc(
         move_rank_loss_sum = 0.0
         move_rank_seen = 0
         move_margin_sum = 0.0
+        move_margin_rows = 0
         move_pair_correct = 0
         move_pair_total = 0
 
@@ -471,11 +482,12 @@ def train_bc(
                         move_pair_total += 1
                         if s_pos > s_neg:
                             move_pair_correct += 1
-                        g = -1.0 / (1.0 + math.exp(delta))  # d/d(delta) softplus(-delta)
+                        g = _grad_softplus_neg_delta(delta)
                         grad_s_pos += g
                         grad_s_neg.append(-g)
 
                     move_margin_sum += s_pos - (sum(s_negs) / max(1, len(s_negs)))
+                    move_margin_rows += 1
                     nneg = max(1, len(negs))
                     grad_s_pos = move_value_loss_weight * (grad_s_pos / nneg)
                     dWmv += grad_s_pos * x_pos
@@ -523,7 +535,7 @@ def train_bc(
             "action_acc": action_correct / max(1, seen),
             "value_mse": train_value_mse,
             "move_rank_loss": train_move_rank_loss,
-            "move_rank_margin_mean": move_margin_sum / max(1, seen),
+            "move_rank_margin_mean": move_margin_sum / max(1, move_margin_rows),
             "move_pair_acc": move_pair_correct / max(1, move_pair_total) if move_pair_total > 0 else 0.0,
         }
         val_metrics = eval_split(val)
@@ -571,8 +583,8 @@ def train_bc(
         _restore_model(best_snapshot)
 
     result = {
-        "version": 3,
-        "format_version": 3,
+        "version": 4,
+        "format_version": 4,
         "mode": "factorized_behavioral_cloning",
         "model_arch": "mlp_2layer",
         "elapsed_sec": round(time.time() - started, 3),

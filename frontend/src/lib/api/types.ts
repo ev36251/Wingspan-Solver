@@ -86,6 +86,7 @@ export interface Player {
 
 export interface GameState {
 	players: Player[];
+	board_type: string;
 	current_player_idx: number;
 	current_round: number;
 	turn_in_round: number;
@@ -93,6 +94,7 @@ export interface GameState {
 	card_tray: { face_up: string[] };
 	round_goals: string[];
 	round_goal_scores: Record<number, Record<string, number>>;
+	strict_rules_mode: boolean;
 	deck_remaining: number;
 }
 
@@ -160,6 +162,53 @@ export interface MaxScoreResponse {
 	current_score: number;
 	efficiency_pct: number;
 	breakdown: Record<string, number>;
+}
+
+export interface MLEvalSummary {
+	nn_wins: number;
+	games: number;
+	nn_mean_margin: number;
+	nn_mean_score: number;
+}
+
+export interface MLPromotionGateSummary {
+	nn_wins: number;
+	games: number;
+	nn_mean_margin: number;
+	primary_opponent: string;
+}
+
+export interface MLLatestIterationSummary {
+	iteration: string;
+	stage: string;
+	samples: number;
+	mean_player_score: number;
+	strict_game_fraction: number;
+	strict_games: number;
+	relaxed_games: number;
+	eval: MLEvalSummary;
+	promotion_gate: MLPromotionGateSummary;
+}
+
+export interface MLRunSummary {
+	run_name: string;
+	run_path: string;
+	status: 'in_progress' | 'completed' | 'empty';
+	current_stage: string;
+	iterations_detected: number;
+	iterations_completed: number;
+	best_exists: boolean;
+	latest_iteration: MLLatestIterationSummary | null;
+	updated_at_epoch: number;
+	updated_at_iso: string;
+}
+
+export interface MLRunsDashboardResponse {
+	generated_at_epoch: number;
+	reports_ml_dir: string;
+	runs: MLRunSummary[];
+	active_runs: MLRunSummary[];
+	latest_completed_run: MLRunSummary | null;
 }
 
 // UI display helpers

@@ -21,6 +21,20 @@ class TestHealth:
         assert resp.json()["status"] == "ok"
 
 
+class TestMLRoutes:
+    def test_ml_runs_dashboard(self, client):
+        resp = client.get("/api/ml/runs/dashboard")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "runs" in data
+        assert "active_runs" in data
+        assert isinstance(data["runs"], list)
+
+    def test_ml_run_diagnostics_not_found(self, client):
+        resp = client.get("/api/ml/runs/nonexistent-run-name/diagnostics")
+        assert resp.status_code == 404
+
+
 # --- Data routes ---
 
 class TestBirdRoutes:

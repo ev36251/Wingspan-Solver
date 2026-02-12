@@ -39,6 +39,10 @@ def run_auto_improve(
     champion_engine_num_determinizations: int = 8,
     champion_engine_max_rollout_depth: int = 24,
     promotion_primary_opponent: str = "champion",
+    strict_curriculum_enabled: bool = True,
+    strict_fraction_start: float = 1.0,
+    strict_fraction_end: float = 0.0,
+    strict_fraction_warmup_iters: int = 1,
     seed: int = 0,
     clean_out_dir: bool = True,
     proposal_top_k: int = 6,
@@ -104,6 +108,10 @@ def run_auto_improve(
         engine_max_rollout_depth=24,
         strict_rules_only=True,
         reject_non_strict_powers=True,
+        strict_curriculum_enabled=strict_curriculum_enabled,
+        strict_fraction_start=strict_fraction_start,
+        strict_fraction_end=strict_fraction_end,
+        strict_fraction_warmup_iters=strict_fraction_warmup_iters,
         strict_kpi_gate_enabled=strict_kpi_gate_enabled,
         seed=seed,
         clean_out_dir=clean_out_dir,
@@ -155,6 +163,12 @@ def main() -> None:
     parser.add_argument("--champion-engine-num-determinizations", type=int, default=8)
     parser.add_argument("--champion-engine-max-rollout-depth", type=int, default=24)
     parser.add_argument("--promotion-primary-opponent", default="champion", choices=["heuristic", "champion"])
+    parser.set_defaults(strict_curriculum_enabled=True)
+    parser.add_argument("--strict-curriculum-enabled", dest="strict_curriculum_enabled", action="store_true")
+    parser.add_argument("--disable-strict-curriculum", dest="strict_curriculum_enabled", action="store_false")
+    parser.add_argument("--strict-fraction-start", type=float, default=1.0)
+    parser.add_argument("--strict-fraction-end", type=float, default=0.0)
+    parser.add_argument("--strict-fraction-warmup-iters", type=int, default=1)
     parser.set_defaults(strict_kpi_gate_enabled=True)
     parser.add_argument("--strict-kpi-gate-enabled", dest="strict_kpi_gate_enabled", action="store_true")
     parser.add_argument("--disable-strict-kpi-gate", dest="strict_kpi_gate_enabled", action="store_false")
@@ -192,6 +206,10 @@ def main() -> None:
         champion_engine_num_determinizations=args.champion_engine_num_determinizations,
         champion_engine_max_rollout_depth=args.champion_engine_max_rollout_depth,
         promotion_primary_opponent=args.promotion_primary_opponent,
+        strict_curriculum_enabled=args.strict_curriculum_enabled,
+        strict_fraction_start=args.strict_fraction_start,
+        strict_fraction_end=args.strict_fraction_end,
+        strict_fraction_warmup_iters=args.strict_fraction_warmup_iters,
         seed=args.seed,
         clean_out_dir=not args.resume,
         proposal_top_k=args.proposal_top_k,

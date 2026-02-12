@@ -325,6 +325,8 @@ def _sample_negative_move_features(
     opponent_model: FactorizedPolicyModel | None,
     self_play_policy: str,
     num_negatives: int,
+    pre_state: np.ndarray | None = None,
+    pre_logits: dict[str, np.ndarray] | None = None,
 ) -> list[list[float]]:
     if num_negatives <= 0:
         return []
@@ -342,8 +344,10 @@ def _sample_negative_move_features(
     )
     scored: list[tuple[Move, float]] = []
     if current_model is not None:
-        state = np.asarray(encoder.encode(game, player_idx), dtype=np.float32)
-        logits, _ = current_model.forward(state)
+        state = pre_state if pre_state is not None else np.asarray(encoder.encode(game, player_idx), dtype=np.float32)
+        logits = pre_logits
+        if logits is None:
+            logits, _ = current_model.forward(state)
         for m in candidates:
             scored.append((m, float(current_model.score_move(state, m, player, logits=logits))))
     else:
@@ -383,6 +387,7 @@ def generate_bc_dataset(
     engine_max_rollout_depth: int = 24,
     strict_rules_only: bool = True,
     reject_non_strict_powers: bool = True,
+    strict_game_fraction: float = 1.0,
     max_round: int = 4,
     emit_score_breakdown: bool = True,
     move_value_enabled: bool = True,
@@ -398,6 +403,7 @@ def generate_bc_dataset(
     value_target_score_scale = max(1.0, float(value_target_score_scale))
     late_round_oversample_factor = max(1, int(late_round_oversample_factor))
     move_value_num_negatives = max(0, int(move_value_num_negatives))
+    strict_game_fraction = max(0.0, min(1.0, float(strict_game_fraction)))
 
     load_all(EXCEL_FILE)
 
@@ -425,13 +431,20 @@ def generate_bc_dataset(
     move_execute_fallback_used = 0
     move_execute_dropped = 0
     strict_rejected_games = 0
+    strict_games = 0
+    relaxed_games = 0
 
     with outp.open("w", encoding="utf-8") as f:
         for g in range(1, games + 1):
+            is_strict_game = bool(strict_rules_only and (random.random() < strict_game_fraction))
+            if is_strict_game:
+                strict_games += 1
+            else:
+                relaxed_games += 1
             game = create_training_game(
                 players,
                 board_type,
-                strict_rules_mode=strict_rules_only,
+                strict_rules_mode=is_strict_game,
             )
             turns = 0
             pending: list[_PendingDecision] = []
@@ -442,7 +455,7 @@ def generate_bc_dataset(
                 if game.current_round > max_round:
                     break
 
-                if reject_non_strict_powers:
+                if reject_non_strict_powers and is_strict_game:
                     for pl in game.players:
                         for b in pl.board.all_birds():
                             src = get_power_source(b)
@@ -504,36 +517,57 @@ def generate_bc_dataset(
                 score_now = int(calculate_score(game, p).total)
                 state_now = enc.encode(game, pi)
                 mask_now = _action_type_mask(moves)
-                move_execute_attempts += 1
-                success = execute_move_on_sim(game, p, best)
-                if success:
-                    pos_f = encode_move_features(best, p) if move_value_enabled else []
+                state_np = np.asarray(state_now, dtype=np.float32)
+                pre_game = deep_copy_game(game)
+                pre_player = pre_game.players[pi]
+                pre_round_num = game.current_round
+                pre_turn_in_round = game.turn_in_round
+                current_model = _model_for_player(
+                    pi,
+                    proposal_model=proposal_model,
+                    opponent_model=opponent_model,
+                    self_play_policy=self_play_policy,
+                )
+                pre_logits = None
+                if current_model is not None:
+                    pre_logits, _ = current_model.forward(state_np)
+
+                def _build_supervision(executed_move: Move) -> tuple[dict[str, int], list[float], list[list[float]]]:
+                    pos_f = encode_move_features(executed_move, pre_player) if move_value_enabled else []
                     neg_f = (
                         _sample_negative_move_features(
                             moves=moves,
-                            executed_move=best,
-                            player=p,
+                            executed_move=executed_move,
+                            player=pre_player,
                             player_idx=pi,
-                            game=game,
+                            game=pre_game,
                             encoder=enc,
                             proposal_model=proposal_model,
                             opponent_model=opponent_model,
                             self_play_policy=self_play_policy,
                             num_negatives=move_value_num_negatives,
+                            pre_state=state_np,
+                            pre_logits=pre_logits,
                         )
                         if move_value_enabled
                         else []
                     )
+                    return encode_factorized_targets(executed_move, pre_player), pos_f, neg_f
+
+                move_execute_attempts += 1
+                success = execute_move_on_sim(game, p, best)
+                if success:
+                    targets, pos_f, neg_f = _build_supervision(best)
                     pending.append(
                         _PendingDecision(
                             state=state_now,
-                            targets=encode_factorized_targets(best, p),
+                            targets=targets,
                             move_pos=pos_f,
                             move_negs=neg_f,
                             legal_action_type_mask=mask_now,
                             player_index=pi,
-                            round_num=game.current_round,
-                            turn_in_round=game.turn_in_round,
+                            round_num=pre_round_num,
+                            turn_in_round=pre_turn_in_round,
                             ordinal_for_player=ordinals[pi],
                             score_now=score_now,
                         )
@@ -546,33 +580,17 @@ def generate_bc_dataset(
                     fallback = False
                     for m in moves:
                         if execute_move_on_sim(game, p, m):
-                            pos_f = encode_move_features(m, p) if move_value_enabled else []
-                            neg_f = (
-                                _sample_negative_move_features(
-                                    moves=moves,
-                                    executed_move=m,
-                                    player=p,
-                                    player_idx=pi,
-                                    game=game,
-                                    encoder=enc,
-                                    proposal_model=proposal_model,
-                                    opponent_model=opponent_model,
-                                    self_play_policy=self_play_policy,
-                                    num_negatives=move_value_num_negatives,
-                                )
-                                if move_value_enabled
-                                else []
-                            )
+                            targets, pos_f, neg_f = _build_supervision(m)
                             pending.append(
                                 _PendingDecision(
                                     state=state_now,
-                                    targets=encode_factorized_targets(m, p),
+                                    targets=targets,
                                     move_pos=pos_f,
                                     move_negs=neg_f,
                                     legal_action_type_mask=mask_now,
                                     player_index=pi,
-                                    round_num=game.current_round,
-                                    turn_in_round=game.turn_in_round,
+                                    round_num=pre_round_num,
+                                    turn_in_round=pre_turn_in_round,
                                     ordinal_for_player=ordinals[pi],
                                     score_now=score_now,
                                 )
@@ -592,7 +610,7 @@ def generate_bc_dataset(
                 turns += 1
 
             finals = [int(calculate_score(game, pl).total) for pl in game.players]
-            if reject_non_strict_powers and strict_violations:
+            if reject_non_strict_powers and is_strict_game and strict_violations:
                 strict_rejected_games += 1
                 continue
             all_scores.extend(finals)
@@ -697,6 +715,9 @@ def generate_bc_dataset(
         },
         "strict_rules_only": strict_rules_only,
         "reject_non_strict_powers": reject_non_strict_powers,
+        "strict_game_fraction": strict_game_fraction,
+        "strict_games": strict_games,
+        "relaxed_games": relaxed_games,
         "max_round": max_round,
         "emit_score_breakdown": emit_score_breakdown,
         "strict_rejected_games": strict_rejected_games,
@@ -741,6 +762,7 @@ def main() -> None:
     parser.add_argument("--allow-non-strict-rules", dest="strict_rules_only", action="store_false")
     parser.add_argument("--reject-non-strict-powers", dest="reject_non_strict_powers", action="store_true")
     parser.add_argument("--allow-non-strict-powers", dest="reject_non_strict_powers", action="store_false")
+    parser.add_argument("--strict-game-fraction", type=float, default=1.0)
     parser.add_argument("--max-round", type=int, default=4, choices=[1, 2, 3, 4])
     parser.add_argument("--emit-score-breakdown", action="store_true")
     args = parser.parse_args()
@@ -773,6 +795,7 @@ def main() -> None:
         engine_max_rollout_depth=args.engine_max_rollout_depth,
         strict_rules_only=args.strict_rules_only,
         reject_non_strict_powers=args.reject_non_strict_powers,
+        strict_game_fraction=args.strict_game_fraction,
         max_round=args.max_round,
         emit_score_breakdown=args.emit_score_breakdown,
     )

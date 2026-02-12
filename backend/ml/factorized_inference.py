@@ -43,6 +43,33 @@ class FactorizedPolicyModel:
         self.has_move_value_head = "W_move_value" in z and "b_move_value" in z
         self.W_move_value = z["W_move_value"] if self.has_move_value_head else None
         self.b_move_value = float(z["b_move_value"][0]) if self.has_move_value_head else 0.0
+        self.move_value_blend_alpha = float(self.meta.get("move_value_inference_blend_alpha", 0.35))
+        self.move_value_min_pair_acc = float(self.meta.get("move_value_inference_min_pair_acc", 0.52))
+        self.move_value_min_margin = float(self.meta.get("move_value_inference_min_margin", 0.01))
+        self.use_move_value_head = self._infer_move_value_reliability()
+
+    def _infer_move_value_reliability(self) -> bool:
+        """Enable move-value at inference only when validation ranking is strong."""
+        if not self.has_move_value_head or self.W_move_value is None:
+            return False
+
+        hist = self.meta.get("history")
+        if not isinstance(hist, list) or not hist:
+            return False
+
+        best_epoch = int(self.meta.get("best_val_loss_epoch", 0))
+        best_row = None
+        if best_epoch > 0:
+            for row in hist:
+                if int(row.get("epoch", 0)) == best_epoch:
+                    best_row = row
+                    break
+        if best_row is None:
+            best_row = hist[-1]
+
+        pair_acc = float(best_row.get("val_move_pair_acc", 0.0))
+        margin = float(best_row.get("val_move_rank_margin_mean", 0.0))
+        return pair_acc >= self.move_value_min_pair_acc and margin >= self.move_value_min_margin
 
     def forward(self, state: np.ndarray) -> tuple[dict[str, np.ndarray], float | None]:
         h1_pre = state @ self.W1 + self.b1
@@ -76,14 +103,17 @@ class FactorizedPolicyModel:
         player: Player,
         logits: dict[str, np.ndarray] | None = None,
     ) -> float:
-        """Score a move with move-value head when available, else legacy logits."""
-        if self.has_move_value_head and self.W_move_value is not None:
-            move_f = np.asarray(encode_move_features(move, player), dtype=np.float32)
-            x = np.concatenate([state.astype(np.float32, copy=False), move_f], axis=0)
-            return float(x @ self.W_move_value + self.b_move_value)
+        """Score a move; blend move-value with logits when move head is reliable."""
         if logits is None:
             logits, _ = self.forward(state.astype(np.float32, copy=False))
-        return score_move_with_factorized_model(logits, move, player)
+        base_score = score_move_with_factorized_model(logits, move, player)
+
+        if self.use_move_value_head and self.W_move_value is not None:
+            move_f = np.asarray(encode_move_features(move, player), dtype=np.float32)
+            x = np.concatenate([state.astype(np.float32, copy=False), move_f], axis=0)
+            move_value_score = float(x @ self.W_move_value + self.b_move_value)
+            return float(base_score + (self.move_value_blend_alpha * move_value_score))
+        return base_score
 
 
 def score_move_with_factorized_model(
