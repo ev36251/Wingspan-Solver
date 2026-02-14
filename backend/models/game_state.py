@@ -7,7 +7,7 @@ from .birdfeeder import Birdfeeder
 from .card_tray import CardTray
 from .goal import Goal
 from backend.config import ACTIONS_PER_ROUND, ROUNDS
-from backend.models.enums import BoardType
+from backend.models.enums import BoardType, PowerColor
 
 if TYPE_CHECKING:
     from backend.solver.deck_tracker import DeckTracker
@@ -47,6 +47,8 @@ class GameState:
     # Optional deterministic choices for power resolution.
     # Key: "<player_name>::<bird_name>" -> FIFO list of choice payload dicts.
     power_choice_queues: dict[str, list[dict]] = field(default_factory=dict)
+    # Debug/event stream for bird-power execution visibility in tests.
+    power_events: list[dict] = field(default_factory=list)
     _end_game_powers_resolved: bool = False
 
     @property
@@ -216,6 +218,29 @@ class GameState:
             return None
         idx = next((i for i, p in enumerate(self.players) if p.name == player.name), 0)
         return self.players[(idx - 1) % self.num_players]
+
+    def record_power_event(
+        self,
+        *,
+        timing: str,
+        color: PowerColor | str,
+        player_name: str,
+        bird_name: str,
+        executed: bool,
+    ) -> None:
+        """Append a normalized power event record for validation/debug tests."""
+        color_value = color.value if isinstance(color, PowerColor) else str(color)
+        self.power_events.append(
+            {
+                "timing": str(timing),
+                "color": color_value,
+                "player": str(player_name),
+                "bird": str(bird_name),
+                "round": int(self.current_round),
+                "turn": int(self.turn_in_round),
+                "executed": bool(executed),
+            }
+        )
 
 
 def create_new_game(player_names: list[str],

@@ -41,6 +41,18 @@ class ActionResult:
     power_activations: list[PowerActivation] = field(default_factory=list)
 
 
+def _record_power_event(game_state: GameState, *, timing: str, player: Player, bird: Bird, executed: bool) -> None:
+    recorder = getattr(game_state, "record_power_event", None)
+    if callable(recorder):
+        recorder(
+            timing=timing,
+            color=bird.color,
+            player_name=player.name,
+            bird_name=bird.name,
+            executed=executed,
+        )
+
+
 def activate_row(game_state: GameState, player: Player,
                  habitat: Habitat, simulate: bool = True) -> list[PowerActivation]:
     """Activate brown powers in a habitat row, right to left.
@@ -91,6 +103,13 @@ def activate_row(game_state: GameState, player: Player,
 
         if power.can_execute(ctx):
             result = power.execute(ctx)
+            _record_power_event(
+                game_state,
+                timing="brown",
+                player=player,
+                bird=slot.bird,
+                executed=bool(result.executed),
+            )
             if result.executed:
                 activations.append(PowerActivation(
                     bird_name=slot.bird.name,
@@ -231,6 +250,13 @@ def execute_play_bird(
             )
             if power.can_execute(ctx):
                 result = power.execute(ctx)
+                _record_power_event(
+                    game_state,
+                    timing="white",
+                    player=player,
+                    bird=bird,
+                    executed=bool(result.executed),
+                )
                 if result.executed:
                     power_acts.append(PowerActivation(
                         bird_name=bird.name,
@@ -335,6 +361,13 @@ def execute_play_bird_discounted(
             )
             if power.can_execute(ctx):
                 result = power.execute(ctx)
+                _record_power_event(
+                    game_state,
+                    timing="white",
+                    player=player,
+                    bird=bird,
+                    executed=bool(result.executed),
+                )
                 if result.executed:
                     power_acts.append(PowerActivation(
                         bird_name=bird.name,

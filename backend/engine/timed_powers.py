@@ -43,6 +43,18 @@ def _merge_food_maps(a: dict[FoodType, int], b: dict[FoodType, int]) -> dict[Foo
     return out
 
 
+def _record_power_event(game_state, *, timing: str, player, bird, executed: bool) -> None:
+    recorder = getattr(game_state, "record_power_event", None)
+    if callable(recorder):
+        recorder(
+            timing=timing,
+            color=bird.color,
+            player_name=player.name,
+            bird_name=bird.name,
+            executed=executed,
+        )
+
+
 def _build_trigger_meta(game_state, trigger_player, trigger_action: ActionType | None, trigger_result) -> dict:
     food_gained: dict[FoodType, int] = {}
     cards_tucked = 0
@@ -114,6 +126,13 @@ def trigger_between_turn_powers(
             )
             if power.can_execute(ctx):
                 result = power.execute(ctx)
+                _record_power_event(
+                    game_state,
+                    timing="pink",
+                    player=p,
+                    bird=bird,
+                    executed=bool(result.executed),
+                )
                 if result.executed:
                     activated += 1
     return activated
@@ -143,6 +162,13 @@ def trigger_end_of_round_powers(game_state, round_num: int) -> int:
             )
             if power.can_execute(ctx):
                 result = power.execute(ctx)
+                _record_power_event(
+                    game_state,
+                    timing="teal",
+                    player=p,
+                    bird=bird,
+                    executed=bool(result.executed),
+                )
                 if result.executed:
                     activated += 1
     return activated
@@ -174,6 +200,13 @@ def trigger_end_of_game_powers(game_state) -> int:
             )
             if power.can_execute(ctx):
                 result = power.execute(ctx)
+                _record_power_event(
+                    game_state,
+                    timing="yellow",
+                    player=p,
+                    bird=bird,
+                    executed=bool(result.executed),
+                )
                 if result.executed:
                     activated += 1
 

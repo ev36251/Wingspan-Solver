@@ -22,7 +22,7 @@ from pathlib import Path
 
 from backend.config import EXCEL_FILE
 from backend.data.registries import load_all, get_bird_registry, get_bonus_registry, get_goal_registry
-from backend.models.enums import BoardType, ActionType, FoodType
+from backend.models.enums import BoardType, ActionType, FoodType, PowerColor
 from backend.models.game_state import create_new_game, GameState
 from backend.models.player import Player
 from backend.engine.scoring import calculate_score
@@ -117,6 +117,8 @@ def create_training_game(
     setup_mode: str = "real5_softmax",
     draft_temperature: float = 0.85,
     draft_sample_top_k: int = 12,
+    coverage_mode: str = "off",
+    coverage_seed_birds: bool = False,
 ) -> GameState:
     """Create a game state suitable for self-play training."""
     bird_reg = get_bird_registry()
@@ -155,6 +157,84 @@ def create_training_game(
     random.shuffle(all_birds)
     all_bonus = list(bonus_reg.all_cards)
     random.shuffle(all_bonus)
+
+    coverage_mode_norm = coverage_mode.strip().lower()
+    if coverage_mode_norm not in {"off", "all_5_colors_exec"}:
+        coverage_mode_norm = "off"
+
+    # Validation-only hook: ensure at least one strict-certified bird of each
+    # power color is reachable in the opening pool (hands/tray/early deck).
+    if coverage_mode_norm == "all_5_colors_exec" and coverage_seed_birds:
+        needed_colors = [
+            PowerColor.WHITE,
+            PowerColor.BROWN,
+            PowerColor.PINK,
+            PowerColor.TEAL,
+            PowerColor.YELLOW,
+        ]
+        from backend.powers.registry import get_power_source, is_strict_power_source_allowed
+
+        preferred_names = {
+            PowerColor.WHITE: "Roseate Spoonbill",
+            PowerColor.BROWN: "Forster's Tern",
+            PowerColor.PINK: "Sacred Kingfisher",
+            PowerColor.TEAL: "Cetti's Warbler",
+            PowerColor.YELLOW: "Crested Pigeon",
+        }
+        selected_by_color: dict[PowerColor, object] = {}
+        for color in needed_colors:
+            preferred = preferred_names.get(color)
+            bird = next(
+                (
+                    b for b in all_birds
+                    if b.color == color
+                    and b.name == preferred
+                    and (not strict_rules_mode or is_strict_power_source_allowed(get_power_source(b)))
+                ),
+                None,
+            )
+            if bird is None:
+                bird = next(
+                    (
+                        b for b in all_birds
+                        if b.color == color
+                        and (not strict_rules_mode or is_strict_power_source_allowed(get_power_source(b)))
+                    ),
+                    None,
+                )
+            if bird is None:
+                raise ValueError(f"No eligible bird found for required coverage color '{color.value}'")
+            selected_by_color[color] = bird
+
+        # Keep seeded colors in immediate opening reach (candidate hands + tray).
+        reachable_window = min(len(all_birds), num_players * 5 + 3)
+        if reachable_window < len(needed_colors):
+            raise ValueError("Insufficient deck window to seed all coverage colors")
+
+        if len(needed_colors) == 1:
+            target_positions = [0]
+        else:
+            step = (reachable_window - 1) / float(len(needed_colors) - 1)
+            target_positions = [int(round(step * i)) for i in range(len(needed_colors))]
+            target_positions = [max(0, min(reachable_window - 1, p)) for p in target_positions]
+            # Ensure uniqueness in-order.
+            seen = set()
+            uniq_positions = []
+            for p in target_positions:
+                while p in seen and p + 1 < reachable_window:
+                    p += 1
+                if p in seen:
+                    p = 0
+                    while p in seen and p + 1 < reachable_window:
+                        p += 1
+                seen.add(p)
+                uniq_positions.append(p)
+            target_positions = uniq_positions
+
+        for color, pos in zip(needed_colors, target_positions):
+            seeded_bird = selected_by_color[color]
+            current_idx = all_birds.index(seeded_bird)
+            all_birds[pos], all_birds[current_idx] = all_birds[current_idx], all_birds[pos]
 
     idx = 0
     non_nectar_foods = [
@@ -288,6 +368,8 @@ def create_training_game(
         "draft_sample_top_k": draft_sample_top_k,
         "draft_discard_total": draft_discard_total,
         "draft_fallbacks": draft_fallbacks,
+        "coverage_mode": coverage_mode_norm,
+        "coverage_seed_birds": bool(coverage_seed_birds),
     }
 
     # Keep finite deck identities for higher-fidelity simulation.

@@ -174,6 +174,27 @@ class TestGameCreation:
             assert 0 <= len(p.hand) <= 5
             assert p.food_supply.total_non_nectar() == (5 - len(p.hand))
 
+    def test_validation_mode_does_not_mutate_default_setup(self):
+        baseline = create_training_game(2, BoardType.OCEANIA)
+        seeded = create_training_game(
+            2,
+            BoardType.OCEANIA,
+            strict_rules_mode=True,
+            coverage_mode="all_5_colors_exec",
+            coverage_seed_birds=True,
+        )
+
+        baseline_stats = getattr(baseline, "_setup_stats")
+        seeded_stats = getattr(seeded, "_setup_stats")
+        assert baseline_stats["coverage_mode"] == "off"
+        assert baseline_stats["coverage_seed_birds"] is False
+        assert seeded_stats["coverage_mode"] == "all_5_colors_exec"
+        assert seeded_stats["coverage_seed_birds"] is True
+
+        for p in baseline.players:
+            assert 0 <= len(p.hand) <= 5
+            assert p.food_supply.total_non_nectar() == (5 - len(p.hand))
+
 
 class TestPlayMatch:
     def test_play_head_to_head_completes(self):
