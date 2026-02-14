@@ -17,6 +17,7 @@ class PowerContext:
     # For pink powers: the triggering player and action
     trigger_player: "Player | None" = None
     trigger_action: ActionType | None = None
+    trigger_meta: dict | None = None
     # Precomputed evaluation context (filled by heuristic callers when available)
     rounds_remaining: int = 0
     actions_remaining: int = 0

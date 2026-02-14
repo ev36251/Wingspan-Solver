@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import shutil
 import time
 from pathlib import Path
@@ -22,6 +23,39 @@ from backend.ml.kpi_gate import run_gate
 from backend.ml.strict_kpi_compare import run_compare as run_strict_kpi_compare
 from backend.ml.strict_kpi_runner import run_strict_kpi
 from backend.ml.train_factorized_bc import train_bc
+
+
+def _sample_jsonl_to_handle(
+    src_path: Path,
+    dst_handle,
+    *,
+    sample_count: int,
+    total_rows: int,
+    rng,
+) -> int:
+    if sample_count <= 0 or total_rows <= 0:
+        return 0
+
+    written = 0
+    if sample_count >= total_rows:
+        with src_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    dst_handle.write(line)
+                    written += 1
+        return written
+
+    keep_idx = set(rng.sample(range(total_rows), sample_count))
+    with src_path.open("r", encoding="utf-8") as f:
+        row_idx = 0
+        for line in f:
+            if not line.strip():
+                continue
+            if row_idx in keep_idx:
+                dst_handle.write(line)
+                written += 1
+            row_idx += 1
+    return written
 
 
 def run_auto_improve_factorized(
@@ -41,16 +75,16 @@ def run_auto_improve_factorized(
     late_round_oversample_factor: int,
     train_epochs: int,
     train_batch: int,
-    train_hidden1: int = 256,
-    train_hidden2: int = 128,
-    train_dropout: float = 0.15,
+    train_hidden1: int = 384,
+    train_hidden2: int = 192,
+    train_dropout: float = 0.2,
     train_lr_init: float = 1e-4,
-    train_lr_peak: float = 1e-3,
-    train_lr_warmup_epochs: int = 2,
-    train_lr_decay_every: int = 3,
-    train_lr_decay_factor: float = 0.5,
+    train_lr_peak: float = 5e-4,
+    train_lr_warmup_epochs: int = 3,
+    train_lr_decay_every: int = 5,
+    train_lr_decay_factor: float = 0.7,
     train_early_stop_enabled: bool = True,
-    train_early_stop_patience: int = 3,
+    train_early_stop_patience: int = 5,
     train_early_stop_min_delta: float = 1e-4,
     train_early_stop_restore_best: bool = True,
     train_value_weight: float = 0.5,
@@ -63,8 +97,8 @@ def run_auto_improve_factorized(
     min_pool_rate_ge_100: float = 0.0,
     min_pool_rate_ge_120: float = 0.0,
     require_pool_non_regression: bool = False,
-    min_gate_win_rate: float = 0.45,
-    min_gate_mean_score: float = 45.0,
+    min_gate_win_rate: float = 0.20,
+    min_gate_mean_score: float = 25.0,
     min_gate_rate_ge_100: float = 0.0,
     min_gate_rate_ge_120: float = 0.0,
     champion_self_play_enabled: bool = True,
@@ -96,6 +130,9 @@ def run_auto_improve_factorized(
     strict_kpi_min_strict_certified_birds: int = 50,
     strict_kpi_require_non_regression: bool = False,
     strict_kpi_mean_score_tolerance: float = 0.5,
+    data_accumulation_enabled: bool = True,
+    data_accumulation_decay: float = 0.5,
+    max_accumulated_samples: int = 200_000,
     clean_out_dir: bool = True,
     train_hidden: int | None = None,
     train_lr: float | None = None,
@@ -118,6 +155,9 @@ def run_auto_improve_factorized(
             f"warning: deprecated auto-improve train args used: {', '.join(deprecated_train_args_used)}"
         )
 
+    data_accumulation_decay = max(0.0, min(1.0, float(data_accumulation_decay)))
+    max_accumulated_samples = max(1, int(max_accumulated_samples))
+
     base = Path(out_dir)
     if clean_out_dir and base.exists():
         shutil.rmtree(base)
@@ -132,6 +172,7 @@ def run_auto_improve_factorized(
     started = time.time()
 
     proposal_model_path: str | None = None
+    accumulation_sources: list[dict] = []
 
     for i in range(1, iterations + 1):
         iter_seed = seed + i * 1000
@@ -160,6 +201,8 @@ def run_auto_improve_factorized(
         kpi_gate_path = iter_dir / "kpi_gate.json"
         strict_kpi_candidate_path = iter_dir / "strict_kpi_candidate.json"
         strict_kpi_compare_path = iter_dir / "strict_kpi_compare.json"
+        combined_dataset_jsonl = iter_dir / "bc_dataset_combined.jsonl"
+        combined_dataset_meta = iter_dir / "bc_dataset_combined.meta.json"
 
         champion_available = best_model_path.exists()
         use_champion_mode = (
@@ -200,9 +243,110 @@ def run_auto_improve_factorized(
             strict_game_fraction=strict_game_fraction_iter,
         )
 
+        accumulation_sources.append(
+            {
+                "iteration": i,
+                "jsonl": str(dataset_jsonl),
+                "meta": str(dataset_meta),
+                "samples": int(ds_meta.get("samples", 0)),
+            }
+        )
+
+        train_dataset_jsonl = dataset_jsonl
+        train_dataset_meta = dataset_meta
+        accumulation_summary = {
+            "enabled": bool(data_accumulation_enabled),
+            "decay": float(data_accumulation_decay),
+            "max_accumulated_samples": int(max_accumulated_samples),
+            "sources": [],
+            "target_total": int(ds_meta.get("samples", 0)),
+            "combined_samples": int(ds_meta.get("samples", 0)),
+        }
+
+        if data_accumulation_enabled and accumulation_sources:
+            valid_sources = [s for s in accumulation_sources if int(s.get("samples", 0)) > 0]
+            total_available = sum(int(s["samples"]) for s in valid_sources)
+            target_total = min(int(max_accumulated_samples), total_available)
+
+            if target_total > 0 and valid_sources:
+                weights = []
+                for src in valid_sources:
+                    age = max(0, i - int(src["iteration"]))
+                    weights.append(float(data_accumulation_decay ** age))
+                weight_sum = max(1e-9, float(sum(weights)))
+                raw = [
+                    min(float(src["samples"]), (target_total * w / weight_sum))
+                    for src, w in zip(valid_sources, weights)
+                ]
+                quotas = [int(x) for x in raw]
+                remaining = target_total - sum(quotas)
+                # Fill remaining quota by fractional share, then by younger source.
+                order = sorted(
+                    range(len(valid_sources)),
+                    key=lambda idx: (raw[idx] - quotas[idx], -int(valid_sources[idx]["iteration"])),
+                    reverse=True,
+                )
+                while remaining > 0:
+                    progressed = False
+                    for idx in order:
+                        cap = int(valid_sources[idx]["samples"])
+                        if quotas[idx] < cap:
+                            quotas[idx] += 1
+                            remaining -= 1
+                            progressed = True
+                            if remaining <= 0:
+                                break
+                    if not progressed:
+                        break
+
+                rng = random.Random(iter_seed + 24680)
+                written_total = 0
+                src_rows = []
+                with combined_dataset_jsonl.open("w", encoding="utf-8") as out_f:
+                    for src, w, q in zip(valid_sources, weights, quotas):
+                        if q <= 0:
+                            continue
+                        wrote = _sample_jsonl_to_handle(
+                            Path(str(src["jsonl"])),
+                            out_f,
+                            sample_count=int(q),
+                            total_rows=int(src["samples"]),
+                            rng=rng,
+                        )
+                        written_total += wrote
+                        src_rows.append(
+                            {
+                                "iteration": int(src["iteration"]),
+                                "dataset": str(src["jsonl"]),
+                                "samples_available": int(src["samples"]),
+                                "weight": round(float(w), 6),
+                                "quota": int(q),
+                                "written": int(wrote),
+                            }
+                        )
+
+                combined_meta_obj = dict(ds_meta)
+                combined_meta_obj["samples"] = int(written_total)
+                combined_meta_obj["accumulation"] = {
+                    "enabled": True,
+                    "decay": float(data_accumulation_decay),
+                    "max_accumulated_samples": int(max_accumulated_samples),
+                    "target_total": int(target_total),
+                    "combined_samples": int(written_total),
+                    "total_available": int(total_available),
+                    "sources": src_rows,
+                }
+                combined_dataset_meta.write_text(
+                    json.dumps(combined_meta_obj, indent=2),
+                    encoding="utf-8",
+                )
+                train_dataset_jsonl = combined_dataset_jsonl
+                train_dataset_meta = combined_dataset_meta
+                accumulation_summary = dict(combined_meta_obj["accumulation"])
+
         tr = train_bc(
-            dataset_jsonl=str(dataset_jsonl),
-            meta_json=str(dataset_meta),
+            dataset_jsonl=str(train_dataset_jsonl),
+            meta_json=str(train_dataset_meta),
             out_model=str(model_path),
             epochs=train_epochs,
             batch_size=train_batch,
@@ -372,11 +516,14 @@ def run_auto_improve_factorized(
             "strict_game_fraction": round(float(strict_game_fraction_iter), 4),
             "dataset": str(dataset_jsonl),
             "dataset_meta": str(dataset_meta),
+            "train_dataset": str(train_dataset_jsonl),
+            "train_dataset_meta": str(train_dataset_meta),
             "model": str(model_path),
             "dataset_summary": {
                 "samples": ds_meta["samples"],
                 "mean_player_score": ds_meta["mean_player_score"],
             },
+            "combined_dataset_summary": accumulation_summary,
             "train_summary": {
                 "train_samples": tr["train_samples"],
                 "val_samples": tr["val_samples"],
@@ -405,7 +552,7 @@ def run_auto_improve_factorized(
             if best is None or gate_dict["nn_mean_margin"] > best["promotion_gate"]["result"]["nn_mean_margin"]:
                 best = row
                 shutil.copy2(model_path, best_model_path)
-                shutil.copy2(dataset_meta, best_meta_path)
+                shutil.copy2(train_dataset_meta, best_meta_path)
                 proposal_model_path = str(best_model_path)
         elif not use_champion_mode:
             # Keep bootstrapping with the latest candidate even when strict
@@ -491,6 +638,9 @@ def run_auto_improve_factorized(
                 "strict_kpi_min_strict_certified_birds": strict_kpi_min_strict_certified_birds,
                 "strict_kpi_require_non_regression": strict_kpi_require_non_regression,
                 "strict_kpi_mean_score_tolerance": strict_kpi_mean_score_tolerance,
+                "data_accumulation_enabled": data_accumulation_enabled,
+                "data_accumulation_decay": data_accumulation_decay,
+                "max_accumulated_samples": max_accumulated_samples,
                 "seed": seed,
             },
             "best": best,
@@ -517,7 +667,7 @@ def main() -> None:
     parser.add_argument("--players", type=int, default=2, choices=[2])
     parser.add_argument("--board-type", default="oceania", choices=["base", "oceania"])
     parser.add_argument("--max-turns", type=int, default=220)
-    parser.add_argument("--games-per-iter", type=int, default=400)
+    parser.add_argument("--games-per-iter", type=int, default=800)
     parser.add_argument("--proposal-top-k", type=int, default=6)
     parser.add_argument("--lookahead-depth", type=int, default=2, choices=[0, 1, 2])
     parser.add_argument("--n-step", type=int, default=2)
@@ -526,20 +676,20 @@ def main() -> None:
     parser.add_argument("--value-target-score-scale", type=float, default=160.0)
     parser.add_argument("--value-target-score-bias", type=float, default=0.0)
     parser.add_argument("--late-round-oversample-factor", type=int, default=2)
-    parser.add_argument("--train-epochs", type=int, default=20)
+    parser.add_argument("--train-epochs", type=int, default=30)
     parser.add_argument("--train-batch", type=int, default=128)
-    parser.add_argument("--train-hidden1", type=int, default=256)
-    parser.add_argument("--train-hidden2", type=int, default=128)
-    parser.add_argument("--train-dropout", type=float, default=0.15)
+    parser.add_argument("--train-hidden1", type=int, default=384)
+    parser.add_argument("--train-hidden2", type=int, default=192)
+    parser.add_argument("--train-dropout", type=float, default=0.2)
     parser.add_argument("--train-lr-init", type=float, default=1e-4)
-    parser.add_argument("--train-lr-peak", type=float, default=1e-3)
-    parser.add_argument("--train-lr-warmup-epochs", type=int, default=2)
-    parser.add_argument("--train-lr-decay-every", type=int, default=3)
-    parser.add_argument("--train-lr-decay-factor", type=float, default=0.5)
+    parser.add_argument("--train-lr-peak", type=float, default=5e-4)
+    parser.add_argument("--train-lr-warmup-epochs", type=int, default=3)
+    parser.add_argument("--train-lr-decay-every", type=int, default=5)
+    parser.add_argument("--train-lr-decay-factor", type=float, default=0.7)
     parser.set_defaults(train_early_stop_enabled=True, train_early_stop_restore_best=True)
     parser.add_argument("--train-early-stop-enabled", dest="train_early_stop_enabled", action="store_true")
     parser.add_argument("--disable-train-early-stop", dest="train_early_stop_enabled", action="store_false")
-    parser.add_argument("--train-early-stop-patience", type=int, default=3)
+    parser.add_argument("--train-early-stop-patience", type=int, default=5)
     parser.add_argument("--train-early-stop-min-delta", type=float, default=1e-4)
     parser.add_argument("--train-early-stop-restore-best", dest="train_early_stop_restore_best", action="store_true")
     parser.add_argument("--no-train-early-stop-restore-best", dest="train_early_stop_restore_best", action="store_false")
@@ -555,10 +705,15 @@ def main() -> None:
     parser.add_argument("--min-pool-rate-ge-100", type=float, default=0.0)
     parser.add_argument("--min-pool-rate-ge-120", type=float, default=0.0)
     parser.add_argument("--require-pool-non-regression", action="store_true")
-    parser.add_argument("--min-gate-win-rate", type=float, default=0.45)
-    parser.add_argument("--min-gate-mean-score", type=float, default=45.0)
+    parser.add_argument("--min-gate-win-rate", type=float, default=0.20)
+    parser.add_argument("--min-gate-mean-score", type=float, default=25.0)
     parser.add_argument("--min-gate-rate-ge-100", type=float, default=0.0)
     parser.add_argument("--min-gate-rate-ge-120", type=float, default=0.0)
+    parser.set_defaults(data_accumulation_enabled=True)
+    parser.add_argument("--data-accumulation-enabled", dest="data_accumulation_enabled", action="store_true")
+    parser.add_argument("--disable-data-accumulation", dest="data_accumulation_enabled", action="store_false")
+    parser.add_argument("--data-accumulation-decay", type=float, default=0.5)
+    parser.add_argument("--max-accumulated-samples", type=int, default=200000)
     parser.set_defaults(champion_self_play_enabled=True, champion_switch_after_first_promotion=True)
     parser.add_argument("--champion-self-play-enabled", dest="champion_self_play_enabled", action="store_true")
     parser.add_argument("--disable-champion-self-play", dest="champion_self_play_enabled", action="store_false")
@@ -646,6 +801,9 @@ def main() -> None:
         min_gate_mean_score=args.min_gate_mean_score,
         min_gate_rate_ge_100=args.min_gate_rate_ge_100,
         min_gate_rate_ge_120=args.min_gate_rate_ge_120,
+        data_accumulation_enabled=args.data_accumulation_enabled,
+        data_accumulation_decay=args.data_accumulation_decay,
+        max_accumulated_samples=args.max_accumulated_samples,
         champion_self_play_enabled=args.champion_self_play_enabled,
         champion_switch_after_first_promotion=args.champion_switch_after_first_promotion,
         champion_teacher_source=args.champion_teacher_source,

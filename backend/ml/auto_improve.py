@@ -17,16 +17,16 @@ def run_auto_improve(
     games_per_iter: int,
     train_epochs: int,
     train_batch: int,
-    train_hidden1: int = 256,
-    train_hidden2: int = 128,
-    train_dropout: float = 0.15,
+    train_hidden1: int = 384,
+    train_hidden2: int = 192,
+    train_dropout: float = 0.2,
     train_lr_init: float = 1e-4,
-    train_lr_peak: float = 1e-3,
-    train_lr_warmup_epochs: int = 2,
-    train_lr_decay_every: int = 3,
-    train_lr_decay_factor: float = 0.5,
+    train_lr_peak: float = 5e-4,
+    train_lr_warmup_epochs: int = 3,
+    train_lr_decay_every: int = 5,
+    train_lr_decay_factor: float = 0.7,
     train_early_stop_enabled: bool = True,
-    train_early_stop_patience: int = 3,
+    train_early_stop_patience: int = 5,
     train_early_stop_min_delta: float = 1e-4,
     train_early_stop_restore_best: bool = True,
     value_weight: float = 0.5,
@@ -43,6 +43,9 @@ def run_auto_improve(
     strict_fraction_start: float = 1.0,
     strict_fraction_end: float = 0.0,
     strict_fraction_warmup_iters: int = 5,
+    data_accumulation_enabled: bool = True,
+    data_accumulation_decay: float = 0.5,
+    max_accumulated_samples: int = 200_000,
     seed: int = 0,
     clean_out_dir: bool = True,
     proposal_top_k: int = 6,
@@ -91,10 +94,13 @@ def run_auto_improve(
         min_pool_rate_ge_100=0.0,
         min_pool_rate_ge_120=0.0,
         require_pool_non_regression=False,
-        min_gate_win_rate=0.0,
-        min_gate_mean_score=0.0,
+        min_gate_win_rate=0.20,
+        min_gate_mean_score=25.0,
         min_gate_rate_ge_100=0.0,
         min_gate_rate_ge_120=0.0,
+        data_accumulation_enabled=data_accumulation_enabled,
+        data_accumulation_decay=data_accumulation_decay,
+        max_accumulated_samples=max_accumulated_samples,
         champion_self_play_enabled=champion_self_play_enabled,
         champion_switch_after_first_promotion=champion_switch_after_first_promotion,
         champion_teacher_source=champion_teacher_source,
@@ -128,23 +134,23 @@ def main() -> None:
     parser.add_argument("--players", type=int, default=2, choices=[2])
     parser.add_argument("--board-type", default="oceania", choices=["base", "oceania"])
     parser.add_argument("--max-turns", type=int, default=220)
-    parser.add_argument("--games-per-iter", type=int, default=400)
+    parser.add_argument("--games-per-iter", type=int, default=800)
     parser.add_argument("--proposal-top-k", type=int, default=6)
     parser.add_argument("--lookahead-depth", type=int, default=2, choices=[0, 1, 2])
-    parser.add_argument("--train-epochs", type=int, default=20)
+    parser.add_argument("--train-epochs", type=int, default=30)
     parser.add_argument("--train-batch", type=int, default=128)
-    parser.add_argument("--train-hidden1", type=int, default=256)
-    parser.add_argument("--train-hidden2", type=int, default=128)
-    parser.add_argument("--train-dropout", type=float, default=0.15)
+    parser.add_argument("--train-hidden1", type=int, default=384)
+    parser.add_argument("--train-hidden2", type=int, default=192)
+    parser.add_argument("--train-dropout", type=float, default=0.2)
     parser.add_argument("--train-lr-init", type=float, default=1e-4)
-    parser.add_argument("--train-lr-peak", type=float, default=1e-3)
-    parser.add_argument("--train-lr-warmup-epochs", type=int, default=2)
-    parser.add_argument("--train-lr-decay-every", type=int, default=3)
-    parser.add_argument("--train-lr-decay-factor", type=float, default=0.5)
+    parser.add_argument("--train-lr-peak", type=float, default=5e-4)
+    parser.add_argument("--train-lr-warmup-epochs", type=int, default=3)
+    parser.add_argument("--train-lr-decay-every", type=int, default=5)
+    parser.add_argument("--train-lr-decay-factor", type=float, default=0.7)
     parser.set_defaults(train_early_stop_enabled=True, train_early_stop_restore_best=True)
     parser.add_argument("--train-early-stop-enabled", dest="train_early_stop_enabled", action="store_true")
     parser.add_argument("--disable-train-early-stop", dest="train_early_stop_enabled", action="store_false")
-    parser.add_argument("--train-early-stop-patience", type=int, default=3)
+    parser.add_argument("--train-early-stop-patience", type=int, default=5)
     parser.add_argument("--train-early-stop-min-delta", type=float, default=1e-4)
     parser.add_argument("--train-early-stop-restore-best", dest="train_early_stop_restore_best", action="store_true")
     parser.add_argument("--no-train-early-stop-restore-best", dest="train_early_stop_restore_best", action="store_false")
@@ -169,6 +175,11 @@ def main() -> None:
     parser.add_argument("--strict-fraction-start", type=float, default=1.0)
     parser.add_argument("--strict-fraction-end", type=float, default=0.0)
     parser.add_argument("--strict-fraction-warmup-iters", type=int, default=5)
+    parser.set_defaults(data_accumulation_enabled=True)
+    parser.add_argument("--data-accumulation-enabled", dest="data_accumulation_enabled", action="store_true")
+    parser.add_argument("--disable-data-accumulation", dest="data_accumulation_enabled", action="store_false")
+    parser.add_argument("--data-accumulation-decay", type=float, default=0.5)
+    parser.add_argument("--max-accumulated-samples", type=int, default=200000)
     parser.set_defaults(strict_kpi_gate_enabled=True)
     parser.add_argument("--strict-kpi-gate-enabled", dest="strict_kpi_gate_enabled", action="store_true")
     parser.add_argument("--disable-strict-kpi-gate", dest="strict_kpi_gate_enabled", action="store_false")
@@ -210,6 +221,9 @@ def main() -> None:
         strict_fraction_start=args.strict_fraction_start,
         strict_fraction_end=args.strict_fraction_end,
         strict_fraction_warmup_iters=args.strict_fraction_warmup_iters,
+        data_accumulation_enabled=args.data_accumulation_enabled,
+        data_accumulation_decay=args.data_accumulation_decay,
+        max_accumulated_samples=args.max_accumulated_samples,
         seed=args.seed,
         clean_out_dir=not args.resume,
         proposal_top_k=args.proposal_top_k,

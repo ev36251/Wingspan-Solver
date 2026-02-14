@@ -45,7 +45,7 @@ def test_base_round_order_end_round_powers_then_goal_then_cleanup() -> None:
     assert bob.play_bird_actions_this_round == 0
 
 
-def test_oceania_round_order_scores_goal_before_nectar_cleanup() -> None:
+def test_oceania_round_order_discards_nectar_before_goal_scoring() -> None:
     # Use a custom scoring tuple with clear 1st/2nd separation.
     goal = Goal(
         description="[wild] in personal supply",
@@ -57,15 +57,16 @@ def test_oceania_round_order_scores_goal_before_nectar_cleanup() -> None:
     game = create_new_game(["Alice", "Bob"], round_goals=[goal], board_type=BoardType.OCEANIA)
     alice, bob = game.players
 
-    # Alice should win this goal only if scoring sees nectar before cleanup.
+    # Alice starts with more nectar, but nectar should be discarded before scoring.
     alice.food_supply.nectar = 3
-    bob.food_supply.nectar = 1
+    bob.food_supply.nectar = 0
+    bob.food_supply.seed = 1
     alice.play_bird_actions_this_round = 1
     bob.play_bird_actions_this_round = 2
 
     game.advance_round()
 
-    assert game.round_goal_scores[1]["Alice"] > game.round_goal_scores[1]["Bob"]
+    assert game.round_goal_scores[1]["Bob"] > game.round_goal_scores[1]["Alice"]
     # Cleanup should still happen by end of transition.
     assert alice.food_supply.nectar == 0
     assert bob.food_supply.nectar == 0

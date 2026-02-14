@@ -38,6 +38,9 @@ class BCModel:
         head_dims: dict[str, int],
         has_value_head: bool,
         has_move_value_head: bool,
+        batch_norm_enabled: bool,
+        batch_norm_momentum: float,
+        batch_norm_eps: float,
         seed: int,
     ):
         rng = np.random.default_rng(seed)
@@ -67,6 +70,64 @@ class BCModel:
         self.b_move_value = np.float32(0.0)
         self.hidden1 = hidden1
         self.hidden2 = hidden2
+        self.batch_norm_enabled = bool(batch_norm_enabled)
+        self.batch_norm_momentum = float(batch_norm_momentum)
+        self.batch_norm_eps = float(batch_norm_eps)
+        self.bn1_gamma = np.ones(hidden1, dtype=np.float32) if self.batch_norm_enabled else None
+        self.bn1_beta = np.zeros(hidden1, dtype=np.float32) if self.batch_norm_enabled else None
+        self.bn1_running_mean = np.zeros(hidden1, dtype=np.float32) if self.batch_norm_enabled else None
+        self.bn1_running_var = np.ones(hidden1, dtype=np.float32) if self.batch_norm_enabled else None
+        self.bn2_gamma = np.ones(hidden2, dtype=np.float32) if self.batch_norm_enabled else None
+        self.bn2_beta = np.zeros(hidden2, dtype=np.float32) if self.batch_norm_enabled else None
+        self.bn2_running_mean = np.zeros(hidden2, dtype=np.float32) if self.batch_norm_enabled else None
+        self.bn2_running_var = np.ones(hidden2, dtype=np.float32) if self.batch_norm_enabled else None
+
+    def _bn_forward(
+        self,
+        x: np.ndarray,
+        *,
+        gamma: np.ndarray | None,
+        beta: np.ndarray | None,
+        running_mean: np.ndarray | None,
+        running_var: np.ndarray | None,
+        train: bool,
+        batch_mean: np.ndarray | None,
+        batch_var: np.ndarray | None,
+    ) -> tuple[np.ndarray, dict | None]:
+        if (
+            not self.batch_norm_enabled
+            or gamma is None
+            or beta is None
+            or running_mean is None
+            or running_var is None
+        ):
+            return x, None
+        if train and batch_mean is not None and batch_var is not None:
+            mean = batch_mean
+            var = batch_var
+        else:
+            mean = running_mean
+            var = running_var
+        inv_std = 1.0 / np.sqrt(np.maximum(var, 0.0) + self.batch_norm_eps)
+        x_hat = (x - mean) * inv_std
+        y = x_hat * gamma + beta
+        cache = {
+            "x_hat": x_hat,
+            "gamma_inv_std": gamma * inv_std,
+        }
+        return y, cache
+
+    def update_batch_norm_running_stats(self, batch_stats: dict[str, np.ndarray] | None) -> None:
+        if not self.batch_norm_enabled or batch_stats is None:
+            return
+        m = np.float32(self.batch_norm_momentum)
+        one_minus_m = np.float32(1.0) - m
+        if self.bn1_running_mean is not None and self.bn1_running_var is not None:
+            self.bn1_running_mean = (one_minus_m * self.bn1_running_mean) + (m * batch_stats["bn1_mean"])
+            self.bn1_running_var = (one_minus_m * self.bn1_running_var) + (m * batch_stats["bn1_var"])
+        if self.bn2_running_mean is not None and self.bn2_running_var is not None:
+            self.bn2_running_mean = (one_minus_m * self.bn2_running_mean) + (m * batch_stats["bn2_mean"])
+            self.bn2_running_var = (one_minus_m * self.bn2_running_var) + (m * batch_stats["bn2_var"])
 
     def forward(
         self,
@@ -75,8 +136,19 @@ class BCModel:
         train: bool = False,
         dropout: float = 0.0,
         rng: np.random.Generator | None = None,
+        bn_stats: dict[str, np.ndarray] | None = None,
     ):
         h1_pre = x @ self.W1 + self.b1
+        h1_pre, bn1_cache = self._bn_forward(
+            h1_pre,
+            gamma=self.bn1_gamma,
+            beta=self.bn1_beta,
+            running_mean=self.bn1_running_mean,
+            running_var=self.bn1_running_var,
+            train=train,
+            batch_mean=bn_stats.get("bn1_mean") if bn_stats is not None else None,
+            batch_var=bn_stats.get("bn1_var") if bn_stats is not None else None,
+        )
         h1 = np.maximum(h1_pre, 0.0)
 
         keep = 1.0 - float(dropout)
@@ -88,6 +160,16 @@ class BCModel:
             h1_drop = h1
 
         h2_pre = h1_drop @ self.W2 + self.b2
+        h2_pre, bn2_cache = self._bn_forward(
+            h2_pre,
+            gamma=self.bn2_gamma,
+            beta=self.bn2_beta,
+            running_mean=self.bn2_running_mean,
+            running_var=self.bn2_running_var,
+            train=train,
+            batch_mean=bn_stats.get("bn2_mean") if bn_stats is not None else None,
+            batch_var=bn_stats.get("bn2_var") if bn_stats is not None else None,
+        )
         h2 = np.maximum(h2_pre, 0.0)
         if train and dropout > 0.0 and rng is not None and keep > 0.0:
             mask2 = (rng.random(h2.shape, dtype=np.float32) < keep).astype(np.float32) / np.float32(keep)
@@ -100,7 +182,7 @@ class BCModel:
         value = None
         if self.has_value_head:
             value = float(h2_drop @ self.W_value + self.b_value)
-        return h1_pre, h1, mask1, h1_drop, h2_pre, h2, mask2, h2_drop, logits, value
+        return h1_pre, h1, mask1, h1_drop, h2_pre, h2, mask2, h2_drop, logits, value, bn1_cache, bn2_cache
 
     def save(self, path: str | Path, metadata: dict) -> None:
         out = {
@@ -119,6 +201,15 @@ class BCModel:
         if self.has_move_value_head and self.W_move_value is not None:
             out["W_move_value"] = self.W_move_value
             out["b_move_value"] = np.asarray([self.b_move_value], dtype=np.float32)
+        if self.batch_norm_enabled:
+            out["bn1_gamma"] = self.bn1_gamma
+            out["bn1_beta"] = self.bn1_beta
+            out["bn1_running_mean"] = self.bn1_running_mean
+            out["bn1_running_var"] = self.bn1_running_var
+            out["bn2_gamma"] = self.bn2_gamma
+            out["bn2_beta"] = self.bn2_beta
+            out["bn2_running_mean"] = self.bn2_running_mean
+            out["bn2_running_var"] = self.bn2_running_var
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(path, **out)
 
@@ -190,8 +281,11 @@ def train_bc(
     move_value_enabled: bool = True,
     move_value_loss_weight: float = 0.2,
     move_value_num_negatives: int = 4,
+    batch_norm_enabled: bool = True,
+    batch_norm_momentum: float = 0.1,
+    batch_norm_eps: float = 1e-5,
     early_stop_enabled: bool = True,
-    early_stop_patience: int = 3,
+    early_stop_patience: int = 5,
     early_stop_min_delta: float = 1e-4,
     early_stop_restore_best: bool = True,
     hidden: int | None = None,
@@ -247,6 +341,9 @@ def train_bc(
         head_dims,
         has_value_target,
         effective_move_value,
+        batch_norm_enabled,
+        batch_norm_momentum,
+        batch_norm_eps,
         seed,
     )
     early_stop_patience = max(1, int(early_stop_patience))
@@ -263,6 +360,15 @@ def train_bc(
             "b_value": np.float32(model.b_value),
             "b_move_value": np.float32(model.b_move_value),
         }
+        if model.batch_norm_enabled:
+            snap["bn1_gamma"] = None if model.bn1_gamma is None else model.bn1_gamma.copy()
+            snap["bn1_beta"] = None if model.bn1_beta is None else model.bn1_beta.copy()
+            snap["bn1_running_mean"] = None if model.bn1_running_mean is None else model.bn1_running_mean.copy()
+            snap["bn1_running_var"] = None if model.bn1_running_var is None else model.bn1_running_var.copy()
+            snap["bn2_gamma"] = None if model.bn2_gamma is None else model.bn2_gamma.copy()
+            snap["bn2_beta"] = None if model.bn2_beta is None else model.bn2_beta.copy()
+            snap["bn2_running_mean"] = None if model.bn2_running_mean is None else model.bn2_running_mean.copy()
+            snap["bn2_running_var"] = None if model.bn2_running_var is None else model.bn2_running_var.copy()
         if model.has_value_head and model.W_value is not None:
             snap["W_value"] = model.W_value.copy()
         if model.has_move_value_head and model.W_move_value is not None:
@@ -278,6 +384,23 @@ def train_bc(
             model.head_W[k][...] = snap["head_W"][k]
             model.head_b[k][...] = snap["head_b"][k]
         model.b_value = np.float32(snap["b_value"])
+        if model.batch_norm_enabled:
+            if model.bn1_gamma is not None and snap.get("bn1_gamma") is not None:
+                model.bn1_gamma[...] = snap["bn1_gamma"]
+            if model.bn1_beta is not None and snap.get("bn1_beta") is not None:
+                model.bn1_beta[...] = snap["bn1_beta"]
+            if model.bn1_running_mean is not None and snap.get("bn1_running_mean") is not None:
+                model.bn1_running_mean[...] = snap["bn1_running_mean"]
+            if model.bn1_running_var is not None and snap.get("bn1_running_var") is not None:
+                model.bn1_running_var[...] = snap["bn1_running_var"]
+            if model.bn2_gamma is not None and snap.get("bn2_gamma") is not None:
+                model.bn2_gamma[...] = snap["bn2_gamma"]
+            if model.bn2_beta is not None and snap.get("bn2_beta") is not None:
+                model.bn2_beta[...] = snap["bn2_beta"]
+            if model.bn2_running_mean is not None and snap.get("bn2_running_mean") is not None:
+                model.bn2_running_mean[...] = snap["bn2_running_mean"]
+            if model.bn2_running_var is not None and snap.get("bn2_running_var") is not None:
+                model.bn2_running_var[...] = snap["bn2_running_var"]
         if model.has_value_head and model.W_value is not None and "W_value" in snap:
             model.W_value[...] = snap["W_value"]
         model.b_move_value = np.float32(snap["b_move_value"])
@@ -300,7 +423,7 @@ def train_bc(
         for r in split_rows:
             x = np.asarray(r["state"], dtype=np.float32)
             t = r["targets"]
-            _, _, _, _, _, _, _, _, logits, value_pred = model.forward(x, train=False)
+            _, _, _, _, _, _, _, _, logits, value_pred, _, _ = model.forward(x, train=False)
 
             # Always action_type
             p_action = _softmax(logits["action_type"])
@@ -392,12 +515,39 @@ def train_bc(
             if not batch:
                 continue
 
+            batch_bn_stats: dict[str, np.ndarray] | None = None
+            if model.batch_norm_enabled:
+                xb = np.asarray([np.asarray(r["state"], dtype=np.float32) for r in batch], dtype=np.float32)
+                h1_lin_b = xb @ model.W1 + model.b1
+                bn1_mean = h1_lin_b.mean(axis=0).astype(np.float32)
+                bn1_var = h1_lin_b.var(axis=0).astype(np.float32)
+                if model.bn1_gamma is not None and model.bn1_beta is not None:
+                    inv1 = 1.0 / np.sqrt(np.maximum(bn1_var, 0.0) + model.batch_norm_eps)
+                    h1_bn_b = ((h1_lin_b - bn1_mean) * inv1) * model.bn1_gamma + model.bn1_beta
+                else:
+                    h1_bn_b = h1_lin_b
+                h1_b = np.maximum(h1_bn_b, 0.0)
+                h2_lin_b = h1_b @ model.W2 + model.b2
+                bn2_mean = h2_lin_b.mean(axis=0).astype(np.float32)
+                bn2_var = h2_lin_b.var(axis=0).astype(np.float32)
+                batch_bn_stats = {
+                    "bn1_mean": bn1_mean,
+                    "bn1_var": bn1_var,
+                    "bn2_mean": bn2_mean,
+                    "bn2_var": bn2_var,
+                }
+                model.update_batch_norm_running_stats(batch_bn_stats)
+
             dW1 = np.zeros_like(model.W1)
             db1 = np.zeros_like(model.b1)
             dW2 = np.zeros_like(model.W2)
             db2 = np.zeros_like(model.b2)
             dWh = {hn: np.zeros_like(model.head_W[hn]) for hn in HEAD_NAMES}
             dbh = {hn: np.zeros_like(model.head_b[hn]) for hn in HEAD_NAMES}
+            dbn1_gamma = np.zeros_like(model.bn1_gamma) if model.batch_norm_enabled and model.bn1_gamma is not None else None
+            dbn1_beta = np.zeros_like(model.bn1_beta) if model.batch_norm_enabled and model.bn1_beta is not None else None
+            dbn2_gamma = np.zeros_like(model.bn2_gamma) if model.batch_norm_enabled and model.bn2_gamma is not None else None
+            dbn2_beta = np.zeros_like(model.bn2_beta) if model.batch_norm_enabled and model.bn2_beta is not None else None
             dWv = np.zeros_like(model.W_value) if model.has_value_head and model.W_value is not None else None
             dbv = 0.0
             dWmv = np.zeros_like(model.W_move_value) if model.has_move_value_head and model.W_move_value is not None else None
@@ -407,11 +557,12 @@ def train_bc(
                 x = np.asarray(r["state"], dtype=np.float32)
                 t = r["targets"]
 
-                h1_pre, h1, mask1, h1_drop, h2_pre, h2, mask2, h2_drop, logits, value_pred = model.forward(
+                h1_pre, h1, mask1, h1_drop, h2_pre, h2, mask2, h2_drop, logits, value_pred, bn1_cache, bn2_cache = model.forward(
                     x,
                     train=True,
                     dropout=dropout,
                     rng=np_rng,
+                    bn_stats=batch_bn_stats,
                 )
                 ta = int(t["action_type"])
 
@@ -500,6 +651,12 @@ def train_bc(
 
                 dh2 = dh2_drop * mask2
                 dh2[h2_pre <= 0.0] = 0.0
+                if bn2_cache is not None:
+                    if dbn2_beta is not None:
+                        dbn2_beta += dh2
+                    if dbn2_gamma is not None:
+                        dbn2_gamma += dh2 * bn2_cache["x_hat"]
+                    dh2 = dh2 * bn2_cache["gamma_inv_std"]
 
                 dW2 += np.outer(h1_drop, dh2)
                 db2 += dh2
@@ -507,6 +664,12 @@ def train_bc(
                 dh1_drop = model.W2 @ dh2
                 dh1 = dh1_drop * mask1
                 dh1[h1_pre <= 0.0] = 0.0
+                if bn1_cache is not None:
+                    if dbn1_beta is not None:
+                        dbn1_beta += dh1
+                    if dbn1_gamma is not None:
+                        dbn1_gamma += dh1 * bn1_cache["x_hat"]
+                    dh1 = dh1 * bn1_cache["gamma_inv_std"]
 
                 dW1 += np.outer(x, dh1)
                 db1 += dh1
@@ -520,6 +683,15 @@ def train_bc(
             for hn in HEAD_NAMES:
                 model.head_W[hn] -= lr_epoch * dWh[hn] * scale
                 model.head_b[hn] -= lr_epoch * dbh[hn] * scale
+            if model.batch_norm_enabled:
+                if model.bn1_gamma is not None and dbn1_gamma is not None:
+                    model.bn1_gamma -= lr_epoch * dbn1_gamma * scale
+                if model.bn1_beta is not None and dbn1_beta is not None:
+                    model.bn1_beta -= lr_epoch * dbn1_beta * scale
+                if model.bn2_gamma is not None and dbn2_gamma is not None:
+                    model.bn2_gamma -= lr_epoch * dbn2_gamma * scale
+                if model.bn2_beta is not None and dbn2_beta is not None:
+                    model.bn2_beta -= lr_epoch * dbn2_beta * scale
             if model.has_value_head and dWv is not None and model.W_value is not None:
                 model.W_value -= lr_epoch * dWv * scale
                 model.b_value = np.float32(float(model.b_value - lr_epoch * dbv * scale))
@@ -583,8 +755,8 @@ def train_bc(
         _restore_model(best_snapshot)
 
     result = {
-        "version": 4,
-        "format_version": 4,
+        "version": 5,
+        "format_version": 5,
         "mode": "factorized_behavioral_cloning",
         "model_arch": "mlp_2layer",
         "elapsed_sec": round(time.time() - started, 3),
@@ -594,6 +766,9 @@ def train_bc(
         "hidden1": int(hidden1),
         "hidden2": int(hidden2),
         "dropout": float(dropout),
+        "batch_norm_enabled": bool(model.batch_norm_enabled),
+        "batch_norm_momentum": float(model.batch_norm_momentum),
+        "batch_norm_eps": float(model.batch_norm_eps),
         "lr_init": float(lr_init),
         "lr_peak": float(lr_peak),
         "lr_warmup_epochs": int(lr_warmup_epochs),
@@ -633,11 +808,16 @@ def main() -> None:
     parser.add_argument("--dataset", default="reports/ml/bc_dataset.jsonl")
     parser.add_argument("--meta", default="reports/ml/bc_dataset.meta.json")
     parser.add_argument("--out", default="reports/ml/factorized_bc_model.npz")
-    parser.add_argument("--epochs", type=int, default=6)
+    parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--hidden1", type=int, default=256)
     parser.add_argument("--hidden2", type=int, default=128)
     parser.add_argument("--dropout", type=float, default=0.15)
+    parser.set_defaults(batch_norm_enabled=True)
+    parser.add_argument("--batch-norm-enabled", dest="batch_norm_enabled", action="store_true")
+    parser.add_argument("--disable-batch-norm", dest="batch_norm_enabled", action="store_false")
+    parser.add_argument("--batch-norm-momentum", type=float, default=0.1)
+    parser.add_argument("--batch-norm-eps", type=float, default=1e-5)
     parser.add_argument("--lr-init", type=float, default=1e-4)
     parser.add_argument("--lr-peak", type=float, default=1e-3)
     parser.add_argument("--lr-warmup-epochs", type=int, default=2)
@@ -646,7 +826,7 @@ def main() -> None:
     parser.set_defaults(early_stop_enabled=True, early_stop_restore_best=True)
     parser.add_argument("--early-stop-enabled", dest="early_stop_enabled", action="store_true")
     parser.add_argument("--disable-early-stop", dest="early_stop_enabled", action="store_false")
-    parser.add_argument("--early-stop-patience", type=int, default=3)
+    parser.add_argument("--early-stop-patience", type=int, default=5)
     parser.add_argument("--early-stop-min-delta", type=float, default=1e-4)
     parser.add_argument("--early-stop-restore-best", dest="early_stop_restore_best", action="store_true")
     parser.add_argument("--no-early-stop-restore-best", dest="early_stop_restore_best", action="store_false")
@@ -671,6 +851,9 @@ def main() -> None:
         hidden1=args.hidden1,
         hidden2=args.hidden2,
         dropout=args.dropout,
+        batch_norm_enabled=args.batch_norm_enabled,
+        batch_norm_momentum=args.batch_norm_momentum,
+        batch_norm_eps=args.batch_norm_eps,
         lr_init=args.lr_init,
         lr_peak=args.lr_peak,
         lr_warmup_epochs=args.lr_warmup_epochs,

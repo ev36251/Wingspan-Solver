@@ -122,26 +122,63 @@ class GameState:
 
         On Oceania boards, all nectar in player supplies is discarded.
         """
-        # Official timing: resolve round-end powers first.
+        # 1) Resolve round-end powers first (teal / explicit end-of-round text).
         from backend.engine.timed_powers import trigger_end_of_round_powers
         trigger_end_of_round_powers(self, self.current_round)
 
-        # Finally score the round goal for this round.
+        # 2) On Oceania boards, discard unspent nectar before scoring round goal.
+        if self.board_type == BoardType.OCEANIA:
+            for p in self.players:
+                p.food_supply.nectar = 0
+
+        # 3) Score the round goal for this round.
         if 1 <= self.current_round <= len(self.round_goals):
             from backend.engine.scoring import compute_round_goal_scores
             scores = compute_round_goal_scores(self, self.current_round)
             if scores:
                 self.round_goal_scores[self.current_round] = scores
 
-        # Round-end cleanup happens after goal scoring.
-        if self.board_type == BoardType.OCEANIA:
-            for p in self.players:
-                p.food_supply.nectar = 0
+        # 4) Refresh the tray at end of round (discard all, then refill to 3).
+        discarded = self.card_tray.clear()
+        self.discard_pile_count += len(discarded)
 
-        # Reset per-round action trackers after round scoring completes.
+        def _draw_card_for_tray():
+            deck_cards = getattr(self, "_deck_cards", None)
+            if isinstance(deck_cards, list) and deck_cards:
+                card = deck_cards.pop()
+                self.deck_remaining = max(0, self.deck_remaining - 1)
+                if self.deck_tracker is not None:
+                    self.deck_tracker.mark_drawn(card.name)
+                return card
+            if self.deck_remaining <= 0:
+                return None
+            from backend.data.registries import get_bird_registry
+            import random
+
+            pool = list(get_bird_registry().all_birds)
+            if not pool:
+                return None
+            self.deck_remaining = max(0, self.deck_remaining - 1)
+            card = random.choice(pool)
+            if self.deck_tracker is not None:
+                self.deck_tracker.mark_drawn(card.name)
+            return card
+
+        for _ in range(3):
+            card = _draw_card_for_tray()
+            if card is None:
+                break
+            self.card_tray.add_card(card)
+
+        # 5) Reset per-round action trackers after round cleanup.
         for p in self.players:
             p.play_bird_actions_this_round = 0
+            p.gain_food_actions_this_round = 0
+            p.lay_eggs_actions_this_round = 0
+            p.draw_cards_actions_this_round = 0
+            p.action_types_used_this_round.clear()
 
+        # 6) Advance to next round and reset action cubes.
         self.current_round += 1
         self.turn_in_round = 1
         self.current_player_idx = 0

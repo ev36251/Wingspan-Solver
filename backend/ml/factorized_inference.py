@@ -18,6 +18,7 @@ class FactorizedPolicyModel:
         z = np.load(path, allow_pickle=True)
         self.W1 = z["W1"]
         self.b1 = z["b1"]
+        self.feature_dim = int(self.W1.shape[0])
         self.has_second_layer = "W2" in z and "b2" in z
         self.W2 = z["W2"] if self.has_second_layer else None
         self.b2 = z["b2"] if self.has_second_layer else None
@@ -26,6 +27,20 @@ class FactorizedPolicyModel:
         if isinstance(meta_json, bytes):
             meta_json = meta_json.decode("utf-8")
         self.meta = json.loads(str(meta_json))
+        self.batch_norm_eps = float(self.meta.get("batch_norm_eps", 1e-5))
+
+        self.has_bn1 = all(k in z for k in ("bn1_gamma", "bn1_beta", "bn1_running_mean", "bn1_running_var"))
+        self.bn1_gamma = z["bn1_gamma"] if self.has_bn1 else None
+        self.bn1_beta = z["bn1_beta"] if self.has_bn1 else None
+        self.bn1_running_mean = z["bn1_running_mean"] if self.has_bn1 else None
+        self.bn1_running_var = z["bn1_running_var"] if self.has_bn1 else None
+        self.has_bn2 = self.has_second_layer and all(
+            k in z for k in ("bn2_gamma", "bn2_beta", "bn2_running_mean", "bn2_running_var")
+        )
+        self.bn2_gamma = z["bn2_gamma"] if self.has_bn2 else None
+        self.bn2_beta = z["bn2_beta"] if self.has_bn2 else None
+        self.bn2_running_mean = z["bn2_running_mean"] if self.has_bn2 else None
+        self.bn2_running_var = z["bn2_running_var"] if self.has_bn2 else None
 
         self.head_dims = self.meta.get("head_dims") or self.meta.get("target_heads") or {}
         self.head_W: dict[str, np.ndarray] = {}
@@ -71,11 +86,59 @@ class FactorizedPolicyModel:
         margin = float(best_row.get("val_move_rank_margin_mean", 0.0))
         return pair_acc >= self.move_value_min_pair_acc and margin >= self.move_value_min_margin
 
+    def _apply_batch_norm(
+        self,
+        x: np.ndarray,
+        gamma: np.ndarray,
+        beta: np.ndarray,
+        running_mean: np.ndarray,
+        running_var: np.ndarray,
+    ) -> np.ndarray:
+        inv_std = 1.0 / np.sqrt(np.maximum(running_var, 0.0) + self.batch_norm_eps)
+        x_hat = (x - running_mean) * inv_std
+        return x_hat * gamma + beta
+
     def forward(self, state: np.ndarray) -> tuple[dict[str, np.ndarray], float | None]:
-        h1_pre = state @ self.W1 + self.b1
+        state_arr = np.asarray(state, dtype=np.float32)
+        if state_arr.ndim != 1:
+            raise ValueError(f"FactorizedPolicyModel.forward expects 1D state; got shape {state_arr.shape}")
+        if int(state_arr.shape[0]) != self.feature_dim:
+            raise ValueError(
+                f"State feature dimension mismatch: model expects {self.feature_dim}, got {int(state_arr.shape[0])}"
+            )
+
+        h1_pre = state_arr @ self.W1 + self.b1
+        if (
+            self.has_bn1
+            and self.bn1_gamma is not None
+            and self.bn1_beta is not None
+            and self.bn1_running_mean is not None
+            and self.bn1_running_var is not None
+        ):
+            h1_pre = self._apply_batch_norm(
+                h1_pre,
+                self.bn1_gamma,
+                self.bn1_beta,
+                self.bn1_running_mean,
+                self.bn1_running_var,
+            )
         h1 = np.maximum(h1_pre, 0.0)
         if self.has_second_layer and self.W2 is not None and self.b2 is not None:
             h2_pre = h1 @ self.W2 + self.b2
+            if (
+                self.has_bn2
+                and self.bn2_gamma is not None
+                and self.bn2_beta is not None
+                and self.bn2_running_mean is not None
+                and self.bn2_running_var is not None
+            ):
+                h2_pre = self._apply_batch_norm(
+                    h2_pre,
+                    self.bn2_gamma,
+                    self.bn2_beta,
+                    self.bn2_running_mean,
+                    self.bn2_running_var,
+                )
             h = np.maximum(h2_pre, 0.0)
         else:
             h = h1

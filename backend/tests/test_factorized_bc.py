@@ -74,11 +74,20 @@ def test_generate_and_train_factorized_bc(tmp_path: Path) -> None:
     assert out["train_samples"] > 0
     assert out["val_samples"] > 0
     assert out["model_arch"] == "mlp_2layer"
-    assert out["format_version"] == 4
+    assert out["format_version"] == 5
     assert out["has_move_value_head"] is True
+    assert out["batch_norm_enabled"] is True
     z = np.load(model, allow_pickle=True)
     assert "W_move_value" in z
     assert "b_move_value" in z
+    assert "bn1_gamma" in z
+    assert "bn1_beta" in z
+    assert "bn1_running_mean" in z
+    assert "bn1_running_var" in z
+    assert "bn2_gamma" in z
+    assert "bn2_beta" in z
+    assert "bn2_running_mean" in z
+    assert "bn2_running_var" in z
 
 
 def test_factorized_inference_loads_legacy_and_new(tmp_path: Path) -> None:
@@ -144,6 +153,38 @@ def test_factorized_inference_loads_legacy_and_new(tmp_path: Path) -> None:
     state = np.zeros((new_model.W1.shape[0],), dtype=np.float32)
     score = new_model.score_move(state, mv, p, logits=logits_new)
     assert np.isfinite(score)
+
+
+def test_factorized_inference_raises_on_state_dim_mismatch(tmp_path: Path) -> None:
+    head_dims = {
+        "action_type": 4,
+        "play_habitat": 4,
+        "gain_food_primary": 7,
+        "draw_mode": 4,
+        "lay_eggs_bin": 11,
+        "play_cost_bin": 7,
+        "play_power_color": 7,
+    }
+    p = tmp_path / "mismatch_model.npz"
+    meta = {"head_dims": head_dims, "value_prediction_mode": "none"}
+    out = {
+        "W1": np.zeros((10, 8), dtype=np.float32),
+        "b1": np.zeros((8,), dtype=np.float32),
+        "metadata_json": np.asarray([json.dumps(meta)], dtype=object),
+    }
+    for hn, d in head_dims.items():
+        out[f"W_{hn}"] = np.zeros((8, d), dtype=np.float32)
+        out[f"b_{hn}"] = np.zeros((d,), dtype=np.float32)
+    np.savez_compressed(p, **out)
+
+    model = FactorizedPolicyModel(p)
+    try:
+        model.forward(np.zeros((11,), dtype=np.float32))
+        assert False, "expected ValueError for mismatched state dimension"
+    except ValueError as exc:
+        msg = str(exc)
+        assert "expects 10" in msg
+        assert "got 11" in msg
 
 
 def test_encode_move_features_shape_and_blocks() -> None:
@@ -276,6 +317,44 @@ def test_train_bc_early_stopping_triggers(tmp_path: Path) -> None:
     )
     assert out_no_es["stopped_early"] is False
     assert out_no_es["epochs_completed"] == 3
+
+
+def test_train_bc_batch_norm_disable_compatibility(tmp_path: Path) -> None:
+    ds = tmp_path / "bn_off.jsonl"
+    meta = tmp_path / "bn_off.meta.json"
+    model = tmp_path / "bn_off_model.npz"
+
+    generate_bc_dataset(
+        out_jsonl=str(ds),
+        out_meta=str(meta),
+        games=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        seed=101,
+    )
+
+    out = train_bc(
+        dataset_jsonl=str(ds),
+        meta_json=str(meta),
+        out_model=str(model),
+        epochs=1,
+        batch_size=32,
+        hidden1=32,
+        hidden2=16,
+        batch_norm_enabled=False,
+        val_split=0.2,
+        seed=101,
+    )
+    assert out["batch_norm_enabled"] is False
+
+    z = np.load(model, allow_pickle=True)
+    assert "bn1_gamma" not in z
+    assert "bn2_gamma" not in z
+
+    inf = FactorizedPolicyModel(model)
+    logits, _ = inf.forward(np.zeros((inf.feature_dim,), dtype=np.float32))
+    assert "action_type" in logits
 
 
 def test_grad_softplus_neg_delta_is_stable_for_large_values() -> None:

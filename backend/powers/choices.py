@@ -33,7 +33,7 @@ def validate_power_choice_payload(bird_name: str, choice: dict) -> None:
     allowed = _ALLOWED_CHOICE_KEYS_BY_BIRD.get(bird_name)
     if allowed is None:
         return
-    unknown = set(choice.keys()) - allowed
+    unknown = set(choice.keys()) - allowed - {"activate"}
     if unknown:
         raise ValueError(
             f"Unknown choice key(s) for {bird_name}: {sorted(unknown)}; allowed={sorted(allowed)}"
@@ -59,6 +59,36 @@ def consume_power_choice(game_state, player_name: str, bird_name: str) -> dict |
     if not queue:
         game_state.power_choice_queues.pop(key, None)
     return choice
+
+
+def consume_power_activation_decision(game_state, player_name: str, bird_name: str) -> bool | None:
+    """Consume an optional queued activation decision for a power.
+
+    Returns:
+    - True: explicitly activate
+    - False: explicitly skip
+    - None: no explicit activation decision queued
+    """
+    key = _queue_key(player_name, bird_name)
+    queue = game_state.power_choice_queues.get(key)
+    if not queue:
+        return None
+
+    first = queue[0]
+    if "activate" not in first:
+        return None
+
+    activate = bool(first.get("activate"))
+    rest = {k: v for k, v in first.items() if k != "activate"}
+
+    # Consume this queue item.
+    queue.pop(0)
+    if rest:
+        # Preserve remaining keys as next choice payload for the power itself.
+        queue.insert(0, rest)
+    if not queue:
+        game_state.power_choice_queues.pop(key, None)
+    return activate
 
 
 def queue_many_power_choices(game_state, items: list[dict]) -> int:

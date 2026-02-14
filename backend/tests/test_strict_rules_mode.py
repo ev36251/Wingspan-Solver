@@ -2,17 +2,43 @@ import pytest
 
 from backend.config import EXCEL_FILE
 from backend.data.registries import load_all
-from backend.models.enums import BoardType, Habitat, FoodType
+from backend.models.bird import Bird, FoodCost
+from backend.models.enums import (
+    BeakDirection,
+    BoardType,
+    FoodType,
+    GameSet,
+    Habitat,
+    NestType,
+    PowerColor,
+)
 from backend.models.game_state import create_new_game
 from backend.solver.simulation import simulate_playout
 
 
 def test_simulation_rejects_non_strict_power_mapping_in_strict_mode():
-    birds, _, _ = load_all(EXCEL_FILE)
+    load_all(EXCEL_FILE)
     game = create_new_game(["A", "B"], board_type=BoardType.OCEANIA, strict_rules_mode=True)
     a = game.players[0]
-    # Abbott's Booby is regex-parsed (non-strict).
-    a.board.forest.slots[0].bird = birds.get("Abbott's Booby")
+    # Synthetic fallback power should be rejected in strict mode.
+    a.board.forest.slots[0].bird = Bird(
+        name="Strict Rejection Dummy",
+        scientific_name="Dummy",
+        game_set=GameSet.CORE,
+        color=PowerColor.BROWN,
+        power_text="Unrecognized power text for strict-mode rejection.",
+        victory_points=2,
+        nest_type=NestType.BOWL,
+        egg_limit=3,
+        wingspan_cm=20,
+        habitats=frozenset({Habitat.FOREST}),
+        food_cost=FoodCost(items=(FoodType.SEED,), is_or=False, total=1),
+        beak_direction=BeakDirection.LEFT,
+        is_predator=False,
+        is_flocking=False,
+        is_bonus_card_bird=False,
+        bonus_eligibility=frozenset(),
+    )
     with pytest.raises(RuntimeError, match="non-strict power mapping"):
         simulate_playout(game, max_turns=5)
 

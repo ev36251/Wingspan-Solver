@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from backend.models.enums import ActionType, PowerColor
+from backend.models.enums import ActionType, FoodType, PowerColor
 from backend.powers.base import PowerContext, NoPower, FallbackPower
 from backend.powers.registry import get_power, assert_power_allowed_for_strict_mode
 
@@ -36,8 +36,58 @@ def _pink_matches_action(power_text: str, trigger_action: ActionType | None) -> 
     return True
 
 
-def trigger_between_turn_powers(game_state, trigger_player, trigger_action: ActionType | None) -> int:
+def _merge_food_maps(a: dict[FoodType, int], b: dict[FoodType, int]) -> dict[FoodType, int]:
+    out = dict(a)
+    for ft, cnt in b.items():
+        out[ft] = out.get(ft, 0) + cnt
+    return out
+
+
+def _build_trigger_meta(game_state, trigger_player, trigger_action: ActionType | None, trigger_result) -> dict:
+    food_gained: dict[FoodType, int] = {}
+    cards_tucked = 0
+    predator_successes = 0
+    played_habitat = None
+
+    if trigger_result is not None:
+        food_gained = _merge_food_maps(food_gained, getattr(trigger_result, "food_gained", {}) or {})
+        played_habitat = getattr(trigger_result, "habitat", None)
+        for act in getattr(trigger_result, "power_activations", []) or []:
+            res = getattr(act, "result", None)
+            if res is None:
+                continue
+            cards_tucked += getattr(res, "cards_tucked", 0) or 0
+            food_gained = _merge_food_maps(food_gained, getattr(res, "food_gained", {}) or {})
+            # Predation "success" means predator activation produced a tangible gain.
+            bird = None
+            found = trigger_player.board.find_bird(getattr(act, "bird_name", ""))
+            if found is not None:
+                _, _, slot = found
+                bird = slot.bird
+            if bird is not None and bird.is_predator:
+                cached = sum((getattr(res, "food_cached", {}) or {}).values())
+                tucked = getattr(res, "cards_tucked", 0) or 0
+                if cached > 0 or tucked > 0:
+                    predator_successes += 1
+
+    return {
+        "trigger_action": trigger_action,
+        "food_gained": food_gained,
+        "cards_tucked": cards_tucked,
+        "predator_successes": predator_successes,
+        "played_habitat": played_habitat,
+        "nectar_gained": food_gained.get(FoodType.NECTAR, 0),
+    }
+
+
+def trigger_between_turn_powers(
+    game_state,
+    trigger_player,
+    trigger_action: ActionType | None,
+    trigger_result=None,
+) -> int:
     """Trigger pink powers on non-active players after an action resolves."""
+    trigger_meta = _build_trigger_meta(game_state, trigger_player, trigger_action, trigger_result)
     activated = 0
     for p in game_state.players:
         if p.name == trigger_player.name:
@@ -60,6 +110,7 @@ def trigger_between_turn_powers(game_state, trigger_player, trigger_action: Acti
                 habitat=habitat,
                 trigger_player=trigger_player,
                 trigger_action=trigger_action,
+                trigger_meta=trigger_meta,
             )
             if power.can_execute(ctx):
                 result = power.execute(ctx)

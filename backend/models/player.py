@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from .bird import Bird
 from .bonus_card import BonusCard
 from .board import PlayerBoard
-from .enums import FoodType
+from .enums import ActionType, FoodType
 
 
 @dataclass
@@ -84,6 +84,10 @@ class Player:
     unknown_bonus_count: int = 0  # Bonus cards held (count only, identity unknown)
     # Current-round count of times the player took the main "play a bird" action.
     play_bird_actions_this_round: int = 0
+    gain_food_actions_this_round: int = 0
+    lay_eggs_actions_this_round: int = 0
+    draw_cards_actions_this_round: int = 0
+    action_types_used_this_round: set[ActionType] = field(default_factory=set)
 
     @property
     def total_birds(self) -> int:

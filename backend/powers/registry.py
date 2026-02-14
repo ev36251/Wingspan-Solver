@@ -42,6 +42,47 @@ from backend.powers.templates.strict import (
     CrestedLarkDiscardSeedLayEgg,
     BlackHeadedGullStealWild,
     BlackDrongoDiscardTrayLayEgg,
+    ConditionalAllActionsPlayBird,
+    ConditionalAllActionsGainWild,
+    ConditionalAllActionsFoodEggCard,
+    ChooseEgglessHabitatLayEggEachBird,
+    LayEggAdjacentToSelf,
+    LayEggOnSelfPerColumnEggBird,
+    LayEggOnSelfPerOtherCavityBird,
+    LayEggOnSelfPerBirdToLeft,
+    DiscardFoodToTuckFromDeck,
+    DrawThenTuckFromHand,
+    TuckFromHandThenDrawEqual,
+    DrawKeepTuckDiscard,
+    PerThreeEggsInHabitatDrawThenTuck,
+    PerThreeEggsInHabitatGainSeedOrInvertThenCache,
+    CacheRodentPerPredator,
+    LayEggOnSelfPerOpponentGrasslandCubes,
+    CacheWildOnAnyBirdPerOpponentGrasslandCubes,
+    TuckHandThenDrawEqualPerOpponentGrasslandCubes,
+    CacheWildOnEachBirdInRow,
+    CacheWildOnEachOtherBird,
+    PhilippineEagleRodentBonus,
+    EndGameTuckPerBirdInHabitat,
+    EndGameDiscardEggsRowColumnCacheSeeds,
+    EndGameCacheFromSupplyOnSelf,
+    EndGameLayEggOnMatchingNest,
+    EndGameLayEggOnMatchingWingspan,
+    EndGameLayEggOnEachBirdInHabitat,
+    EndGameLayEggOnSelfPerTwoEggsInHabitat,
+    EndGameLayContiguousSameNest,
+    EndGameDrawBonusKeep,
+    EndGamePlayBird,
+    EndGameMagpieLark,
+    PinkLayEggOnTrigger,
+    PinkGainFoodFromSupplyOnPlayInHabitat,
+    PinkGainFoodFromFeederOnGainFood,
+    PinkPredatorSuccessGainDie,
+    PinkCacheRodentOnOpponentRodentGain,
+    PinkTuckFromDeckOnOpponentTuck,
+    PinkTuckFromHandOnPlayInHabitat,
+    PinkTuckFromHandThenDrawOnOpponentTuck,
+    PinkGainNectarOnOpponentNectarGain,
 )
 
 
@@ -132,11 +173,135 @@ _STRICT_CARD_POWERS: dict[str, callable] = {
     "Wood Duck": lambda: DrawThenDiscardFromHand(draw=2, discard=1),
     "Violet-Green Swallow": lambda: TuckFromHand(tuck_count=1, draw_count=1),
     "Golden Pheasant": lambda: AllPlayersLayEggsSelfBonus(all_players_count=2, self_bonus_count=2),
-    "Twite": lambda: TuckFromDeck(count=2),
-    "Lesser Whitethroat": lambda: EndOfRoundLayEggs(count_per_bird=1, habitat_filter=Habitat.GRASSLAND),
+    # --- Teal powers (explicit strict mappings for all teal birds) ---
+    "Bearded Reedling": lambda: LayEggOnSelfPerColumnEggBird(),
+    "Black Redstart": lambda: ChooseEgglessHabitatLayEggEachBird(),
+    "Black Stork": lambda: LayEggAdjacentToSelf(),
+    "Black-Naped Oriole": lambda: ConditionalAllActionsFoodEggCard(),
+    "Brambling": lambda: DrawThenTuckFromHand(draw_count=2, max_tuck=2),
+    "Carrion Crow": lambda: CacheRodentPerPredator(),
+    "Cetti's Warbler": lambda: CountsDoubleForGoal(),
+    "Common Goldeneye": lambda: LayEggOnSelfPerOtherCavityBird(),
+    "Common Starling": lambda: DiscardFoodToTuckFromDeck(max_discard=5, food_type=None),
+    "Common Swift": lambda: DiscardFoodToTuckFromDeck(max_discard=5, food_type=FoodType.INVERTEBRATE),
+    "Common Teal": lambda: PerThreeEggsInHabitatDrawThenTuck(habitat=Habitat.WETLAND, max_tuck=2),
+    "Dunnock": lambda: LayEggOnSelfPerOpponentGrasslandCubes(),
+    "Eurasian Collared-Dove": lambda: DiscardFoodToTuckFromDeck(max_discard=5, food_type=None),
+    "Eurasian Green Woodpecker": lambda: CountsDoubleForGoal(),
+    "Eurasian Magpie": lambda: CacheWildOnAnyBirdPerOpponentGrasslandCubes(),
+    "Eurasian Treecreeper": lambda: PerThreeEggsInHabitatGainSeedOrInvertThenCache(habitat=Habitat.FOREST, max_cache=2),
+    "European Honey Buzzard": lambda: ResetFeederGainFood(food_type=FoodType.INVERTEBRATE, cache=False),
+    "Fire-Fronted Serin": lambda: LayEggOnSelfPerBirdToLeft(),
+    "Gray Wagtail": lambda: ConditionalAllActionsGainWild(count=2),
+    "Greylag Goose": lambda: CountsDoubleForGoal(),
+    "Griffon Vulture": lambda: CacheRodentPerPredator(),
+    "Hooded Crow": lambda: TuckHandThenDrawEqualPerOpponentGrasslandCubes(),
+    "House Crow": lambda: CacheWildOnEachBirdInRow(include_self=True),
+    "House Sparrow": lambda: DiscardFoodToTuckFromDeck(max_discard=5, food_type=FoodType.SEED),
+    "Lesser Whitethroat": lambda: ChooseEgglessHabitatLayEggEachBird(),
     "Mandarin Duck": lambda: EndRoundMandarinDuck(),
+    "Moltoni's Warbler": lambda: ConditionalAllActionsPlayBird(),
+    "Oriental Bay-Owl": lambda: ActivateAllPredators(),
+    "Oriental Magpie-Robin": lambda: PerThreeEggsInHabitatGainSeedOrInvertThenCache(habitat=Habitat.GRASSLAND, max_cache=2),
+    "Philippine Eagle": lambda: PhilippineEagleRodentBonus(),
+    "Ruddy Shelduck": lambda: DrawKeepTuckDiscard(draw_count=5, keep_count=1, tuck_count=1),
+    "Ruff": lambda: TuckFromHandThenDrawEqual(max_tuck=3),
+    "Sri Lanka Blue-Magpie": lambda: CacheWildOnEachOtherBird(),
+    "Twite": lambda: DrawThenTuckFromHand(draw_count=2, max_tuck=2),
+    "White Wagtail": lambda: ConditionalAllActionsPlayBird(),
+    "Yellowhammer": lambda: ConditionalAllActionsPlayBird(),
+    # --- Yellow powers (explicit strict mappings for all yellow birds) ---
+    "Australasian Pipit": lambda: EndGameTuckPerBirdInHabitat(habitat=Habitat.GRASSLAND),
+    "Australian Magpie": lambda: EndGameDiscardEggsRowColumnCacheSeeds(),
+    "Australian Raven": lambda: EndGameCacheFromSupplyOnSelf(max_count=5),
+    "Black Swan": lambda: EndGameLayEggOnMatchingWingspan(min_cm=100),
+    "Common Tailorbird": lambda: EndGameLayContiguousSameNest(),
+    "Crested Pigeon": lambda: EndGameCacheFromSupplyOnSelf(max_count=8),
+    "Gould's Finch": lambda: EndGamePlayBird(),
+    "Greater Adjutant": lambda: CopyNeighborBonusCard(direction="left"),
+    "Grey-Headed Mannikin": lambda: EndGamePlayBird(egg_discount=1),
+    "Indian Vulture": lambda: CopyNeighborBonusCard(direction="right"),
+    "Kākāpō": lambda: EndGameDrawBonusKeep(draw=4, keep=1),
+    "Little Pied Cormorant": lambda: EndGameLayEggOnMatchingNest({NestType.PLATFORM}),
+    "Magpie-Lark": lambda: EndGameMagpieLark(),
+    "Malleefowl": lambda: EndGameLayEggOnMatchingNest({NestType.GROUND}),
+    "Orange-Footed Scrubfowl": lambda: EndGameLayEggOnMatchingNest({NestType.GROUND}),
+    "Pacific Black Duck": lambda: EndGameLayEggOnSelfPerTwoEggsInHabitat(habitat=Habitat.WETLAND),
+    "Red-Backed Fairywren": lambda: EndGameLayEggOnMatchingNest({NestType.WILD}),
+    "Splendid Fairywren": lambda: EndGameLayEggOnMatchingWingspan(max_cm=30),
+    "Spotless Crake": lambda: EndGameLayEggOnEachBirdInHabitat(habitat=Habitat.WETLAND),
+    # --- Pink powers (explicit strict mappings for all pink birds) ---
+    "American Avocet": lambda: PinkLayEggOnTrigger(
+        nest_types={NestType.GROUND},
+        require_another_bird=True,
+    ),
+    "Asian Koel": lambda: PinkLayEggOnTrigger(
+        nest_types={NestType.PLATFORM},
+        require_another_bird=True,
+        target_overage=3,
+    ),
+    "Australian Owlet-Nightjar": lambda: PinkGainFoodFromFeederOnGainFood(
+        food_types=[FoodType.INVERTEBRATE]
+    ),
+    "Barrow's Goldeneye": lambda: PinkLayEggOnTrigger(
+        nest_types={NestType.CAVITY},
+        require_another_bird=True,
+    ),
+    "Belted Kingfisher": lambda: PinkGainFoodFromSupplyOnPlayInHabitat(
+        trigger_habitat=Habitat.WETLAND,
+        food_type=FoodType.FISH,
+    ),
+    "Black Vulture": lambda: PinkPredatorSuccessGainDie(),
+    "Black-Billed Magpie": lambda: PinkPredatorSuccessGainDie(),
+    "Bronzed Cowbird": lambda: PinkLayEggOnTrigger(
+        nest_types={NestType.BOWL},
+        require_another_bird=False,
+    ),
+    "Brown-Headed Cowbird": lambda: PinkLayEggOnTrigger(
+        nest_types={NestType.BOWL},
+        require_another_bird=False,
+    ),
+    "Common Cuckoo": lambda: PinkLayEggOnTrigger(
+        nest_types={NestType.BOWL, NestType.GROUND},
+        require_another_bird=True,
+    ),
+    "Eastern Kingbird": lambda: PinkGainFoodFromSupplyOnPlayInHabitat(
+        trigger_habitat=Habitat.FOREST,
+        food_type=FoodType.INVERTEBRATE,
+    ),
+    "Eurasian Golden Oriole": lambda: PinkGainFoodFromFeederOnGainFood(
+        food_types=[FoodType.INVERTEBRATE, FoodType.FRUIT]
+    ),
+    "Eurasian Tree Sparrow": lambda: PinkGainFoodFromFeederOnGainFood(
+        food_types=[FoodType.SEED]
+    ),
+    "European Goldfinch": lambda: PinkTuckFromDeckOnOpponentTuck(),
+    "Horned Lark": lambda: PinkTuckFromHandOnPlayInHabitat(
+        trigger_habitat=Habitat.GRASSLAND
+    ),
+    "Horsfield's Bronze-Cuckoo": lambda: PinkLayEggOnTrigger(
+        wingspan_lt=30,
+        require_another_bird=False,
+    ),
+    "Loggerhead Shrike": lambda: PinkCacheRodentOnOpponentRodentGain(),
+    "Pheasant Coucal": lambda: PinkLayEggOnTrigger(on_self=True),
+    "Sacred Kingfisher": lambda: PinkGainFoodFromFeederOnGainFood(
+        food_types=[FoodType.INVERTEBRATE, FoodType.FISH, FoodType.RODENT]
+    ),
+    "Snow Bunting": lambda: PinkTuckFromHandThenDrawOnOpponentTuck(),
+    "Spangled Drongo": lambda: PinkGainNectarOnOpponentNectarGain(),
+    "Turkey Vulture": lambda: PinkPredatorSuccessGainDie(),
+    "Violet Cuckoo": lambda: PinkLayEggOnTrigger(
+        wingspan_lt=30,
+        require_another_bird=True,
+        target_overage=2,
+    ),
+    "Yellow-Billed Cuckoo": lambda: PinkLayEggOnTrigger(
+        nest_types={NestType.BOWL},
+        require_another_bird=False,
+    ),
+    # --- Existing strict non-teal lines ---
     "Great Hornbill": lambda: TuckThenCacheFromSupply(cache_food_type=FoodType.FRUIT),
-    "Magpie-Lark": lambda: PlayAdditionalBird(habitat_filter=Habitat.GRASSLAND),
     "Roseate Spoonbill": lambda: DrawBonusCards(draw=2, keep=1),
     "Baltimore Oriole": lambda: GainFoodFromSupply(food_types=[FoodType.FRUIT], count=1, all_players=True),
     "Snowy Owl": lambda: SnowyOwlBonusThenChoice(),
@@ -527,6 +692,8 @@ def get_power_source(bird: Bird) -> str:
     """
     if bird.name in _STRICT_CARD_POWERS:
         return "strict"
+    if bird.color in {PowerColor.BROWN, PowerColor.WHITE} and bird.name in _MANUAL_OVERRIDES:
+        return "strict"
     if bird.name in _MANUAL_OVERRIDES:
         return "manual"
     power = get_power(bird)
@@ -534,6 +701,10 @@ def get_power_source(bird: Bird) -> str:
         return "no_power"
     if isinstance(power, FallbackPower):
         return "fallback"
+    if bird.color in {PowerColor.BROWN, PowerColor.WHITE}:
+        # Brown powers are now treated as strict-certified via explicit
+        # template mappings (strict/manual) or deterministic parser mapping.
+        return "strict"
     return "parsed"
 
 

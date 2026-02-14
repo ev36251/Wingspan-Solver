@@ -120,6 +120,66 @@ def test_auto_improve_factorized_smoke(tmp_path: Path) -> None:
     assert "promotion_primary_opponent" in manifest["config"]
 
 
+def test_auto_improve_factorized_data_accumulation_smoke(tmp_path: Path) -> None:
+    out_dir = tmp_path / "auto_fac_accum"
+    manifest = run_auto_improve_factorized(
+        out_dir=str(out_dir),
+        iterations=2,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=100,
+        games_per_iter=1,
+        proposal_top_k=2,
+        lookahead_depth=0,
+        n_step=1,
+        gamma=0.97,
+        bootstrap_mix=0.35,
+        value_target_score_scale=160.0,
+        value_target_score_bias=0.0,
+        late_round_oversample_factor=1,
+        train_epochs=1,
+        train_batch=32,
+        train_hidden1=64,
+        train_hidden2=32,
+        train_dropout=0.1,
+        train_lr_init=1e-4,
+        train_lr_peak=1e-3,
+        train_lr_warmup_epochs=1,
+        train_lr_decay_every=3,
+        train_lr_decay_factor=0.5,
+        train_value_weight=0.5,
+        val_split=0.2,
+        eval_games=1,
+        promotion_games=2,
+        pool_games_per_opponent=1,
+        min_pool_win_rate=0.0,
+        min_pool_mean_score=0.0,
+        min_pool_rate_ge_100=0.0,
+        min_pool_rate_ge_120=0.0,
+        require_pool_non_regression=False,
+        min_gate_win_rate=0.0,
+        min_gate_mean_score=0.0,
+        min_gate_rate_ge_100=0.0,
+        min_gate_rate_ge_120=0.0,
+        data_accumulation_enabled=True,
+        data_accumulation_decay=0.5,
+        max_accumulated_samples=100,
+        strict_kpi_gate_enabled=False,
+        seed=901,
+    )
+    row2 = manifest["history"][1]
+    assert "combined_dataset_summary" in row2
+    summary = row2["combined_dataset_summary"]
+    assert summary["enabled"] is True
+    assert summary["combined_samples"] <= 100
+    assert summary["combined_samples"] >= row2["dataset_summary"]["samples"]
+    assert (out_dir / "iter_002" / "bc_dataset_combined.jsonl").exists()
+    assert (out_dir / "iter_002" / "bc_dataset_combined.meta.json").exists()
+    assert manifest["config"]["data_accumulation_enabled"] is True
+    assert manifest["config"]["data_accumulation_decay"] == 0.5
+    assert manifest["config"]["max_accumulated_samples"] == 100
+
+
 def test_generate_bc_dataset_engine_teacher_smoke(tmp_path: Path) -> None:
     ds = tmp_path / "bc_engine.jsonl"
     meta = tmp_path / "bc_engine.meta.json"

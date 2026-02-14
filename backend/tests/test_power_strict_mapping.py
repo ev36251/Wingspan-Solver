@@ -1,10 +1,10 @@
 from backend.config import EXCEL_FILE
 from backend.data.registries import load_all
-from backend.models.enums import BoardType, Habitat
+from backend.models.enums import BoardType, Habitat, PowerColor
 from backend.models.game_state import create_new_game
 from backend.powers.base import PowerContext
 from backend.powers.choices import queue_power_choice
-from backend.powers.registry import get_power, clear_cache
+from backend.powers.registry import get_power, get_power_source, clear_cache
 from backend.powers.templates.strict import (
     DrawThenDiscardFromHand,
     AllPlayersLayEggsSelfBonus,
@@ -131,3 +131,78 @@ def test_common_nightingale_choice_applies_to_all_players():
     assert res.executed
     assert a.food_supply.fish == 1
     assert b.food_supply.fish == 1
+
+
+def test_all_teal_birds_are_explicitly_strict_mapped():
+    birds, _, _ = load_all(EXCEL_FILE)
+    clear_cache()
+
+    teal_birds = [b for b in birds.all_birds if b.color == PowerColor.TEAL]
+    assert teal_birds, "Expected teal birds in registry"
+
+    non_strict = [
+        (b.name, get_power_source(b))
+        for b in teal_birds
+        if get_power_source(b) != "strict"
+    ]
+    assert non_strict == []
+
+
+def test_all_yellow_birds_are_explicitly_strict_mapped():
+    birds, _, _ = load_all(EXCEL_FILE)
+    clear_cache()
+
+    yellow_birds = [b for b in birds.all_birds if b.color == PowerColor.YELLOW]
+    assert yellow_birds, "Expected yellow birds in registry"
+
+    non_strict = [
+        (b.name, get_power_source(b))
+        for b in yellow_birds
+        if get_power_source(b) != "strict"
+    ]
+    assert non_strict == []
+
+
+def test_all_pink_birds_are_explicitly_strict_mapped():
+    birds, _, _ = load_all(EXCEL_FILE)
+    clear_cache()
+
+    pink_birds = [b for b in birds.all_birds if b.color == PowerColor.PINK]
+    assert pink_birds, "Expected pink birds in registry"
+
+    non_strict = [
+        (b.name, get_power_source(b))
+        for b in pink_birds
+        if get_power_source(b) != "strict"
+    ]
+    assert non_strict == []
+
+
+def test_all_brown_birds_are_strict_certified():
+    birds, _, _ = load_all(EXCEL_FILE)
+    clear_cache()
+
+    brown_birds = [b for b in birds.all_birds if b.color == PowerColor.BROWN]
+    assert brown_birds, "Expected brown birds in registry"
+
+    non_strict = [
+        (b.name, get_power_source(b))
+        for b in brown_birds
+        if get_power_source(b) != "strict"
+    ]
+    assert non_strict == []
+
+
+def test_all_white_birds_are_strict_certified():
+    birds, _, _ = load_all(EXCEL_FILE)
+    clear_cache()
+
+    white_birds = [b for b in birds.all_birds if b.color == PowerColor.WHITE]
+    assert white_birds, "Expected white birds in registry"
+
+    non_strict = [
+        (b.name, get_power_source(b))
+        for b in white_birds
+        if get_power_source(b) != "strict"
+    ]
+    assert non_strict == []

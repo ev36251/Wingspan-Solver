@@ -14,6 +14,7 @@ from backend.models.player import Player
 from backend.engine.rules import can_play_bird, can_gain_food, can_lay_eggs, can_draw_cards
 from backend.powers.registry import get_power, assert_power_allowed_for_strict_mode
 from backend.powers.base import PowerContext, PowerResult, NoPower
+from backend.powers.choices import consume_power_activation_decision
 
 
 @dataclass
@@ -65,6 +66,10 @@ def activate_row(game_state: GameState, player: Player,
     for i, slot in reversed(occupied):
         if slot.bird.color != PowerColor.BROWN:
             continue
+        activate_choice = consume_power_activation_decision(game_state, player.name, slot.bird.name)
+        if activate_choice is False:
+            continue
+        force_activate = activate_choice is True
         assert_power_allowed_for_strict_mode(game_state, slot.bird)
         power = get_power(slot.bird)
         if isinstance(power, NoPower):
@@ -76,7 +81,7 @@ def activate_row(game_state: GameState, player: Player,
         )
 
         # Smart activation: skip all-players powers that help opponents more
-        if simulate and opponents:
+        if simulate and opponents and not force_activate:
             is_all_players = getattr(power, 'all_players', False)
             if is_all_players:
                 val = power.estimate_value(ctx)
@@ -241,8 +246,14 @@ def execute_play_bird(
     )
     # Track cubes spent on the "play a bird" action for round-goal scoring.
     player.play_bird_actions_this_round += 1
+    player.action_types_used_this_round.add(ActionType.PLAY_BIRD)
     from backend.engine.timed_powers import trigger_between_turn_powers
-    trigger_between_turn_powers(game_state, trigger_player=player, trigger_action=ActionType.PLAY_BIRD)
+    trigger_between_turn_powers(
+        game_state,
+        trigger_player=player,
+        trigger_action=ActionType.PLAY_BIRD,
+        trigger_result=result,
+    )
     return result
 
 
@@ -273,9 +284,6 @@ def execute_play_bird_discounted(
     # Validate food payment against supply (discounted payment provided)
     if any(player.food_supply.get(ft) < cnt for ft, cnt in food_payment.items()):
         return ActionResult(False, ActionType.PLAY_BIRD, "Not enough food to pay")
-    if player.action_cubes_remaining <= 0:
-        return ActionResult(False, ActionType.PLAY_BIRD, "No action cubes remaining")
-
     row = player.board.get_row(habitat)
     slot_idx = row.next_empty_slot()
 
@@ -341,7 +349,12 @@ def execute_play_bird_discounted(
         power_activations=power_acts,
     )
     from backend.engine.timed_powers import trigger_between_turn_powers
-    trigger_between_turn_powers(game_state, trigger_player=player, trigger_action=ActionType.PLAY_BIRD)
+    trigger_between_turn_powers(
+        game_state,
+        trigger_player=player,
+        trigger_action=ActionType.PLAY_BIRD,
+        trigger_result=result,
+    )
     return result
 
 
@@ -436,8 +449,15 @@ def execute_gain_food(
         bonus_activated=bonus_activated,
         power_activations=power_acts,
     )
+    player.gain_food_actions_this_round += 1
+    player.action_types_used_this_round.add(ActionType.GAIN_FOOD)
     from backend.engine.timed_powers import trigger_between_turn_powers
-    trigger_between_turn_powers(game_state, trigger_player=player, trigger_action=ActionType.GAIN_FOOD)
+    trigger_between_turn_powers(
+        game_state,
+        trigger_player=player,
+        trigger_action=ActionType.GAIN_FOOD,
+        trigger_result=result,
+    )
     return result
 
 
@@ -493,8 +513,15 @@ def execute_lay_eggs(
         bonus_activated=bonus_activated,
         power_activations=power_acts,
     )
+    player.lay_eggs_actions_this_round += 1
+    player.action_types_used_this_round.add(ActionType.LAY_EGGS)
     from backend.engine.timed_powers import trigger_between_turn_powers
-    trigger_between_turn_powers(game_state, trigger_player=player, trigger_action=ActionType.LAY_EGGS)
+    trigger_between_turn_powers(
+        game_state,
+        trigger_player=player,
+        trigger_action=ActionType.LAY_EGGS,
+        trigger_result=result,
+    )
     return result
 
 
@@ -572,6 +599,13 @@ def execute_draw_cards(
         bonus_activated=bonus_activated,
         power_activations=power_acts,
     )
+    player.draw_cards_actions_this_round += 1
+    player.action_types_used_this_round.add(ActionType.DRAW_CARDS)
     from backend.engine.timed_powers import trigger_between_turn_powers
-    trigger_between_turn_powers(game_state, trigger_player=player, trigger_action=ActionType.DRAW_CARDS)
+    trigger_between_turn_powers(
+        game_state,
+        trigger_player=player,
+        trigger_action=ActionType.DRAW_CARDS,
+        trigger_result=result,
+    )
     return result
