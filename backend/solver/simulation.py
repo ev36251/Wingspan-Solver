@@ -107,8 +107,8 @@ def pick_weighted_random_move(moves: list[Move], game: GameState,
                                base_weights=None) -> Move:
     """Pick a move using epsilon-greedy heuristic selection.
 
-    70% of the time: pick the best move according to the full heuristic evaluator.
-    30% of the time: pick from top moves weighted by heuristic score.
+    80% of the time: pick the best move according to the full heuristic evaluator.
+    20% of the time: pick from top moves weighted by heuristic score.
     This produces more realistic playouts than uniform random while preserving
     some exploration.
 
@@ -127,8 +127,8 @@ def pick_weighted_random_move(moves: list[Move], game: GameState,
     scored = [(m, _estimate_move_value(game, player, m, weights)) for m in moves]
     scored.sort(key=lambda x: -x[1])
 
-    # Epsilon-greedy: 90% best move, 10% weighted random from top candidates
-    if random.random() < 0.9:
+    # Epsilon-greedy: 80% best move, 20% weighted random from top candidates
+    if random.random() < 0.8:
         return scored[0][0]
 
     # Weighted random from top 3 candidates (softmax-style)

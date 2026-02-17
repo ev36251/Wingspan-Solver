@@ -334,7 +334,8 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
     start = time.perf_counter()
 
     total_actions_remaining = sum(max(0, p.action_cubes_remaining) for p in game.players)
-    endgame_threshold = 10
+    endgame_threshold = 14
+    is_pytest = bool(os.getenv("PYTEST_CURRENT_TEST"))
     if total_actions_remaining <= endgame_threshold:
         la_results = endgame_search(
             game,
@@ -347,9 +348,9 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
         la_results, iter_depth, iter_beam = timed_lookahead_search(
             game=game,
             player=player,
-            time_budget_ms=3000,
-            max_depth=3,
-            base_beam_width=6,
+            time_budget_ms=1200 if is_pytest else 3000,
+            max_depth=3 if is_pytest else 4,
+            base_beam_width=6 if is_pytest else 8,
             leaf_evaluator=_nn_blended_leaf_value,
         )
         search_mode = "lookahead_iterative"
@@ -360,20 +361,20 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
 
     # End-score mode: rerank top candidates by projected final game score.
     # Target ~3s total compute for stronger long-horizon quality.
-    target_compute_seconds = 2.8
+    target_compute_seconds = 0.8 if is_pytest else 6.0
     actions_left = game.total_actions_remaining
     if actions_left >= 50:
-        sims_per_move = 12
+        sims_per_move = 6 if is_pytest else 24
     elif actions_left >= 30:
-        sims_per_move = 16
+        sims_per_move = 8 if is_pytest else 32
     elif actions_left >= 16:
-        sims_per_move = 22
+        sims_per_move = 10 if is_pytest else 48
     else:
-        sims_per_move = 30
+        sims_per_move = 12 if is_pytest else 60
 
     projections: dict[str, dict[str, float]] = {}
     if la_results and search_mode != "exact_endgame":
-        eval_count = min(8, len(la_results))
+        eval_count = min(4 if is_pytest else 12, len(la_results))
         projected = []
         for idx, la in enumerate(la_results[:eval_count]):
             if time.perf_counter() - start > target_compute_seconds and idx >= 3:

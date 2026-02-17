@@ -121,7 +121,8 @@ def dynamic_weights(game: GameState,
     phase = rounds_left / ROUNDS  # 1.0 at start, 0.0 at end
 
     # Engine value scales down
-    w.engine_value = 0.4 + 0.6 * phase
+    # Keep a floor so early-round engine-building is never undervalued.
+    w.engine_value = max(0.6, 0.4 + 0.6 * phase)
     w.early_game_engine_bonus = 0.5 * phase
 
     # Cards: valuable early for options, near-worthless late
@@ -537,7 +538,7 @@ def _expected_habitat_activations(
     if game.current_round > ROUNDS:
         return 0.0
 
-    habitat_share = 0.33
+    habitat_share = _expected_habitat_activation_shares(game, player).get(habitat, 1.0 / 3.0)
     total = 0.0
 
     current_round_actions = player.action_cubes_remaining - (1 if post_action else 0)
@@ -550,6 +551,58 @@ def _expected_habitat_activations(
         position_activation_factor = max(0.3, 1.0 - slot_index * 0.15)
         total *= position_activation_factor
     return total
+
+
+def _brown_row_power_density(game: GameState, player: Player, habitat: Habitat) -> float:
+    """Estimated per-activation point density of a habitat's brown row."""
+    row = player.board.get_row(habitat)
+    density = 0.0
+    for i, slot in enumerate(row.slots):
+        if not slot.bird or slot.bird.color != PowerColor.BROWN:
+            continue
+        power = get_power(slot.bird)
+        if isinstance(power, NoPower):
+            continue
+        ctx = _build_power_context(
+            game=game,
+            player=player,
+            bird=slot.bird,
+            slot_index=i,
+            habitat=habitat,
+        )
+        # Slightly favor left slots that trigger more often within the row.
+        density += max(0.0, float(power.estimate_value(ctx))) * max(0.5, 1.0 - i * 0.1)
+    return density
+
+
+def _expected_habitat_activation_shares(game: GameState, player: Player) -> dict[Habitat, float]:
+    """Allocate action share across habitats using brown-power density.
+
+    Uses a floor per habitat so low-density rows are still considered.
+    """
+    habitats = (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND)
+    raw = {hab: _brown_row_power_density(game, player, hab) for hab in habitats}
+    total_raw = float(sum(raw.values()))
+
+    if total_raw <= 1e-9:
+        return {hab: 1.0 / len(habitats) for hab in habitats}
+
+    floor = 0.2
+    flex = max(0.0, 1.0 - floor * len(habitats))
+    shares = {hab: floor + (raw[hab] / total_raw) * flex for hab in habitats}
+    norm = float(sum(shares.values()))
+    if norm <= 1e-9:
+        return {hab: 1.0 / len(habitats) for hab in habitats}
+    return {hab: shares[hab] / norm for hab in habitats}
+
+
+def _is_zero_cost_point_generator(power) -> bool:
+    """Brown powers that are near-deterministic point generation."""
+    from backend.powers.templates.tuck_cards import TuckFromDeck
+    from backend.powers.templates.special import FlockingPower
+    from backend.powers.templates.cache_food import CacheFoodFromSupply
+
+    return isinstance(power, (TuckFromDeck, CacheFoodFromSupply, FlockingPower))
 
 
 def _brown_power_discount(power, bird: Bird, weights: HeuristicWeights) -> float:
@@ -567,7 +620,7 @@ def _brown_power_discount(power, bird: Bird, weights: HeuristicWeights) -> float
     from backend.powers.templates.lay_eggs import LayEggs, LayEggsEachBirdInRow
 
     if isinstance(power, (TuckFromDeck, CacheFoodFromSupply, FlockingPower)):
-        return 0.85
+        return 0.95
     if bird.is_predator:
         return weights.predator_penalty
     if isinstance(
@@ -586,6 +639,21 @@ def _brown_power_discount(power, bird: Bird, weights: HeuristicWeights) -> float
     ):
         return 0.5
     return 0.6
+
+
+def _effective_brown_power_value(
+    raw_power_value: float,
+    total_expected_activations: float,
+    power,
+    bird: Bird,
+    weights: HeuristicWeights,
+) -> float:
+    """Discounted brown-power value with a floor for zero-cost generators."""
+    discounted = raw_power_value * total_expected_activations * _brown_power_discount(power, bird, weights)
+    if _is_zero_cost_point_generator(power):
+        # Zero-cost tuck/cache engines are close to deterministic points.
+        discounted = max(discounted, total_expected_activations * 0.9)
+    return discounted
 
 
 def _engine_chain_value(
@@ -851,13 +919,69 @@ def _estimate_engine_value(game: GameState, player: Player,
                 slot_index=i,
                 habitat=row.habitat,
             )
-            power_val = power.estimate_value(ctx)
+            raw_power_val = power.estimate_value(ctx)
             # Position-aware: earlier slots activate more per use of that habitat.
             activation_factor = max(0.3, 1.0 - i * 0.15)
-            power_val *= activation_factor
-            power_val *= _brown_power_discount(power, slot.bird, weights)
-            total += power_val
+            total += _effective_brown_power_value(
+                raw_power_value=raw_power_val,
+                total_expected_activations=activation_factor,
+                power=power,
+                bird=slot.bird,
+                weights=weights,
+            )
     return total
+
+
+def _can_play_any_bird_now(player: Player) -> bool:
+    """Approximate whether the player can legally play any current hand bird."""
+    available_food = player.food_supply.total_non_nectar() + player.food_supply.get(FoodType.NECTAR)
+    total_eggs = player.board.total_eggs()
+
+    for bird in player.hand:
+        if available_food < bird.food_cost.total:
+            continue
+        for hab in bird.habitats:
+            row = player.board.get_row(hab)
+            slot_idx = row.next_empty_slot()
+            if slot_idx is None:
+                continue
+            egg_cost = EGG_COST_BY_COLUMN[slot_idx] if slot_idx < len(EGG_COST_BY_COLUMN) else 0
+            if total_eggs >= egg_cost:
+                return True
+    return False
+
+
+def _tempo_penalty(game: GameState, player: Player, move: Move) -> float:
+    """Penalty for tempo-wasting actions in low-conversion states."""
+    penalty = 0.0
+
+    if move.action_type == ActionType.GAIN_FOOD:
+        total_food = player.food_supply.total_non_nectar() + player.food_supply.get(FoodType.NECTAR)
+        if total_food >= 5 and not _can_play_any_bird_now(player):
+            penalty -= 1.0
+
+    elif move.action_type == ActionType.DRAW_CARDS:
+        birds_on_board = sum(row.bird_count for row in player.board.all_rows())
+        hand_cap = max(0, 15 - birds_on_board)
+        if player.hand_size >= hand_cap:
+            penalty -= 0.5
+
+    elif move.action_type == ActionType.PLAY_BIRD and game.current_round >= 4:
+        bird = _move_play_bird(game, player, move)
+        if bird and bird.color == PowerColor.BROWN:
+            row = player.board.get_row(move.habitat)
+            slot_idx = row.bird_count
+            expected_activations = _expected_habitat_activations(
+                game=game,
+                player=player,
+                habitat=move.habitat,
+                slot_index=slot_idx,
+                post_action=True,
+            )
+            if expected_activations <= 2.0:
+                penalty -= 0.5
+
+    return penalty
 
 
 def _estimate_move_value(game: GameState, player: Player, move: Move,
@@ -881,22 +1005,23 @@ def _estimate_move_value(game: GameState, player: Player, move: Move,
                     value *= 1.2
                 else:
                     value *= 0.6
-        return value
     elif move.action_type == ActionType.GAIN_FOOD:
         value = _evaluate_gain_food(game, player, move, weights)
         if strategic_phase == "engine":
             value *= 1.2
-        return value
     elif move.action_type == ActionType.LAY_EGGS:
         value = _evaluate_lay_eggs(game, player, move, weights)
         if strategic_phase == "engine":
             value *= 0.7
         elif strategic_phase == "scoring":
             value *= 1.3
-        return value
     elif move.action_type == ActionType.DRAW_CARDS:
-        return _evaluate_draw_cards(game, player, move, weights)
-    return 0.0
+        value = _evaluate_draw_cards(game, player, move, weights)
+    else:
+        value = 0.0
+
+    value += _tempo_penalty(game, player, move)
+    return value
 
 
 def estimate_move_breakdown(
@@ -944,8 +1069,14 @@ def estimate_move_breakdown(
                 slot_index=slot_idx,
                 post_action=True,
             )
-            power_discount = _brown_power_discount(power, bird, weights)
-            power_val = power.estimate_value(ctx) * total_expected_activations * power_discount
+            raw_power_val = power.estimate_value(ctx)
+            power_val = _effective_brown_power_value(
+                raw_power_value=raw_power_val,
+                total_expected_activations=total_expected_activations,
+                power=power,
+                bird=bird,
+                weights=weights,
+            )
             power_val += _engine_chain_value(game, player, move.habitat, bird, rounds_remaining)
         elif bird.color == PowerColor.WHITE and not isinstance(power, NoPower):
             ctx = _build_power_context(
@@ -1226,8 +1357,14 @@ def _evaluate_play_bird(game: GameState, player: Player, move: Move,
             slot_index=slot_idx,
             post_action=True,
         )
-        power_discount = _brown_power_discount(power, bird, weights)
-        power_val = power.estimate_value(ctx) * total_expected_activations * power_discount
+        raw_power_val = power.estimate_value(ctx)
+        power_val = _effective_brown_power_value(
+            raw_power_value=raw_power_val,
+            total_expected_activations=total_expected_activations,
+            power=power,
+            bird=bird,
+            weights=weights,
+        )
 
         # Engine chains compound: outputs from one brown power feed later powers.
         power_val += _engine_chain_value(game, player, move.habitat, bird, rounds_remaining)

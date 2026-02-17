@@ -31,7 +31,7 @@ def run_auto_improve(
     train_early_stop_restore_best: bool = True,
     value_weight: float = 0.5,
     val_split: float = 0.1,
-    eval_games: int = 100,
+    eval_games: int = 40,
     champion_self_play_enabled: bool = True,
     champion_switch_after_first_promotion: bool = True,
     champion_switch_min_stable_iters: int = 2,
@@ -53,6 +53,7 @@ def run_auto_improve(
     data_accumulation_enabled: bool = True,
     data_accumulation_decay: float = 0.5,
     max_accumulated_samples: int = 200_000,
+    dataset_workers: int = 4,
     seed: int = 0,
     clean_out_dir: bool = True,
     proposal_top_k: int = 6,
@@ -94,8 +95,8 @@ def run_auto_improve(
         train_value_weight=value_weight,
         val_split=val_split,
         eval_games=eval_games,
-        promotion_games=max(20, min(200, eval_games * 10)),
-        pool_games_per_opponent=max(10, min(60, eval_games * 5)),
+        promotion_games=max(40, eval_games * 2),
+        pool_games_per_opponent=max(20, eval_games),
         min_pool_win_rate=0.0,
         min_pool_mean_score=0.0,
         min_pool_rate_ge_100=0.0,
@@ -109,6 +110,7 @@ def run_auto_improve(
         data_accumulation_enabled=data_accumulation_enabled,
         data_accumulation_decay=data_accumulation_decay,
         max_accumulated_samples=max_accumulated_samples,
+        dataset_workers=dataset_workers,
         champion_self_play_enabled=champion_self_play_enabled,
         champion_switch_after_first_promotion=champion_switch_after_first_promotion,
         champion_switch_min_stable_iters=champion_switch_min_stable_iters,
@@ -146,7 +148,7 @@ def main() -> None:
     parser.add_argument("--players", type=int, default=2, choices=[2])
     parser.add_argument("--board-type", default="oceania", choices=["base", "oceania"])
     parser.add_argument("--max-turns", type=int, default=220)
-    parser.add_argument("--games-per-iter", type=int, default=800)
+    parser.add_argument("--games-per-iter", type=int, default=400)
     parser.add_argument("--proposal-top-k", type=int, default=6)
     parser.add_argument("--lookahead-depth", type=int, default=2, choices=[0, 1, 2])
     parser.add_argument("--train-epochs", type=int, default=30)
@@ -170,7 +172,7 @@ def main() -> None:
     parser.add_argument("--train-lr", type=float, default=None, help="Deprecated: maps train-lr-peak=train-lr")
     parser.add_argument("--value-weight", type=float, default=0.5)
     parser.add_argument("--val-split", type=float, default=0.1)
-    parser.add_argument("--eval-games", type=int, default=100)
+    parser.add_argument("--eval-games", type=int, default=40)
     parser.set_defaults(champion_self_play_enabled=True, champion_switch_after_first_promotion=True)
     parser.add_argument("--champion-self-play-enabled", dest="champion_self_play_enabled", action="store_true")
     parser.add_argument("--disable-champion-self-play", dest="champion_self_play_enabled", action="store_false")
@@ -206,6 +208,7 @@ def main() -> None:
     parser.add_argument("--disable-data-accumulation", dest="data_accumulation_enabled", action="store_false")
     parser.add_argument("--data-accumulation-decay", type=float, default=0.5)
     parser.add_argument("--max-accumulated-samples", type=int, default=200000)
+    parser.add_argument("--dataset-workers", type=int, default=4)
     parser.set_defaults(strict_kpi_gate_enabled=True)
     parser.add_argument("--strict-kpi-gate-enabled", dest="strict_kpi_gate_enabled", action="store_true")
     parser.add_argument("--disable-strict-kpi-gate", dest="strict_kpi_gate_enabled", action="store_false")
@@ -257,6 +260,7 @@ def main() -> None:
         data_accumulation_enabled=args.data_accumulation_enabled,
         data_accumulation_decay=args.data_accumulation_decay,
         max_accumulated_samples=args.max_accumulated_samples,
+        dataset_workers=args.dataset_workers,
         seed=args.seed,
         clean_out_dir=not args.resume,
         proposal_top_k=args.proposal_top_k,

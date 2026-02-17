@@ -1,10 +1,7 @@
 """Self-play training to discover improved heuristic weights.
 
-Runs an evolutionary strategy:
-1. Maintain a population of HeuristicWeights configurations
-2. For each generation, play tournament matches between configurations
-3. Select winners, apply crossover and mutation
-4. Repeat until convergence
+Primary optimizer: CMA-ES against a fixed baseline opponent.
+Fallback optimizer: legacy evolutionary tournament.
 
 Usage:
     python -m backend.solver.self_play --games 10 --players 2
@@ -32,15 +29,22 @@ from backend.solver.move_generator import Move, generate_all_moves
 from backend.solver.simulation import deep_copy_game, execute_move_on_sim, _refill_tray, _score_round_goal
 from backend.solver.deck_tracker import DeckTracker
 
+try:
+    import cma  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    cma = None
+
 
 @dataclass
 class TrainingConfig:
-    """Configuration for the evolutionary training run."""
+    """Configuration for self-play optimization run."""
     population_size: int = 20
     generations: int = 50
     games_per_matchup: int = 10
     num_players: int = 2
     board_type: str = "oceania"
+    optimizer: str = "cmaes"
+    cma_sigma: float = 0.15
     mutation_rate: float = 0.3
     mutation_sigma: float = 0.15
     crossover_rate: float = 0.5
@@ -69,6 +73,17 @@ WEIGHT_BOUNDS = (0.05, 5.0)
 
 def _clamp(val: float) -> float:
     return max(WEIGHT_BOUNDS[0], min(WEIGHT_BOUNDS[1], val))
+
+
+def _weights_to_vector(w: HeuristicWeights) -> list[float]:
+    return [float(getattr(w, f)) for f in WEIGHT_FIELDS]
+
+
+def _vector_to_weights(vec: list[float]) -> HeuristicWeights:
+    w = HeuristicWeights()
+    for i, f in enumerate(WEIGHT_FIELDS):
+        setattr(w, f, _clamp(float(vec[i])))
+    return w
 
 
 def random_individual() -> Individual:
@@ -520,8 +535,8 @@ def evaluate_population(population: list[Individual],
         ind.fitness = ind.avg_score * 0.7 + ind.win_rate * 30.0
 
 
-def evolve(config: TrainingConfig) -> dict:
-    """Run the full evolutionary training loop."""
+def evolve_evolutionary(config: TrainingConfig) -> dict:
+    """Run the legacy evolutionary training loop."""
     if config.seed is not None:
         random.seed(config.seed)
 
@@ -600,8 +615,159 @@ def evolve(config: TrainingConfig) -> dict:
         "best_win_rate": round(best_ever.win_rate, 3) if best_ever else 0,
         "default_weights": asdict(DEFAULT_WEIGHTS),
         "config": asdict(config),
+        "optimizer_used": "evolutionary",
         "history": best_history,
     }
+
+
+def _evaluate_weights_vs_baseline(
+    candidate: HeuristicWeights,
+    config: TrainingConfig,
+) -> tuple[float, float, float]:
+    """Evaluate one candidate against fixed default heuristic weights."""
+    board_type = BoardType(config.board_type)
+    games = max(1, int(config.games_per_matchup))
+    cand_scores: list[float] = []
+    cand_wins = 0.0
+
+    for gi in range(games):
+        game = create_training_game(
+            config.num_players,
+            board_type,
+            strict_rules_mode=config.strict_rules_mode,
+        )
+        candidate_on_p1 = (gi % 2 == 0)
+        candidate_name = "Player_1" if candidate_on_p1 else "Player_2"
+
+        pw: dict[str, HeuristicWeights] = {}
+        for p in game.players:
+            if p.name == candidate_name:
+                pw[p.name] = candidate
+            else:
+                pw[p.name] = DEFAULT_WEIGHTS
+
+        results = play_head_to_head(game, pw)
+        cand_score = float(results.get(candidate_name, 0))
+        opp_scores = [float(v) for k, v in results.items() if k != candidate_name]
+        opp_best = max(opp_scores) if opp_scores else 0.0
+        cand_scores.append(cand_score)
+
+        if cand_score > opp_best:
+            cand_wins += 1.0
+        elif cand_score == opp_best:
+            cand_wins += 0.5
+
+    avg_score = sum(cand_scores) / len(cand_scores) if cand_scores else 0.0
+    win_rate = cand_wins / games if games > 0 else 0.0
+    fitness = avg_score * 0.7 + win_rate * 30.0
+    return avg_score, win_rate, fitness
+
+
+def evolve_cmaes(config: TrainingConfig) -> dict:
+    """Run CMA-ES optimization against fixed DEFAULT_WEIGHTS baseline."""
+    if cma is None:
+        print("cma package not installed; falling back to legacy evolutionary optimizer.")
+        return evolve_evolutionary(config)
+
+    if config.seed is not None:
+        random.seed(config.seed)
+
+    x0 = _weights_to_vector(DEFAULT_WEIGHTS)
+    sigma = max(0.01, float(config.cma_sigma))
+    options = {
+        "popsize": max(4, int(config.population_size)),
+        "verbose": -9,
+    }
+    if config.seed is not None:
+        options["seed"] = int(config.seed)
+
+    es = cma.CMAEvolutionStrategy(x0, sigma, options)
+
+    best_ever: Individual | None = None
+    best_history: list[dict] = []
+    no_improvement_count = 0
+
+    for gen in range(config.generations):
+        gen_start = time.time()
+
+        solutions = es.ask()
+        losses: list[float] = []
+        generation_candidates: list[Individual] = []
+
+        for vec in solutions:
+            w = _vector_to_weights([float(v) for v in vec])
+            avg_score, win_rate, fitness = _evaluate_weights_vs_baseline(w, config)
+            ind = Individual(
+                weights=w,
+                fitness=fitness,
+                avg_score=avg_score,
+                win_rate=win_rate,
+                games_played=max(1, int(config.games_per_matchup)),
+            )
+            generation_candidates.append(ind)
+            losses.append(-fitness)  # CMA-ES minimizes
+
+        es.tell(solutions, losses)
+        generation_candidates.sort(key=lambda ind: -ind.fitness)
+        gen_best = generation_candidates[0]
+        gen_elapsed = time.time() - gen_start
+
+        print(
+            f"Gen {gen + 1}/{config.generations}: "
+            f"best_fitness={gen_best.fitness:.1f} "
+            f"avg_score={gen_best.avg_score:.1f} "
+            f"win_rate={gen_best.win_rate:.1%} "
+            f"({gen_elapsed:.1f}s)"
+        )
+
+        best_history.append({
+            "generation": gen + 1,
+            "best_fitness": round(gen_best.fitness, 2),
+            "best_avg_score": round(gen_best.avg_score, 2),
+            "best_win_rate": round(gen_best.win_rate, 3),
+            "weights": asdict(gen_best.weights),
+        })
+
+        if best_ever is None or gen_best.fitness > best_ever.fitness:
+            if best_ever is not None:
+                improvement = ((gen_best.fitness - best_ever.fitness) / max(1, abs(best_ever.fitness)))
+                if improvement > config.convergence_threshold:
+                    no_improvement_count = 0
+                else:
+                    no_improvement_count += 1
+            best_ever = copy.deepcopy(gen_best)
+        else:
+            no_improvement_count += 1
+
+        if no_improvement_count >= config.convergence_patience:
+            print(
+                f"Converged after {gen + 1} generations "
+                f"(no improvement for {config.convergence_patience} generations)"
+            )
+            break
+
+        if es.stop():
+            print(f"CMA-ES stop condition met after generation {gen + 1}.")
+            break
+
+    return {
+        "best_weights": asdict(best_ever.weights) if best_ever else {},
+        "best_fitness": round(best_ever.fitness, 2) if best_ever else 0,
+        "best_avg_score": round(best_ever.avg_score, 2) if best_ever else 0,
+        "best_win_rate": round(best_ever.win_rate, 3) if best_ever else 0,
+        "default_weights": asdict(DEFAULT_WEIGHTS),
+        "config": asdict(config),
+        "optimizer_used": "cmaes" if cma is not None else "evolutionary",
+        "history": best_history,
+    }
+
+
+def evolve(config: TrainingConfig) -> dict:
+    """Run the configured optimizer (CMA-ES by default)."""
+    optimizer = (config.optimizer or "cmaes").strip().lower()
+    if optimizer == "evolutionary":
+        return evolve_evolutionary(config)
+    return evolve_cmaes(config)
 
 
 def main():
@@ -614,6 +780,8 @@ def main():
     parser.add_argument("--pop-size", type=int, default=20)
     parser.add_argument("--board-type", default="oceania",
                         choices=["base", "oceania"])
+    parser.add_argument("--optimizer", default="cmaes", choices=["cmaes", "evolutionary"])
+    parser.add_argument("--cma-sigma", type=float, default=0.15)
     parser.add_argument("--mutation-rate", type=float, default=0.3)
     parser.add_argument("--mutation-sigma", type=float, default=0.15)
     parser.add_argument("--seed", type=int, default=None)
@@ -630,6 +798,8 @@ def main():
         games_per_matchup=args.games,
         num_players=args.players,
         board_type=args.board_type,
+        optimizer=args.optimizer,
+        cma_sigma=args.cma_sigma,
         mutation_rate=args.mutation_rate,
         mutation_sigma=args.mutation_sigma,
         seed=args.seed,
@@ -637,8 +807,10 @@ def main():
         strict_rules_mode=args.strict_rules_only,
     )
 
-    print(f"Starting self-play training: {config.population_size} individuals, "
-          f"{config.generations} generations, {config.num_players} players")
+    print(
+        f"Starting self-play training ({config.optimizer}): {config.population_size} individuals, "
+        f"{config.generations} generations, {config.num_players} players"
+    )
 
     results = evolve(config)
 

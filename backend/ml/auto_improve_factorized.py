@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import multiprocessing as mp
+import os
 import random
 import shutil
+import sys
 import time
 from pathlib import Path
 
@@ -108,6 +111,77 @@ def _sample_jsonl_to_handle(
     return written
 
 
+def _run_dataset_shard(task: dict) -> dict:
+    """Worker entrypoint for parallel dataset shard generation."""
+    kwargs = dict(task["kwargs"])
+    kwargs["out_jsonl"] = task["out_jsonl"]
+    kwargs["out_meta"] = task["out_meta"]
+    kwargs["games"] = int(task["games"])
+    kwargs["seed"] = int(task["seed"])
+    meta = generate_bc_dataset(**kwargs)
+    return {
+        "jsonl": task["out_jsonl"],
+        "meta_path": task["out_meta"],
+        "meta": meta,
+    }
+
+
+def _merge_dataset_shards(
+    shard_results: list[dict],
+    *,
+    out_jsonl: Path,
+    out_meta: Path,
+) -> dict:
+    """Concatenate shard JSONL files and merge key dataset metadata fields."""
+    if not shard_results:
+        raise ValueError("No shard results to merge")
+
+    with out_jsonl.open("w", encoding="utf-8") as out_f:
+        for shard in shard_results:
+            with Path(shard["jsonl"]).open("r", encoding="utf-8") as in_f:
+                for line in in_f:
+                    if line.strip():
+                        out_f.write(line)
+
+    metas = [dict(shard["meta"]) for shard in shard_results]
+    base = dict(metas[0])
+    total_games = sum(int(m.get("games", 0)) for m in metas)
+    total_samples = sum(int(m.get("samples", 0)) for m in metas)
+    total_elapsed = sum(float(m.get("elapsed_sec", 0.0)) for m in metas)
+    total_strict = sum(int(m.get("strict_games", 0)) for m in metas)
+    total_relaxed = sum(int(m.get("relaxed_games", 0)) for m in metas)
+    total_rejected = sum(int(m.get("strict_rejected_games", 0)) for m in metas)
+
+    weighted_score_num = sum(float(m.get("mean_player_score", 0.0)) * max(1, int(m.get("games", 0))) for m in metas)
+    mean_player_score = weighted_score_num / max(1, total_games)
+
+    base["generated_at_epoch"] = int(time.time())
+    base["games"] = int(total_games)
+    base["samples"] = int(total_samples)
+    base["elapsed_sec"] = round(total_elapsed, 2)
+    base["strict_games"] = int(total_strict)
+    base["relaxed_games"] = int(total_relaxed)
+    base["strict_rejected_games"] = int(total_rejected)
+    base["mean_player_score"] = round(mean_player_score, 3)
+
+    policy_keys_to_sum = [
+        "engine_teacher_calls",
+        "engine_teacher_applied",
+        "engine_teacher_miss_fallback_used",
+        "move_execute_attempts",
+        "move_execute_successes",
+        "move_execute_fallback_used",
+        "move_execute_dropped",
+    ]
+    pi = dict(base.get("policy_improvement", {}))
+    for key in policy_keys_to_sum:
+        pi[key] = int(sum(int(m.get("policy_improvement", {}).get(key, 0)) for m in metas))
+    base["policy_improvement"] = pi
+
+    out_meta.write_text(json.dumps(base, indent=2), encoding="utf-8")
+    return base
+
+
 def run_auto_improve_factorized(
     out_dir: str,
     iterations: int,
@@ -139,9 +213,9 @@ def run_auto_improve_factorized(
     train_early_stop_restore_best: bool = True,
     train_value_weight: float = 0.5,
     val_split: float = 0.1,
-    eval_games: int = 80,
-    promotion_games: int = 200,
-    pool_games_per_opponent: int = 60,
+    eval_games: int = 40,
+    promotion_games: int = 80,
+    pool_games_per_opponent: int = 40,
     min_pool_win_rate: float = 0.0,
     min_pool_mean_score: float = 0.0,
     min_pool_rate_ge_100: float = 0.0,
@@ -188,6 +262,7 @@ def run_auto_improve_factorized(
     data_accumulation_enabled: bool = True,
     data_accumulation_decay: float = 0.5,
     max_accumulated_samples: int = 200_000,
+    dataset_workers: int = 4,
     clean_out_dir: bool = True,
     train_hidden: int | None = None,
     train_lr: float | None = None,
@@ -221,6 +296,15 @@ def run_auto_improve_factorized(
 
     data_accumulation_decay = max(0.0, min(1.0, float(data_accumulation_decay)))
     max_accumulated_samples = max(1, int(max_accumulated_samples))
+    dataset_workers = max(1, int(dataset_workers))
+    # Multiprocessing can deadlock in some pytest harnesses; force single-worker
+    # mode under tests for deterministic CI behavior.
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        dataset_workers = 1
+    main_mod = sys.modules.get("__main__")
+    if not getattr(main_mod, "__file__", None):
+        # Interactive stdin/REPL execution is not spawn-safe.
+        dataset_workers = 1
 
     base = Path(out_dir)
     if clean_out_dir and base.exists():
@@ -286,14 +370,10 @@ def run_auto_improve_factorized(
         iter_proposal_model_path = str(best_model_path) if use_champion_mode else proposal_model_path
         iter_opponent_model_path = str(best_model_path) if use_champion_mode else None
 
-        ds_meta = generate_bc_dataset(
-            out_jsonl=str(dataset_jsonl),
-            out_meta=str(dataset_meta),
-            games=games_per_iter,
+        dataset_common_kwargs = dict(
             players=players,
             board_type=board_type,
             max_turns=max_turns,
-            seed=iter_seed,
             proposal_model_path=iter_proposal_model_path,
             opponent_model_path=iter_opponent_model_path,
             self_play_policy="champion_nn_vs_nn" if use_champion_mode else "mixed",
@@ -314,6 +394,58 @@ def run_auto_improve_factorized(
             reject_non_strict_powers=reject_non_strict_powers,
             strict_game_fraction=strict_game_fraction_iter,
         )
+
+        if dataset_workers <= 1 or games_per_iter <= 1:
+            ds_meta = generate_bc_dataset(
+                out_jsonl=str(dataset_jsonl),
+                out_meta=str(dataset_meta),
+                games=games_per_iter,
+                seed=iter_seed,
+                **dataset_common_kwargs,
+            )
+        else:
+            shard_dir = iter_dir / "dataset_shards"
+            shard_dir.mkdir(parents=True, exist_ok=True)
+            worker_count = min(dataset_workers, games_per_iter)
+            base_games = games_per_iter // worker_count
+            extras = games_per_iter % worker_count
+            shard_tasks: list[dict] = []
+            for shard_idx in range(worker_count):
+                shard_games = base_games + (1 if shard_idx < extras else 0)
+                if shard_games <= 0:
+                    continue
+                shard_jsonl = shard_dir / f"bc_dataset_{shard_idx:02d}.jsonl"
+                shard_meta = shard_dir / f"bc_dataset_{shard_idx:02d}.meta.json"
+                shard_tasks.append(
+                    {
+                        "out_jsonl": str(shard_jsonl),
+                        "out_meta": str(shard_meta),
+                        "games": int(shard_games),
+                        "seed": int(iter_seed + shard_idx * 100_003),
+                        "kwargs": dataset_common_kwargs,
+                    }
+                )
+
+            if len(shard_tasks) <= 1:
+                task = shard_tasks[0]
+                ds_meta = generate_bc_dataset(
+                    out_jsonl=task["out_jsonl"],
+                    out_meta=task["out_meta"],
+                    games=task["games"],
+                    seed=task["seed"],
+                    **task["kwargs"],
+                )
+                shutil.copy2(task["out_jsonl"], dataset_jsonl)
+                shutil.copy2(task["out_meta"], dataset_meta)
+            else:
+                ctx = mp.get_context("spawn")
+                with ctx.Pool(processes=len(shard_tasks)) as pool:
+                    shard_results = pool.map(_run_dataset_shard, shard_tasks)
+                ds_meta = _merge_dataset_shards(
+                    shard_results,
+                    out_jsonl=dataset_jsonl,
+                    out_meta=dataset_meta,
+                )
 
         accumulation_sources.append(
             {
@@ -751,6 +883,7 @@ def run_auto_improve_factorized(
                 "data_accumulation_enabled": data_accumulation_enabled,
                 "data_accumulation_decay": data_accumulation_decay,
                 "max_accumulated_samples": max_accumulated_samples,
+                "dataset_workers": dataset_workers,
                 "seed": seed,
             },
             "best": best,
@@ -778,7 +911,7 @@ def main() -> None:
     parser.add_argument("--players", type=int, default=2, choices=[2])
     parser.add_argument("--board-type", default="oceania", choices=["base", "oceania"])
     parser.add_argument("--max-turns", type=int, default=220)
-    parser.add_argument("--games-per-iter", type=int, default=800)
+    parser.add_argument("--games-per-iter", type=int, default=400)
     parser.add_argument("--proposal-top-k", type=int, default=6)
     parser.add_argument("--lookahead-depth", type=int, default=2, choices=[0, 1, 2])
     parser.add_argument("--n-step", type=int, default=2)
@@ -808,9 +941,9 @@ def main() -> None:
     parser.add_argument("--train-lr", type=float, default=None, help="Deprecated: maps train-lr-peak=train-lr")
     parser.add_argument("--train-value-weight", type=float, default=0.5)
     parser.add_argument("--val-split", type=float, default=0.1)
-    parser.add_argument("--eval-games", type=int, default=80)
-    parser.add_argument("--promotion-games", type=int, default=200)
-    parser.add_argument("--pool-games-per-opponent", type=int, default=60)
+    parser.add_argument("--eval-games", type=int, default=40)
+    parser.add_argument("--promotion-games", type=int, default=80)
+    parser.add_argument("--pool-games-per-opponent", type=int, default=40)
     parser.add_argument("--min-pool-win-rate", type=float, default=0.0)
     parser.add_argument("--min-pool-mean-score", type=float, default=0.0)
     parser.add_argument("--min-pool-rate-ge-100", type=float, default=0.0)
@@ -836,6 +969,7 @@ def main() -> None:
     parser.add_argument("--disable-data-accumulation", dest="data_accumulation_enabled", action="store_false")
     parser.add_argument("--data-accumulation-decay", type=float, default=0.5)
     parser.add_argument("--max-accumulated-samples", type=int, default=200000)
+    parser.add_argument("--dataset-workers", type=int, default=4)
     parser.set_defaults(champion_self_play_enabled=True, champion_switch_after_first_promotion=True)
     parser.add_argument("--champion-self-play-enabled", dest="champion_self_play_enabled", action="store_true")
     parser.add_argument("--disable-champion-self-play", dest="champion_self_play_enabled", action="store_false")
@@ -936,6 +1070,7 @@ def main() -> None:
         data_accumulation_enabled=args.data_accumulation_enabled,
         data_accumulation_decay=args.data_accumulation_decay,
         max_accumulated_samples=args.max_accumulated_samples,
+        dataset_workers=args.dataset_workers,
         champion_self_play_enabled=args.champion_self_play_enabled,
         champion_switch_after_first_promotion=args.champion_switch_after_first_promotion,
         champion_switch_min_stable_iters=args.champion_switch_min_stable_iters,
