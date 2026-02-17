@@ -17,6 +17,7 @@ from backend.solver.heuristics import (
     _estimate_engine_value, detect_strategic_phase, _should_concede_goal,
 )
 from backend.engine_search.is_mcts import _model_priors
+from backend.api.routes_solver import _sanitize_plan_for_hidden_draws
 
 
 @pytest.fixture(scope="module")
@@ -42,6 +43,29 @@ def goal_reg(regs):
 @pytest.fixture
 def game():
     return create_new_game(["Alice", "Bob"])
+
+
+def test_sanitize_plan_for_hidden_draws_masks_unknown_birds():
+    seq = [
+        "Lay eggs",
+        "Play Australian Zebra Finch in grassland",
+        "Play Tui in wetland",
+    ]
+    details = [
+        {"description": seq[0]},
+        {"description": seq[1]},
+        {"description": seq[2]},
+    ]
+    known_hand = {"Tui", "Dark-eyed Junco"}
+
+    out_seq, out_details, changed = _sanitize_plan_for_hidden_draws(seq, details, known_hand)
+
+    assert changed is True
+    assert out_seq[0] == "Lay eggs"
+    assert out_seq[1].startswith("Play a drawn bird in grassland")
+    assert out_seq[2] == "Play Tui in wetland"
+    assert out_details[1]["conditional_unknown_draw"] is True
+    assert out_details[2].get("conditional_unknown_draw") is None
 
 
 # --- Move generation ---

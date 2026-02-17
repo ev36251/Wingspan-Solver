@@ -186,6 +186,10 @@
 	const hasPlanDetails = (rec: SolverRecommendation) => Array.isArray(detailsOf(rec)?.plan_details);
 	const getPlanDetails = (rec: SolverRecommendation) =>
 		detailsOf(rec)?.plan_details as { description: string; delta?: any; power?: string[]; goal?: any }[] | undefined;
+	const getPlanNote = (rec: SolverRecommendation) => {
+		const v = detailsOf(rec)?.plan_note;
+		return typeof v === 'string' ? v : null;
+	};
 	const hasActivationAdvice = (rec: SolverRecommendation) =>
 		Array.isArray(detailsOf(rec)?.activation_advice);
 	const getActivationAdvice = (rec: SolverRecommendation) =>
@@ -456,6 +460,9 @@
 								{/each}
 							</span>
 						</div>
+					{/if}
+					{#if getPlanNote(rec)}
+						<div class="rec-plan-note">{getPlanNote(rec)}</div>
 					{/if}
 					{#if hasPlanDetails(rec)}
 						<div class="rec-plan-details">
@@ -742,6 +749,14 @@
 		color: var(--text-muted);
 		margin-top: 4px;
 		padding-left: 32px;
+	}
+
+	.rec-plan-note {
+		font-size: 0.7rem;
+		color: #7c3aed;
+		margin-top: 2px;
+		padding-left: 32px;
+		font-style: italic;
 	}
 
 	.rec-why {

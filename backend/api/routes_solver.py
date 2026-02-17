@@ -3,6 +3,7 @@
 import copy
 import json
 import os
+import re
 import time
 from pathlib import Path
 from fastapi import APIRouter, HTTPException
@@ -36,6 +37,59 @@ _POLICY_MODEL = None
 _STATE_ENCODER = None
 _POLICY_MODEL_PATH: str | None = None
 _POLICY_MODEL_LOAD_TRIED = False
+
+_PLAY_DESC_RE = re.compile(
+    r"^Play (?P<bird>.+?) in (?P<habitat>forest|grassland|wetland)$",
+    re.IGNORECASE,
+)
+
+
+def _sanitize_plan_for_hidden_draws(
+    best_sequence: list[str],
+    plan_details: list[dict],
+    known_hand: set[str],
+) -> tuple[list[str], list[dict], bool]:
+    """Hide hidden-deck bird identities in future plan steps.
+
+    Lookahead can mention specific birds only because the simulator knows an
+    internal deck order. In companion mode, those future identities are not
+    guaranteed, so mark them as conditional unless already in known hand.
+    """
+    if not best_sequence and not plan_details:
+        return best_sequence, plan_details, False
+
+    sanitized_seq = list(best_sequence)
+    sanitized_details = [dict(step) for step in plan_details]
+    changed = False
+
+    def _sanitize(desc: str, idx: int) -> tuple[str, bool]:
+        if idx == 0:
+            return desc, False
+        m = _PLAY_DESC_RE.match(desc.strip())
+        if not m:
+            return desc, False
+        bird = m.group("bird")
+        habitat = m.group("habitat").lower()
+        if bird in known_hand:
+            return desc, False
+        return f"Play a drawn bird in {habitat} (conditional)", True
+
+    for i, step in enumerate(sanitized_seq):
+        new_step, step_changed = _sanitize(step, i)
+        if step_changed:
+            sanitized_seq[i] = new_step
+            changed = True
+
+    for i, step in enumerate(sanitized_details):
+        desc = str(step.get("description", ""))
+        new_desc, step_changed = _sanitize(desc, i)
+        if step_changed:
+            step["description"] = new_desc
+            step["conditional_unknown_draw"] = True
+            changed = True
+        sanitized_details[i] = step
+
+    return sanitized_seq, sanitized_details, changed
 
 
 def _iter_policy_model_candidates() -> list[Path]:
@@ -436,10 +490,22 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
             details["p120"] = projections[la.move.description]["p120"]
             details["rollout_samples"] = int(projections[la.move.description]["rollout_samples"])
         if la.best_sequence and len(la.best_sequence) > 1:
-            details["best_sequence"] = la.best_sequence
-            details["plan"] = la.best_sequence[:3]
+            truncated_seq = la.best_sequence[:3]
+            truncated_details = la.plan_details[:3] if la.plan_details else []
+            sanitized_seq, sanitized_details, plan_conditional = _sanitize_plan_for_hidden_draws(
+                truncated_seq,
+                truncated_details,
+                set(player.hand),
+            )
+            details["best_sequence"] = sanitized_seq
+            details["plan"] = sanitized_seq
             details["plan_depth"] = la.depth_reached
-        if la.plan_details:
+            if sanitized_details:
+                details["plan_details"] = sanitized_details
+            if plan_conditional:
+                details["plan_is_conditional"] = True
+                details["plan_note"] = "Future plan steps depend on unknown deck draws."
+        elif la.plan_details:
             details["plan_details"] = la.plan_details[:3]
         details["breakdown"] = estimate_move_breakdown(game, player, la.move, weights=weights)
 

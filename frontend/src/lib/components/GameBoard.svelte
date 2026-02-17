@@ -167,6 +167,11 @@
 
 	function addBirdToHand(bird: Bird) {
 		player.hand.push(bird.name);
+		// If this was a real deck draw being resolved, convert one face-down card
+		// into a known card automatically.
+		if (player.unknown_hand_count > 0) {
+			player.unknown_hand_count -= 1;
+		}
 		player = player;
 		dispatch('changed');
 	}
@@ -398,7 +403,7 @@
 		</div>
 		<div class="hand-controls">
 			<div class="add-hand">
-				<BirdSearch on:select={(e) => addBirdToHand(e.detail)} placeholder="Add bird to hand..." />
+				<BirdSearch on:select={(e) => addBirdToHand(e.detail)} placeholder="Add drawn bird to hand..." />
 			</div>
 			<label class="face-down-input" title="Face-down cards (identity unknown)">
 				Face-down:
@@ -406,6 +411,7 @@
 					on:change={() => { player = player; dispatch('changed'); }} />
 			</label>
 		</div>
+		<div class="hand-note">Tip: use “Add drawn bird to hand” to record real deck draws.</div>
 	</div>
 
 	<!-- Bonus Cards -->
@@ -976,6 +982,12 @@
 		display: flex;
 		gap: 12px;
 		align-items: flex-start;
+	}
+
+	.hand-note {
+		margin-top: 6px;
+		font-size: 0.78rem;
+		color: var(--text-muted);
 	}
 
 	.add-hand {
