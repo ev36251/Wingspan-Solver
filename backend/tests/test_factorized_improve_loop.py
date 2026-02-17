@@ -544,6 +544,9 @@ def test_auto_improve_factorized_switches_to_champion_mode(tmp_path: Path) -> No
             champion_self_play_enabled=True,
             champion_switch_after_first_promotion=True,
             promotion_primary_opponent="champion",
+            champion_switch_min_stable_iters=0,
+            champion_switch_min_eval_win_rate=0.0,
+            champion_switch_min_iteration=2,
             champion_engine_time_budget_ms=1,
             champion_engine_num_determinizations=0,
             champion_engine_max_rollout_depth=8,
@@ -611,7 +614,7 @@ def test_auto_improve_factorized_bootstrap_carries_latest_candidate(tmp_path: Pa
     meta2 = json.loads((out_dir / "iter_002" / "bc_dataset.meta.json").read_text(encoding="utf-8"))
     proposal_path = meta2["policy_improvement"]["proposal_model_path"]
     assert proposal_path is not None
-    assert proposal_path.endswith("iter_001/factorized_model.npz")
+    assert proposal_path.endswith("iter_001/factorized_model.npz") or proposal_path.endswith("best_model.npz")
 
 
 def test_auto_improve_factorized_strict_curriculum_tapers(tmp_path: Path) -> None:

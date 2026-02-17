@@ -33,6 +33,18 @@ class EvalResult:
     nn_rate_ge_120: float
     heuristic_rate_ge_100: float
     heuristic_rate_ge_120: float
+    nn_max_score: int
+    nn_min_score: int
+    heuristic_max_score: int
+    heuristic_min_score: int
+    nn_rate_lt_80: float
+    nn_rate_80_99: float
+    nn_rate_100_119: float
+    nn_rate_ge_120_bucket: float
+    heuristic_rate_lt_80: float
+    heuristic_rate_80_99: float
+    heuristic_rate_100_119: float
+    heuristic_rate_ge_120_bucket: float
 
 
 def evaluate_factorized_vs_heuristic(
@@ -54,6 +66,16 @@ def evaluate_factorized_vs_heuristic(
     nn_scores: list[int] = []
     h_scores: list[int] = []
     margins: list[int] = []
+
+    def _rate(scores: list[int], low: int | None = None, high: int | None = None) -> float:
+        n = max(1, len(scores))
+        if low is None and high is None:
+            return 0.0
+        if low is None:
+            return round(sum(1 for s in scores if s < high) / n, 4)
+        if high is None:
+            return round(sum(1 for s in scores if s >= low) / n, 4)
+        return round(sum(1 for s in scores if low <= s < high) / n, 4)
 
     for g in range(1, games + 1):
         game = create_training_game(num_players=2, board_type=board_type)
@@ -162,6 +184,18 @@ def evaluate_factorized_vs_heuristic(
         nn_rate_ge_120=round(sum(1 for s in nn_scores if s >= 120) / max(1, len(nn_scores)), 4),
         heuristic_rate_ge_100=round(sum(1 for s in h_scores if s >= 100) / max(1, len(h_scores)), 4),
         heuristic_rate_ge_120=round(sum(1 for s in h_scores if s >= 120) / max(1, len(h_scores)), 4),
+        nn_max_score=max(nn_scores) if nn_scores else 0,
+        nn_min_score=min(nn_scores) if nn_scores else 0,
+        heuristic_max_score=max(h_scores) if h_scores else 0,
+        heuristic_min_score=min(h_scores) if h_scores else 0,
+        nn_rate_lt_80=_rate(nn_scores, high=80),
+        nn_rate_80_99=_rate(nn_scores, low=80, high=100),
+        nn_rate_100_119=_rate(nn_scores, low=100, high=120),
+        nn_rate_ge_120_bucket=_rate(nn_scores, low=120),
+        heuristic_rate_lt_80=_rate(h_scores, high=80),
+        heuristic_rate_80_99=_rate(h_scores, low=80, high=100),
+        heuristic_rate_100_119=_rate(h_scores, low=100, high=120),
+        heuristic_rate_ge_120_bucket=_rate(h_scores, low=120),
     )
 
 

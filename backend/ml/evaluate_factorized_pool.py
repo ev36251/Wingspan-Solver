@@ -32,6 +32,12 @@ class OpponentEval:
     nn_mean_margin: float
     nn_rate_ge_100: float
     nn_rate_ge_120: float
+    nn_max_score: int
+    nn_min_score: int
+    nn_rate_lt_80: float
+    nn_rate_80_99: float
+    nn_rate_100_119: float
+    nn_rate_ge_120_bucket: float
 
 
 def _pick_model_move(model: FactorizedPolicyModel, enc: StateEncoder, game, pi: int, proposal_top_k: int = 5):
@@ -85,6 +91,16 @@ def _evaluate_vs_one_opponent(
     nn_scores: list[int] = []
     opp_scores: list[int] = []
     margins: list[int] = []
+
+    def _rate(scores: list[int], low: int | None = None, high: int | None = None) -> float:
+        n = max(1, len(scores))
+        if low is None and high is None:
+            return 0.0
+        if low is None:
+            return round(sum(1 for s in scores if s < high) / n, 4)
+        if high is None:
+            return round(sum(1 for s in scores if s >= low) / n, 4)
+        return round(sum(1 for s in scores if low <= s < high) / n, 4)
 
     for g in range(1, games + 1):
         game = create_training_game(num_players=2, board_type=board_type)
@@ -162,6 +178,12 @@ def _evaluate_vs_one_opponent(
         nn_mean_margin=round(sum(margins) / n, 3),
         nn_rate_ge_100=round(sum(1 for s in nn_scores if s >= 100) / n, 4),
         nn_rate_ge_120=round(sum(1 for s in nn_scores if s >= 120) / n, 4),
+        nn_max_score=max(nn_scores) if nn_scores else 0,
+        nn_min_score=min(nn_scores) if nn_scores else 0,
+        nn_rate_lt_80=_rate(nn_scores, high=80),
+        nn_rate_80_99=_rate(nn_scores, low=80, high=100),
+        nn_rate_100_119=_rate(nn_scores, low=100, high=120),
+        nn_rate_ge_120_bucket=_rate(nn_scores, low=120),
     )
 
 
@@ -210,6 +232,20 @@ def evaluate_against_pool(
     weighted_ge120 = (
         sum(r.nn_rate_ge_120 * r.games for r in rows) / max(1, total_games)
     )
+    weighted_lt80 = (
+        sum(r.nn_rate_lt_80 * r.games for r in rows) / max(1, total_games)
+    )
+    weighted_80_99 = (
+        sum(r.nn_rate_80_99 * r.games for r in rows) / max(1, total_games)
+    )
+    weighted_100_119 = (
+        sum(r.nn_rate_100_119 * r.games for r in rows) / max(1, total_games)
+    )
+    weighted_ge120_bucket = (
+        sum(r.nn_rate_ge_120_bucket * r.games for r in rows) / max(1, total_games)
+    )
+    max_score = max((r.nn_max_score for r in rows), default=0)
+    min_score = min((r.nn_min_score for r in rows), default=0)
 
     return {
         "model": model_path,
@@ -226,6 +262,12 @@ def evaluate_against_pool(
             "nn_mean_margin": round(weighted_margin, 3),
             "nn_rate_ge_100": round(weighted_ge100, 4),
             "nn_rate_ge_120": round(weighted_ge120, 4),
+            "nn_max_score": max_score,
+            "nn_min_score": min_score,
+            "nn_rate_lt_80": round(weighted_lt80, 4),
+            "nn_rate_80_99": round(weighted_80_99, 4),
+            "nn_rate_100_119": round(weighted_100_119, 4),
+            "nn_rate_ge_120_bucket": round(weighted_ge120_bucket, 4),
         },
         "by_opponent": [r.__dict__ for r in rows],
     }

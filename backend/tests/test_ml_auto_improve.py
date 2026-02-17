@@ -24,9 +24,11 @@ def test_auto_improve_smoke(tmp_path: Path) -> None:
 
     assert (out_dir / "auto_improve_factorized_manifest.json").exists()
     best_info = manifest.get("best") or {}
-    best_path = best_info.get("path")
-    if best_path:
+    best_path = best_info.get("path") or best_info.get("model")
+    if best_info:
+        assert best_path
         assert Path(best_path).exists()
+        assert (out_dir / "best_model.npz").exists()
     else:
         assert not (out_dir / "best_model.npz").exists()
     assert manifest["config"]["strict_rules_only"] is True
@@ -34,6 +36,13 @@ def test_auto_improve_smoke(tmp_path: Path) -> None:
     assert manifest["config"]["strict_kpi_gate_enabled"] is False
     assert manifest["config"]["promotion_primary_opponent"] == "champion"
     assert manifest["config"]["champion_self_play_enabled"] is True
+    assert "champion_switch_min_stable_iters" in manifest["config"]
+    assert "champion_switch_min_eval_win_rate" in manifest["config"]
+    assert "champion_switch_min_iteration" in manifest["config"]
+    assert "best_selection_eval_games" in manifest["config"]
+    assert manifest["config"]["min_gate_win_rate"] == 0.50
+    assert manifest["config"]["min_gate_mean_score"] == 52.0
+    assert manifest["config"]["require_non_negative_champion_margin"] is True
     assert "train_early_stop_enabled" in manifest["config"]
     assert "train_early_stop_patience" in manifest["config"]
     assert "train_early_stop_min_delta" in manifest["config"]

@@ -106,6 +106,7 @@ class GameState:
     def advance_turn(self) -> None:
         """Move to the next player's turn within the current round."""
         self.current_player.action_cubes_remaining -= 1
+        self.turn_in_round += 1
         self.current_player_idx = (self.current_player_idx + 1) % self.num_players
 
         # Skip players who have no cubes left

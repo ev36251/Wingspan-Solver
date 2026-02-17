@@ -25,6 +25,56 @@ from backend.ml.strict_kpi_runner import run_strict_kpi
 from backend.ml.train_factorized_bc import train_bc
 
 
+def _win_rate_from_eval(eval_dict: dict) -> float:
+    games = max(1, int(eval_dict.get("games", 0)))
+    return float(eval_dict.get("nn_wins", 0)) / games
+
+
+def _champion_switch_ready(
+    history: list[dict],
+    *,
+    min_stable_iters: int,
+    min_eval_win_rate: float,
+) -> bool:
+    required = max(0, int(min_stable_iters))
+    if required == 0:
+        return True
+    if len(history) < required:
+        return False
+    for row in history[-required:]:
+        eval_summary = row.get("eval_summary", {})
+        if _win_rate_from_eval(eval_summary) < float(min_eval_win_rate):
+            return False
+    return True
+
+
+def _robust_selection_metrics(eval_dict: dict) -> dict:
+    win_rate = _win_rate_from_eval(eval_dict)
+    return {
+        "games": int(eval_dict.get("games", 0)),
+        "nn_wins": int(eval_dict.get("nn_wins", 0)),
+        "nn_win_rate": round(win_rate, 4),
+        "nn_mean_score": float(eval_dict.get("nn_mean_score", 0.0)),
+        "nn_mean_margin": float(eval_dict.get("nn_mean_margin", 0.0)),
+    }
+
+
+def _robust_is_better(candidate: dict, incumbent: dict | None) -> bool:
+    if incumbent is None:
+        return True
+    cand_key = (
+        float(candidate.get("nn_win_rate", 0.0)),
+        float(candidate.get("nn_mean_score", 0.0)),
+        float(candidate.get("nn_mean_margin", 0.0)),
+    )
+    inc_key = (
+        float(incumbent.get("nn_win_rate", 0.0)),
+        float(incumbent.get("nn_mean_score", 0.0)),
+        float(incumbent.get("nn_mean_margin", 0.0)),
+    )
+    return cand_key > inc_key
+
+
 def _sample_jsonl_to_handle(
     src_path: Path,
     dst_handle,
@@ -97,17 +147,22 @@ def run_auto_improve_factorized(
     min_pool_rate_ge_100: float = 0.0,
     min_pool_rate_ge_120: float = 0.0,
     require_pool_non_regression: bool = False,
-    min_gate_win_rate: float = 0.20,
-    min_gate_mean_score: float = 25.0,
+    min_gate_win_rate: float = 0.50,
+    min_gate_mean_score: float = 52.0,
     min_gate_rate_ge_100: float = 0.0,
     min_gate_rate_ge_120: float = 0.0,
+    require_non_negative_champion_margin: bool = True,
     champion_self_play_enabled: bool = True,
     champion_switch_after_first_promotion: bool = True,
+    champion_switch_min_stable_iters: int = 2,
+    champion_switch_min_eval_win_rate: float = 0.5,
+    champion_switch_min_iteration: int = 3,
     champion_teacher_source: str = "engine_only",
     champion_engine_time_budget_ms: int = 50,
     champion_engine_num_determinizations: int = 8,
     champion_engine_max_rollout_depth: int = 24,
     promotion_primary_opponent: str = "champion",
+    best_selection_eval_games: int = 0,
     engine_teacher_prob: float = 0.15,
     engine_time_budget_ms: int = 25,
     engine_num_determinizations: int = 0,
@@ -155,6 +210,15 @@ def run_auto_improve_factorized(
             f"warning: deprecated auto-improve train args used: {', '.join(deprecated_train_args_used)}"
         )
 
+    champion_switch_min_stable_iters = max(0, int(champion_switch_min_stable_iters))
+    champion_switch_min_iteration = max(1, int(champion_switch_min_iteration))
+    champion_switch_min_eval_win_rate = max(0.0, min(1.0, float(champion_switch_min_eval_win_rate)))
+    best_selection_eval_games = int(best_selection_eval_games)
+    if best_selection_eval_games <= 0:
+        best_selection_eval_games = max(1, int(promotion_games), int(eval_games))
+    else:
+        best_selection_eval_games = max(1, best_selection_eval_games)
+
     data_accumulation_decay = max(0.0, min(1.0, float(data_accumulation_decay)))
     max_accumulated_samples = max(1, int(max_accumulated_samples))
 
@@ -168,6 +232,7 @@ def run_auto_improve_factorized(
     best_meta_path = base / "best_dataset.meta.json"
 
     best: dict | None = None
+    best_selection_metrics: dict | None = None
     history: list[dict] = []
     started = time.time()
 
@@ -205,10 +270,17 @@ def run_auto_improve_factorized(
         combined_dataset_meta = iter_dir / "bc_dataset_combined.meta.json"
 
         champion_available = best_model_path.exists()
+        champion_switch_is_ready = _champion_switch_ready(
+            history,
+            min_stable_iters=champion_switch_min_stable_iters,
+            min_eval_win_rate=champion_switch_min_eval_win_rate,
+        )
         use_champion_mode = (
             champion_self_play_enabled
             and champion_available
             and champion_switch_after_first_promotion
+            and champion_switch_is_ready
+            and i >= int(champion_switch_min_iteration)
         )
         generation_mode = "champion_nn_vs_nn" if use_champion_mode else "bootstrap_mixed"
         iter_proposal_model_path = str(best_model_path) if use_champion_mode else proposal_model_path
@@ -502,17 +574,37 @@ def run_auto_improve_factorized(
             and gate_ge120 >= min_gate_rate_ge_120
         )
         gate_secondary_pass = gate_win_rate >= min_gate_win_rate
+        champion_margin_pass = True
+        if use_champion_primary_gate and require_non_negative_champion_margin:
+            champion_margin_pass = float(gate_dict.get("nn_mean_margin", 0.0)) >= 0.0
         promoted = (
             gate_primary_pass
             and gate_secondary_pass
+            and champion_margin_pass
             and bool(kpi_gate["passed"])
             and bool(strict_kpi_compare.get("passed", False))
         )
+
+        # Robust best-model selector: use a larger eval to choose best, not
+        # promotion status alone.
+        robust_eval = evaluate_factorized_vs_heuristic(
+            model_path=str(model_path),
+            games=max(1, int(best_selection_eval_games)),
+            board_type=board_type,
+            max_turns=max_turns,
+            seed=iter_seed + 31337,
+            proposal_top_k=proposal_top_k,
+        )
+        robust_metrics = _robust_selection_metrics(robust_eval.__dict__)
+        eligible_for_best = bool(kpi_gate["passed"]) and bool(strict_kpi_compare.get("passed", False))
+        incumbent_metrics_before = dict(best_selection_metrics) if best_selection_metrics is not None else None
+        selected_as_best = eligible_for_best and _robust_is_better(robust_metrics, best_selection_metrics)
 
         row = {
             "iteration": i,
             "seed": iter_seed,
             "generation_mode": generation_mode,
+            "champion_switch_ready": bool(champion_switch_is_ready),
             "strict_game_fraction": round(float(strict_game_fraction_iter), 4),
             "dataset": str(dataset_jsonl),
             "dataset_meta": str(dataset_meta),
@@ -535,6 +627,7 @@ def run_auto_improve_factorized(
                 "result": gate_dict,
                 "score_primary_pass": gate_primary_pass,
                 "win_secondary_pass": gate_secondary_pass,
+                "champion_margin_pass": champion_margin_pass,
                 "win_rate": round(gate_win_rate, 4),
                 "promoted": promoted,
             },
@@ -545,15 +638,27 @@ def run_auto_improve_factorized(
             "pool_eval": pool_eval,
             "kpi_gate": kpi_gate,
             "strict_kpi_gate": strict_kpi_compare,
+            "best_selection_eval": {
+                "games": int(best_selection_eval_games),
+                "candidate": robust_metrics,
+                "incumbent_before": incumbent_metrics_before,
+                "eligible": eligible_for_best,
+                "selected": selected_as_best,
+            },
         }
         history.append(row)
 
-        if promoted:
-            if best is None or gate_dict["nn_mean_margin"] > best["promotion_gate"]["result"]["nn_mean_margin"]:
-                best = row
-                shutil.copy2(model_path, best_model_path)
-                shutil.copy2(train_dataset_meta, best_meta_path)
-                proposal_model_path = str(best_model_path)
+        if selected_as_best:
+            best = row
+            best_selection_metrics = robust_metrics
+            shutil.copy2(model_path, best_model_path)
+            shutil.copy2(train_dataset_meta, best_meta_path)
+            proposal_model_path = str(best_model_path)
+        elif best_selection_metrics is None and best is not None:
+            # Keep selector state aligned when resuming from an existing best row.
+            candidate_sel = best.get("best_selection_eval", {}).get("candidate")
+            if isinstance(candidate_sel, dict):
+                best_selection_metrics = dict(candidate_sel)
         elif not use_champion_mode:
             # Keep bootstrapping with the latest candidate even when strict
             # promotion fails, so proposal quality can still improve.
@@ -610,13 +715,18 @@ def run_auto_improve_factorized(
                 "min_gate_mean_score": min_gate_mean_score,
                 "min_gate_rate_ge_100": min_gate_rate_ge_100,
                 "min_gate_rate_ge_120": min_gate_rate_ge_120,
+                "require_non_negative_champion_margin": require_non_negative_champion_margin,
                 "champion_self_play_enabled": champion_self_play_enabled,
                 "champion_switch_after_first_promotion": champion_switch_after_first_promotion,
+                "champion_switch_min_stable_iters": champion_switch_min_stable_iters,
+                "champion_switch_min_eval_win_rate": champion_switch_min_eval_win_rate,
+                "champion_switch_min_iteration": champion_switch_min_iteration,
                 "champion_teacher_source": champion_teacher_source,
                 "champion_engine_time_budget_ms": champion_engine_time_budget_ms,
                 "champion_engine_num_determinizations": champion_engine_num_determinizations,
                 "champion_engine_max_rollout_depth": champion_engine_max_rollout_depth,
                 "promotion_primary_opponent": promotion_primary_opponent,
+                "best_selection_eval_games": best_selection_eval_games,
                 "engine_teacher_prob": engine_teacher_prob,
                 "engine_time_budget_ms": engine_time_budget_ms,
                 "engine_num_determinizations": engine_num_determinizations,
@@ -653,7 +763,8 @@ def run_auto_improve_factorized(
             f"eval_wins={ev_dict['nn_wins']}/{ev_dict['games']} margin={ev_dict['nn_mean_margin']:.2f} | "
             f"gate_wins={gate_dict['nn_wins']}/{promotion_games} | "
             f"pool_win={pool_eval['summary']['nn_win_rate']:.3f} ge100={pool_eval['summary']['nn_rate_ge_100']:.3f} | "
-            f"kpi_pass={kpi_gate['passed']} strict_kpi_pass={strict_kpi_compare.get('passed', False)} promoted={promoted}"
+            f"kpi_pass={kpi_gate['passed']} strict_kpi_pass={strict_kpi_compare.get('passed', False)} "
+            f"promoted={promoted} selected_best={selected_as_best}"
         )
 
     return json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -705,10 +816,21 @@ def main() -> None:
     parser.add_argument("--min-pool-rate-ge-100", type=float, default=0.0)
     parser.add_argument("--min-pool-rate-ge-120", type=float, default=0.0)
     parser.add_argument("--require-pool-non-regression", action="store_true")
-    parser.add_argument("--min-gate-win-rate", type=float, default=0.20)
-    parser.add_argument("--min-gate-mean-score", type=float, default=25.0)
+    parser.add_argument("--min-gate-win-rate", type=float, default=0.50)
+    parser.add_argument("--min-gate-mean-score", type=float, default=52.0)
     parser.add_argument("--min-gate-rate-ge-100", type=float, default=0.0)
     parser.add_argument("--min-gate-rate-ge-120", type=float, default=0.0)
+    parser.set_defaults(require_non_negative_champion_margin=True)
+    parser.add_argument(
+        "--require-non-negative-champion-margin",
+        dest="require_non_negative_champion_margin",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--allow-negative-champion-margin",
+        dest="require_non_negative_champion_margin",
+        action="store_false",
+    )
     parser.set_defaults(data_accumulation_enabled=True)
     parser.add_argument("--data-accumulation-enabled", dest="data_accumulation_enabled", action="store_true")
     parser.add_argument("--disable-data-accumulation", dest="data_accumulation_enabled", action="store_false")
@@ -723,7 +845,16 @@ def main() -> None:
     parser.add_argument("--champion-engine-time-budget-ms", type=int, default=50)
     parser.add_argument("--champion-engine-num-determinizations", type=int, default=8)
     parser.add_argument("--champion-engine-max-rollout-depth", type=int, default=24)
+    parser.add_argument("--champion-switch-min-stable-iters", type=int, default=2)
+    parser.add_argument("--champion-switch-min-eval-win-rate", type=float, default=0.5)
+    parser.add_argument("--champion-switch-min-iteration", type=int, default=3)
     parser.add_argument("--promotion-primary-opponent", default="champion", choices=["heuristic", "champion"])
+    parser.add_argument(
+        "--best-selection-eval-games",
+        type=int,
+        default=0,
+        help="0 => auto (max(promotion_games, eval_games))",
+    )
     parser.add_argument("--engine-teacher-prob", type=float, default=0.15)
     parser.add_argument("--engine-time-budget-ms", type=int, default=25)
     parser.add_argument("--engine-num-determinizations", type=int, default=0)
@@ -801,16 +932,21 @@ def main() -> None:
         min_gate_mean_score=args.min_gate_mean_score,
         min_gate_rate_ge_100=args.min_gate_rate_ge_100,
         min_gate_rate_ge_120=args.min_gate_rate_ge_120,
+        require_non_negative_champion_margin=args.require_non_negative_champion_margin,
         data_accumulation_enabled=args.data_accumulation_enabled,
         data_accumulation_decay=args.data_accumulation_decay,
         max_accumulated_samples=args.max_accumulated_samples,
         champion_self_play_enabled=args.champion_self_play_enabled,
         champion_switch_after_first_promotion=args.champion_switch_after_first_promotion,
+        champion_switch_min_stable_iters=args.champion_switch_min_stable_iters,
+        champion_switch_min_eval_win_rate=args.champion_switch_min_eval_win_rate,
+        champion_switch_min_iteration=args.champion_switch_min_iteration,
         champion_teacher_source=args.champion_teacher_source,
         champion_engine_time_budget_ms=args.champion_engine_time_budget_ms,
         champion_engine_num_determinizations=args.champion_engine_num_determinizations,
         champion_engine_max_rollout_depth=args.champion_engine_max_rollout_depth,
         promotion_primary_opponent=args.promotion_primary_opponent,
+        best_selection_eval_games=args.best_selection_eval_games,
         engine_teacher_prob=args.engine_teacher_prob,
         engine_time_budget_ms=args.engine_time_budget_ms,
         engine_num_determinizations=args.engine_num_determinizations,

@@ -72,3 +72,14 @@ def test_oceania_round_order_discards_nectar_before_goal_scoring() -> None:
     assert bob.food_supply.nectar == 0
     assert alice.play_bird_actions_this_round == 0
     assert bob.play_bird_actions_this_round == 0
+
+
+def test_turn_in_round_increments_each_advance_turn() -> None:
+    game = create_new_game(["Alice", "Bob"], round_goals=[], board_type=BoardType.BASE)
+    assert game.turn_in_round == 1
+
+    game.advance_turn()
+    assert game.turn_in_round == 2
+
+    game.advance_turn()
+    assert game.turn_in_round == 3

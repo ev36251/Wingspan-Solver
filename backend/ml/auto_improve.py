@@ -34,11 +34,18 @@ def run_auto_improve(
     eval_games: int = 100,
     champion_self_play_enabled: bool = True,
     champion_switch_after_first_promotion: bool = True,
+    champion_switch_min_stable_iters: int = 2,
+    champion_switch_min_eval_win_rate: float = 0.5,
+    champion_switch_min_iteration: int = 3,
     champion_teacher_source: str = "engine_only",
     champion_engine_time_budget_ms: int = 50,
     champion_engine_num_determinizations: int = 8,
     champion_engine_max_rollout_depth: int = 24,
     promotion_primary_opponent: str = "champion",
+    best_selection_eval_games: int = 0,
+    min_gate_win_rate: float = 0.50,
+    min_gate_mean_score: float = 52.0,
+    require_non_negative_champion_margin: bool = True,
     strict_curriculum_enabled: bool = True,
     strict_fraction_start: float = 1.0,
     strict_fraction_end: float = 0.0,
@@ -94,20 +101,25 @@ def run_auto_improve(
         min_pool_rate_ge_100=0.0,
         min_pool_rate_ge_120=0.0,
         require_pool_non_regression=False,
-        min_gate_win_rate=0.20,
-        min_gate_mean_score=25.0,
+        min_gate_win_rate=min_gate_win_rate,
+        min_gate_mean_score=min_gate_mean_score,
         min_gate_rate_ge_100=0.0,
         min_gate_rate_ge_120=0.0,
+        require_non_negative_champion_margin=require_non_negative_champion_margin,
         data_accumulation_enabled=data_accumulation_enabled,
         data_accumulation_decay=data_accumulation_decay,
         max_accumulated_samples=max_accumulated_samples,
         champion_self_play_enabled=champion_self_play_enabled,
         champion_switch_after_first_promotion=champion_switch_after_first_promotion,
+        champion_switch_min_stable_iters=champion_switch_min_stable_iters,
+        champion_switch_min_eval_win_rate=champion_switch_min_eval_win_rate,
+        champion_switch_min_iteration=champion_switch_min_iteration,
         champion_teacher_source=champion_teacher_source,
         champion_engine_time_budget_ms=champion_engine_time_budget_ms,
         champion_engine_num_determinizations=champion_engine_num_determinizations,
         champion_engine_max_rollout_depth=champion_engine_max_rollout_depth,
         promotion_primary_opponent=promotion_primary_opponent,
+        best_selection_eval_games=best_selection_eval_games,
         engine_teacher_prob=0.15,
         engine_time_budget_ms=25,
         engine_num_determinizations=0,
@@ -168,7 +180,21 @@ def main() -> None:
     parser.add_argument("--champion-engine-time-budget-ms", type=int, default=50)
     parser.add_argument("--champion-engine-num-determinizations", type=int, default=8)
     parser.add_argument("--champion-engine-max-rollout-depth", type=int, default=24)
+    parser.add_argument("--champion-switch-min-stable-iters", type=int, default=2)
+    parser.add_argument("--champion-switch-min-eval-win-rate", type=float, default=0.5)
+    parser.add_argument("--champion-switch-min-iteration", type=int, default=3)
     parser.add_argument("--promotion-primary-opponent", default="champion", choices=["heuristic", "champion"])
+    parser.add_argument(
+        "--best-selection-eval-games",
+        type=int,
+        default=0,
+        help="0 => auto (max(promotion_games, eval_games))",
+    )
+    parser.add_argument("--min-gate-win-rate", type=float, default=0.50)
+    parser.add_argument("--min-gate-mean-score", type=float, default=52.0)
+    parser.set_defaults(require_non_negative_champion_margin=True)
+    parser.add_argument("--require-non-negative-champion-margin", dest="require_non_negative_champion_margin", action="store_true")
+    parser.add_argument("--allow-negative-champion-margin", dest="require_non_negative_champion_margin", action="store_false")
     parser.set_defaults(strict_curriculum_enabled=True)
     parser.add_argument("--strict-curriculum-enabled", dest="strict_curriculum_enabled", action="store_true")
     parser.add_argument("--disable-strict-curriculum", dest="strict_curriculum_enabled", action="store_false")
@@ -212,11 +238,18 @@ def main() -> None:
         eval_games=args.eval_games,
         champion_self_play_enabled=args.champion_self_play_enabled,
         champion_switch_after_first_promotion=args.champion_switch_after_first_promotion,
+        champion_switch_min_stable_iters=args.champion_switch_min_stable_iters,
+        champion_switch_min_eval_win_rate=args.champion_switch_min_eval_win_rate,
+        champion_switch_min_iteration=args.champion_switch_min_iteration,
         champion_teacher_source=args.champion_teacher_source,
         champion_engine_time_budget_ms=args.champion_engine_time_budget_ms,
         champion_engine_num_determinizations=args.champion_engine_num_determinizations,
         champion_engine_max_rollout_depth=args.champion_engine_max_rollout_depth,
         promotion_primary_opponent=args.promotion_primary_opponent,
+        best_selection_eval_games=args.best_selection_eval_games,
+        min_gate_win_rate=args.min_gate_win_rate,
+        min_gate_mean_score=args.min_gate_mean_score,
+        require_non_negative_champion_margin=args.require_non_negative_champion_margin,
         strict_curriculum_enabled=args.strict_curriculum_enabled,
         strict_fraction_start=args.strict_fraction_start,
         strict_fraction_end=args.strict_fraction_end,
