@@ -97,9 +97,14 @@ TRAINED_WEIGHTS: dict[int, HeuristicWeights] = {
     ),
 }
 
+# Optional round-specific trained weights.
+# Shape: {num_players: {round_num: HeuristicWeights}}.
+# When populated, round weights bypass formulaic phase scaling for that round.
+TRAINED_ROUND_WEIGHTS: dict[int, dict[int, HeuristicWeights]] = {}
+
 
 def dynamic_weights(game: GameState,
-                    base: HeuristicWeights | None = None) -> HeuristicWeights:
+                    base: HeuristicWeights | dict[int, HeuristicWeights] | None = None) -> HeuristicWeights:
     """Compute phase-aware weights based on current game state.
 
     Automatically selects trained weights for the game's player count (2/3/4P).
@@ -109,9 +114,23 @@ def dynamic_weights(game: GameState,
       Round 3: Scoring pivot (eggs, goals, bonus cards matter more)
       Round 4: Pure points (eggs dominant, cards/engine near worthless)
 
-    If base is provided (for training), it overrides the player-count lookup.
+    If base is provided, it overrides player-count lookup:
+      - HeuristicWeights: global base scaling (legacy behavior)
+      - dict[int, HeuristicWeights]: per-round direct weights
     """
-    # Pick the right trained weights for this player count
+    # Prefer empirically trained round-specific weights when available.
+    if base is None:
+        by_round = TRAINED_ROUND_WEIGHTS.get(game.num_players)
+        if by_round and game.current_round in by_round:
+            return copy.deepcopy(by_round[game.current_round])
+
+    if isinstance(base, dict):
+        round_base = base.get(game.current_round) or base.get(0)
+        if round_base is not None:
+            return copy.deepcopy(round_base)
+        base = None
+
+    # Pick the right trained global weights for this player count
     if base is None:
         base = TRAINED_WEIGHTS.get(game.num_players)
 

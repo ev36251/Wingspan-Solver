@@ -150,6 +150,21 @@ class TestAnalyzeSetup:
         results = analyze_setup(birds, bonus_cards, goals)
         assert len(results) > 0
 
+    def test_rollout_rerank_path(self, bird_reg, bonus_reg):
+        """Rollout reranking should execute and return ranked recommendations."""
+        birds = bird_reg.all_birds[:5]
+        bonus_cards = bonus_reg.all_cards[:2]
+        results = analyze_setup(
+            birds,
+            bonus_cards,
+            [],
+            rollout_top_k=2,
+            rollout_simulations=1,
+            rollout_max_turns=80,
+        )
+        assert len(results) > 0
+        assert results[0].rank == 1
+
     def test_single_bonus_card(self, bird_reg, bonus_reg):
         """Works with a single bonus card."""
         birds = bird_reg.all_birds[:5]

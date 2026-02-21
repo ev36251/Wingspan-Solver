@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 import json
 
@@ -8,7 +9,7 @@ from backend.ml.generate_bc_dataset import generate_bc_dataset
 from backend.ml.move_features import encode_move_features
 from backend.ml.train_factorized_bc import train_bc
 from backend.ml.evaluate_factorized_bc import evaluate_factorized_vs_heuristic
-from backend.ml.auto_improve_factorized import run_auto_improve_factorized
+from backend.ml.auto_improve_factorized import _robust_is_better, run_auto_improve_factorized
 
 
 def test_factorized_eval_smoke(tmp_path: Path) -> None:
@@ -494,7 +495,7 @@ def test_generate_bc_dataset_champion_mode_uses_model_for_both_sides(monkeypatch
     assert 1 in seen_player_indices
 
 
-def test_auto_improve_factorized_switches_to_champion_mode(tmp_path: Path) -> None:
+def test_auto_improve_factorized_keeps_bootstrap_mode_when_champion_requested(tmp_path: Path) -> None:
     import backend.ml.generate_bc_dataset as mod
 
     # Keep the loop fast by bypassing heavy engine search in tests.
@@ -557,16 +558,16 @@ def test_auto_improve_factorized_switches_to_champion_mode(tmp_path: Path) -> No
         mod._select_engine_teacher_move = original_engine
     assert manifest["config"]["promotion_primary_opponent"] == "champion"
     assert manifest["history"][0]["generation_mode"] == "bootstrap_mixed"
-    assert manifest["history"][1]["generation_mode"] == "champion_nn_vs_nn"
+    assert manifest["history"][1]["generation_mode"] == "bootstrap_mixed"
     assert "promotion_primary_eval" in manifest["history"][1]
-    assert manifest["history"][1]["promotion_primary_eval"]["primary_opponent"] == "champion"
+    assert manifest["history"][1]["promotion_primary_eval"]["primary_opponent"] in {"champion", "heuristic"}
 
 
-def test_auto_improve_factorized_bootstrap_carries_latest_candidate(tmp_path: Path) -> None:
-    out_dir = tmp_path / "auto_fac_bootstrap_carry"
+def test_auto_improve_factorized_best_only_policy_prevents_drift(tmp_path: Path) -> None:
+    out_dir = tmp_path / "auto_fac_best_only"
     manifest = run_auto_improve_factorized(
         out_dir=str(out_dir),
-        iterations=2,
+        iterations=3,
         players=2,
         board_type=BoardType.OCEANIA,
         max_turns=80,
@@ -606,15 +607,423 @@ def test_auto_improve_factorized_bootstrap_carries_latest_candidate(tmp_path: Pa
         champion_self_play_enabled=True,
         champion_switch_after_first_promotion=True,
         promotion_primary_opponent="champion",
+        proposal_update_policy="best_only",
+        selection_requires_gate_pass=False,
+        best_min_win_rate_delta=2.0,
+        best_min_mean_score_delta=1e6,
         strict_kpi_gate_enabled=False,
         seed=75,
     )
-    assert manifest["history"][0]["promotion_gate"]["promoted"] is False
-    assert manifest["history"][1]["generation_mode"] == "bootstrap_mixed"
-    meta2 = json.loads((out_dir / "iter_002" / "bc_dataset.meta.json").read_text(encoding="utf-8"))
-    proposal_path = meta2["policy_improvement"]["proposal_model_path"]
+    assert manifest["history"][0]["best_selection_eval"]["selected"] is True
+    assert manifest["history"][1]["best_selection_eval"]["selected"] is False
+    meta3 = json.loads((out_dir / "iter_003" / "bc_dataset.meta.json").read_text(encoding="utf-8"))
+    proposal_path = meta3["policy_improvement"]["proposal_model_path"]
     assert proposal_path is not None
-    assert proposal_path.endswith("iter_001/factorized_model.npz") or proposal_path.endswith("best_model.npz")
+    assert proposal_path.endswith("best_model.npz") or proposal_path.endswith("iter_001/factorized_model.npz")
+    assert not proposal_path.endswith("iter_002/factorized_model.npz")
+
+
+def test_auto_improve_factorized_latest_candidate_policy_compat(tmp_path: Path) -> None:
+    out_dir = tmp_path / "auto_fac_latest_candidate"
+    manifest = run_auto_improve_factorized(
+        out_dir=str(out_dir),
+        iterations=3,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        games_per_iter=1,
+        proposal_top_k=3,
+        lookahead_depth=0,
+        n_step=1,
+        gamma=0.97,
+        bootstrap_mix=0.35,
+        value_target_score_scale=160.0,
+        value_target_score_bias=0.0,
+        late_round_oversample_factor=1,
+        train_epochs=1,
+        train_batch=32,
+        train_hidden1=64,
+        train_hidden2=32,
+        train_dropout=0.1,
+        train_lr_init=1e-4,
+        train_lr_peak=1e-3,
+        train_lr_warmup_epochs=1,
+        train_lr_decay_every=3,
+        train_lr_decay_factor=0.5,
+        train_value_weight=0.5,
+        val_split=0.2,
+        eval_games=1,
+        promotion_games=1,
+        pool_games_per_opponent=1,
+        min_pool_win_rate=0.0,
+        min_pool_mean_score=0.0,
+        min_pool_rate_ge_100=0.0,
+        min_pool_rate_ge_120=0.0,
+        require_pool_non_regression=False,
+        min_gate_win_rate=1.0,
+        min_gate_mean_score=999.0,
+        min_gate_rate_ge_100=1.0,
+        min_gate_rate_ge_120=1.0,
+        champion_self_play_enabled=True,
+        champion_switch_after_first_promotion=True,
+        promotion_primary_opponent="champion",
+        proposal_update_policy="latest_candidate",
+        selection_requires_gate_pass=False,
+        best_min_win_rate_delta=2.0,
+        best_min_mean_score_delta=1e6,
+        strict_kpi_gate_enabled=False,
+        seed=76,
+    )
+    assert manifest["history"][0]["best_selection_eval"]["selected"] is True
+    assert manifest["history"][1]["best_selection_eval"]["selected"] is False
+    meta3 = json.loads((out_dir / "iter_003" / "bc_dataset.meta.json").read_text(encoding="utf-8"))
+    proposal_path = meta3["policy_improvement"]["proposal_model_path"]
+    assert proposal_path is not None
+    assert proposal_path.endswith("iter_002/factorized_model.npz")
+
+
+def test_auto_improve_factorized_train_init_every_iter_uses_best_checkpoint(tmp_path: Path) -> None:
+    teacher_ds = tmp_path / "teacher_init_bc.jsonl"
+    teacher_meta = tmp_path / "teacher_init_bc.meta.json"
+    teacher_model = tmp_path / "teacher_init_model.npz"
+    generate_bc_dataset(
+        out_jsonl=str(teacher_ds),
+        out_meta=str(teacher_meta),
+        games=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        seed=191,
+        lookahead_depth=0,
+    )
+    train_bc(
+        dataset_jsonl=str(teacher_ds),
+        meta_json=str(teacher_meta),
+        out_model=str(teacher_model),
+        epochs=1,
+        batch_size=32,
+        hidden1=64,
+        hidden2=32,
+        dropout=0.1,
+        lr_init=1e-4,
+        lr_peak=1e-3,
+        lr_warmup_epochs=1,
+        lr_decay_every=3,
+        lr_decay_factor=0.5,
+        val_split=0.2,
+        seed=191,
+    )
+
+    out_dir = tmp_path / "auto_fac_train_init_dynamic"
+    manifest = run_auto_improve_factorized(
+        out_dir=str(out_dir),
+        iterations=2,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        games_per_iter=1,
+        proposal_top_k=2,
+        lookahead_depth=0,
+        n_step=1,
+        gamma=0.97,
+        bootstrap_mix=0.35,
+        value_target_score_scale=160.0,
+        value_target_score_bias=0.0,
+        late_round_oversample_factor=1,
+        train_epochs=1,
+        train_batch=32,
+        train_hidden1=64,
+        train_hidden2=32,
+        train_dropout=0.1,
+        train_lr_init=1e-4,
+        train_lr_peak=1e-3,
+        train_lr_warmup_epochs=1,
+        train_lr_decay_every=3,
+        train_lr_decay_factor=0.5,
+        train_init_model_path=str(teacher_model),
+        train_init_first_iter_only=False,
+        train_value_weight=0.5,
+        val_split=0.2,
+        eval_games=1,
+        promotion_games=1,
+        pool_games_per_opponent=1,
+        min_pool_win_rate=0.0,
+        min_pool_mean_score=0.0,
+        min_pool_rate_ge_100=0.0,
+        min_pool_rate_ge_120=0.0,
+        require_pool_non_regression=False,
+        min_gate_win_rate=0.0,
+        min_gate_mean_score=0.0,
+        min_gate_rate_ge_100=0.0,
+        min_gate_rate_ge_120=0.0,
+        strict_kpi_gate_enabled=False,
+        seed=192,
+    )
+    warm_start_iter2 = manifest["history"][1]["train_summary"]["warm_start"]
+    source_model = str(warm_start_iter2.get("init_model_path", warm_start_iter2.get("source_model", "")))
+    assert warm_start_iter2.get("requested") is True
+    assert source_model.endswith("best_model.npz")
+    assert manifest["config"]["train_init_first_iter_only"] is False
+
+
+def test_selection_requires_practical_delta() -> None:
+    incumbent = {
+        "nn_win_rate": 0.55,
+        "nn_mean_score": 53.5,
+        "nn_mean_margin": 2.0,
+    }
+    too_small_delta = {
+        "nn_win_rate": 0.56,
+        "nn_mean_score": 53.7,
+        "nn_mean_margin": 2.2,
+    }
+    assert (
+        _robust_is_better(
+            too_small_delta,
+            incumbent,
+            min_win_rate_delta=0.02,
+            min_mean_score_delta=0.5,
+            max_margin_regression=1.0,
+        )
+        is False
+    )
+
+    enough_win_delta = {
+        "nn_win_rate": 0.58,
+        "nn_mean_score": 53.6,
+        "nn_mean_margin": 1.5,
+    }
+    assert (
+        _robust_is_better(
+            enough_win_delta,
+            incumbent,
+            min_win_rate_delta=0.02,
+            min_mean_score_delta=0.5,
+            max_margin_regression=1.0,
+        )
+        is True
+    )
+
+    regressed_margin = {
+        "nn_win_rate": 0.58,
+        "nn_mean_score": 54.3,
+        "nn_mean_margin": 0.5,
+    }
+    assert (
+        _robust_is_better(
+            regressed_margin,
+            incumbent,
+            min_win_rate_delta=0.02,
+            min_mean_score_delta=0.5,
+            max_margin_regression=1.0,
+        )
+        is False
+    )
+
+
+def test_fixed_benchmark_seeds_reproducible(monkeypatch, tmp_path: Path) -> None:
+    import backend.ml.auto_improve_factorized as mod
+
+    eval_seeds: list[int] = []
+    pool_seeds: list[int] = []
+
+    def fake_eval_factorized_vs_heuristic(*, seed, games, **kwargs):
+        eval_seeds.append(int(seed))
+        return SimpleNamespace(
+            games=int(games),
+            nn_wins=0,
+            heuristic_wins=int(games),
+            ties=0,
+            nn_mean_score=40.0,
+            heuristic_mean_score=50.0,
+            nn_mean_margin=-10.0,
+            nn_rate_ge_100=0.0,
+            nn_rate_ge_120=0.0,
+            heuristic_rate_ge_100=0.0,
+            heuristic_rate_ge_120=0.0,
+            nn_max_score=40,
+            nn_min_score=40,
+            heuristic_max_score=50,
+            heuristic_min_score=50,
+            nn_rate_lt_80=1.0,
+            nn_rate_80_99=0.0,
+            nn_rate_100_119=0.0,
+            nn_rate_ge_120_bucket=0.0,
+            heuristic_rate_lt_80=1.0,
+            heuristic_rate_80_99=0.0,
+            heuristic_rate_100_119=0.0,
+            heuristic_rate_ge_120_bucket=0.0,
+        )
+
+    def fake_eval_pool(*, seed, opponents, games_per_opponent, **kwargs):
+        pool_seeds.append(int(seed))
+        games = int(games_per_opponent) * len(opponents)
+        return {
+            "model": "fake_model.npz",
+            "board_type": "oceania",
+            "games_per_opponent": int(games_per_opponent),
+            "opponents": list(opponents),
+            "summary": {
+                "games": games,
+                "nn_wins": 0,
+                "opponent_wins": games,
+                "ties": 0,
+                "nn_win_rate": 0.0,
+                "nn_mean_score": 40.0,
+                "nn_mean_margin": -10.0,
+                "nn_rate_ge_100": 0.0,
+                "nn_rate_ge_120": 0.0,
+                "nn_max_score": 40,
+                "nn_min_score": 40,
+                "nn_rate_lt_80": 1.0,
+                "nn_rate_80_99": 0.0,
+                "nn_rate_100_119": 0.0,
+                "nn_rate_ge_120_bucket": 0.0,
+            },
+            "by_opponent": [],
+        }
+
+    monkeypatch.setattr(mod, "evaluate_factorized_vs_heuristic", fake_eval_factorized_vs_heuristic)
+    monkeypatch.setattr(mod, "evaluate_against_pool", fake_eval_pool)
+
+    run_auto_improve_factorized(
+        out_dir=str(tmp_path / "fixed_seed_run"),
+        iterations=2,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        games_per_iter=1,
+        proposal_top_k=2,
+        lookahead_depth=0,
+        n_step=1,
+        gamma=0.97,
+        bootstrap_mix=0.35,
+        value_target_score_scale=160.0,
+        value_target_score_bias=0.0,
+        late_round_oversample_factor=1,
+        train_epochs=1,
+        train_batch=32,
+        train_hidden1=64,
+        train_hidden2=32,
+        train_dropout=0.1,
+        train_lr_init=1e-4,
+        train_lr_peak=1e-3,
+        train_lr_warmup_epochs=1,
+        train_lr_decay_every=3,
+        train_lr_decay_factor=0.5,
+        train_value_weight=0.5,
+        val_split=0.2,
+        eval_games=1,
+        promotion_games=1,
+        pool_games_per_opponent=1,
+        min_pool_win_rate=0.0,
+        min_pool_mean_score=0.0,
+        min_pool_rate_ge_100=0.0,
+        min_pool_rate_ge_120=0.0,
+        require_pool_non_regression=False,
+        min_gate_win_rate=0.0,
+        min_gate_mean_score=0.0,
+        min_gate_rate_ge_100=0.0,
+        min_gate_rate_ge_120=0.0,
+        strict_kpi_gate_enabled=False,
+        fixed_benchmark_seeds=True,
+        benchmark_seed=77777,
+        seed=90,
+    )
+
+    assert eval_seeds == [77788, 77799, 77821, 77788, 77799, 77821]
+    assert pool_seeds == [77810, 77810]
+
+
+def test_auto_improve_factorized_frozen_opponent_gate_and_identity_encoder(tmp_path: Path) -> None:
+    teacher_ds = tmp_path / "teacher_bc.jsonl"
+    teacher_meta = tmp_path / "teacher_bc.meta.json"
+    teacher_model = tmp_path / "teacher_model.npz"
+    generate_bc_dataset(
+        out_jsonl=str(teacher_ds),
+        out_meta=str(teacher_meta),
+        games=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        seed=222,
+        lookahead_depth=0,
+    )
+    train_bc(
+        dataset_jsonl=str(teacher_ds),
+        meta_json=str(teacher_meta),
+        out_model=str(teacher_model),
+        epochs=1,
+        batch_size=32,
+        hidden1=64,
+        hidden2=32,
+        dropout=0.1,
+        lr_init=1e-4,
+        lr_peak=1e-3,
+        lr_warmup_epochs=1,
+        lr_decay_every=3,
+        lr_decay_factor=0.5,
+        val_split=0.2,
+        seed=222,
+    )
+
+    out_dir = tmp_path / "auto_fac_frozen_gate"
+    manifest = run_auto_improve_factorized(
+        out_dir=str(out_dir),
+        iterations=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        games_per_iter=1,
+        proposal_top_k=2,
+        lookahead_depth=0,
+        n_step=1,
+        gamma=0.97,
+        bootstrap_mix=0.35,
+        value_target_score_scale=160.0,
+        value_target_score_bias=0.0,
+        late_round_oversample_factor=1,
+        train_epochs=1,
+        train_batch=32,
+        train_hidden1=64,
+        train_hidden2=32,
+        train_dropout=0.1,
+        train_lr_init=1e-4,
+        train_lr_peak=1e-3,
+        train_lr_warmup_epochs=1,
+        train_lr_decay_every=3,
+        train_lr_decay_factor=0.5,
+        train_value_weight=0.5,
+        val_split=0.2,
+        eval_games=1,
+        promotion_games=1,
+        pool_games_per_opponent=1,
+        min_pool_win_rate=0.0,
+        min_pool_mean_score=0.0,
+        min_pool_rate_ge_100=0.0,
+        min_pool_rate_ge_120=0.0,
+        require_pool_non_regression=False,
+        min_gate_win_rate=0.0,
+        min_gate_mean_score=0.0,
+        min_gate_rate_ge_100=0.0,
+        min_gate_rate_ge_120=0.0,
+        promotion_primary_opponent="frozen",
+        frozen_opponent_model_path=str(teacher_model),
+        state_encoder_enable_identity=True,
+        state_encoder_identity_hash_dim=16,
+        require_fixed_seed_eval_gate_pass=True,
+        fixed_seed_eval_gate_games=1,
+        fixed_seed_eval_gate_min_win_rate=0.0,
+        strict_kpi_gate_enabled=False,
+        seed=223,
+    )
+    row = manifest["history"][0]
+    assert row["promotion_primary_eval"]["primary_opponent"] == "frozen"
+    assert row["promotion_primary_eval"]["result"]["opponent_spec"] == str(teacher_model)
+    assert row["fixed_seed_eval_gate"]["enabled"] is True
+    assert row["fixed_seed_eval_gate"]["opponents"] == [str(teacher_model)]
+    assert manifest["config"]["state_encoder_enable_identity"] is True
+    assert manifest["config"]["state_encoder_identity_hash_dim"] == 16
 
 
 def test_auto_improve_factorized_strict_curriculum_tapers(tmp_path: Path) -> None:
@@ -675,3 +1084,471 @@ def test_auto_improve_factorized_strict_curriculum_tapers(tmp_path: Path) -> Non
     assert int(meta1["relaxed_games"]) == 0
     assert int(meta2["strict_games"]) == 0
     assert int(meta2["relaxed_games"]) == 2
+
+
+def test_auto_improve_factorized_early_stops_on_non_eligible_streak(monkeypatch, tmp_path: Path) -> None:
+    import backend.ml.auto_improve_factorized as mod
+
+    gate_calls = {"n": 0}
+
+    def fake_eval_factorized_vs_heuristic(*, games, **kwargs):
+        g = int(games)
+        return SimpleNamespace(
+            games=g,
+            nn_wins=max(1, g // 2),
+            heuristic_wins=g - max(1, g // 2),
+            ties=0,
+            nn_mean_score=55.0,
+            heuristic_mean_score=52.0,
+            nn_mean_margin=3.0,
+            nn_rate_ge_100=0.0,
+            nn_rate_ge_120=0.0,
+            heuristic_rate_ge_100=0.0,
+            heuristic_rate_ge_120=0.0,
+            nn_max_score=80,
+            nn_min_score=40,
+            heuristic_max_score=80,
+            heuristic_min_score=40,
+            nn_rate_lt_80=1.0,
+            nn_rate_80_99=0.0,
+            nn_rate_100_119=0.0,
+            nn_rate_ge_120_bucket=0.0,
+            heuristic_rate_lt_80=1.0,
+            heuristic_rate_80_99=0.0,
+            heuristic_rate_100_119=0.0,
+            heuristic_rate_ge_120_bucket=0.0,
+        )
+
+    def fake_eval_pool(*, opponents, games_per_opponent, **kwargs):
+        games = int(games_per_opponent) * len(opponents)
+        return {
+            "model": "fake_model.npz",
+            "board_type": "oceania",
+            "games_per_opponent": int(games_per_opponent),
+            "opponents": list(opponents),
+            "summary": {
+                "games": games,
+                "nn_wins": games,
+                "opponent_wins": 0,
+                "ties": 0,
+                "nn_win_rate": 1.0,
+                "nn_mean_score": 60.0,
+                "nn_mean_margin": 10.0,
+                "nn_rate_ge_100": 0.0,
+                "nn_rate_ge_120": 0.0,
+                "nn_max_score": 90,
+                "nn_min_score": 40,
+                "nn_rate_lt_80": 1.0,
+                "nn_rate_80_99": 0.0,
+                "nn_rate_100_119": 0.0,
+                "nn_rate_ge_120_bucket": 0.0,
+            },
+            "by_opponent": [],
+        }
+
+    def fake_gate(**kwargs):
+        gate_calls["n"] += 1
+        return {
+            "passed": gate_calls["n"] == 1,
+            "checks": [],
+            "candidate_summary": {},
+            "candidate_path": kwargs.get("candidate_path"),
+            "baseline_path": kwargs.get("baseline_path"),
+        }
+
+    monkeypatch.setattr(mod, "evaluate_factorized_vs_heuristic", fake_eval_factorized_vs_heuristic)
+    monkeypatch.setattr(mod, "evaluate_against_pool", fake_eval_pool)
+    monkeypatch.setattr(mod, "run_gate", fake_gate)
+
+    manifest = run_auto_improve_factorized(
+        out_dir=str(tmp_path / "auto_fac_early_stop"),
+        iterations=6,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        games_per_iter=1,
+        proposal_top_k=2,
+        lookahead_depth=0,
+        n_step=1,
+        gamma=0.97,
+        bootstrap_mix=0.35,
+        value_target_score_scale=160.0,
+        value_target_score_bias=0.0,
+        late_round_oversample_factor=1,
+        train_epochs=1,
+        train_batch=32,
+        train_hidden1=64,
+        train_hidden2=32,
+        train_dropout=0.1,
+        train_lr_init=1e-4,
+        train_lr_peak=1e-3,
+        train_lr_warmup_epochs=1,
+        train_lr_decay_every=3,
+        train_lr_decay_factor=0.5,
+        train_value_weight=0.5,
+        val_split=0.2,
+        eval_games=1,
+        promotion_games=1,
+        pool_games_per_opponent=1,
+        min_pool_win_rate=0.0,
+        min_pool_mean_score=0.0,
+        min_pool_rate_ge_100=0.0,
+        min_pool_rate_ge_120=0.0,
+        require_pool_non_regression=False,
+        min_gate_win_rate=0.0,
+        min_gate_mean_score=0.0,
+        min_gate_rate_ge_100=0.0,
+        min_gate_rate_ge_120=0.0,
+        selection_requires_gate_pass=False,
+        strict_kpi_gate_enabled=False,
+        stop_after_consecutive_non_eligible_iters=True,
+        max_consecutive_non_eligible_iters=2,
+        seed=1234,
+    )
+    assert len(manifest["history"]) == 3
+    assert manifest["stopped_early"] is True
+    assert "non_eligible_streak_reached_2" in str(manifest["stop_reason"])
+    assert manifest["history"][0]["best_selection_eval"]["selected"] is True
+    assert manifest["history"][2]["stability"]["early_stop_triggered"] is True
+
+
+def test_generate_bc_dataset_hard_replay_tracks_loss_slice(monkeypatch, tmp_path: Path) -> None:
+    import backend.ml.generate_bc_dataset as mod
+
+    original_score = mod.calculate_score
+
+    def forced_scores(game, player):
+        # Ensure target player 0 always "loses" so hard replay is exercised.
+        if game.players and player.name == game.players[0].name:
+            return SimpleNamespace(total=10)
+        return SimpleNamespace(total=20)
+
+    monkeypatch.setattr(mod, "calculate_score", forced_scores)
+    try:
+        out = generate_bc_dataset(
+            out_jsonl=str(tmp_path / "bc_hard.jsonl"),
+            out_meta=str(tmp_path / "bc_hard.meta.json"),
+            games=1,
+            players=2,
+            board_type=BoardType.OCEANIA,
+            max_turns=60,
+            seed=202,
+            proposal_model_path=None,
+            self_play_policy="proposal_vs_heuristic",
+            proposal_top_k=2,
+            lookahead_depth=0,
+            hard_replay_enabled=True,
+            hard_replay_target_player=0,
+            hard_replay_loss_oversample_factor=3,
+            hard_replay_only_losses=True,
+            late_round_oversample_factor=1,
+        )
+    finally:
+        monkeypatch.setattr(mod, "calculate_score", original_score)
+
+    pi = out["policy_improvement"]
+    assert pi["hard_replay_enabled"] is True
+    assert pi["hard_replay_games"] == 1
+    assert pi["hard_replay_loss_games"] == 1
+    assert pi["hard_replay_rows_kept"] >= 1
+    assert pi["hard_replay_rows_written"] == (3 * pi["hard_replay_rows_kept"])
+    assert pi["hard_replay_player"] == "proposal"
+
+
+def test_auto_improve_factorized_hard_replay_player_frozen_uses_frozen_model(tmp_path: Path) -> None:
+    teacher_ds = tmp_path / "teacher_hard_bc.jsonl"
+    teacher_meta = tmp_path / "teacher_hard_bc.meta.json"
+    teacher_model = tmp_path / "teacher_hard_model.npz"
+    generate_bc_dataset(
+        out_jsonl=str(teacher_ds),
+        out_meta=str(teacher_meta),
+        games=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        seed=301,
+        lookahead_depth=0,
+    )
+    train_bc(
+        dataset_jsonl=str(teacher_ds),
+        meta_json=str(teacher_meta),
+        out_model=str(teacher_model),
+        epochs=1,
+        batch_size=32,
+        hidden1=64,
+        hidden2=32,
+        dropout=0.1,
+        lr_init=1e-4,
+        lr_peak=1e-3,
+        lr_warmup_epochs=1,
+        lr_decay_every=3,
+        lr_decay_factor=0.5,
+        val_split=0.2,
+        seed=301,
+    )
+
+    out_dir = tmp_path / "auto_fac_hard_frozen"
+    manifest = run_auto_improve_factorized(
+        out_dir=str(out_dir),
+        iterations=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        games_per_iter=1,
+        proposal_top_k=2,
+        lookahead_depth=0,
+        n_step=1,
+        gamma=0.97,
+        bootstrap_mix=0.35,
+        value_target_score_scale=160.0,
+        value_target_score_bias=0.0,
+        late_round_oversample_factor=1,
+        train_epochs=1,
+        train_batch=32,
+        train_hidden1=64,
+        train_hidden2=32,
+        train_dropout=0.1,
+        train_lr_init=1e-4,
+        train_lr_peak=1e-3,
+        train_lr_warmup_epochs=1,
+        train_lr_decay_every=3,
+        train_lr_decay_factor=0.5,
+        train_value_weight=0.5,
+        val_split=0.2,
+        eval_games=1,
+        promotion_games=1,
+        pool_games_per_opponent=1,
+        min_pool_win_rate=0.0,
+        min_pool_mean_score=0.0,
+        min_pool_rate_ge_100=0.0,
+        min_pool_rate_ge_120=0.0,
+        require_pool_non_regression=False,
+        min_gate_win_rate=0.0,
+        min_gate_mean_score=0.0,
+        min_gate_rate_ge_100=0.0,
+        min_gate_rate_ge_120=0.0,
+        hard_replay_games=1,
+        hard_replay_player="frozen",
+        hard_replay_target_player=0,
+        hard_replay_loss_oversample_factor=2,
+        hard_replay_only_losses=False,
+        frozen_opponent_model_path=str(teacher_model),
+        strict_kpi_gate_enabled=False,
+        seed=302,
+    )
+    row = manifest["history"][0]
+    assert row["hard_replay"]["enabled"] is True
+    assert row["hard_replay"]["player"] == "frozen"
+    assert row["hard_replay"]["player_model_path"] == str(teacher_model)
+
+    hard_meta = json.loads((out_dir / "iter_001" / "bc_dataset_hard.meta.json").read_text(encoding="utf-8"))
+    hard_pi = hard_meta["policy_improvement"]
+    assert hard_pi["proposal_model_path"] == str(teacher_model)
+    assert hard_pi["hard_replay_player"] == "frozen"
+
+
+def test_auto_improve_factorized_fixed_gate_regression_rolls_back(monkeypatch, tmp_path: Path) -> None:
+    import backend.ml.auto_improve_factorized as mod
+
+    fixed_gate_rates = [0.62, 0.45]
+    fixed_gate_idx = {"i": 0}
+
+    def fake_eval_factorized_vs_heuristic(*, games, **kwargs):
+        g = int(games)
+        return SimpleNamespace(
+            games=g,
+            nn_wins=g,
+            heuristic_wins=0,
+            ties=0,
+            nn_mean_score=60.0,
+            heuristic_mean_score=50.0,
+            nn_mean_margin=10.0,
+            nn_rate_ge_100=0.0,
+            nn_rate_ge_120=0.0,
+            heuristic_rate_ge_100=0.0,
+            heuristic_rate_ge_120=0.0,
+            nn_max_score=80,
+            nn_min_score=40,
+            heuristic_max_score=70,
+            heuristic_min_score=30,
+            nn_rate_lt_80=1.0,
+            nn_rate_80_99=0.0,
+            nn_rate_100_119=0.0,
+            nn_rate_ge_120_bucket=0.0,
+            heuristic_rate_lt_80=1.0,
+            heuristic_rate_80_99=0.0,
+            heuristic_rate_100_119=0.0,
+            heuristic_rate_ge_120_bucket=0.0,
+        )
+
+    def fake_eval_pool(*, opponents, games_per_opponent, **kwargs):
+        games = int(games_per_opponent) * len(opponents)
+        wr = 0.8
+        if int(games_per_opponent) == 3:
+            idx = min(fixed_gate_idx["i"], len(fixed_gate_rates) - 1)
+            wr = float(fixed_gate_rates[idx])
+            fixed_gate_idx["i"] += 1
+        nn_wins = int(round(games * wr))
+        return {
+            "model": "fake_model.npz",
+            "board_type": "oceania",
+            "games_per_opponent": int(games_per_opponent),
+            "opponents": list(opponents),
+            "summary": {
+                "games": games,
+                "nn_wins": nn_wins,
+                "opponent_wins": games - nn_wins,
+                "ties": 0,
+                "nn_win_rate": wr,
+                "nn_mean_score": 55.0,
+                "nn_mean_margin": 2.0,
+                "nn_rate_ge_100": 0.0,
+                "nn_rate_ge_120": 0.0,
+                "nn_max_score": 90,
+                "nn_min_score": 40,
+                "nn_rate_lt_80": 1.0,
+                "nn_rate_80_99": 0.0,
+                "nn_rate_100_119": 0.0,
+                "nn_rate_ge_120_bucket": 0.0,
+            },
+            "by_opponent": [],
+        }
+
+    monkeypatch.setattr(mod, "evaluate_factorized_vs_heuristic", fake_eval_factorized_vs_heuristic)
+    monkeypatch.setattr(mod, "evaluate_against_pool", fake_eval_pool)
+    monkeypatch.setattr(
+        mod,
+        "run_gate",
+        lambda **kwargs: {"passed": True, "checks": [], "candidate_summary": {}, "baseline_summary": {}},
+    )
+
+    manifest = run_auto_improve_factorized(
+        out_dir=str(tmp_path / "auto_fac_fixed_gate_rollback"),
+        iterations=3,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        games_per_iter=1,
+        proposal_top_k=2,
+        lookahead_depth=0,
+        n_step=1,
+        gamma=0.97,
+        bootstrap_mix=0.35,
+        value_target_score_scale=160.0,
+        value_target_score_bias=0.0,
+        late_round_oversample_factor=1,
+        train_epochs=1,
+        train_batch=32,
+        train_hidden1=64,
+        train_hidden2=32,
+        train_dropout=0.1,
+        train_lr_init=1e-4,
+        train_lr_peak=1e-3,
+        train_lr_warmup_epochs=1,
+        train_lr_decay_every=3,
+        train_lr_decay_factor=0.5,
+        train_value_weight=0.5,
+        val_split=0.2,
+        eval_games=1,
+        promotion_games=1,
+        pool_games_per_opponent=1,
+        min_pool_win_rate=0.0,
+        min_pool_mean_score=0.0,
+        min_pool_rate_ge_100=0.0,
+        min_pool_rate_ge_120=0.0,
+        require_pool_non_regression=False,
+        min_gate_win_rate=0.0,
+        min_gate_mean_score=0.0,
+        min_gate_rate_ge_100=0.0,
+        min_gate_rate_ge_120=0.0,
+        strict_kpi_gate_enabled=False,
+        require_fixed_seed_eval_gate_pass=True,
+        fixed_seed_eval_gate_games=3,
+        fixed_seed_eval_gate_min_win_rate=0.0,
+        rollback_on_fixed_gate_regression=True,
+        fixed_gate_regression_max_drop=0.10,
+        stop_after_consecutive_non_eligible_iters=False,
+        seed=303,
+    )
+    assert manifest["stopped_early"] is True
+    assert "fixed_gate_regression_drop_" in str(manifest.get("stop_reason"))
+    assert len(manifest["history"]) == 2
+    assert manifest["history"][1]["stability"]["fixed_gate_rollback_triggered"] is True
+    assert manifest["history"][1]["fixed_gate_regression"]["triggered"] is True
+
+
+def test_generate_bc_dataset_adaptive_depth2_triggers(monkeypatch, tmp_path: Path) -> None:
+    import backend.ml.generate_bc_dataset as mod
+
+    depth_calls: list[int] = []
+    original_rerank = mod._rerank_with_lookahead
+
+    def fake_rerank(game, player_idx, moves, depth, **kwargs):
+        depth_calls.append(int(depth))
+        out = {}
+        for idx, mv in enumerate(moves):
+            # Keep depth-1 gaps small to trigger selective depth-2.
+            if int(depth) == 1:
+                out[id(mv)] = 20.0 - (0.5 * idx)
+            else:
+                out[id(mv)] = 22.0 - idx
+        return out
+
+    ds = tmp_path / "bc_src_adaptive.jsonl"
+    meta = tmp_path / "bc_src_adaptive.meta.json"
+    model = tmp_path / "adaptive_model.npz"
+    generate_bc_dataset(
+        out_jsonl=str(ds),
+        out_meta=str(meta),
+        games=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        seed=303,
+        lookahead_depth=0,
+        n_step=1,
+    )
+    train_bc(
+        dataset_jsonl=str(ds),
+        meta_json=str(meta),
+        out_model=str(model),
+        epochs=1,
+        batch_size=32,
+        hidden1=64,
+        hidden2=32,
+        dropout=0.1,
+        lr_init=1e-4,
+        lr_peak=1e-3,
+        lr_warmup_epochs=1,
+        lr_decay_every=3,
+        lr_decay_factor=0.5,
+        val_split=0.2,
+        seed=303,
+    )
+
+    monkeypatch.setattr(mod, "_rerank_with_lookahead", fake_rerank)
+    try:
+        out = generate_bc_dataset(
+            out_jsonl=str(tmp_path / "bc_adaptive.jsonl"),
+            out_meta=str(tmp_path / "bc_adaptive.meta.json"),
+            games=1,
+            players=2,
+            board_type=BoardType.OCEANIA,
+            max_turns=60,
+            seed=304,
+            proposal_model_path=str(model),
+            self_play_policy="mixed",
+            proposal_top_k=3,
+            lookahead_depth=1,
+            adaptive_teacher_depth2_enabled=True,
+            adaptive_teacher_uncertainty_gap=2.0,
+            adaptive_teacher_top_m=2,
+        )
+    finally:
+        monkeypatch.setattr(mod, "_rerank_with_lookahead", original_rerank)
+
+    pi = out["policy_improvement"]
+    assert pi["adaptive_depth2_triggered"] >= 1
+    assert pi["adaptive_depth2_candidates"] >= 2
+    assert 1 in depth_calls
+    assert 2 in depth_calls

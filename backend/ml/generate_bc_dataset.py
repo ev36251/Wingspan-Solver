@@ -125,6 +125,8 @@ def _model_for_player(
         if player_idx == 0:
             return proposal_model
         return opponent_model if opponent_model is not None else proposal_model
+    if self_play_policy == "proposal_vs_heuristic":
+        return proposal_model if player_idx == 0 else None
     return proposal_model
 
 
@@ -207,6 +209,10 @@ def _select_policy_move(
     proposal_top_k: int,
     lookahead_depth: int,
     self_play_policy: str,
+    adaptive_teacher_depth2_enabled: bool = True,
+    adaptive_teacher_uncertainty_gap: float = 2.0,
+    adaptive_teacher_top_m: int = 2,
+    policy_stats: dict[str, int] | None = None,
 ) -> Move:
     if not moves:
         raise ValueError("No moves")
@@ -248,8 +254,42 @@ def _select_policy_move(
         )
         candidates.sort(key=lambda m: (look.get(id(m), -1e9), _heuristic_score_move(game, player, m)), reverse=True)
 
+        # For depth-1 runs with a proposal model, spend depth-2 budget only
+        # on close calls so we improve label quality without full depth-2 cost.
+        if (
+            lookahead_depth == 1
+            and adaptive_teacher_depth2_enabled
+            and current_model is not None
+            and len(candidates) >= 2
+        ):
+            top_gap = float(look.get(id(candidates[0]), -1e9) - look.get(id(candidates[1]), -1e9))
+            if top_gap <= float(adaptive_teacher_uncertainty_gap):
+                top_m = max(2, min(int(adaptive_teacher_top_m), len(candidates)))
+                uncertain = candidates[:top_m]
+                look2 = _rerank_with_lookahead(
+                    game,
+                    game.current_player_idx,
+                    uncertain,
+                    2,
+                    encoder=encoder,
+                    proposal_top_k=proposal_top_k,
+                    proposal_model=proposal_model,
+                    opponent_model=opponent_model,
+                    self_play_policy=self_play_policy,
+                )
+                for m in uncertain:
+                    look[id(m)] = look2.get(id(m), look.get(id(m), -1e9))
+                candidates.sort(
+                    key=lambda m: (look.get(id(m), -1e9), _heuristic_score_move(game, player, m)),
+                    reverse=True,
+                )
+                if policy_stats is not None:
+                    policy_stats["adaptive_depth2_triggered"] = policy_stats.get("adaptive_depth2_triggered", 0) + 1
+                    policy_stats["adaptive_depth2_candidates"] = policy_stats.get("adaptive_depth2_candidates", 0) + top_m
+
     # Additional value-head reranking for proposal-model candidates.
-    if current_model is not None and len(candidates) > 1:
+    # Skip when lookahead already provides future-score signal.
+    if current_model is not None and len(candidates) > 1 and lookahead_depth == 0:
         value_scores: dict[int, float] = {}
         for m in candidates:
             sim = deep_copy_game(game)
@@ -385,6 +425,9 @@ def generate_bc_dataset(
     engine_time_budget_ms: int = 25,
     engine_num_determinizations: int = 0,
     engine_max_rollout_depth: int = 24,
+    adaptive_teacher_depth2_enabled: bool = True,
+    adaptive_teacher_uncertainty_gap: float = 2.0,
+    adaptive_teacher_top_m: int = 2,
     strict_rules_only: bool = True,
     reject_non_strict_powers: bool = True,
     strict_game_fraction: float = 1.0,
@@ -392,10 +435,17 @@ def generate_bc_dataset(
     emit_score_breakdown: bool = True,
     move_value_enabled: bool = True,
     move_value_num_negatives: int = 4,
+    hard_replay_enabled: bool = False,
+    hard_replay_player: str = "proposal",
+    hard_replay_target_player: int = 0,
+    hard_replay_loss_oversample_factor: int = 3,
+    hard_replay_only_losses: bool = False,
+    state_encoder_enable_identity: bool = False,
+    state_encoder_identity_hash_dim: int = 128,
 ) -> dict:
     if seed is not None:
         random.seed(seed)
-    if self_play_policy not in ("mixed", "champion_nn_vs_nn"):
+    if self_play_policy not in ("mixed", "champion_nn_vs_nn", "proposal_vs_heuristic"):
         raise ValueError(f"Unsupported self_play_policy: {self_play_policy}")
     if teacher_source not in ("probabilistic_engine", "engine_only"):
         raise ValueError(f"Unsupported teacher_source: {teacher_source}")
@@ -403,7 +453,14 @@ def generate_bc_dataset(
     value_target_score_scale = max(1.0, float(value_target_score_scale))
     late_round_oversample_factor = max(1, int(late_round_oversample_factor))
     move_value_num_negatives = max(0, int(move_value_num_negatives))
+    adaptive_teacher_uncertainty_gap = max(0.0, float(adaptive_teacher_uncertainty_gap))
+    adaptive_teacher_top_m = max(2, int(adaptive_teacher_top_m))
+    if hard_replay_player not in ("proposal", "best", "frozen"):
+        raise ValueError("hard_replay_player must be 'proposal', 'best', or 'frozen'")
+    hard_replay_target_player = max(0, int(hard_replay_target_player))
+    hard_replay_loss_oversample_factor = max(1, int(hard_replay_loss_oversample_factor))
     strict_game_fraction = max(0.0, min(1.0, float(strict_game_fraction)))
+    state_encoder_identity_hash_dim = max(1, int(state_encoder_identity_hash_dim))
 
     load_all(EXCEL_FILE)
 
@@ -416,7 +473,16 @@ def generate_bc_dataset(
         if self_play_policy == "champion_nn_vs_nn" and opponent_path
         else None
     )
-    enc = StateEncoder()
+    encoder_source_meta = (
+        proposal_model.meta
+        if proposal_model is not None
+        else (opponent_model.meta if opponent_model is not None else None)
+    )
+    enc = StateEncoder.resolve_for_model(
+        encoder_source_meta,
+        fallback_enable_identity_features=state_encoder_enable_identity,
+        fallback_identity_hash_dim=state_encoder_identity_hash_dim,
+    )
     outp = Path(out_jsonl)
     outp.parent.mkdir(parents=True, exist_ok=True)
 
@@ -433,6 +499,14 @@ def generate_bc_dataset(
     strict_rejected_games = 0
     strict_games = 0
     relaxed_games = 0
+    policy_stats: dict[str, int] = {
+        "adaptive_depth2_triggered": 0,
+        "adaptive_depth2_candidates": 0,
+    }
+    hard_replay_games = 0
+    hard_replay_loss_games = 0
+    hard_replay_rows_kept = 0
+    hard_replay_rows_written = 0
 
     with outp.open("w", encoding="utf-8") as f:
         for g in range(1, games + 1):
@@ -492,6 +566,10 @@ def generate_bc_dataset(
                     proposal_top_k=proposal_top_k,
                     lookahead_depth=lookahead_depth,
                     self_play_policy=self_play_policy,
+                    adaptive_teacher_depth2_enabled=adaptive_teacher_depth2_enabled,
+                    adaptive_teacher_uncertainty_gap=adaptive_teacher_uncertainty_gap,
+                    adaptive_teacher_top_m=adaptive_teacher_top_m,
+                    policy_stats=policy_stats,
                 )
 
                 use_engine_teacher = (
@@ -614,6 +692,15 @@ def generate_bc_dataset(
                 strict_rejected_games += 1
                 continue
             all_scores.extend(finals)
+            target_idx = min(max(0, hard_replay_target_player), max(0, len(finals) - 1))
+            target_score = finals[target_idx]
+            opp_scores = finals[:target_idx] + finals[target_idx + 1 :]
+            opp_best = max(opp_scores) if opp_scores else target_score
+            target_lost = bool(target_score < opp_best)
+            if hard_replay_enabled:
+                hard_replay_games += 1
+                if target_lost:
+                    hard_replay_loss_games += 1
 
             # Build fast lookup for n-step bootstrap from future own decisions.
             score_by_player_ord: dict[tuple[int, int], int] = {}
@@ -634,6 +721,13 @@ def generate_bc_dataset(
                 ) / value_target_score_scale
                 value_target = max(0.0, min(1.0, value_target))
 
+                if hard_replay_enabled:
+                    if d.player_index != target_idx:
+                        continue
+                    if hard_replay_only_losses and (not target_lost):
+                        continue
+                    hard_replay_rows_kept += 1
+
                 row = {
                     "state": d.state,
                     "targets": d.targets,
@@ -649,9 +743,13 @@ def generate_bc_dataset(
                 copies = 1
                 if d.round_num >= 3:
                     copies = late_round_oversample_factor
+                if hard_replay_enabled and target_lost:
+                    copies *= hard_replay_loss_oversample_factor
                 for _ in range(copies):
                     f.write(json.dumps(row, separators=(",", ":")) + "\n")
                     samples += 1
+                if hard_replay_enabled:
+                    hard_replay_rows_written += int(copies)
 
             if g % 10 == 0 or g == games:
                 print(
@@ -712,6 +810,24 @@ def generate_bc_dataset(
             "move_execute_successes": move_execute_successes,
             "move_execute_fallback_used": move_execute_fallback_used,
             "move_execute_dropped": move_execute_dropped,
+            "adaptive_teacher_depth2_enabled": bool(adaptive_teacher_depth2_enabled),
+            "adaptive_teacher_uncertainty_gap": float(adaptive_teacher_uncertainty_gap),
+            "adaptive_teacher_top_m": int(adaptive_teacher_top_m),
+            "adaptive_depth2_triggered": int(policy_stats.get("adaptive_depth2_triggered", 0)),
+            "adaptive_depth2_candidates": int(policy_stats.get("adaptive_depth2_candidates", 0)),
+            "hard_replay_enabled": bool(hard_replay_enabled),
+            "hard_replay_player": str(hard_replay_player),
+            "hard_replay_target_player": int(hard_replay_target_player),
+            "hard_replay_loss_oversample_factor": int(hard_replay_loss_oversample_factor),
+            "hard_replay_only_losses": bool(hard_replay_only_losses),
+            "hard_replay_games": int(hard_replay_games),
+            "hard_replay_loss_games": int(hard_replay_loss_games),
+            "hard_replay_rows_kept": int(hard_replay_rows_kept),
+            "hard_replay_rows_written": int(hard_replay_rows_written),
+        },
+        "state_encoder": {
+            "enable_identity_features": bool(enc.enable_identity_features),
+            "identity_hash_dim": int(enc.identity_hash_dim),
         },
         "strict_rules_only": strict_rules_only,
         "reject_non_strict_powers": reject_non_strict_powers,
@@ -739,7 +855,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--proposal-model", default=None)
     parser.add_argument("--opponent-model", default=None)
-    parser.add_argument("--self-play-policy", default="mixed", choices=["mixed", "champion_nn_vs_nn"])
+    parser.add_argument("--self-play-policy", default="mixed", choices=["mixed", "champion_nn_vs_nn", "proposal_vs_heuristic"])
     parser.add_argument("--proposal-top-k", type=int, default=6)
     parser.add_argument("--lookahead-depth", type=int, default=2, choices=[0, 1, 2])
     parser.add_argument("--n-step", type=int, default=2)
@@ -757,6 +873,11 @@ def main() -> None:
     parser.add_argument("--engine-time-budget-ms", type=int, default=25)
     parser.add_argument("--engine-num-determinizations", type=int, default=0)
     parser.add_argument("--engine-max-rollout-depth", type=int, default=24)
+    parser.set_defaults(adaptive_teacher_depth2_enabled=True)
+    parser.add_argument("--adaptive-teacher-depth2-enabled", dest="adaptive_teacher_depth2_enabled", action="store_true")
+    parser.add_argument("--disable-adaptive-teacher-depth2", dest="adaptive_teacher_depth2_enabled", action="store_false")
+    parser.add_argument("--adaptive-teacher-uncertainty-gap", type=float, default=2.0)
+    parser.add_argument("--adaptive-teacher-top-m", type=int, default=2)
     parser.set_defaults(strict_rules_only=True, reject_non_strict_powers=True)
     parser.add_argument("--strict-rules-only", dest="strict_rules_only", action="store_true")
     parser.add_argument("--allow-non-strict-rules", dest="strict_rules_only", action="store_false")
@@ -765,6 +886,18 @@ def main() -> None:
     parser.add_argument("--strict-game-fraction", type=float, default=1.0)
     parser.add_argument("--max-round", type=int, default=4, choices=[1, 2, 3, 4])
     parser.add_argument("--emit-score-breakdown", action="store_true")
+    parser.set_defaults(hard_replay_enabled=False, hard_replay_only_losses=False)
+    parser.add_argument("--hard-replay-enabled", dest="hard_replay_enabled", action="store_true")
+    parser.add_argument("--disable-hard-replay", dest="hard_replay_enabled", action="store_false")
+    parser.add_argument("--hard-replay-player", default="proposal", choices=["proposal", "best", "frozen"])
+    parser.add_argument("--hard-replay-target-player", type=int, default=0)
+    parser.add_argument("--hard-replay-loss-oversample-factor", type=int, default=3)
+    parser.add_argument("--hard-replay-only-losses", dest="hard_replay_only_losses", action="store_true")
+    parser.add_argument("--hard-replay-include-wins", dest="hard_replay_only_losses", action="store_false")
+    parser.set_defaults(state_encoder_enable_identity=False)
+    parser.add_argument("--state-encoder-enable-identity", dest="state_encoder_enable_identity", action="store_true")
+    parser.add_argument("--disable-state-encoder-identity", dest="state_encoder_enable_identity", action="store_false")
+    parser.add_argument("--state-encoder-identity-hash-dim", type=int, default=128)
     args = parser.parse_args()
 
     meta = generate_bc_dataset(
@@ -793,11 +926,21 @@ def main() -> None:
         engine_time_budget_ms=args.engine_time_budget_ms,
         engine_num_determinizations=args.engine_num_determinizations,
         engine_max_rollout_depth=args.engine_max_rollout_depth,
+        adaptive_teacher_depth2_enabled=args.adaptive_teacher_depth2_enabled,
+        adaptive_teacher_uncertainty_gap=args.adaptive_teacher_uncertainty_gap,
+        adaptive_teacher_top_m=args.adaptive_teacher_top_m,
         strict_rules_only=args.strict_rules_only,
         reject_non_strict_powers=args.reject_non_strict_powers,
         strict_game_fraction=args.strict_game_fraction,
         max_round=args.max_round,
         emit_score_breakdown=args.emit_score_breakdown,
+        hard_replay_enabled=args.hard_replay_enabled,
+        hard_replay_player=args.hard_replay_player,
+        hard_replay_target_player=args.hard_replay_target_player,
+        hard_replay_loss_oversample_factor=args.hard_replay_loss_oversample_factor,
+        hard_replay_only_losses=args.hard_replay_only_losses,
+        state_encoder_enable_identity=args.state_encoder_enable_identity,
+        state_encoder_identity_hash_dim=args.state_encoder_identity_hash_dim,
     )
     print(
         f"bc dataset complete | samples={meta['samples']} | feature_dim={meta['feature_dim']}"

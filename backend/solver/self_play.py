@@ -55,6 +55,7 @@ class TrainingConfig:
     output_path: str = "training_results.json"
     seed: int | None = None
     strict_rules_mode: bool = False
+    training_mode: str = "global"
 
 
 @dataclass
@@ -69,6 +70,7 @@ class Individual:
 
 WEIGHT_FIELDS = [f.name for f in fields(HeuristicWeights)]
 WEIGHT_BOUNDS = (0.05, 5.0)
+WeightProfile = HeuristicWeights | dict[int, HeuristicWeights]
 
 
 def _clamp(val: float) -> float:
@@ -403,7 +405,7 @@ def create_training_game(
 
 def _pick_move_with_weights(moves: list[Move], game: GameState,
                             player: Player,
-                            base_weights: HeuristicWeights) -> Move:
+                            base_weights: WeightProfile) -> Move:
     """Epsilon-greedy move selection using specific weights."""
     from backend.solver.heuristics import _estimate_move_value
 
@@ -421,7 +423,7 @@ def _pick_move_with_weights(moves: list[Move], game: GameState,
 
 
 def play_head_to_head(game: GameState,
-                      player_weights: dict[str, HeuristicWeights],
+                      player_weights: dict[str, WeightProfile],
                       max_turns: int = 200) -> dict[str, int]:
     """Play a full game where each player uses their own weight configuration."""
     sim = deep_copy_game(game)
@@ -623,6 +625,8 @@ def evolve_evolutionary(config: TrainingConfig) -> dict:
 def _evaluate_weights_vs_baseline(
     candidate: HeuristicWeights,
     config: TrainingConfig,
+    target_round: int | None = None,
+    locked_round_weights: dict[int, HeuristicWeights] | None = None,
 ) -> tuple[float, float, float]:
     """Evaluate one candidate against fixed default heuristic weights."""
     board_type = BoardType(config.board_type)
@@ -639,10 +643,19 @@ def _evaluate_weights_vs_baseline(
         candidate_on_p1 = (gi % 2 == 0)
         candidate_name = "Player_1" if candidate_on_p1 else "Player_2"
 
-        pw: dict[str, HeuristicWeights] = {}
+        candidate_profile: WeightProfile
+        if target_round is not None:
+            profile: dict[int, HeuristicWeights] = {0: DEFAULT_WEIGHTS}
+            profile.update(dict(locked_round_weights or {}))
+            profile[int(target_round)] = candidate
+            candidate_profile = profile
+        else:
+            candidate_profile = candidate
+
+        pw: dict[str, WeightProfile] = {}
         for p in game.players:
             if p.name == candidate_name:
-                pw[p.name] = candidate
+                pw[p.name] = candidate_profile
             else:
                 pw[p.name] = DEFAULT_WEIGHTS
 
@@ -663,14 +676,16 @@ def _evaluate_weights_vs_baseline(
     return avg_score, win_rate, fitness
 
 
-def evolve_cmaes(config: TrainingConfig) -> dict:
-    """Run CMA-ES optimization against fixed DEFAULT_WEIGHTS baseline."""
-    if cma is None:
-        print("cma package not installed; falling back to legacy evolutionary optimizer.")
-        return evolve_evolutionary(config)
-
+def _run_cmaes_optimization(
+    config: TrainingConfig,
+    evaluator,
+    *,
+    seed_offset: int = 0,
+    label: str = "",
+) -> tuple[Individual | None, list[dict]]:
+    """Shared CMA-ES loop that optimizes weights using an evaluator callback."""
     if config.seed is not None:
-        random.seed(config.seed)
+        random.seed(int(config.seed) + int(seed_offset))
 
     x0 = _weights_to_vector(DEFAULT_WEIGHTS)
     sigma = max(0.01, float(config.cma_sigma))
@@ -679,13 +694,14 @@ def evolve_cmaes(config: TrainingConfig) -> dict:
         "verbose": -9,
     }
     if config.seed is not None:
-        options["seed"] = int(config.seed)
+        options["seed"] = int(config.seed) + int(seed_offset)
 
     es = cma.CMAEvolutionStrategy(x0, sigma, options)
 
     best_ever: Individual | None = None
     best_history: list[dict] = []
     no_improvement_count = 0
+    tag = f"[{label}] " if label else ""
 
     for gen in range(config.generations):
         gen_start = time.time()
@@ -696,7 +712,7 @@ def evolve_cmaes(config: TrainingConfig) -> dict:
 
         for vec in solutions:
             w = _vector_to_weights([float(v) for v in vec])
-            avg_score, win_rate, fitness = _evaluate_weights_vs_baseline(w, config)
+            avg_score, win_rate, fitness = evaluator(w)
             ind = Individual(
                 weights=w,
                 fitness=fitness,
@@ -713,7 +729,7 @@ def evolve_cmaes(config: TrainingConfig) -> dict:
         gen_elapsed = time.time() - gen_start
 
         print(
-            f"Gen {gen + 1}/{config.generations}: "
+            f"{tag}Gen {gen + 1}/{config.generations}: "
             f"best_fitness={gen_best.fitness:.1f} "
             f"avg_score={gen_best.avg_score:.1f} "
             f"win_rate={gen_best.win_rate:.1%} "
@@ -741,15 +757,28 @@ def evolve_cmaes(config: TrainingConfig) -> dict:
 
         if no_improvement_count >= config.convergence_patience:
             print(
-                f"Converged after {gen + 1} generations "
+                f"{tag}Converged after {gen + 1} generations "
                 f"(no improvement for {config.convergence_patience} generations)"
             )
             break
 
         if es.stop():
-            print(f"CMA-ES stop condition met after generation {gen + 1}.")
+            print(f"{tag}CMA-ES stop condition met after generation {gen + 1}.")
             break
 
+    return best_ever, best_history
+
+
+def evolve_cmaes(config: TrainingConfig) -> dict:
+    """Run CMA-ES optimization against fixed DEFAULT_WEIGHTS baseline."""
+    if cma is None:
+        print("cma package not installed; falling back to legacy evolutionary optimizer.")
+        return evolve_evolutionary(config)
+
+    best_ever, best_history = _run_cmaes_optimization(
+        config,
+        lambda w: _evaluate_weights_vs_baseline(w, config),
+    )
     return {
         "best_weights": asdict(best_ever.weights) if best_ever else {},
         "best_fitness": round(best_ever.fitness, 2) if best_ever else 0,
@@ -762,8 +791,97 @@ def evolve_cmaes(config: TrainingConfig) -> dict:
     }
 
 
+def evolve_cmaes_per_round(config: TrainingConfig) -> dict:
+    """Run CMA-ES independently per round and return round-indexed weights."""
+    if cma is None:
+        print("cma package not installed; falling back to global evolutionary optimizer.")
+        return evolve_evolutionary(config)
+
+    locked_round_weights: dict[int, HeuristicWeights] = {}
+    per_round_results: list[dict] = []
+
+    for round_num in range(1, 5):
+        best_ever, history = _run_cmaes_optimization(
+            config,
+            lambda w, rn=round_num, locked=locked_round_weights: _evaluate_weights_vs_baseline(
+                w,
+                config,
+                target_round=rn,
+                locked_round_weights=locked,
+            ),
+            seed_offset=round_num * 10_000,
+            label=f"R{round_num}",
+        )
+        if best_ever is None:
+            continue
+        locked_round_weights[round_num] = copy.deepcopy(best_ever.weights)
+        per_round_results.append(
+            {
+                "round": round_num,
+                "best_fitness": round(best_ever.fitness, 2),
+                "best_avg_score": round(best_ever.avg_score, 2),
+                "best_win_rate": round(best_ever.win_rate, 3),
+                "weights": asdict(best_ever.weights),
+                "history": history,
+            }
+        )
+
+    combined_profile: WeightProfile = ({0: DEFAULT_WEIGHTS} | locked_round_weights) if locked_round_weights else DEFAULT_WEIGHTS
+    agg_avg, agg_wr, agg_fit = _evaluate_weights_vs_baseline(
+        DEFAULT_WEIGHTS,
+        config,
+        target_round=None,
+        locked_round_weights=None,
+    )
+    if locked_round_weights:
+        # Evaluate a representative combined profile by plugging all learned rounds into candidate side.
+        board_type = BoardType(config.board_type)
+        games = max(1, int(config.games_per_matchup))
+        scores: list[float] = []
+        wins = 0.0
+        for gi in range(games):
+            game = create_training_game(
+                config.num_players,
+                board_type,
+                strict_rules_mode=config.strict_rules_mode,
+            )
+            candidate_on_p1 = (gi % 2 == 0)
+            candidate_name = "Player_1" if candidate_on_p1 else "Player_2"
+            pw: dict[str, WeightProfile] = {}
+            for p in game.players:
+                pw[p.name] = combined_profile if p.name == candidate_name else DEFAULT_WEIGHTS
+            results = play_head_to_head(game, pw)
+            cand_score = float(results.get(candidate_name, 0.0))
+            opp_scores = [float(v) for k, v in results.items() if k != candidate_name]
+            opp_best = max(opp_scores) if opp_scores else 0.0
+            scores.append(cand_score)
+            if cand_score > opp_best:
+                wins += 1.0
+            elif cand_score == opp_best:
+                wins += 0.5
+        agg_avg = sum(scores) / len(scores) if scores else 0.0
+        agg_wr = wins / games if games > 0 else 0.0
+        agg_fit = agg_avg * 0.7 + agg_wr * 30.0
+
+    return {
+        "best_weights": asdict(DEFAULT_WEIGHTS),
+        "best_weights_by_round": {str(r): asdict(w) for r, w in locked_round_weights.items()},
+        "best_fitness": round(agg_fit, 2),
+        "best_avg_score": round(agg_avg, 2),
+        "best_win_rate": round(agg_wr, 3),
+        "default_weights": asdict(DEFAULT_WEIGHTS),
+        "config": asdict(config),
+        "optimizer_used": "cmaes_per_round",
+        "history": per_round_results,
+    }
+
+
 def evolve(config: TrainingConfig) -> dict:
     """Run the configured optimizer (CMA-ES by default)."""
+    mode = (config.training_mode or "global").strip().lower()
+    if mode in {"per-round", "per_round", "round"}:
+        return evolve_cmaes_per_round(config)
+
     optimizer = (config.optimizer or "cmaes").strip().lower()
     if optimizer == "evolutionary":
         return evolve_evolutionary(config)
@@ -781,6 +899,7 @@ def main():
     parser.add_argument("--board-type", default="oceania",
                         choices=["base", "oceania"])
     parser.add_argument("--optimizer", default="cmaes", choices=["cmaes", "evolutionary"])
+    parser.add_argument("--training-mode", default="global", choices=["global", "per-round"])
     parser.add_argument("--cma-sigma", type=float, default=0.15)
     parser.add_argument("--mutation-rate", type=float, default=0.3)
     parser.add_argument("--mutation-sigma", type=float, default=0.15)
@@ -805,10 +924,11 @@ def main():
         seed=args.seed,
         output_path=args.output,
         strict_rules_mode=args.strict_rules_only,
+        training_mode=args.training_mode,
     )
 
     print(
-        f"Starting self-play training ({config.optimizer}): {config.population_size} individuals, "
+        f"Starting self-play training ({config.optimizer}, mode={config.training_mode}): {config.population_size} individuals, "
         f"{config.generations} generations, {config.num_players} players"
     )
 
@@ -821,14 +941,30 @@ def main():
     print(f"\nTraining complete! Results saved to {output_path}")
     print(f"Best avg score: {results['best_avg_score']}")
     print(f"Best win rate: {results['best_win_rate']:.1%}")
-    print(f"\nBest weights (compare to defaults):")
-    for key in results['best_weights']:
-        best_val = results['best_weights'][key]
-        default_val = results['default_weights'][key]
-        diff = ((best_val / default_val) - 1) * 100 if default_val else 0
-        marker = " *" if abs(diff) > 20 else ""
-        print(f"  {key}: {best_val:.3f} (default: {default_val:.3f}, "
-              f"{diff:+.0f}%){marker}")
+    by_round = results.get("best_weights_by_round")
+    if isinstance(by_round, dict) and by_round:
+        print("\nBest weights by round:")
+        for round_key in sorted(by_round.keys(), key=lambda x: int(x)):
+            print(f" Round {round_key}:")
+            round_weights = by_round[round_key]
+            for key in round_weights:
+                best_val = round_weights[key]
+                default_val = results["default_weights"][key]
+                diff = ((best_val / default_val) - 1) * 100 if default_val else 0
+                marker = " *" if abs(diff) > 20 else ""
+                print(
+                    f"  {key}: {best_val:.3f} (default: {default_val:.3f}, "
+                    f"{diff:+.0f}%){marker}"
+                )
+    else:
+        print(f"\nBest weights (compare to defaults):")
+        for key in results['best_weights']:
+            best_val = results['best_weights'][key]
+            default_val = results['default_weights'][key]
+            diff = ((best_val / default_val) - 1) * 100 if default_val else 0
+            marker = " *" if abs(diff) > 20 else ""
+            print(f"  {key}: {best_val:.3f} (default: {default_val:.3f}, "
+                  f"{diff:+.0f}%){marker}")
 
 
 if __name__ == "__main__":

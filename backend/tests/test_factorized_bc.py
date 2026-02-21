@@ -90,6 +90,122 @@ def test_generate_and_train_factorized_bc(tmp_path: Path) -> None:
     assert "bn2_running_var" in z
 
 
+def test_generate_and_train_factorized_bc_with_identity_encoder(tmp_path: Path) -> None:
+    ds = tmp_path / "bc_id.jsonl"
+    meta = tmp_path / "bc_id.meta.json"
+    model = tmp_path / "bc_id_model.npz"
+
+    ds_meta = generate_bc_dataset(
+        out_jsonl=str(ds),
+        out_meta=str(meta),
+        games=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        seed=141,
+        lookahead_depth=0,
+        state_encoder_enable_identity=True,
+        state_encoder_identity_hash_dim=32,
+    )
+    assert ds_meta["state_encoder"]["enable_identity_features"] is True
+    assert ds_meta["state_encoder"]["identity_hash_dim"] == 32
+    assert ds_meta["feature_dim"] == len(ds_meta["feature_names"])
+
+    train_bc(
+        dataset_jsonl=str(ds),
+        meta_json=str(meta),
+        out_model=str(model),
+        epochs=1,
+        batch_size=32,
+        hidden1=64,
+        hidden2=32,
+        dropout=0.1,
+        lr_init=1e-4,
+        lr_peak=1e-3,
+        lr_warmup_epochs=1,
+        lr_decay_every=3,
+        lr_decay_factor=0.5,
+        val_split=0.2,
+        seed=141,
+    )
+    loaded = FactorizedPolicyModel(model)
+    assert loaded.meta["state_encoder"]["enable_identity_features"] is True
+    assert loaded.meta["state_encoder"]["identity_hash_dim"] == 32
+    state = np.zeros((loaded.feature_dim,), dtype=np.float32)
+    logits, _ = loaded.forward(state)
+    assert "action_type" in logits
+
+
+def test_train_bc_warm_start_from_frozen_teacher(tmp_path: Path) -> None:
+    src_ds = tmp_path / "src_bc.jsonl"
+    src_meta = tmp_path / "src_bc.meta.json"
+    src_model = tmp_path / "src_model.npz"
+    generate_bc_dataset(
+        out_jsonl=str(src_ds),
+        out_meta=str(src_meta),
+        games=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        seed=151,
+        lookahead_depth=0,
+    )
+    train_bc(
+        dataset_jsonl=str(src_ds),
+        meta_json=str(src_meta),
+        out_model=str(src_model),
+        epochs=1,
+        batch_size=32,
+        hidden1=64,
+        hidden2=32,
+        dropout=0.1,
+        lr_init=1e-4,
+        lr_peak=1e-3,
+        lr_warmup_epochs=1,
+        lr_decay_every=3,
+        lr_decay_factor=0.5,
+        val_split=0.2,
+        seed=151,
+    )
+
+    dst_ds = tmp_path / "dst_bc.jsonl"
+    dst_meta = tmp_path / "dst_bc.meta.json"
+    dst_model = tmp_path / "dst_model.npz"
+    generate_bc_dataset(
+        out_jsonl=str(dst_ds),
+        out_meta=str(dst_meta),
+        games=1,
+        players=2,
+        board_type=BoardType.OCEANIA,
+        max_turns=80,
+        seed=152,
+        lookahead_depth=0,
+        state_encoder_enable_identity=True,
+        state_encoder_identity_hash_dim=32,
+    )
+    out = train_bc(
+        dataset_jsonl=str(dst_ds),
+        meta_json=str(dst_meta),
+        out_model=str(dst_model),
+        epochs=1,
+        batch_size=32,
+        hidden1=64,
+        hidden2=32,
+        dropout=0.1,
+        lr_init=1e-4,
+        lr_peak=1e-3,
+        lr_warmup_epochs=1,
+        lr_decay_every=3,
+        lr_decay_factor=0.5,
+        val_split=0.2,
+        seed=152,
+        init_model_path=str(src_model),
+    )
+    assert out["warm_start"]["requested"] is True
+    assert out["warm_start"]["applied_count"] > 0
+    assert any(x.get("param") == "W1" for x in out["warm_start"]["applied"])
+
+
 def test_factorized_inference_loads_legacy_and_new(tmp_path: Path) -> None:
     head_dims = {
         "action_type": 4,

@@ -232,6 +232,110 @@ def _load_rows(path: str | Path) -> list[dict]:
     return rows
 
 
+def _copy_param_overlap(dst: np.ndarray, src: np.ndarray) -> tuple[int, tuple[int, ...]]:
+    """Copy overlapping tensor region from src->dst and return copied scalar count."""
+    if dst.ndim != src.ndim:
+        return 0, tuple()
+    if dst.ndim == 1:
+        n = min(int(dst.shape[0]), int(src.shape[0]))
+        if n > 0:
+            dst[:n] = src[:n]
+        return n, (n,)
+    if dst.ndim == 2:
+        r = min(int(dst.shape[0]), int(src.shape[0]))
+        c = min(int(dst.shape[1]), int(src.shape[1]))
+        if r > 0 and c > 0:
+            dst[:r, :c] = src[:r, :c]
+        return r * c, (r, c)
+    return 0, tuple()
+
+
+def _apply_warm_start(model: BCModel, init_model_path: str | Path) -> dict:
+    """Warm-start model parameters from an existing checkpoint with shape-safe overlap copy."""
+    z = np.load(init_model_path, allow_pickle=True)
+    applied: list[dict] = []
+    skipped: list[dict] = []
+
+    def _copy(name: str, dst: np.ndarray | None) -> None:
+        if dst is None:
+            skipped.append({"param": name, "reason": "dst_missing"})
+            return
+        if name not in z:
+            skipped.append({"param": name, "reason": "src_missing"})
+            return
+        src = np.asarray(z[name], dtype=dst.dtype)
+        copied, overlap = _copy_param_overlap(dst, src)
+        if copied <= 0:
+            skipped.append(
+                {
+                    "param": name,
+                    "reason": "shape_mismatch",
+                    "src_shape": tuple(int(x) for x in src.shape),
+                    "dst_shape": tuple(int(x) for x in dst.shape),
+                }
+            )
+            return
+        applied.append(
+            {
+                "param": name,
+                "copied": int(copied),
+                "src_shape": tuple(int(x) for x in src.shape),
+                "dst_shape": tuple(int(x) for x in dst.shape),
+                "overlap_shape": tuple(int(x) for x in overlap),
+            }
+        )
+
+    _copy("W1", model.W1)
+    _copy("b1", model.b1)
+    _copy("W2", model.W2)
+    _copy("b2", model.b2)
+    for hn in HEAD_NAMES:
+        _copy(f"W_{hn}", model.head_W.get(hn))
+        _copy(f"b_{hn}", model.head_b.get(hn))
+
+    if model.has_value_head and model.W_value is not None:
+        _copy("W_value", model.W_value)
+        if "b_value" in z:
+            src_b = np.asarray(z["b_value"], dtype=np.float32).reshape(-1)
+            if src_b.size > 0:
+                model.b_value = np.float32(src_b[0])
+                applied.append({"param": "b_value", "copied": 1})
+            else:
+                skipped.append({"param": "b_value", "reason": "src_empty"})
+        else:
+            skipped.append({"param": "b_value", "reason": "src_missing"})
+    if model.has_move_value_head and model.W_move_value is not None:
+        _copy("W_move_value", model.W_move_value)
+        if "b_move_value" in z:
+            src_bmv = np.asarray(z["b_move_value"], dtype=np.float32).reshape(-1)
+            if src_bmv.size > 0:
+                model.b_move_value = np.float32(src_bmv[0])
+                applied.append({"param": "b_move_value", "copied": 1})
+            else:
+                skipped.append({"param": "b_move_value", "reason": "src_empty"})
+        else:
+            skipped.append({"param": "b_move_value", "reason": "src_missing"})
+
+    if model.batch_norm_enabled:
+        _copy("bn1_gamma", model.bn1_gamma)
+        _copy("bn1_beta", model.bn1_beta)
+        _copy("bn1_running_mean", model.bn1_running_mean)
+        _copy("bn1_running_var", model.bn1_running_var)
+        _copy("bn2_gamma", model.bn2_gamma)
+        _copy("bn2_beta", model.bn2_beta)
+        _copy("bn2_running_mean", model.bn2_running_mean)
+        _copy("bn2_running_var", model.bn2_running_var)
+
+    return {
+        "requested": True,
+        "init_model_path": str(init_model_path),
+        "applied_count": len(applied),
+        "skipped_count": len(skipped),
+        "applied": applied,
+        "skipped": skipped,
+    }
+
+
 def _lr_for_epoch(
     ep: int,
     *,
@@ -275,6 +379,7 @@ def train_bc(
     lr_warmup_epochs: int = 2,
     lr_decay_every: int = 3,
     lr_decay_factor: float = 0.5,
+    momentum: float = 0.9,
     val_split: float = 0.1,
     seed: int = 0,
     value_loss_weight: float = 0.5,
@@ -288,6 +393,7 @@ def train_bc(
     early_stop_patience: int = 5,
     early_stop_min_delta: float = 1e-4,
     early_stop_restore_best: bool = True,
+    init_model_path: str | None = None,
     hidden: int | None = None,
     lr: float | None = None,
 ) -> dict:
@@ -321,12 +427,13 @@ def train_bc(
     effective_move_value = bool(move_value_enabled and has_move_value_data)
     value_target_scale = float(meta.get("value_target_config", {}).get("score_scale", 150.0))
     value_target_bias = float(meta.get("value_target_config", {}).get("score_bias", 0.0))
+    momentum = max(0.0, min(0.999, float(momentum)))
 
     def target_score(row: dict) -> float:
         if "value_target_score" in row:
-            return float(row["value_target_score"])
+            return (float(row["value_target_score"]) - value_target_bias) / value_target_scale
         if "value_target" in row:
-            return float(value_target_bias + value_target_scale * float(row["value_target"]))
+            return float(row["value_target"])
         return 0.0
 
     rnd.shuffle(rows)
@@ -346,8 +453,34 @@ def train_bc(
         batch_norm_eps,
         seed,
     )
+    warm_start_summary: dict = {"requested": False}
+    if init_model_path:
+        init_path = Path(init_model_path)
+        if not init_path.exists():
+            raise FileNotFoundError(f"init_model_path does not exist: {init_model_path}")
+        warm_start_summary = _apply_warm_start(model, init_path)
+        print(
+            f"warm-start applied from {init_path} | "
+            f"applied={warm_start_summary['applied_count']} skipped={warm_start_summary['skipped_count']}"
+        )
     early_stop_patience = max(1, int(early_stop_patience))
     early_stop_min_delta = max(0.0, float(early_stop_min_delta))
+
+    # SGD + momentum velocity buffers.
+    vW1 = np.zeros_like(model.W1)
+    vb1 = np.zeros_like(model.b1)
+    vW2 = np.zeros_like(model.W2)
+    vb2 = np.zeros_like(model.b2)
+    vWh = {hn: np.zeros_like(model.head_W[hn]) for hn in HEAD_NAMES}
+    vbh = {hn: np.zeros_like(model.head_b[hn]) for hn in HEAD_NAMES}
+    vbn1_gamma = np.zeros_like(model.bn1_gamma) if model.batch_norm_enabled and model.bn1_gamma is not None else None
+    vbn1_beta = np.zeros_like(model.bn1_beta) if model.batch_norm_enabled and model.bn1_beta is not None else None
+    vbn2_gamma = np.zeros_like(model.bn2_gamma) if model.batch_norm_enabled and model.bn2_gamma is not None else None
+    vbn2_beta = np.zeros_like(model.bn2_beta) if model.batch_norm_enabled and model.bn2_beta is not None else None
+    vWv = np.zeros_like(model.W_value) if model.has_value_head and model.W_value is not None else None
+    vbv = 0.0
+    vWmv = np.zeros_like(model.W_move_value) if model.has_move_value_head and model.W_move_value is not None else None
+    vbmv = 0.0
 
     def _snapshot_model() -> dict:
         snap = {
@@ -676,28 +809,49 @@ def train_bc(
                 seen += 1
 
             scale = 1.0 / max(1, len(batch))
-            model.W1 -= lr_epoch * dW1 * scale
-            model.b1 -= lr_epoch * db1 * scale
-            model.W2 -= lr_epoch * dW2 * scale
-            model.b2 -= lr_epoch * db2 * scale
+            step = lr_epoch * scale
+            vW1 = (momentum * vW1) + (step * dW1)
+            vb1 = (momentum * vb1) + (step * db1)
+            vW2 = (momentum * vW2) + (step * dW2)
+            vb2 = (momentum * vb2) + (step * db2)
+            model.W1 -= vW1
+            model.b1 -= vb1
+            model.W2 -= vW2
+            model.b2 -= vb2
             for hn in HEAD_NAMES:
-                model.head_W[hn] -= lr_epoch * dWh[hn] * scale
-                model.head_b[hn] -= lr_epoch * dbh[hn] * scale
+                vWh[hn] = (momentum * vWh[hn]) + (step * dWh[hn])
+                vbh[hn] = (momentum * vbh[hn]) + (step * dbh[hn])
+                model.head_W[hn] -= vWh[hn]
+                model.head_b[hn] -= vbh[hn]
             if model.batch_norm_enabled:
                 if model.bn1_gamma is not None and dbn1_gamma is not None:
-                    model.bn1_gamma -= lr_epoch * dbn1_gamma * scale
+                    if vbn1_gamma is not None:
+                        vbn1_gamma = (momentum * vbn1_gamma) + (step * dbn1_gamma)
+                        model.bn1_gamma -= vbn1_gamma
                 if model.bn1_beta is not None and dbn1_beta is not None:
-                    model.bn1_beta -= lr_epoch * dbn1_beta * scale
+                    if vbn1_beta is not None:
+                        vbn1_beta = (momentum * vbn1_beta) + (step * dbn1_beta)
+                        model.bn1_beta -= vbn1_beta
                 if model.bn2_gamma is not None and dbn2_gamma is not None:
-                    model.bn2_gamma -= lr_epoch * dbn2_gamma * scale
+                    if vbn2_gamma is not None:
+                        vbn2_gamma = (momentum * vbn2_gamma) + (step * dbn2_gamma)
+                        model.bn2_gamma -= vbn2_gamma
                 if model.bn2_beta is not None and dbn2_beta is not None:
-                    model.bn2_beta -= lr_epoch * dbn2_beta * scale
+                    if vbn2_beta is not None:
+                        vbn2_beta = (momentum * vbn2_beta) + (step * dbn2_beta)
+                        model.bn2_beta -= vbn2_beta
             if model.has_value_head and dWv is not None and model.W_value is not None:
-                model.W_value -= lr_epoch * dWv * scale
-                model.b_value = np.float32(float(model.b_value - lr_epoch * dbv * scale))
+                if vWv is not None:
+                    vWv = (momentum * vWv) + (step * dWv)
+                    model.W_value -= vWv
+                vbv = (momentum * vbv) + (step * dbv)
+                model.b_value = np.float32(float(model.b_value - vbv))
             if model.has_move_value_head and dWmv is not None and model.W_move_value is not None:
-                model.W_move_value -= lr_epoch * dWmv * scale
-                model.b_move_value = np.float32(float(model.b_move_value - lr_epoch * dbmv * scale))
+                if vWmv is not None:
+                    vWmv = (momentum * vWmv) + (step * dWmv)
+                    model.W_move_value -= vWmv
+                vbmv = (momentum * vbmv) + (step * dbmv)
+                model.b_move_value = np.float32(float(model.b_move_value - vbmv))
 
         train_cls_loss = loss_sum / max(1, seen)
         train_value_mse = value_mse_sum / max(1, value_seen) if value_seen > 0 else 0.0
@@ -774,6 +928,7 @@ def train_bc(
         "lr_warmup_epochs": int(lr_warmup_epochs),
         "lr_decay_every": int(lr_decay_every),
         "lr_decay_factor": float(lr_decay_factor),
+        "momentum": float(momentum),
         "early_stop_enabled": bool(early_stop_enabled),
         "early_stop_patience": int(early_stop_patience),
         "early_stop_min_delta": float(early_stop_min_delta),
@@ -784,8 +939,15 @@ def train_bc(
         "epochs_completed": int(epochs_completed),
         "deprecated_args_used": deprecated_args_used,
         "head_dims": head_dims,
+        "state_encoder": meta.get(
+            "state_encoder",
+            {
+                "enable_identity_features": False,
+                "identity_hash_dim": 128,
+            },
+        ),
         "has_value_head": has_value_target,
-        "value_prediction_mode": "score_linear" if has_value_target else "none",
+        "value_prediction_mode": "score_norm_linear" if has_value_target else "none",
         "value_score_scale": value_target_scale,
         "value_score_bias": value_target_bias,
         "has_move_value_head": bool(model.has_move_value_head),
@@ -797,6 +959,7 @@ def train_bc(
         },
         "train_samples": len(train_rows),
         "val_samples": len(val),
+        "warm_start": warm_start_summary,
         "history": history,
     }
     model.save(out_model, result)
@@ -823,6 +986,7 @@ def main() -> None:
     parser.add_argument("--lr-warmup-epochs", type=int, default=2)
     parser.add_argument("--lr-decay-every", type=int, default=3)
     parser.add_argument("--lr-decay-factor", type=float, default=0.5)
+    parser.add_argument("--momentum", type=float, default=0.9)
     parser.set_defaults(early_stop_enabled=True, early_stop_restore_best=True)
     parser.add_argument("--early-stop-enabled", dest="early_stop_enabled", action="store_true")
     parser.add_argument("--disable-early-stop", dest="early_stop_enabled", action="store_false")
@@ -830,6 +994,7 @@ def main() -> None:
     parser.add_argument("--early-stop-min-delta", type=float, default=1e-4)
     parser.add_argument("--early-stop-restore-best", dest="early_stop_restore_best", action="store_true")
     parser.add_argument("--no-early-stop-restore-best", dest="early_stop_restore_best", action="store_false")
+    parser.add_argument("--init-model", default=None, help="Optional warm-start model (.npz)")
     parser.add_argument("--hidden", type=int, default=None, help="Deprecated: maps hidden1=hidden2=hidden")
     parser.add_argument("--lr", type=float, default=None, help="Deprecated: maps lr_peak=lr")
     parser.add_argument("--val-split", type=float, default=0.1)
@@ -859,10 +1024,12 @@ def main() -> None:
         lr_warmup_epochs=args.lr_warmup_epochs,
         lr_decay_every=args.lr_decay_every,
         lr_decay_factor=args.lr_decay_factor,
+        momentum=args.momentum,
         early_stop_enabled=args.early_stop_enabled,
         early_stop_patience=args.early_stop_patience,
         early_stop_min_delta=args.early_stop_min_delta,
         early_stop_restore_best=args.early_stop_restore_best,
+        init_model_path=args.init_model,
         val_split=args.val_split,
         seed=args.seed,
         value_loss_weight=args.value_weight,

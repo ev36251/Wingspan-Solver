@@ -16,6 +16,9 @@ class SetupAnalyzeRequest(BaseModel):
     tray_cards: list[str] = Field(default_factory=list, max_length=3)
     turn_order: int = Field(default=1, ge=1, le=5)
     num_players: int = Field(default=2, ge=2, le=5)
+    rollout_top_k: int = Field(default=5, ge=0, le=20)
+    rollout_simulations: int = Field(default=15, ge=0, le=60)
+    rollout_max_turns: int = Field(default=220, ge=60, le=300)
 
 
 class SetupRecommendationSchema(BaseModel):
@@ -80,6 +83,9 @@ async def analyze_draft(req: SetupAnalyzeRequest) -> SetupAnalyzeResponse:
         tray_birds=tray_birds,
         turn_order=req.turn_order,
         num_players=req.num_players,
+        rollout_top_k=req.rollout_top_k,
+        rollout_simulations=req.rollout_simulations,
+        rollout_max_turns=req.rollout_max_turns,
     )
 
     # Calculate total combinations
