@@ -334,7 +334,7 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
     start = time.perf_counter()
 
     total_actions_remaining = sum(max(0, p.action_cubes_remaining) for p in game.players)
-    endgame_threshold = 14
+    endgame_threshold = 18
     is_pytest = bool(os.getenv("PYTEST_CURRENT_TEST"))
     if total_actions_remaining <= endgame_threshold:
         la_results = endgame_search(

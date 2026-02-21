@@ -146,7 +146,7 @@ class FactorizedPolicyModel:
         value = None
         if self.has_value_head:
             vr = float(h @ self.W_value + self.b_value)
-            if self.value_prediction_mode == "score_linear":
+            if self.value_prediction_mode in {"score_linear", "score_norm_linear"}:
                 value = vr
             else:
                 value = 1.0 / (1.0 + np.exp(-vr))
@@ -157,6 +157,8 @@ class FactorizedPolicyModel:
             return 0.0
         if self.value_prediction_mode == "score_linear":
             return float(value)
+        if self.value_prediction_mode == "score_norm_linear":
+            return float(self.value_score_bias + self.value_score_scale * float(value))
         return float(self.value_score_bias + self.value_score_scale * float(value))
 
     def score_move(

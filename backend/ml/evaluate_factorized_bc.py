@@ -58,7 +58,7 @@ def evaluate_factorized_vs_heuristic(
     load_all(EXCEL_FILE)
 
     model = FactorizedPolicyModel(model_path)
-    enc = StateEncoder()
+    enc = StateEncoder.resolve_for_model(model.meta)
 
     nn_wins = 0
     h_wins = 0

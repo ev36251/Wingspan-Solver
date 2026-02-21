@@ -9,6 +9,7 @@ food tokens. They also pick 1 of 2 bonus cards. This module evaluates all
 from collections import Counter
 from dataclasses import dataclass, field
 from itertools import combinations
+import random
 from typing import Callable
 
 from backend.models.bird import Bird, FoodCost
@@ -661,6 +662,145 @@ def _generate_reasoning(
     return "; ".join(parts)
 
 
+def _reset_non_nectar_food(player) -> None:
+    """Clear non-nectar food so setup choices can be reapplied."""
+    player.food_supply.invertebrate = 0
+    player.food_supply.seed = 0
+    player.food_supply.fish = 0
+    player.food_supply.fruit = 0
+    player.food_supply.rodent = 0
+
+
+def _build_draft_rollout_game(
+    kept_birds: list[Bird],
+    kept_food: tuple[FoodType, ...],
+    bonus_card: BonusCard,
+    round_goals: list[Goal],
+    tray_birds: list[Bird],
+    num_players: int,
+    rng: random.Random,
+):
+    """Create a lightweight start-state approximation for draft rollouts."""
+    from backend.data.registries import get_bird_registry, get_bonus_registry, get_goal_registry
+    from backend.models.enums import BoardType
+    from backend.models.goal import NO_GOAL
+    from backend.models.game_state import create_new_game
+
+    bird_reg = get_bird_registry()
+    bonus_reg = get_bonus_registry()
+    goal_reg = get_goal_registry()
+
+    normalized_players = max(2, min(5, int(num_players)))
+    player_names = [f"Player_{i + 1}" for i in range(normalized_players)]
+
+    normalized_goals = list(round_goals[:4])
+    if len(normalized_goals) < 4:
+        candidates = [g for g in goal_reg.all_goals if g.description.lower() != "no goal"]
+        rng.shuffle(candidates)
+        while len(normalized_goals) < 4 and candidates:
+            normalized_goals.append(candidates.pop())
+    while len(normalized_goals) < 4:
+        normalized_goals.append(NO_GOAL)
+
+    game = create_new_game(
+        player_names=player_names,
+        round_goals=normalized_goals,
+        board_type=BoardType.OCEANIA,
+    )
+
+    all_birds = list(bird_reg.all_birds)
+    all_bonus = list(bonus_reg.all_cards)
+    rng.shuffle(all_birds)
+    rng.shuffle(all_bonus)
+    deck_idx = 0
+
+    for idx, player in enumerate(game.players):
+        if idx == 0:
+            player.hand = list(kept_birds)
+            player.bonus_cards = [bonus_card]
+            _reset_non_nectar_food(player)
+            for ft in kept_food:
+                if ft != FoodType.NECTAR:
+                    player.food_supply.add(ft, 1)
+            continue
+
+        # Opponent approximation: sample 5 birds, keep 2-3 cheap/high-VP birds.
+        sample5 = all_birds[deck_idx:deck_idx + 5]
+        deck_idx += len(sample5)
+        if len(sample5) < 5:
+            sample5.extend(rng.sample(all_birds, k=5 - len(sample5)))
+        sample5.sort(key=lambda b: (b.food_cost.total, -b.victory_points))
+        keep_count = 2 if rng.random() < 0.6 else 3
+        player.hand = sample5[:keep_count]
+        _reset_non_nectar_food(player)
+        for ft in rng.sample(STARTING_FOOD, k=max(0, 5 - keep_count)):
+            player.food_supply.add(ft, 1)
+
+        if all_bonus:
+            player.bonus_cards = [all_bonus[(idx - 1) % len(all_bonus)]]
+
+    # Preserve shown tray if provided, then fill remaining visible slots.
+    game.card_tray.clear()
+    for b in tray_birds[:3]:
+        game.card_tray.add_card(b)
+    while game.card_tray.needs_refill() > 0 and deck_idx < len(all_birds):
+        game.card_tray.add_card(all_birds[deck_idx])
+        deck_idx += 1
+
+    # Keep finite deck identities for more stable playout draw behavior.
+    game._deck_cards = list(all_birds[deck_idx:])  # type: ignore[attr-defined]
+    game.deck_remaining = len(game._deck_cards)  # type: ignore[attr-defined]
+    game.birdfeeder.reroll()
+    return game
+
+
+def rollout_draft_evaluation(
+    options: list[tuple[float, list[Bird], tuple[FoodType, ...], BonusCard]],
+    round_goals: list[Goal],
+    tray_birds: list[Bird] | None = None,
+    num_players: int = 2,
+    top_k: int = 5,
+    simulations_per_option: int = 15,
+    rollout_max_turns: int = 220,
+    rollout_policy: str = "medium",
+) -> list[tuple[float, list[Bird], tuple[FoodType, ...], BonusCard]]:
+    """Rerank top setup options by average simulated final score."""
+    from backend.solver.simulation import simulate_playout
+
+    if not options:
+        return []
+
+    tray_birds = tray_birds or []
+    k = max(1, min(int(top_k), len(options)))
+    sims = max(1, int(simulations_per_option))
+    top_options = options[:k]
+
+    scored: list[tuple[float, float, list[Bird], tuple[FoodType, ...], BonusCard]] = []
+    for static_score, birds, food, bonus in top_options:
+        rng = random.Random()
+        game = _build_draft_rollout_game(
+            kept_birds=birds,
+            kept_food=food,
+            bonus_card=bonus,
+            round_goals=round_goals,
+            tray_birds=tray_birds,
+            num_players=num_players,
+            rng=rng,
+        )
+        totals: list[float] = []
+        for _ in range(sims):
+            out = simulate_playout(game, max_turns=rollout_max_turns, rollout_policy=rollout_policy)
+            totals.append(float(out.get("Player_1", 0.0)))
+        avg_final = sum(totals) / len(totals) if totals else static_score
+        scored.append((avg_final, static_score, birds, food, bonus))
+
+    scored.sort(key=lambda row: (-row[0], -row[1]))
+    reranked_top = [(avg, birds, food, bonus) for avg, _, birds, food, bonus in scored]
+    if len(options) <= k:
+        return reranked_top
+    return reranked_top + options[k:]
+
+
 def analyze_setup(
     birds: list[Bird],
     bonus_cards: list[BonusCard],
@@ -669,6 +809,9 @@ def analyze_setup(
     tray_birds: list[Bird] | None = None,
     turn_order: int = 1,
     num_players: int = 2,
+    rollout_top_k: int = 0,
+    rollout_simulations: int = 0,
+    rollout_max_turns: int = 220,
 ) -> list[SetupRecommendation]:
     """Evaluate all starting draft combinations and return the best options.
 
@@ -700,6 +843,16 @@ def analyze_setup(
 
     # Sort by score descending
     options.sort(key=lambda o: -o[0])
+    if rollout_top_k > 0 and rollout_simulations > 0:
+        options = rollout_draft_evaluation(
+            options,
+            round_goals=round_goals,
+            tray_birds=tray_birds,
+            num_players=num_players,
+            top_k=rollout_top_k,
+            simulations_per_option=rollout_simulations,
+            rollout_max_turns=rollout_max_turns,
+        )
 
     # Build recommendations
     results = []

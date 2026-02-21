@@ -62,19 +62,31 @@ def _robust_selection_metrics(eval_dict: dict) -> dict:
     }
 
 
-def _robust_is_better(candidate: dict, incumbent: dict | None) -> bool:
+def _robust_is_better(
+    candidate: dict,
+    incumbent: dict | None,
+    *,
+    min_win_rate_delta: float = 0.0,
+    min_mean_score_delta: float = 0.0,
+    max_margin_regression: float = 1.0,
+) -> bool:
     if incumbent is None:
         return True
-    cand_key = (
-        float(candidate.get("nn_win_rate", 0.0)),
-        float(candidate.get("nn_mean_score", 0.0)),
-        float(candidate.get("nn_mean_margin", 0.0)),
+    cand_win = float(candidate.get("nn_win_rate", 0.0))
+    cand_score = float(candidate.get("nn_mean_score", 0.0))
+    cand_margin = float(candidate.get("nn_mean_margin", 0.0))
+    inc_win = float(incumbent.get("nn_win_rate", 0.0))
+    inc_score = float(incumbent.get("nn_mean_score", 0.0))
+    inc_margin = float(incumbent.get("nn_mean_margin", 0.0))
+    has_meaningful_improvement = (
+        cand_win >= (inc_win + float(min_win_rate_delta))
+        or cand_score >= (inc_score + float(min_mean_score_delta))
     )
-    inc_key = (
-        float(incumbent.get("nn_win_rate", 0.0)),
-        float(incumbent.get("nn_mean_score", 0.0)),
-        float(incumbent.get("nn_mean_margin", 0.0)),
-    )
+    margin_guard_pass = cand_margin >= (inc_margin - float(max_margin_regression))
+    if not has_meaningful_improvement or not margin_guard_pass:
+        return False
+    cand_key = (cand_win, cand_score, cand_margin)
+    inc_key = (inc_win, inc_score, inc_margin)
     return cand_key > inc_key
 
 
@@ -172,6 +184,12 @@ def _merge_dataset_shards(
         "move_execute_successes",
         "move_execute_fallback_used",
         "move_execute_dropped",
+        "adaptive_depth2_triggered",
+        "adaptive_depth2_candidates",
+        "hard_replay_games",
+        "hard_replay_loss_games",
+        "hard_replay_rows_kept",
+        "hard_replay_rows_written",
     ]
     pi = dict(base.get("policy_improvement", {}))
     for key in policy_keys_to_sum:
@@ -207,6 +225,9 @@ def run_auto_improve_factorized(
     train_lr_warmup_epochs: int = 3,
     train_lr_decay_every: int = 5,
     train_lr_decay_factor: float = 0.7,
+    train_momentum: float = 0.9,
+    train_init_model_path: str | None = None,
+    train_init_first_iter_only: bool = True,
     train_early_stop_enabled: bool = True,
     train_early_stop_patience: int = 5,
     train_early_stop_min_delta: float = 1e-4,
@@ -216,17 +237,17 @@ def run_auto_improve_factorized(
     eval_games: int = 40,
     promotion_games: int = 80,
     pool_games_per_opponent: int = 40,
-    min_pool_win_rate: float = 0.0,
+    min_pool_win_rate: float = 0.50,
     min_pool_mean_score: float = 0.0,
     min_pool_rate_ge_100: float = 0.0,
     min_pool_rate_ge_120: float = 0.0,
-    require_pool_non_regression: bool = False,
+    require_pool_non_regression: bool = True,
     min_gate_win_rate: float = 0.50,
-    min_gate_mean_score: float = 52.0,
+    min_gate_mean_score: float = 50.0,
     min_gate_rate_ge_100: float = 0.0,
     min_gate_rate_ge_120: float = 0.0,
     require_non_negative_champion_margin: bool = True,
-    champion_self_play_enabled: bool = True,
+    champion_self_play_enabled: bool = False,
     champion_switch_after_first_promotion: bool = True,
     champion_switch_min_stable_iters: int = 2,
     champion_switch_min_eval_win_rate: float = 0.5,
@@ -235,12 +256,32 @@ def run_auto_improve_factorized(
     champion_engine_time_budget_ms: int = 50,
     champion_engine_num_determinizations: int = 8,
     champion_engine_max_rollout_depth: int = 24,
-    promotion_primary_opponent: str = "champion",
+    promotion_primary_opponent: str = "heuristic",
+    frozen_opponent_model_path: str | None = None,
     best_selection_eval_games: int = 0,
+    proposal_update_policy: str = "best_only",
+    selection_requires_gate_pass: bool = True,
+    best_min_win_rate_delta: float = 0.02,
+    best_min_mean_score_delta: float = 0.5,
+    best_max_margin_regression: float = 1.0,
+    fixed_benchmark_seeds: bool = True,
+    benchmark_seed: int = 13_371_337,
     engine_teacher_prob: float = 0.15,
     engine_time_budget_ms: int = 25,
     engine_num_determinizations: int = 0,
     engine_max_rollout_depth: int = 24,
+    adaptive_teacher_depth2_enabled: bool = True,
+    adaptive_teacher_uncertainty_gap: float = 2.0,
+    adaptive_teacher_top_m: int = 2,
+    hard_replay_games: int = 0,
+    hard_replay_player: str = "proposal",
+    hard_replay_target_player: int = 0,
+    hard_replay_loss_oversample_factor: int = 3,
+    hard_replay_only_losses: bool = True,
+    rollback_on_fixed_gate_regression: bool = True,
+    fixed_gate_regression_max_drop: float = 0.10,
+    stop_after_consecutive_non_eligible_iters: bool = True,
+    max_consecutive_non_eligible_iters: int = 2,
     seed: int = 0,
     strict_rules_only: bool = True,
     reject_non_strict_powers: bool = True,
@@ -257,8 +298,13 @@ def run_auto_improve_factorized(
     strict_kpi_max_round1_strict_rejected_games: int = 0,
     strict_kpi_max_smoke_strict_rejected_games: int = 0,
     strict_kpi_min_strict_certified_birds: int = 50,
-    strict_kpi_require_non_regression: bool = False,
+    strict_kpi_require_non_regression: bool = True,
     strict_kpi_mean_score_tolerance: float = 0.5,
+    state_encoder_enable_identity: bool = False,
+    state_encoder_identity_hash_dim: int = 128,
+    require_fixed_seed_eval_gate_pass: bool = False,
+    fixed_seed_eval_gate_games: int = 40,
+    fixed_seed_eval_gate_min_win_rate: float = 0.50,
     data_accumulation_enabled: bool = True,
     data_accumulation_decay: float = 0.5,
     max_accumulated_samples: int = 200_000,
@@ -267,10 +313,14 @@ def run_auto_improve_factorized(
     train_hidden: int | None = None,
     train_lr: float | None = None,
 ) -> dict:
-    if promotion_primary_opponent not in ("heuristic", "champion"):
-        raise ValueError("promotion_primary_opponent must be 'heuristic' or 'champion'")
+    if promotion_primary_opponent not in ("heuristic", "champion", "frozen"):
+        raise ValueError("promotion_primary_opponent must be 'heuristic', 'champion', or 'frozen'")
     if champion_teacher_source not in ("probabilistic_engine", "engine_only"):
         raise ValueError("champion_teacher_source must be 'probabilistic_engine' or 'engine_only'")
+    if proposal_update_policy not in {"best_only", "latest_candidate"}:
+        raise ValueError("proposal_update_policy must be 'best_only' or 'latest_candidate'")
+    if hard_replay_player not in {"proposal", "best", "frozen"}:
+        raise ValueError("hard_replay_player must be 'proposal', 'best', or 'frozen'")
 
     deprecated_train_args_used: list[str] = []
     if train_hidden is not None:
@@ -284,6 +334,11 @@ def run_auto_improve_factorized(
         print(
             f"warning: deprecated auto-improve train args used: {', '.join(deprecated_train_args_used)}"
         )
+    if train_init_model_path is not None:
+        init_model_cand = Path(train_init_model_path)
+        if not init_model_cand.exists():
+            raise FileNotFoundError(f"train_init_model_path does not exist: {train_init_model_path}")
+        train_init_model_path = str(init_model_cand)
 
     champion_switch_min_stable_iters = max(0, int(champion_switch_min_stable_iters))
     champion_switch_min_iteration = max(1, int(champion_switch_min_iteration))
@@ -297,6 +352,34 @@ def run_auto_improve_factorized(
     data_accumulation_decay = max(0.0, min(1.0, float(data_accumulation_decay)))
     max_accumulated_samples = max(1, int(max_accumulated_samples))
     dataset_workers = max(1, int(dataset_workers))
+    best_min_win_rate_delta = max(0.0, float(best_min_win_rate_delta))
+    best_min_mean_score_delta = max(0.0, float(best_min_mean_score_delta))
+    best_max_margin_regression = max(0.0, float(best_max_margin_regression))
+    benchmark_seed = int(benchmark_seed)
+    adaptive_teacher_uncertainty_gap = max(0.0, float(adaptive_teacher_uncertainty_gap))
+    adaptive_teacher_top_m = max(2, int(adaptive_teacher_top_m))
+    hard_replay_games = max(0, int(hard_replay_games))
+    hard_replay_target_player = max(0, int(hard_replay_target_player))
+    hard_replay_loss_oversample_factor = max(1, int(hard_replay_loss_oversample_factor))
+    fixed_gate_regression_max_drop = max(0.0, float(fixed_gate_regression_max_drop))
+    state_encoder_identity_hash_dim = max(1, int(state_encoder_identity_hash_dim))
+    fixed_seed_eval_gate_games = max(1, int(fixed_seed_eval_gate_games))
+    fixed_seed_eval_gate_min_win_rate = max(0.0, min(1.0, float(fixed_seed_eval_gate_min_win_rate)))
+    max_consecutive_non_eligible_iters = max(1, int(max_consecutive_non_eligible_iters))
+    if frozen_opponent_model_path is not None:
+        frozen_path = Path(frozen_opponent_model_path)
+        if not frozen_path.exists():
+            raise FileNotFoundError(f"frozen_opponent_model_path does not exist: {frozen_opponent_model_path}")
+        frozen_opponent_model_path = str(frozen_path)
+    if promotion_primary_opponent == "frozen" and not frozen_opponent_model_path:
+        raise ValueError("promotion_primary_opponent='frozen' requires --frozen-opponent-model-path")
+    auto_train_init_from_frozen = (
+        train_init_model_path is None
+        and bool(frozen_opponent_model_path)
+        and bool(state_encoder_enable_identity)
+    )
+    if auto_train_init_from_frozen:
+        train_init_model_path = str(frozen_opponent_model_path)
     # Multiprocessing can deadlock in some pytest harnesses; force single-worker
     # mode under tests for deterministic CI behavior.
     if os.getenv("PYTEST_CURRENT_TEST"):
@@ -321,7 +404,16 @@ def run_auto_improve_factorized(
     started = time.time()
 
     proposal_model_path: str | None = None
+    if best_model_path.exists():
+        proposal_model_path = str(best_model_path)
+    if proposal_model_path is None and frozen_opponent_model_path and not state_encoder_enable_identity:
+        # Optional warm start from a frozen teacher checkpoint when feature dims match.
+        proposal_model_path = str(frozen_opponent_model_path)
     accumulation_sources: list[dict] = []
+    consecutive_non_eligible_iters = 0
+    stopped_early = False
+    stop_reason: str | None = None
+    prev_fixed_gate_win_rate: float | None = None
 
     for i in range(1, iterations + 1):
         iter_seed = seed + i * 1000
@@ -353,19 +445,15 @@ def run_auto_improve_factorized(
         combined_dataset_jsonl = iter_dir / "bc_dataset_combined.jsonl"
         combined_dataset_meta = iter_dir / "bc_dataset_combined.meta.json"
 
-        champion_available = best_model_path.exists()
         champion_switch_is_ready = _champion_switch_ready(
             history,
             min_stable_iters=champion_switch_min_stable_iters,
             min_eval_win_rate=champion_switch_min_eval_win_rate,
         )
-        use_champion_mode = (
-            champion_self_play_enabled
-            and champion_available
-            and champion_switch_after_first_promotion
-            and champion_switch_is_ready
-            and i >= int(champion_switch_min_iteration)
-        )
+        # Keep data generation anchored to heuristic/mixed play.
+        # Champion NN-vs-NN self-play is intentionally disabled to prevent
+        # teacher drift and collapse after promotion.
+        use_champion_mode = False
         generation_mode = "champion_nn_vs_nn" if use_champion_mode else "bootstrap_mixed"
         iter_proposal_model_path = str(best_model_path) if use_champion_mode else proposal_model_path
         iter_opponent_model_path = str(best_model_path) if use_champion_mode else None
@@ -390,9 +478,14 @@ def run_auto_improve_factorized(
             engine_time_budget_ms=champion_engine_time_budget_ms if use_champion_mode else engine_time_budget_ms,
             engine_num_determinizations=champion_engine_num_determinizations if use_champion_mode else engine_num_determinizations,
             engine_max_rollout_depth=champion_engine_max_rollout_depth if use_champion_mode else engine_max_rollout_depth,
+            adaptive_teacher_depth2_enabled=adaptive_teacher_depth2_enabled,
+            adaptive_teacher_uncertainty_gap=adaptive_teacher_uncertainty_gap,
+            adaptive_teacher_top_m=adaptive_teacher_top_m,
             strict_rules_only=strict_rules_only,
             reject_non_strict_powers=reject_non_strict_powers,
             strict_game_fraction=strict_game_fraction_iter,
+            state_encoder_enable_identity=state_encoder_enable_identity,
+            state_encoder_identity_hash_dim=state_encoder_identity_hash_dim,
         )
 
         if dataset_workers <= 1 or games_per_iter <= 1:
@@ -446,6 +539,89 @@ def run_auto_improve_factorized(
                     out_jsonl=dataset_jsonl,
                     out_meta=dataset_meta,
                 )
+
+        hard_replay_player_model_path: str | None = None
+        if hard_replay_player == "proposal":
+            hard_replay_player_model_path = iter_proposal_model_path
+        elif hard_replay_player == "best":
+            hard_replay_player_model_path = str(best_model_path) if best_model_path.exists() else iter_proposal_model_path
+        elif hard_replay_player == "frozen":
+            hard_replay_player_model_path = str(frozen_opponent_model_path) if frozen_opponent_model_path else iter_proposal_model_path
+
+        hard_replay_summary = {
+            "enabled": bool(hard_replay_games > 0 and bool(hard_replay_player_model_path)),
+            "games": 0,
+            "samples_added": 0,
+            "player": hard_replay_player,
+            "player_model_path": hard_replay_player_model_path,
+            "target_player": int(hard_replay_target_player),
+            "loss_oversample_factor": int(hard_replay_loss_oversample_factor),
+            "only_losses": bool(hard_replay_only_losses),
+        }
+        if hard_replay_games > 0 and hard_replay_player_model_path:
+            hard_jsonl = iter_dir / "bc_dataset_hard.jsonl"
+            hard_meta_path = iter_dir / "bc_dataset_hard.meta.json"
+            hard_kwargs = dict(dataset_common_kwargs)
+            hard_kwargs.update(
+                {
+                    "proposal_model_path": hard_replay_player_model_path,
+                    "opponent_model_path": None,
+                    "self_play_policy": "proposal_vs_heuristic",
+                    "hard_replay_enabled": True,
+                    "hard_replay_player": hard_replay_player,
+                    "hard_replay_target_player": hard_replay_target_player,
+                    "hard_replay_loss_oversample_factor": hard_replay_loss_oversample_factor,
+                    "hard_replay_only_losses": hard_replay_only_losses,
+                }
+            )
+            hard_meta = generate_bc_dataset(
+                out_jsonl=str(hard_jsonl),
+                out_meta=str(hard_meta_path),
+                games=hard_replay_games,
+                seed=iter_seed + 888_881,
+                **hard_kwargs,
+            )
+            hard_pi = dict(hard_meta.get("policy_improvement", {}))
+
+            appended = 0
+            with dataset_jsonl.open("a", encoding="utf-8") as out_f:
+                with hard_jsonl.open("r", encoding="utf-8") as in_f:
+                    for line in in_f:
+                        if not line.strip():
+                            continue
+                        out_f.write(line)
+                        appended += 1
+
+            main_games = int(ds_meta.get("games", 0))
+            hard_games_count = int(hard_meta.get("games", 0))
+            total_games = max(1, main_games + hard_games_count)
+            ds_meta["samples"] = int(ds_meta.get("samples", 0)) + int(appended)
+            ds_meta["games"] = int(main_games + hard_games_count)
+            ds_meta["mean_player_score"] = round(
+                (
+                    float(ds_meta.get("mean_player_score", 0.0)) * main_games
+                    + float(hard_meta.get("mean_player_score", 0.0)) * hard_games_count
+                )
+                / total_games,
+                3,
+            )
+            ds_meta["hard_replay"] = {
+                "enabled": True,
+                "dataset": str(hard_jsonl),
+                "dataset_meta": str(hard_meta_path),
+                "games": int(hard_games_count),
+                "samples_added": int(appended),
+                "player": hard_replay_player,
+                "player_model_path": hard_replay_player_model_path,
+                "target_player": int(hard_replay_target_player),
+                "loss_oversample_factor": int(hard_replay_loss_oversample_factor),
+                "only_losses": bool(hard_replay_only_losses),
+                "loss_games": int(hard_pi.get("hard_replay_loss_games", 0)),
+                "rows_kept": int(hard_pi.get("hard_replay_rows_kept", 0)),
+                "rows_written": int(hard_pi.get("hard_replay_rows_written", 0)),
+            }
+            dataset_meta.write_text(json.dumps(ds_meta, indent=2), encoding="utf-8")
+            hard_replay_summary = dict(ds_meta["hard_replay"])
 
         accumulation_sources.append(
             {
@@ -548,6 +724,15 @@ def run_auto_improve_factorized(
                 train_dataset_meta = combined_dataset_meta
                 accumulation_summary = dict(combined_meta_obj["accumulation"])
 
+        train_init_model_path_iter = None
+        if (not train_init_first_iter_only) or i == 1:
+            if best_model_path.exists():
+                train_init_model_path_iter = str(best_model_path)
+            elif train_init_model_path:
+                train_init_model_path_iter = str(train_init_model_path)
+            elif frozen_opponent_model_path:
+                train_init_model_path_iter = str(frozen_opponent_model_path)
+
         tr = train_bc(
             dataset_jsonl=str(train_dataset_jsonl),
             meta_json=str(train_dataset_meta),
@@ -562,6 +747,8 @@ def run_auto_improve_factorized(
             lr_warmup_epochs=train_lr_warmup_epochs,
             lr_decay_every=train_lr_decay_every,
             lr_decay_factor=train_lr_decay_factor,
+            momentum=train_momentum,
+            init_model_path=train_init_model_path_iter,
             early_stop_enabled=train_early_stop_enabled,
             early_stop_patience=train_early_stop_patience,
             early_stop_min_delta=train_early_stop_min_delta,
@@ -571,12 +758,17 @@ def run_auto_improve_factorized(
             value_loss_weight=train_value_weight,
         )
 
+        eval_seed = benchmark_seed + 11 if fixed_benchmark_seeds else iter_seed
+        gate_seed = benchmark_seed + 22 if fixed_benchmark_seeds else (iter_seed + 777)
+        pool_seed = benchmark_seed + 33 if fixed_benchmark_seeds else (iter_seed + 999)
+        robust_seed = benchmark_seed + 44 if fixed_benchmark_seeds else (iter_seed + 31337)
+
         ev = evaluate_factorized_vs_heuristic(
             model_path=str(model_path),
             games=eval_games,
             board_type=board_type,
             max_turns=max_turns,
-            seed=iter_seed,
+            seed=eval_seed,
             proposal_top_k=proposal_top_k,
         )
         ev_dict = ev.__dict__
@@ -586,14 +778,20 @@ def run_auto_improve_factorized(
             promotion_primary_opponent == "champion"
             and best_model_path.exists()
         )
-        if use_champion_primary_gate:
+        use_frozen_primary_gate = (
+            promotion_primary_opponent == "frozen"
+            and bool(frozen_opponent_model_path)
+        )
+        if use_champion_primary_gate or use_frozen_primary_gate:
+            primary_opp_spec = str(best_model_path) if use_champion_primary_gate else str(frozen_opponent_model_path)
+            primary_label = "champion" if use_champion_primary_gate else "frozen"
             primary_gate_eval = evaluate_against_pool(
                 model_path=str(model_path),
-                opponents=[str(best_model_path)],
+                opponents=[primary_opp_spec],
                 games_per_opponent=promotion_games,
                 board_type=board_type,
                 max_turns=max_turns,
-                seed=iter_seed + 777,
+                seed=gate_seed,
                 proposal_top_k=proposal_top_k,
             )
             summary = primary_gate_eval["summary"]
@@ -609,8 +807,8 @@ def run_auto_improve_factorized(
                 "nn_mean_margin": float(summary.get("nn_mean_margin", 0.0)),
                 "nn_rate_ge_100": float(summary.get("nn_rate_ge_100", 0.0)),
                 "nn_rate_ge_120": float(summary.get("nn_rate_ge_120", 0.0)),
-                "primary_opponent": "champion",
-                "opponent_spec": str(best_model_path),
+                "primary_opponent": primary_label,
+                "opponent_spec": primary_opp_spec,
             }
         else:
             gate = evaluate_factorized_vs_heuristic(
@@ -618,7 +816,7 @@ def run_auto_improve_factorized(
                 games=promotion_games,
                 board_type=board_type,
                 max_turns=max_turns,
-                seed=iter_seed + 777,
+                seed=gate_seed,
                 proposal_top_k=proposal_top_k,
             )
             gate_dict = gate.__dict__
@@ -628,9 +826,11 @@ def run_auto_improve_factorized(
             gate_dict["opponent_spec"] = "heuristic"
         gate_path.write_text(json.dumps(gate_dict, indent=2), encoding="utf-8")
 
-        # Opponent-pool evaluation: heuristic + current best model (if exists).
+        # Opponent-pool evaluation: heuristic + frozen teacher or current best.
         opponents = ["heuristic"]
-        if best_model_path.exists():
+        if frozen_opponent_model_path:
+            opponents.append(str(frozen_opponent_model_path))
+        elif best_model_path.exists():
             opponents.append(str(best_model_path))
         pool_eval = evaluate_against_pool(
             model_path=str(model_path),
@@ -638,7 +838,7 @@ def run_auto_improve_factorized(
             games_per_opponent=pool_games_per_opponent,
             board_type=board_type,
             max_turns=max_turns,
-            seed=iter_seed + 999,
+            seed=pool_seed,
             proposal_top_k=proposal_top_k,
         )
         pool_eval_path.write_text(json.dumps(pool_eval, indent=2), encoding="utf-8")
@@ -707,7 +907,7 @@ def run_auto_improve_factorized(
         )
         gate_secondary_pass = gate_win_rate >= min_gate_win_rate
         champion_margin_pass = True
-        if use_champion_primary_gate and require_non_negative_champion_margin:
+        if (use_champion_primary_gate or use_frozen_primary_gate) and require_non_negative_champion_margin:
             champion_margin_pass = float(gate_dict.get("nn_mean_margin", 0.0)) >= 0.0
         promoted = (
             gate_primary_pass
@@ -724,13 +924,70 @@ def run_auto_improve_factorized(
             games=max(1, int(best_selection_eval_games)),
             board_type=board_type,
             max_turns=max_turns,
-            seed=iter_seed + 31337,
+            seed=robust_seed,
             proposal_top_k=proposal_top_k,
         )
         robust_metrics = _robust_selection_metrics(robust_eval.__dict__)
-        eligible_for_best = bool(kpi_gate["passed"]) and bool(strict_kpi_compare.get("passed", False))
+        gate_pass_for_selection = gate_primary_pass and gate_secondary_pass and champion_margin_pass
+        fixed_seed_eval_gate: dict = {
+            "enabled": bool(require_fixed_seed_eval_gate_pass),
+            "seed": int(benchmark_seed + 55 if fixed_benchmark_seeds else (iter_seed + 55555)),
+            "games_per_opponent": int(fixed_seed_eval_gate_games),
+            "min_win_rate": float(fixed_seed_eval_gate_min_win_rate),
+            "opponents": [str(frozen_opponent_model_path)] if frozen_opponent_model_path else ["heuristic"],
+            "win_rate": 0.0,
+            "passed": True,
+            "summary": None,
+        }
+        if require_fixed_seed_eval_gate_pass:
+            fixed_gate_eval = evaluate_against_pool(
+                model_path=str(model_path),
+                opponents=fixed_seed_eval_gate["opponents"],
+                games_per_opponent=fixed_seed_eval_gate_games,
+                board_type=board_type,
+                max_turns=max_turns,
+                seed=fixed_seed_eval_gate["seed"],
+                proposal_top_k=proposal_top_k,
+            )
+            fixed_summary = fixed_gate_eval.get("summary", {})
+            fixed_wr = float(fixed_summary.get("nn_win_rate", 0.0))
+            fixed_seed_eval_gate["summary"] = fixed_summary
+            fixed_seed_eval_gate["win_rate"] = round(fixed_wr, 4)
+            fixed_seed_eval_gate["passed"] = bool(fixed_wr >= fixed_seed_eval_gate_min_win_rate)
+        fixed_gate_regression = {
+            "enabled": bool(require_fixed_seed_eval_gate_pass and rollback_on_fixed_gate_regression),
+            "max_drop": float(fixed_gate_regression_max_drop),
+            "prev_win_rate": None,
+            "current_win_rate": None,
+            "drop": 0.0,
+            "triggered": False,
+        }
+        if require_fixed_seed_eval_gate_pass:
+            fixed_wr = float(fixed_seed_eval_gate.get("win_rate", 0.0))
+            fixed_gate_regression["current_win_rate"] = round(fixed_wr, 4)
+            if prev_fixed_gate_win_rate is not None:
+                drop = float(prev_fixed_gate_win_rate) - fixed_wr
+                fixed_gate_regression["prev_win_rate"] = round(float(prev_fixed_gate_win_rate), 4)
+                fixed_gate_regression["drop"] = round(drop, 4)
+                fixed_gate_regression["triggered"] = bool(
+                    rollback_on_fixed_gate_regression and drop > fixed_gate_regression_max_drop
+                )
+            prev_fixed_gate_win_rate = fixed_wr
+
+        eligible_for_best = (
+            bool(kpi_gate["passed"])
+            and bool(strict_kpi_compare.get("passed", False))
+            and (not selection_requires_gate_pass or gate_pass_for_selection)
+            and bool(fixed_seed_eval_gate.get("passed", True))
+        )
         incumbent_metrics_before = dict(best_selection_metrics) if best_selection_metrics is not None else None
-        selected_as_best = eligible_for_best and _robust_is_better(robust_metrics, best_selection_metrics)
+        selected_as_best = eligible_for_best and _robust_is_better(
+            robust_metrics,
+            best_selection_metrics,
+            min_win_rate_delta=best_min_win_rate_delta,
+            min_mean_score_delta=best_min_mean_score_delta,
+            max_margin_regression=best_max_margin_regression,
+        )
 
         row = {
             "iteration": i,
@@ -747,10 +1004,12 @@ def run_auto_improve_factorized(
                 "samples": ds_meta["samples"],
                 "mean_player_score": ds_meta["mean_player_score"],
             },
+            "hard_replay": hard_replay_summary,
             "combined_dataset_summary": accumulation_summary,
             "train_summary": {
                 "train_samples": tr["train_samples"],
                 "val_samples": tr["val_samples"],
+                "warm_start": tr.get("warm_start", {}),
                 "last_epoch": tr["history"][-1] if tr["history"] else {},
             },
             "eval_summary": ev_dict,
@@ -770,6 +1029,8 @@ def run_auto_improve_factorized(
             "pool_eval": pool_eval,
             "kpi_gate": kpi_gate,
             "strict_kpi_gate": strict_kpi_compare,
+            "fixed_seed_eval_gate": fixed_seed_eval_gate,
+            "fixed_gate_regression": fixed_gate_regression,
             "best_selection_eval": {
                 "games": int(best_selection_eval_games),
                 "candidate": robust_metrics,
@@ -786,21 +1047,48 @@ def run_auto_improve_factorized(
             shutil.copy2(model_path, best_model_path)
             shutil.copy2(train_dataset_meta, best_meta_path)
             proposal_model_path = str(best_model_path)
+            consecutive_non_eligible_iters = 0
         elif best_selection_metrics is None and best is not None:
             # Keep selector state aligned when resuming from an existing best row.
             candidate_sel = best.get("best_selection_eval", {}).get("candidate")
             if isinstance(candidate_sel, dict):
                 best_selection_metrics = dict(candidate_sel)
-        elif not use_champion_mode:
+        elif (not use_champion_mode) and proposal_update_policy == "latest_candidate":
             # Keep bootstrapping with the latest candidate even when strict
             # promotion fails, so proposal quality can still improve.
             proposal_model_path = str(model_path)
+        elif (not use_champion_mode) and proposal_update_policy == "best_only":
+            if best_model_path.exists():
+                proposal_model_path = str(best_model_path)
+            elif frozen_opponent_model_path and not state_encoder_enable_identity:
+                proposal_model_path = str(frozen_opponent_model_path)
+
+        if best is None:
+            consecutive_non_eligible_iters = 0
+        elif not eligible_for_best:
+            consecutive_non_eligible_iters += 1
+        else:
+            consecutive_non_eligible_iters = 0
+        early_stop_triggered = (
+            bool(stop_after_consecutive_non_eligible_iters)
+            and best is not None
+            and consecutive_non_eligible_iters >= max_consecutive_non_eligible_iters
+        )
+        fixed_gate_rollback_triggered = bool(fixed_gate_regression.get("triggered", False))
+        row["stability"] = {
+            "consecutive_non_eligible_iters": int(consecutive_non_eligible_iters),
+            "max_consecutive_non_eligible_iters": int(max_consecutive_non_eligible_iters),
+            "early_stop_triggered": bool(early_stop_triggered or fixed_gate_rollback_triggered),
+            "fixed_gate_rollback_triggered": bool(fixed_gate_rollback_triggered),
+        }
 
         manifest = {
             "version": 1,
             "started_at_epoch": int(started),
             "updated_at_epoch": int(time.time()),
             "elapsed_sec": round(time.time() - started, 2),
+            "stopped_early": bool(stopped_early),
+            "stop_reason": stop_reason,
             "config": {
                 "iterations": iterations,
                 "players": players,
@@ -825,6 +1113,10 @@ def run_auto_improve_factorized(
                 "train_lr_warmup_epochs": train_lr_warmup_epochs,
                 "train_lr_decay_every": train_lr_decay_every,
                 "train_lr_decay_factor": train_lr_decay_factor,
+                "train_momentum": train_momentum,
+                "train_init_model_path": train_init_model_path,
+                "train_init_first_iter_only": train_init_first_iter_only,
+                "auto_train_init_from_frozen": bool(auto_train_init_from_frozen),
                 "train_early_stop_enabled": train_early_stop_enabled,
                 "train_early_stop_patience": train_early_stop_patience,
                 "train_early_stop_min_delta": train_early_stop_min_delta,
@@ -858,11 +1150,31 @@ def run_auto_improve_factorized(
                 "champion_engine_num_determinizations": champion_engine_num_determinizations,
                 "champion_engine_max_rollout_depth": champion_engine_max_rollout_depth,
                 "promotion_primary_opponent": promotion_primary_opponent,
+                "frozen_opponent_model_path": frozen_opponent_model_path,
                 "best_selection_eval_games": best_selection_eval_games,
+                "proposal_update_policy": proposal_update_policy,
+                "selection_requires_gate_pass": selection_requires_gate_pass,
+                "best_min_win_rate_delta": best_min_win_rate_delta,
+                "best_min_mean_score_delta": best_min_mean_score_delta,
+                "best_max_margin_regression": best_max_margin_regression,
+                "fixed_benchmark_seeds": fixed_benchmark_seeds,
+                "benchmark_seed": benchmark_seed,
                 "engine_teacher_prob": engine_teacher_prob,
                 "engine_time_budget_ms": engine_time_budget_ms,
                 "engine_num_determinizations": engine_num_determinizations,
                 "engine_max_rollout_depth": engine_max_rollout_depth,
+                "adaptive_teacher_depth2_enabled": adaptive_teacher_depth2_enabled,
+                "adaptive_teacher_uncertainty_gap": adaptive_teacher_uncertainty_gap,
+                "adaptive_teacher_top_m": adaptive_teacher_top_m,
+                "hard_replay_games": hard_replay_games,
+                "hard_replay_player": hard_replay_player,
+                "hard_replay_target_player": hard_replay_target_player,
+                "hard_replay_loss_oversample_factor": hard_replay_loss_oversample_factor,
+                "hard_replay_only_losses": hard_replay_only_losses,
+                "rollback_on_fixed_gate_regression": rollback_on_fixed_gate_regression,
+                "fixed_gate_regression_max_drop": fixed_gate_regression_max_drop,
+                "stop_after_consecutive_non_eligible_iters": stop_after_consecutive_non_eligible_iters,
+                "max_consecutive_non_eligible_iters": max_consecutive_non_eligible_iters,
                 "strict_rules_only": strict_rules_only,
                 "reject_non_strict_powers": reject_non_strict_powers,
                 "strict_curriculum_enabled": strict_curriculum_enabled,
@@ -880,6 +1192,11 @@ def run_auto_improve_factorized(
                 "strict_kpi_min_strict_certified_birds": strict_kpi_min_strict_certified_birds,
                 "strict_kpi_require_non_regression": strict_kpi_require_non_regression,
                 "strict_kpi_mean_score_tolerance": strict_kpi_mean_score_tolerance,
+                "state_encoder_enable_identity": state_encoder_enable_identity,
+                "state_encoder_identity_hash_dim": state_encoder_identity_hash_dim,
+                "require_fixed_seed_eval_gate_pass": require_fixed_seed_eval_gate_pass,
+                "fixed_seed_eval_gate_games": fixed_seed_eval_gate_games,
+                "fixed_seed_eval_gate_min_win_rate": fixed_seed_eval_gate_min_win_rate,
                 "data_accumulation_enabled": data_accumulation_enabled,
                 "data_accumulation_decay": data_accumulation_decay,
                 "max_accumulated_samples": max_accumulated_samples,
@@ -897,8 +1214,32 @@ def run_auto_improve_factorized(
             f"gate_wins={gate_dict['nn_wins']}/{promotion_games} | "
             f"pool_win={pool_eval['summary']['nn_win_rate']:.3f} ge100={pool_eval['summary']['nn_rate_ge_100']:.3f} | "
             f"kpi_pass={kpi_gate['passed']} strict_kpi_pass={strict_kpi_compare.get('passed', False)} "
+            f"fixed_seed_gate_pass={fixed_seed_eval_gate.get('passed', True)} "
             f"promoted={promoted} selected_best={selected_as_best}"
         )
+        if early_stop_triggered:
+            stopped_early = True
+            stop_reason = (
+                f"non_eligible_streak_reached_{consecutive_non_eligible_iters}"
+            )
+            manifest["stopped_early"] = True
+            manifest["stop_reason"] = stop_reason
+            manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+            print(f"early stop triggered: {stop_reason}")
+            break
+        if fixed_gate_rollback_triggered:
+            if best_model_path.exists():
+                proposal_model_path = str(best_model_path)
+            elif frozen_opponent_model_path and not state_encoder_enable_identity:
+                proposal_model_path = str(frozen_opponent_model_path)
+            stopped_early = True
+            drop = float(fixed_gate_regression.get("drop", 0.0))
+            stop_reason = f"fixed_gate_regression_drop_{drop:.4f}"
+            manifest["stopped_early"] = True
+            manifest["stop_reason"] = stop_reason
+            manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+            print(f"early stop triggered: {stop_reason}")
+            break
 
     return json.loads(manifest_path.read_text(encoding="utf-8"))
 
@@ -930,6 +1271,11 @@ def main() -> None:
     parser.add_argument("--train-lr-warmup-epochs", type=int, default=3)
     parser.add_argument("--train-lr-decay-every", type=int, default=5)
     parser.add_argument("--train-lr-decay-factor", type=float, default=0.7)
+    parser.add_argument("--train-momentum", type=float, default=0.9)
+    parser.add_argument("--train-init-model-path", default=None)
+    parser.set_defaults(train_init_first_iter_only=True)
+    parser.add_argument("--train-init-first-iter-only", dest="train_init_first_iter_only", action="store_true")
+    parser.add_argument("--train-init-every-iter", dest="train_init_first_iter_only", action="store_false")
     parser.set_defaults(train_early_stop_enabled=True, train_early_stop_restore_best=True)
     parser.add_argument("--train-early-stop-enabled", dest="train_early_stop_enabled", action="store_true")
     parser.add_argument("--disable-train-early-stop", dest="train_early_stop_enabled", action="store_false")
@@ -944,13 +1290,15 @@ def main() -> None:
     parser.add_argument("--eval-games", type=int, default=40)
     parser.add_argument("--promotion-games", type=int, default=80)
     parser.add_argument("--pool-games-per-opponent", type=int, default=40)
-    parser.add_argument("--min-pool-win-rate", type=float, default=0.0)
+    parser.add_argument("--min-pool-win-rate", type=float, default=0.50)
     parser.add_argument("--min-pool-mean-score", type=float, default=0.0)
     parser.add_argument("--min-pool-rate-ge-100", type=float, default=0.0)
     parser.add_argument("--min-pool-rate-ge-120", type=float, default=0.0)
-    parser.add_argument("--require-pool-non-regression", action="store_true")
+    parser.set_defaults(require_pool_non_regression=True)
+    parser.add_argument("--require-pool-non-regression", dest="require_pool_non_regression", action="store_true")
+    parser.add_argument("--disable-pool-non-regression", dest="require_pool_non_regression", action="store_false")
     parser.add_argument("--min-gate-win-rate", type=float, default=0.50)
-    parser.add_argument("--min-gate-mean-score", type=float, default=52.0)
+    parser.add_argument("--min-gate-mean-score", type=float, default=50.0)
     parser.add_argument("--min-gate-rate-ge-100", type=float, default=0.0)
     parser.add_argument("--min-gate-rate-ge-120", type=float, default=0.0)
     parser.set_defaults(require_non_negative_champion_margin=True)
@@ -970,7 +1318,7 @@ def main() -> None:
     parser.add_argument("--data-accumulation-decay", type=float, default=0.5)
     parser.add_argument("--max-accumulated-samples", type=int, default=200000)
     parser.add_argument("--dataset-workers", type=int, default=4)
-    parser.set_defaults(champion_self_play_enabled=True, champion_switch_after_first_promotion=True)
+    parser.set_defaults(champion_self_play_enabled=False, champion_switch_after_first_promotion=True)
     parser.add_argument("--champion-self-play-enabled", dest="champion_self_play_enabled", action="store_true")
     parser.add_argument("--disable-champion-self-play", dest="champion_self_play_enabled", action="store_false")
     parser.add_argument("--champion-switch-after-first-promotion", dest="champion_switch_after_first_promotion", action="store_true")
@@ -982,17 +1330,69 @@ def main() -> None:
     parser.add_argument("--champion-switch-min-stable-iters", type=int, default=2)
     parser.add_argument("--champion-switch-min-eval-win-rate", type=float, default=0.5)
     parser.add_argument("--champion-switch-min-iteration", type=int, default=3)
-    parser.add_argument("--promotion-primary-opponent", default="champion", choices=["heuristic", "champion"])
+    parser.add_argument("--promotion-primary-opponent", default="heuristic", choices=["heuristic", "champion", "frozen"])
+    parser.add_argument("--frozen-opponent-model-path", default=None)
     parser.add_argument(
         "--best-selection-eval-games",
         type=int,
         default=0,
         help="0 => auto (max(promotion_games, eval_games))",
     )
+    parser.add_argument("--proposal-update-policy", default="best_only", choices=["best_only", "latest_candidate"])
+    parser.set_defaults(selection_requires_gate_pass=True)
+    parser.add_argument("--selection-requires-gate-pass", dest="selection_requires_gate_pass", action="store_true")
+    parser.add_argument(
+        "--allow-selection-without-gate-pass",
+        dest="selection_requires_gate_pass",
+        action="store_false",
+    )
+    parser.add_argument("--best-min-win-rate-delta", type=float, default=0.02)
+    parser.add_argument("--best-min-mean-score-delta", type=float, default=0.5)
+    parser.add_argument("--best-max-margin-regression", type=float, default=1.0)
+    parser.set_defaults(fixed_benchmark_seeds=True)
+    parser.add_argument("--fixed-benchmark-seeds", dest="fixed_benchmark_seeds", action="store_true")
+    parser.add_argument("--rotating-benchmark-seeds", dest="fixed_benchmark_seeds", action="store_false")
+    parser.add_argument("--benchmark-seed", type=int, default=13_371_337)
     parser.add_argument("--engine-teacher-prob", type=float, default=0.15)
     parser.add_argument("--engine-time-budget-ms", type=int, default=25)
     parser.add_argument("--engine-num-determinizations", type=int, default=0)
     parser.add_argument("--engine-max-rollout-depth", type=int, default=24)
+    parser.set_defaults(adaptive_teacher_depth2_enabled=True)
+    parser.add_argument("--adaptive-teacher-depth2-enabled", dest="adaptive_teacher_depth2_enabled", action="store_true")
+    parser.add_argument("--disable-adaptive-teacher-depth2", dest="adaptive_teacher_depth2_enabled", action="store_false")
+    parser.add_argument("--adaptive-teacher-uncertainty-gap", type=float, default=2.0)
+    parser.add_argument("--adaptive-teacher-top-m", type=int, default=2)
+    parser.add_argument("--hard-replay-games", type=int, default=0)
+    parser.add_argument("--hard-replay-player", default="proposal", choices=["proposal", "best", "frozen"])
+    parser.add_argument("--hard-replay-target-player", type=int, default=0)
+    parser.add_argument("--hard-replay-loss-oversample-factor", type=int, default=3)
+    parser.set_defaults(hard_replay_only_losses=True)
+    parser.add_argument("--hard-replay-only-losses", dest="hard_replay_only_losses", action="store_true")
+    parser.add_argument("--hard-replay-include-wins", dest="hard_replay_only_losses", action="store_false")
+    parser.set_defaults(rollback_on_fixed_gate_regression=True)
+    parser.add_argument(
+        "--rollback-on-fixed-gate-regression",
+        dest="rollback_on_fixed_gate_regression",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--disable-rollback-on-fixed-gate-regression",
+        dest="rollback_on_fixed_gate_regression",
+        action="store_false",
+    )
+    parser.add_argument("--fixed-gate-regression-max-drop", type=float, default=0.10)
+    parser.set_defaults(stop_after_consecutive_non_eligible_iters=True)
+    parser.add_argument(
+        "--stop-after-consecutive-non-eligible-iters",
+        dest="stop_after_consecutive_non_eligible_iters",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--disable-stop-after-consecutive-non-eligible-iters",
+        dest="stop_after_consecutive_non_eligible_iters",
+        action="store_false",
+    )
+    parser.add_argument("--max-consecutive-non-eligible-iters", type=int, default=2)
     parser.set_defaults(strict_rules_only=True, reject_non_strict_powers=True)
     parser.add_argument("--strict-rules-only", dest="strict_rules_only", action="store_true")
     parser.add_argument("--allow-non-strict-rules", dest="strict_rules_only", action="store_false")
@@ -1015,10 +1415,19 @@ def main() -> None:
     parser.add_argument("--strict-kpi-max-round1-strict-rejected-games", type=int, default=0)
     parser.add_argument("--strict-kpi-max-smoke-strict-rejected-games", type=int, default=0)
     parser.add_argument("--strict-kpi-min-strict-certified-birds", type=int, default=50)
-    parser.set_defaults(strict_kpi_require_non_regression=False)
+    parser.set_defaults(strict_kpi_require_non_regression=True)
     parser.add_argument("--strict-kpi-require-non-regression", dest="strict_kpi_require_non_regression", action="store_true")
     parser.add_argument("--strict-kpi-disable-non-regression", dest="strict_kpi_require_non_regression", action="store_false")
     parser.add_argument("--strict-kpi-mean-score-tolerance", type=float, default=0.5)
+    parser.set_defaults(state_encoder_enable_identity=False)
+    parser.add_argument("--state-encoder-enable-identity", dest="state_encoder_enable_identity", action="store_true")
+    parser.add_argument("--disable-state-encoder-identity", dest="state_encoder_enable_identity", action="store_false")
+    parser.add_argument("--state-encoder-identity-hash-dim", type=int, default=128)
+    parser.set_defaults(require_fixed_seed_eval_gate_pass=False)
+    parser.add_argument("--require-fixed-seed-eval-gate-pass", dest="require_fixed_seed_eval_gate_pass", action="store_true")
+    parser.add_argument("--disable-fixed-seed-eval-gate-pass", dest="require_fixed_seed_eval_gate_pass", action="store_false")
+    parser.add_argument("--fixed-seed-eval-gate-games", type=int, default=40)
+    parser.add_argument("--fixed-seed-eval-gate-min-win-rate", type=float, default=0.50)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
@@ -1048,6 +1457,9 @@ def main() -> None:
         train_lr_warmup_epochs=args.train_lr_warmup_epochs,
         train_lr_decay_every=args.train_lr_decay_every,
         train_lr_decay_factor=args.train_lr_decay_factor,
+        train_momentum=args.train_momentum,
+        train_init_model_path=args.train_init_model_path,
+        train_init_first_iter_only=args.train_init_first_iter_only,
         train_early_stop_enabled=args.train_early_stop_enabled,
         train_early_stop_patience=args.train_early_stop_patience,
         train_early_stop_min_delta=args.train_early_stop_min_delta,
@@ -1081,11 +1493,31 @@ def main() -> None:
         champion_engine_num_determinizations=args.champion_engine_num_determinizations,
         champion_engine_max_rollout_depth=args.champion_engine_max_rollout_depth,
         promotion_primary_opponent=args.promotion_primary_opponent,
+        frozen_opponent_model_path=args.frozen_opponent_model_path,
         best_selection_eval_games=args.best_selection_eval_games,
+        proposal_update_policy=args.proposal_update_policy,
+        selection_requires_gate_pass=args.selection_requires_gate_pass,
+        best_min_win_rate_delta=args.best_min_win_rate_delta,
+        best_min_mean_score_delta=args.best_min_mean_score_delta,
+        best_max_margin_regression=args.best_max_margin_regression,
+        fixed_benchmark_seeds=args.fixed_benchmark_seeds,
+        benchmark_seed=args.benchmark_seed,
         engine_teacher_prob=args.engine_teacher_prob,
         engine_time_budget_ms=args.engine_time_budget_ms,
         engine_num_determinizations=args.engine_num_determinizations,
         engine_max_rollout_depth=args.engine_max_rollout_depth,
+        adaptive_teacher_depth2_enabled=args.adaptive_teacher_depth2_enabled,
+        adaptive_teacher_uncertainty_gap=args.adaptive_teacher_uncertainty_gap,
+        adaptive_teacher_top_m=args.adaptive_teacher_top_m,
+        hard_replay_games=args.hard_replay_games,
+        hard_replay_player=args.hard_replay_player,
+        hard_replay_target_player=args.hard_replay_target_player,
+        hard_replay_loss_oversample_factor=args.hard_replay_loss_oversample_factor,
+        hard_replay_only_losses=args.hard_replay_only_losses,
+        rollback_on_fixed_gate_regression=args.rollback_on_fixed_gate_regression,
+        fixed_gate_regression_max_drop=args.fixed_gate_regression_max_drop,
+        stop_after_consecutive_non_eligible_iters=args.stop_after_consecutive_non_eligible_iters,
+        max_consecutive_non_eligible_iters=args.max_consecutive_non_eligible_iters,
         strict_rules_only=args.strict_rules_only,
         reject_non_strict_powers=args.reject_non_strict_powers,
         strict_curriculum_enabled=args.strict_curriculum_enabled,
@@ -1103,6 +1535,11 @@ def main() -> None:
         strict_kpi_min_strict_certified_birds=args.strict_kpi_min_strict_certified_birds,
         strict_kpi_require_non_regression=args.strict_kpi_require_non_regression,
         strict_kpi_mean_score_tolerance=args.strict_kpi_mean_score_tolerance,
+        state_encoder_enable_identity=args.state_encoder_enable_identity,
+        state_encoder_identity_hash_dim=args.state_encoder_identity_hash_dim,
+        require_fixed_seed_eval_gate_pass=args.require_fixed_seed_eval_gate_pass,
+        fixed_seed_eval_gate_games=args.fixed_seed_eval_gate_games,
+        fixed_seed_eval_gate_min_win_rate=args.fixed_seed_eval_gate_min_win_rate,
         seed=args.seed,
         train_hidden=args.train_hidden,
         train_lr=args.train_lr,

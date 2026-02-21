@@ -112,6 +112,16 @@ class TestDynamicWeightsWithBase:
         # Other fields should be unchanged
         assert w.egg_points == pytest.approx(w_default.egg_points)
 
+    def test_round_profile_base_applies_directly(self):
+        """Round-profile dict should bypass phase blending for specified rounds."""
+        from backend.models.game_state import create_new_game
+        game = create_new_game(["P1"])
+        round1 = HeuristicWeights(bird_vp=2.2, egg_points=0.9)
+        profile = {0: DEFAULT_WEIGHTS, 1: round1}
+        w = dynamic_weights(game, base=profile)
+        assert w.bird_vp == pytest.approx(round1.bird_vp)
+        assert w.egg_points == pytest.approx(round1.egg_points)
+
 
 class TestGameCreation:
     def test_create_training_game_valid(self):

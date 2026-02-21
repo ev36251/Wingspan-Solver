@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 
 from backend.config import ACTIONS_PER_ROUND, EGG_COST_BY_COLUMN, get_action_column
@@ -27,9 +28,34 @@ class StateEncoder:
     max_food: float = 12.0
     max_score: float = 180.0
     max_deck: float = 200.0
+    enable_identity_features: bool = False
+    identity_hash_dim: int = 128
+
+    @classmethod
+    def from_metadata(cls, meta: dict | None) -> "StateEncoder":
+        cfg = (meta or {}).get("state_encoder", {}) if isinstance(meta, dict) else {}
+        return cls(
+            enable_identity_features=bool(cfg.get("enable_identity_features", False)),
+            identity_hash_dim=max(1, int(cfg.get("identity_hash_dim", 128))),
+        )
+
+    @classmethod
+    def resolve_for_model(
+        cls,
+        model_meta: dict | None,
+        *,
+        fallback_enable_identity_features: bool = False,
+        fallback_identity_hash_dim: int = 128,
+    ) -> "StateEncoder":
+        if isinstance(model_meta, dict) and isinstance(model_meta.get("state_encoder"), dict):
+            return cls.from_metadata(model_meta)
+        return cls(
+            enable_identity_features=bool(fallback_enable_identity_features),
+            identity_hash_dim=max(1, int(fallback_identity_hash_dim)),
+        )
 
     def feature_names(self) -> list[str]:
-        return [
+        base = [
             "global.round", "global.turn_in_round", "global.current_player_idx",
             "global.total_actions_remaining", "global.deck_remaining", "global.tray_count",
             "global.feeder.invertebrate", "global.feeder.seed", "global.feeder.fish",
@@ -80,6 +106,43 @@ class StateEncoder:
             "goal.current_self_progress", "goal.current_self_rank", "goal.current_gap_to_first",
             "goal.past_total_earned", "goal.future_goals_remaining", "goal.has_no_goal_round",
         ]
+        if self.enable_identity_features:
+            base.extend([f"identity.hash_{i:03d}" for i in range(max(1, int(self.identity_hash_dim)))])
+        return base
+
+    def _identity_bucket(self, token: str, dim: int) -> int:
+        h = hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest()
+        return int.from_bytes(h, byteorder="little", signed=False) % dim
+
+    def _encode_identity_features(self, game: GameState, player_index: int) -> list[float]:
+        dim = max(1, int(self.identity_hash_dim))
+        vec = [0.0 for _ in range(dim)]
+        p = game.players[player_index]
+        opponents = [op for i, op in enumerate(game.players) if i != player_index]
+
+        def add(token: str, weight: float) -> None:
+            if not token:
+                return
+            idx = self._identity_bucket(token, dim)
+            vec[idx] += float(weight)
+
+        for b in p.hand:
+            add(f"self_hand:{b.name}", 1.0)
+        for b in p.board.all_birds():
+            add(f"self_board:{b.name}", 1.5)
+        for b in game.card_tray.face_up:
+            add(f"tray:{b.name}", 0.5)
+        for bc in getattr(p, "bonus_cards", []):
+            add(f"self_bonus:{getattr(bc, 'name', '')}", 1.0)
+
+        for op in opponents:
+            for b in op.board.all_birds():
+                add(f"opp_board:{b.name}", 0.4)
+            for bc in getattr(op, "bonus_cards", []):
+                add(f"opp_bonus:{getattr(bc, 'name', '')}", 0.25)
+
+        max_v = max(1.0, max(vec))
+        return [_clamp01(v / max_v) for v in vec]
 
     def encode(self, game: GameState, player_index: int) -> list[float]:
         p = game.players[player_index]
@@ -582,4 +645,6 @@ class StateEncoder:
             _clamp01(has_no_goal_round),
         ])
 
+        if self.enable_identity_features:
+            vec.extend(self._encode_identity_features(game, player_index))
         return vec

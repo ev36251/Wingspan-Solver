@@ -649,8 +649,10 @@ def _endgame_minimax_value(
     weights: HeuristicWeights,
     tt: dict[tuple, tuple[float, list[str]]],
     leaf_evaluator: LeafEvaluator | None = None,
+    alpha: float = float("-inf"),
+    beta: float = float("inf"),
 ) -> tuple[float, list[str]]:
-    """Full-width minimax for late-game positions."""
+    """Full-width minimax with alpha-beta pruning for late-game positions."""
     key = (_state_signature(game, player_name), depth_left)
     if key in tt:
         return tt[key]
@@ -665,13 +667,23 @@ def _endgame_minimax_value(
     if not moves:
         sim = deep_copy_game(game)
         sim.advance_turn()
-        result = _endgame_minimax_value(sim, player_name, depth_left - 1, weights, tt, leaf_evaluator)
+        result = _endgame_minimax_value(
+            sim,
+            player_name,
+            depth_left - 1,
+            weights,
+            tt,
+            leaf_evaluator,
+            alpha,
+            beta,
+        )
         tt[key] = result
         return result
 
     maximizing = actor.name == player_name
     best_score = float("-inf") if maximizing else float("inf")
     best_seq: list[str] = []
+    cutoff = False
 
     for move in moves:
         sim = deep_copy_game(game)
@@ -680,12 +692,27 @@ def _endgame_minimax_value(
             continue
         sim.advance_turn()
         child_score, child_seq = _endgame_minimax_value(
-            sim, player_name, depth_left - 1, weights, tt, leaf_evaluator
+            sim,
+            player_name,
+            depth_left - 1,
+            weights,
+            tt,
+            leaf_evaluator,
+            alpha,
+            beta,
         )
         better = child_score > best_score if maximizing else child_score < best_score
         if better:
             best_score = child_score
             best_seq = [move.description] + child_seq
+
+        if maximizing:
+            alpha = max(alpha, best_score)
+        else:
+            beta = min(beta, best_score)
+        if alpha >= beta:
+            cutoff = True
+            break
 
     if best_score == float("-inf") or best_score == float("inf"):
         result = (_endgame_leaf_value(game, player_name, weights, leaf_evaluator), [])
@@ -693,7 +720,9 @@ def _endgame_minimax_value(
         return result
 
     result = (best_score, best_seq)
-    tt[key] = result
+    # Cutoffs can return bounds rather than exact values; cache only exact nodes.
+    if not cutoff:
+        tt[key] = result
     return result
 
 

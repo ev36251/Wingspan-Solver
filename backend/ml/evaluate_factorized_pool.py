@@ -82,8 +82,13 @@ def _evaluate_vs_one_opponent(
     seed: int,
     proposal_top_k: int,
 ) -> OpponentEval:
-    enc = StateEncoder()
+    candidate_enc = StateEncoder.resolve_for_model(candidate_model.meta)
     opp_model = None if opponent_spec == "heuristic" else FactorizedPolicyModel(opponent_spec)
+    opponent_enc = (
+        StateEncoder.resolve_for_model(opp_model.meta)
+        if opp_model is not None
+        else None
+    )
 
     nn_wins = 0
     opp_wins = 0
@@ -121,10 +126,16 @@ def _evaluate_vs_one_opponent(
                 continue
 
             if pi == nn_idx:
-                move, moves = _pick_model_move(candidate_model, enc, game, pi, proposal_top_k=proposal_top_k)
+                move, moves = _pick_model_move(candidate_model, candidate_enc, game, pi, proposal_top_k=proposal_top_k)
             else:
                 if opp_model is not None:
-                    move, moves = _pick_model_move(opp_model, enc, game, pi, proposal_top_k=proposal_top_k)
+                    move, moves = _pick_model_move(
+                        opp_model,
+                        opponent_enc if opponent_enc is not None else candidate_enc,
+                        game,
+                        pi,
+                        proposal_top_k=proposal_top_k,
+                    )
                 else:
                     moves = generate_all_moves(game, p)
                     move = pick_weighted_random_move(moves, game, p) if moves else None

@@ -34,8 +34,8 @@ def test_auto_improve_smoke(tmp_path: Path) -> None:
     assert manifest["config"]["strict_rules_only"] is True
     assert manifest["config"]["reject_non_strict_powers"] is True
     assert manifest["config"]["strict_kpi_gate_enabled"] is False
-    assert manifest["config"]["promotion_primary_opponent"] == "champion"
-    assert manifest["config"]["champion_self_play_enabled"] is True
+    assert manifest["config"]["promotion_primary_opponent"] == "heuristic"
+    assert manifest["config"]["champion_self_play_enabled"] is False
     assert "champion_switch_min_stable_iters" in manifest["config"]
     assert "champion_switch_min_eval_win_rate" in manifest["config"]
     assert "champion_switch_min_iteration" in manifest["config"]

@@ -32,7 +32,7 @@ def run_auto_improve(
     value_weight: float = 0.5,
     val_split: float = 0.1,
     eval_games: int = 40,
-    champion_self_play_enabled: bool = True,
+    champion_self_play_enabled: bool = False,
     champion_switch_after_first_promotion: bool = True,
     champion_switch_min_stable_iters: int = 2,
     champion_switch_min_eval_win_rate: float = 0.5,
@@ -41,7 +41,7 @@ def run_auto_improve(
     champion_engine_time_budget_ms: int = 50,
     champion_engine_num_determinizations: int = 8,
     champion_engine_max_rollout_depth: int = 24,
-    promotion_primary_opponent: str = "champion",
+    promotion_primary_opponent: str = "heuristic",
     best_selection_eval_games: int = 0,
     min_gate_win_rate: float = 0.50,
     min_gate_mean_score: float = 52.0,
@@ -173,7 +173,7 @@ def main() -> None:
     parser.add_argument("--value-weight", type=float, default=0.5)
     parser.add_argument("--val-split", type=float, default=0.1)
     parser.add_argument("--eval-games", type=int, default=40)
-    parser.set_defaults(champion_self_play_enabled=True, champion_switch_after_first_promotion=True)
+    parser.set_defaults(champion_self_play_enabled=False, champion_switch_after_first_promotion=True)
     parser.add_argument("--champion-self-play-enabled", dest="champion_self_play_enabled", action="store_true")
     parser.add_argument("--disable-champion-self-play", dest="champion_self_play_enabled", action="store_false")
     parser.add_argument("--champion-switch-after-first-promotion", dest="champion_switch_after_first_promotion", action="store_true")
@@ -185,7 +185,7 @@ def main() -> None:
     parser.add_argument("--champion-switch-min-stable-iters", type=int, default=2)
     parser.add_argument("--champion-switch-min-eval-win-rate", type=float, default=0.5)
     parser.add_argument("--champion-switch-min-iteration", type=int, default=3)
-    parser.add_argument("--promotion-primary-opponent", default="champion", choices=["heuristic", "champion"])
+    parser.add_argument("--promotion-primary-opponent", default="heuristic", choices=["heuristic", "champion"])
     parser.add_argument(
         "--best-selection-eval-games",
         type=int,
