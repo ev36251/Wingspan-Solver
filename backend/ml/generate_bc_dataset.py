@@ -350,6 +350,10 @@ def _move_key(move: Move) -> tuple:
         int(move.deck_draws),
         int(move.bonus_count),
         bool(move.reset_bonus),
+        move.target_slot,
+        bool(move.play_on_top),
+        bool(move.play_on_top_discard),
+        int(move.hand_tuck_payment),
     )
 
 
@@ -442,6 +446,8 @@ def generate_bc_dataset(
     hard_replay_only_losses: bool = False,
     state_encoder_enable_identity: bool = False,
     state_encoder_identity_hash_dim: int = 128,
+    state_encoder_use_per_slot: bool = False,
+    state_encoder_max_hand_slots: int = 8,
 ) -> dict:
     if seed is not None:
         random.seed(seed)
@@ -461,6 +467,7 @@ def generate_bc_dataset(
     hard_replay_loss_oversample_factor = max(1, int(hard_replay_loss_oversample_factor))
     strict_game_fraction = max(0.0, min(1.0, float(strict_game_fraction)))
     state_encoder_identity_hash_dim = max(1, int(state_encoder_identity_hash_dim))
+    state_encoder_max_hand_slots = max(1, int(state_encoder_max_hand_slots))
 
     load_all(EXCEL_FILE)
 
@@ -482,6 +489,8 @@ def generate_bc_dataset(
         encoder_source_meta,
         fallback_enable_identity_features=state_encoder_enable_identity,
         fallback_identity_hash_dim=state_encoder_identity_hash_dim,
+        fallback_use_per_slot=state_encoder_use_per_slot,
+        fallback_max_hand_slots=state_encoder_max_hand_slots,
     )
     outp = Path(out_jsonl)
     outp.parent.mkdir(parents=True, exist_ok=True)
@@ -828,6 +837,8 @@ def generate_bc_dataset(
         "state_encoder": {
             "enable_identity_features": bool(enc.enable_identity_features),
             "identity_hash_dim": int(enc.identity_hash_dim),
+            "use_per_slot_encoding": bool(enc.use_per_slot_encoding),
+            "max_hand_slots": int(enc.max_hand_slots),
         },
         "strict_rules_only": strict_rules_only,
         "reject_non_strict_powers": reject_non_strict_powers,
@@ -898,6 +909,10 @@ def main() -> None:
     parser.add_argument("--state-encoder-enable-identity", dest="state_encoder_enable_identity", action="store_true")
     parser.add_argument("--disable-state-encoder-identity", dest="state_encoder_enable_identity", action="store_false")
     parser.add_argument("--state-encoder-identity-hash-dim", type=int, default=128)
+    parser.set_defaults(state_encoder_use_per_slot=False)
+    parser.add_argument("--use-per-slot-encoding", dest="state_encoder_use_per_slot", action="store_true")
+    parser.add_argument("--disable-per-slot-encoding", dest="state_encoder_use_per_slot", action="store_false")
+    parser.add_argument("--max-hand-slots", dest="state_encoder_max_hand_slots", type=int, default=8)
     args = parser.parse_args()
 
     meta = generate_bc_dataset(
@@ -941,6 +956,8 @@ def main() -> None:
         hard_replay_only_losses=args.hard_replay_only_losses,
         state_encoder_enable_identity=args.state_encoder_enable_identity,
         state_encoder_identity_hash_dim=args.state_encoder_identity_hash_dim,
+        state_encoder_use_per_slot=args.state_encoder_use_per_slot,
+        state_encoder_max_hand_slots=args.state_encoder_max_hand_slots,
     )
     print(
         f"bc dataset complete | samples={meta['samples']} | feature_dim={meta['feature_dim']}"

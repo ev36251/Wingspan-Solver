@@ -39,11 +39,197 @@ class Move:
     bonus_count: int = 0
     reset_bonus: bool = False
 
+    # Special play-bird mechanics
+    target_slot: int | None = None        # For sideways birds: first slot of pair; also play-on-top target
+    play_on_top: bool = False             # True for play-on-top / Cassowary replacement
+    play_on_top_discard: bool = False     # True for Cassowary (discard covered bird vs tuck)
+    hand_tuck_payment: int = 0            # Imperial Eagle: cards tucked as food substitutes
+
+
+def _is_sideways_bird(bird) -> bool:
+    from backend.powers.registry import get_power
+    from backend.powers.templates.play_bird import PlaceBirdSideways
+    return isinstance(get_power(bird), PlaceBirdSideways)
+
+
+def _is_play_on_top_bird(bird) -> bool:
+    from backend.powers.registry import get_power
+    from backend.powers.templates.play_bird import PlayOnTopPower
+    return isinstance(get_power(bird), PlayOnTopPower)
+
+
+def _is_cassowary_bird(bird) -> bool:
+    from backend.powers.registry import get_power
+    from backend.powers.templates.unique import SouthernCassowaryPower
+    return isinstance(get_power(bird), SouthernCassowaryPower)
+
+
+def _is_tuck_to_pay_bird(bird) -> bool:
+    from backend.powers.registry import get_power
+    from backend.powers.templates.unique import TuckToPayCost
+    return isinstance(get_power(bird), TuckToPayCost)
+
+
+def _generate_sideways_moves(game: GameState, player: Player, bird, habitat: Habitat) -> list[Move]:
+    """Generate play moves for a sideways bird (requires 2 consecutive available slots)."""
+    from backend.config import EGG_COST_BY_COLUMN
+    if not player.has_bird_in_hand(bird.name):
+        return []
+    if not bird.can_live_in(habitat):
+        return []
+    if player.action_cubes_remaining <= 0:
+        return []
+    row = player.board.get_row(habitat)
+    moves = []
+    for i in range(len(row.slots) - 1):
+        slot_a = row.slots[i]
+        slot_b = row.slots[i + 1]
+        if not slot_a.is_available or not slot_b.is_available:
+            continue
+        egg_cost = min(EGG_COST_BY_COLUMN[i], EGG_COST_BY_COLUMN[i + 1])
+        if player.board.total_eggs() < egg_cost:
+            continue
+        if bird.food_cost.total == 0:
+            moves.append(Move(
+                action_type=ActionType.PLAY_BIRD,
+                description=f"Play {bird.name} sideways in {habitat.value} slots {i+1}-{i+2}",
+                bird_name=bird.name, habitat=habitat,
+                food_payment={}, target_slot=i,
+            ))
+            continue
+        payment_options = find_food_payment_options(player, bird.food_cost)
+        for payment in payment_options:
+            if not payment:
+                continue
+            pay_desc = ", ".join(f"{c} {ft.value}" for ft, c in payment.items())
+            moves.append(Move(
+                action_type=ActionType.PLAY_BIRD,
+                description=f"Play {bird.name} sideways in {habitat.value} slots {i+1}-{i+2} (pay {pay_desc})",
+                bird_name=bird.name, habitat=habitat,
+                food_payment=payment, target_slot=i,
+            ))
+    return moves
+
+
+def _generate_play_on_top_moves(game: GameState, player: Player, bird, discard: bool = False) -> list[Move]:
+    """Generate play-on-top moves for birds that replace occupied slots for free."""
+    if not player.has_bird_in_hand(bird.name):
+        return []
+    if player.action_cubes_remaining <= 0:
+        return []
+    moves = []
+    for habitat in bird.habitats:
+        row = player.board.get_row(habitat)
+        for i, slot in enumerate(row.slots):
+            if slot.bird is None:
+                continue  # Need an occupied slot to play on top of
+            if slot.is_sideways_blocked:
+                continue  # Skip secondary sideways slots
+            action_word = "replacing" if discard else "on top of"
+            moves.append(Move(
+                action_type=ActionType.PLAY_BIRD,
+                description=f"Play {bird.name} {action_word} {slot.bird.name} in {habitat.value} slot {i+1} (free)",
+                bird_name=bird.name, habitat=habitat,
+                food_payment={}, target_slot=i,
+                play_on_top=True, play_on_top_discard=discard,
+            ))
+    return moves
+
+
+def _generate_tuck_to_pay_moves(game: GameState, player: Player, bird, habitat: Habitat) -> list[Move]:
+    """Generate tuck-to-pay variants for birds like Eastern Imperial Eagle."""
+    from backend.config import EGG_COST_BY_COLUMN
+    if not player.has_bird_in_hand(bird.name):
+        return []
+    if not bird.can_live_in(habitat):
+        return []
+    if player.action_cubes_remaining <= 0:
+        return []
+    row = player.board.get_row(habitat)
+    slot_idx = row.next_empty_slot()
+    if slot_idx is None:
+        return []
+    egg_cost = EGG_COST_BY_COLUMN[slot_idx]
+    if player.board.total_eggs() < egg_cost:
+        return []
+    # Count how many rodents are in the cost
+    rodent_count = sum(1 for ft in bird.food_cost.items if ft == FoodType.RODENT)
+    if rodent_count == 0:
+        return []
+    # Determine how many cards are available to substitute (excluding eagle itself)
+    available_cards = len(player.hand) - 1
+    moves = []
+    for cards_used in range(1, min(rodent_count, available_cards) + 1):
+        rodents_still_needed = rodent_count - cards_used
+        # Build reduced food cost: remove substituted rodents
+        reduced_items = list(bird.food_cost.items)
+        for _ in range(cards_used):
+            reduced_items.remove(FoodType.RODENT)
+        from backend.models.bird import FoodCost
+        reduced_cost = FoodCost(items=tuple(reduced_items), is_or=bird.food_cost.is_or,
+                                total=max(0, bird.food_cost.total - cards_used))
+        if reduced_cost.total == 0:
+            moves.append(Move(
+                action_type=ActionType.PLAY_BIRD,
+                description=f"Play {bird.name} in {habitat.value} (tuck {cards_used} card{'s' if cards_used>1 else ''} for rodent{'s' if cards_used>1 else ''})",
+                bird_name=bird.name, habitat=habitat,
+                food_payment={}, hand_tuck_payment=cards_used,
+            ))
+        else:
+            payment_options = find_food_payment_options(player, reduced_cost)
+            for payment in payment_options:
+                if not payment:
+                    continue
+                pay_desc = ", ".join(f"{c} {ft.value}" for ft, c in payment.items())
+                moves.append(Move(
+                    action_type=ActionType.PLAY_BIRD,
+                    description=f"Play {bird.name} in {habitat.value} (pay {pay_desc} + tuck {cards_used})",
+                    bird_name=bird.name, habitat=habitat,
+                    food_payment=payment, hand_tuck_payment=cards_used,
+                ))
+    return moves
+
 
 def generate_play_bird_moves(game: GameState, player: Player) -> list[Move]:
-    """All legal play-bird moves with food payment options."""
+    """All legal play-bird moves with food payment options.
+
+    Handles special mechanics:
+    - Sideways birds: consecutive empty slot pairs, lower egg cost
+    - Play-on-top birds: free placement over occupied slots (bird becomes tucked)
+    - Southern Cassowary: free forest replacement (bird is discarded, +4 eggs +2 fruit)
+    - Eastern Imperial Eagle: substitute rodent cost with tucked hand cards
+    """
     moves = []
     for bird in player.hand:
+        # Route to special generators for birds with non-standard placement mechanics
+        if _is_sideways_bird(bird):
+            for habitat in bird.habitats:
+                moves.extend(_generate_sideways_moves(game, player, bird, habitat))
+            continue
+
+        if _is_play_on_top_bird(bird):
+            moves.extend(_generate_play_on_top_moves(game, player, bird, discard=False))
+            # Also allow normal placement if there's an available slot
+            for habitat in bird.habitats:
+                legal, _ = can_play_bird(player, bird, habitat, game)
+                if not legal:
+                    continue
+                payment_options = find_food_payment_options(player, bird.food_cost) if bird.food_cost.total > 0 else [{}]
+                for payment in payment_options:
+                    pay_desc = ", ".join(f"{c} {ft.value}" for ft, c in payment.items()) if payment else "free"
+                    moves.append(Move(
+                        action_type=ActionType.PLAY_BIRD,
+                        description=f"Play {bird.name} in {habitat.value} normally ({pay_desc})",
+                        bird_name=bird.name, habitat=habitat,
+                        food_payment=payment,
+                    ))
+            continue
+
+        if _is_cassowary_bird(bird):
+            moves.extend(_generate_play_on_top_moves(game, player, bird, discard=True))
+            continue
+
+        # Standard placement + optional tuck-to-pay variants
         for habitat in bird.habitats:
             legal, _ = can_play_bird(player, bird, habitat, game)
             if not legal:
@@ -52,30 +238,24 @@ def generate_play_bird_moves(game: GameState, player: Player) -> list[Move]:
                 moves.append(Move(
                     action_type=ActionType.PLAY_BIRD,
                     description=f"Play {bird.name} in {habitat.value}",
-                    bird_name=bird.name,
-                    habitat=habitat,
-                    food_payment={},
+                    bird_name=bird.name, habitat=habitat, food_payment={},
                 ))
                 continue
             payment_options = find_food_payment_options(player, bird.food_cost)
             if not payment_options:
-                # Cannot afford this bird
                 continue
-            else:
-                # One move per payment option (solver picks the best)
-                for payment in payment_options:
-                    if not payment:
-                        continue
-                    pay_desc = ", ".join(
-                        f"{c} {ft.value}" for ft, c in payment.items()
-                    )
-                    moves.append(Move(
-                        action_type=ActionType.PLAY_BIRD,
-                        description=f"Play {bird.name} in {habitat.value} (pay {pay_desc})",
-                        bird_name=bird.name,
-                        habitat=habitat,
-                        food_payment=payment,
-                    ))
+            for payment in payment_options:
+                if not payment:
+                    continue
+                pay_desc = ", ".join(f"{c} {ft.value}" for ft, c in payment.items())
+                moves.append(Move(
+                    action_type=ActionType.PLAY_BIRD,
+                    description=f"Play {bird.name} in {habitat.value} (pay {pay_desc})",
+                    bird_name=bird.name, habitat=habitat, food_payment=payment,
+                ))
+            # Imperial Eagle: also generate tuck-to-pay variants
+            if _is_tuck_to_pay_bird(bird):
+                moves.extend(_generate_tuck_to_pay_moves(game, player, bird, habitat))
     return moves
 
 

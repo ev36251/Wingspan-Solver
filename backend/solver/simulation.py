@@ -284,7 +284,11 @@ def execute_move_on_sim_result(
         if not bird:
             return False, None
         result = execute_play_bird(
-            game, player, bird, move.habitat, move.food_payment
+            game, player, bird, move.habitat, move.food_payment,
+            target_slot=move.target_slot,
+            play_on_top=move.play_on_top,
+            play_on_top_discard=move.play_on_top_discard,
+            hand_tuck_payment=move.hand_tuck_payment,
         )
         return result.success, result
 

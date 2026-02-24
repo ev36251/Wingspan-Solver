@@ -63,15 +63,46 @@ class PlayAdditionalBird(PowerEffect):
 class PlaceBirdSideways(PowerEffect):
     """Play this bird so it covers 2 columns.
 
-    This is a white power that affects the action cube spaces.
+    This is a white power. After placement, marks the primary slot as sideways
+    and blocks the next slot so no other bird can be played there.
+
+    Birds: Common Blackbird, European Roller, Grey Heron, Long-Tailed Tit
     """
 
     def __init__(self):
         pass
 
     def execute(self, ctx: PowerContext) -> PowerResult:
-        # Board effect handled at placement time
+        row = ctx.player.board.get_row(ctx.habitat)
+        row.slots[ctx.slot_index].is_sideways = True
+        second_idx = ctx.slot_index + 1
+        if second_idx < len(row.slots):
+            row.slots[second_idx].is_sideways_blocked = True
         return PowerResult(description="Bird placed sideways, covering 2 columns")
 
     def estimate_value(self, ctx: PowerContext) -> float:
         return 1.5  # Saves column space, affects action values
+
+
+class PlayOnTopPower(PowerEffect):
+    """When played, may replace another bird for free (no food/egg cost).
+
+    Birds: Common Buzzard, Red Kite, Eurasian Hobby, Montagu's Harrier
+    "Instead of paying any costs, you may play this bird on top of another
+    bird on your player mat. Discard any eggs and food from that bird.
+    It becomes a tucked card."
+
+    The actual replacement logic is handled in execute_play_bird() when
+    play_on_top=True and target_slot is set.
+    """
+
+    def execute(self, ctx: PowerContext) -> PowerResult:
+        return PowerResult(description="Played on top of another bird (free, covered bird tucked)")
+
+    def estimate_value(self, ctx: PowerContext) -> float:
+        # Free placement is valuable; more occupied slots = more options
+        occupied = sum(
+            1 for _, _, slot in ctx.player.board.all_slots()
+            if slot.bird is not None and slot.bird.name != ctx.bird.name
+        )
+        return 2.0 + occupied * 0.2

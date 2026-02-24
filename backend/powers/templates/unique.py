@@ -406,6 +406,58 @@ class CopyNeighborWhitePower(PowerEffect):
         return 2.0
 
 
+class SouthernCassowaryPower(PowerEffect):
+    """Discard a bird from your [forest] and put this bird in its place.
+
+    Bird: Southern Cassowary (Oceania, White)
+    "Discard a bird from your [forest] and put this bird in its place
+    (do not pay an egg cost). If you do, lay 4 eggs on this bird and gain 2 fruit from supply."
+
+    The forest-bird replacement and free placement is handled by execute_play_bird()
+    with play_on_top=True and play_on_top_discard=True. This power fires after placement
+    and applies the bonus: 4 eggs on self + 2 fruit from supply.
+    """
+
+    def execute(self, ctx: PowerContext) -> PowerResult:
+        row = ctx.player.board.get_row(ctx.habitat)
+        slot = row.slots[ctx.slot_index]
+        if slot.bird is None:
+            return PowerResult(executed=False, description="No bird in slot for Cassowary bonus")
+
+        eggs_laid = 0
+        for _ in range(4):
+            if slot.can_hold_more_eggs():
+                slot.eggs += 1
+                eggs_laid += 1
+
+        ctx.player.food_supply.add(FoodType.FRUIT, 2)
+        return PowerResult(
+            food_gained={FoodType.FRUIT: 2},
+            description=f"Cassowary: laid {eggs_laid} eggs on self, gained 2 fruit",
+        )
+
+    def estimate_value(self, ctx: PowerContext) -> float:
+        # Free forest replacement + 4 eggs + 2 fruit is very valuable
+        return 6.0
+
+
+class TuckToPayCost(PowerEffect):
+    """For each [rodent] in this bird's cost, may pay 1 card from hand instead.
+    If you do, tuck the paid card behind this bird.
+
+    Bird: Eastern Imperial Eagle (European, White)
+    The cost-reduction logic is handled by execute_play_bird() with hand_tuck_payment set.
+    This power class is used as a marker for the registry and move generator.
+    """
+
+    def execute(self, ctx: PowerContext) -> PowerResult:
+        return PowerResult(description="Tuck-to-pay: cards were tucked during placement")
+
+    def estimate_value(self, ctx: PowerContext) -> float:
+        # Having flexible payment options increases playability
+        return 0.5
+
+
 class ConditionalCacheFromNeighbor(PowerEffect):
     """Cache food if the neighboring player has that food type.
 

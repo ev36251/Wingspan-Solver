@@ -182,6 +182,11 @@ def execute_play_bird(
     habitat: Habitat,
     food_payment: dict[FoodType, int],
     egg_payment_slots: list[tuple[Habitat, int]] | None = None,
+    *,
+    target_slot: int | None = None,
+    play_on_top: bool = False,
+    play_on_top_discard: bool = False,
+    hand_tuck_payment: int = 0,
 ) -> ActionResult:
     """Play a bird card from hand onto the board.
 
@@ -192,7 +197,173 @@ def execute_play_bird(
         habitat: Which habitat to place it in
         food_payment: How to pay food cost {FoodType: count}
         egg_payment_slots: Where to remove eggs from [(habitat, slot_idx), ...]
+        target_slot: For sideways birds (first slot of consecutive pair) or play-on-top target slot
+        play_on_top: True for play-on-top birds / Cassowary (free placement into occupied slot)
+        play_on_top_discard: True for Cassowary (discard covered bird vs tuck it)
+        hand_tuck_payment: For Imperial Eagle: number of hand cards tucked instead of rodents
     """
+    # --- Play-on-top path (free replacement of an occupied slot) ---
+    if play_on_top and target_slot is not None:
+        if not player.has_bird_in_hand(bird.name):
+            return ActionResult(False, ActionType.PLAY_BIRD, "Bird not in hand")
+        if not bird.can_live_in(habitat):
+            return ActionResult(False, ActionType.PLAY_BIRD,
+                                f"{bird.name} cannot live in {habitat.value}")
+        if player.action_cubes_remaining <= 0:
+            return ActionResult(False, ActionType.PLAY_BIRD, "No action cubes remaining")
+
+        row = player.board.get_row(habitat)
+        if target_slot >= len(row.slots):
+            return ActionResult(False, ActionType.PLAY_BIRD, "Invalid target slot")
+        covered_slot = row.slots[target_slot]
+        if covered_slot.bird is None:
+            return ActionResult(False, ActionType.PLAY_BIRD, "Target slot is empty for play-on-top")
+
+        # Transfer tucked cards from covered bird; discard or tuck covered bird
+        covered_tucked = covered_slot.tucked_cards
+        if not play_on_top_discard:
+            # Tuck covered bird: new bird gets +1 tucked card (the covered bird) + its tucked count
+            new_tucked = covered_tucked + 1
+        else:
+            # Cassowary: discard covered bird, no tucking
+            new_tucked = 0
+
+        # Discard covered bird's eggs and food
+        covered_slot.eggs = 0
+        covered_slot.cached_food = {}
+        covered_slot.tucked_cards = 0
+        covered_slot.counts_double = False
+        covered_slot.is_sideways = False
+        covered_slot.is_sideways_blocked = False
+
+        # Remove eagle from hand and place in target slot
+        player.remove_from_hand(bird.name)
+        covered_slot.bird = bird
+        covered_slot.tucked_cards = new_tucked
+
+        slot_idx = target_slot
+
+        power_acts: list[PowerActivation] = []
+        if bird.color == PowerColor.WHITE:
+            assert_power_allowed_for_strict_mode(game_state, bird)
+            power = get_power(bird)
+            if not isinstance(power, NoPower):
+                ctx = PowerContext(
+                    game_state=game_state, player=player, bird=bird,
+                    slot_index=slot_idx, habitat=habitat,
+                )
+                if power.can_execute(ctx):
+                    result = power.execute(ctx)
+                    _record_power_event(game_state, timing="white", player=player,
+                                        bird=bird, executed=bool(result.executed))
+                    if result.executed:
+                        power_acts.append(PowerActivation(bird_name=bird.name,
+                                                          slot_index=slot_idx, result=result))
+
+        action_desc = (
+            f"Played {bird.name} replacing {covered_slot.bird.name if covered_slot.bird else '?'} "
+            f"in {habitat.value} slot {slot_idx + 1}"
+        ) if play_on_top_discard else (
+            f"Played {bird.name} on top in {habitat.value} slot {slot_idx + 1} "
+            f"(tucked {covered_slot.bird.name if covered_slot.bird else 'covered bird'})"
+        )
+        result = ActionResult(
+            True, ActionType.PLAY_BIRD,
+            f"Played {bird.name} in {habitat.value} slot {slot_idx + 1} (on-top)",
+            bird_played=bird.name, habitat=habitat,
+            power_activations=power_acts,
+        )
+        player.play_bird_actions_this_round += 1
+        player.action_types_used_this_round.add(ActionType.PLAY_BIRD)
+        from backend.engine.timed_powers import trigger_between_turn_powers
+        trigger_between_turn_powers(game_state, trigger_player=player,
+                                    trigger_action=ActionType.PLAY_BIRD, trigger_result=result)
+        return result
+
+    # --- Sideways path (target_slot set, not play_on_top) ---
+    if target_slot is not None:
+        if not player.has_bird_in_hand(bird.name):
+            return ActionResult(False, ActionType.PLAY_BIRD, "Bird not in hand")
+        if not bird.can_live_in(habitat):
+            return ActionResult(False, ActionType.PLAY_BIRD,
+                                f"{bird.name} cannot live in {habitat.value}")
+        if player.action_cubes_remaining <= 0:
+            return ActionResult(False, ActionType.PLAY_BIRD, "No action cubes remaining")
+
+        row = player.board.get_row(habitat)
+        if target_slot >= len(row.slots) - 1:
+            return ActionResult(False, ActionType.PLAY_BIRD, "No room for sideways placement")
+        if not row.slots[target_slot].is_available or not row.slots[target_slot + 1].is_available:
+            return ActionResult(False, ActionType.PLAY_BIRD, "Consecutive slots not available for sideways")
+
+        slot_idx = target_slot
+        egg_cost = min(EGG_COST_BY_COLUMN[slot_idx], EGG_COST_BY_COLUMN[slot_idx + 1])
+        if player.board.total_eggs() < egg_cost:
+            return ActionResult(False, ActionType.PLAY_BIRD,
+                                f"Need {egg_cost} eggs for sideways placement")
+
+        # Pay egg cost
+        if egg_cost > 0:
+            if not egg_payment_slots:
+                egg_payment_slots = _auto_select_egg_payment(player, egg_cost)
+            if egg_payment_slots is None:
+                return ActionResult(False, ActionType.PLAY_BIRD, "Cannot pay egg cost")
+            eggs_removed = 0
+            for hab, si in egg_payment_slots:
+                slot = player.board.get_row(hab).slots[si]
+                if slot.eggs > 0:
+                    slot.eggs -= 1
+                    eggs_removed += 1
+                if eggs_removed >= egg_cost:
+                    break
+            if eggs_removed < egg_cost:
+                return ActionResult(False, ActionType.PLAY_BIRD,
+                                    f"Could only remove {eggs_removed}/{egg_cost} eggs")
+
+        # Pay food cost
+        for food_type, count in food_payment.items():
+            if not player.food_supply.spend(food_type, count):
+                return ActionResult(False, ActionType.PLAY_BIRD,
+                                    f"Failed to spend {count} {food_type.value}")
+        nectar_spent = food_payment.get(FoodType.NECTAR, 0)
+        if nectar_spent > 0:
+            row.nectar_spent += nectar_spent
+
+        # Place bird and mark second slot as blocked
+        player.remove_from_hand(bird.name)
+        row.slots[slot_idx].bird = bird
+        # White power fires immediately (PlaceBirdSideways marks the second slot)
+        power_acts: list[PowerActivation] = []
+        if bird.color == PowerColor.WHITE:
+            assert_power_allowed_for_strict_mode(game_state, bird)
+            power = get_power(bird)
+            if not isinstance(power, NoPower):
+                ctx = PowerContext(
+                    game_state=game_state, player=player, bird=bird,
+                    slot_index=slot_idx, habitat=habitat,
+                )
+                if power.can_execute(ctx):
+                    res = power.execute(ctx)
+                    _record_power_event(game_state, timing="white", player=player,
+                                        bird=bird, executed=bool(res.executed))
+                    if res.executed:
+                        power_acts.append(PowerActivation(bird_name=bird.name,
+                                                          slot_index=slot_idx, result=res))
+
+        result = ActionResult(
+            True, ActionType.PLAY_BIRD,
+            f"Played {bird.name} sideways in {habitat.value} slots {slot_idx + 1}-{slot_idx + 2}",
+            bird_played=bird.name, habitat=habitat,
+            power_activations=power_acts,
+        )
+        player.play_bird_actions_this_round += 1
+        player.action_types_used_this_round.add(ActionType.PLAY_BIRD)
+        from backend.engine.timed_powers import trigger_between_turn_powers
+        trigger_between_turn_powers(game_state, trigger_player=player,
+                                    trigger_action=ActionType.PLAY_BIRD, trigger_result=result)
+        return result
+
+    # --- Normal placement path ---
     legal, reason = can_play_bird(player, bird, habitat, game_state)
     if not legal:
         return ActionResult(False, ActionType.PLAY_BIRD, reason)
@@ -236,6 +407,13 @@ def execute_play_bird(
     # Remove bird from hand and place on board
     player.remove_from_hand(bird.name)
     row.slots[slot_idx].bird = bird
+
+    # Imperial Eagle: tuck hand cards as food substitute
+    if hand_tuck_payment > 0:
+        cards_to_tuck = sorted(player.hand, key=lambda b: b.victory_points)[:hand_tuck_payment]
+        for card in cards_to_tuck:
+            player.remove_from_hand(card.name)
+        row.slots[slot_idx].tucked_cards += hand_tuck_payment
 
     power_acts: list[PowerActivation] = []
 
