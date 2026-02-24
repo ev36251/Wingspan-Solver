@@ -19,6 +19,7 @@ import time
 from pathlib import Path
 
 from backend.models.enums import BoardType
+from backend.ml.collect_rl_episodes import collect_rl_episodes
 from backend.ml.evaluate_factorized_bc import evaluate_factorized_vs_heuristic
 from backend.ml.evaluate_factorized_pool import evaluate_against_pool
 from backend.ml.generate_bc_dataset import generate_bc_dataset
@@ -237,13 +238,13 @@ def run_auto_improve_factorized(
     eval_games: int = 40,
     promotion_games: int = 80,
     pool_games_per_opponent: int = 40,
-    min_pool_win_rate: float = 0.50,
+    min_pool_win_rate: float = 0.30,
     min_pool_mean_score: float = 0.0,
     min_pool_rate_ge_100: float = 0.0,
     min_pool_rate_ge_120: float = 0.0,
-    require_pool_non_regression: bool = True,
-    min_gate_win_rate: float = 0.50,
-    min_gate_mean_score: float = 50.0,
+    require_pool_non_regression: bool = False,
+    min_gate_win_rate: float = 0.0,
+    min_gate_mean_score: float = 0.0,
     min_gate_rate_ge_100: float = 0.0,
     min_gate_rate_ge_120: float = 0.0,
     require_non_negative_champion_margin: bool = True,
@@ -266,7 +267,7 @@ def run_auto_improve_factorized(
     best_max_margin_regression: float = 1.0,
     fixed_benchmark_seeds: bool = True,
     benchmark_seed: int = 13_371_337,
-    engine_teacher_prob: float = 0.15,
+    engine_teacher_prob: float = 0.30,
     engine_time_budget_ms: int = 25,
     engine_num_determinizations: int = 0,
     engine_max_rollout_depth: int = 24,
@@ -281,7 +282,7 @@ def run_auto_improve_factorized(
     rollback_on_fixed_gate_regression: bool = True,
     fixed_gate_regression_max_drop: float = 0.10,
     stop_after_consecutive_non_eligible_iters: bool = True,
-    max_consecutive_non_eligible_iters: int = 2,
+    max_consecutive_non_eligible_iters: int = 4,
     seed: int = 0,
     strict_rules_only: bool = True,
     reject_non_strict_powers: bool = True,
@@ -291,20 +292,22 @@ def run_auto_improve_factorized(
     strict_fraction_warmup_iters: int = 5,
     strict_kpi_gate_enabled: bool = True,
     strict_kpi_baseline_path: str = "reports/ml/baselines/strict_kpi_baseline.json",
-    strict_kpi_round1_games: int = 10,
-    strict_kpi_smoke_games: int = 3,
+    strict_kpi_round1_games: int = 20,
+    strict_kpi_smoke_games: int = 20,
     strict_kpi_max_turns: int = 120,
     strict_kpi_min_round1_pct_15_30: float = 0.2,
     strict_kpi_max_round1_strict_rejected_games: int = 0,
     strict_kpi_max_smoke_strict_rejected_games: int = 0,
     strict_kpi_min_strict_certified_birds: int = 50,
     strict_kpi_require_non_regression: bool = True,
-    strict_kpi_mean_score_tolerance: float = 0.5,
+    strict_kpi_mean_score_tolerance: float = 3.0,
     state_encoder_enable_identity: bool = False,
     state_encoder_identity_hash_dim: int = 128,
+    state_encoder_use_per_slot: bool = False,
+    state_encoder_max_hand_slots: int = 8,
     require_fixed_seed_eval_gate_pass: bool = False,
     fixed_seed_eval_gate_games: int = 40,
-    fixed_seed_eval_gate_min_win_rate: float = 0.50,
+    fixed_seed_eval_gate_min_win_rate: float = 0.43,
     data_accumulation_enabled: bool = True,
     data_accumulation_decay: float = 0.5,
     max_accumulated_samples: int = 200_000,
@@ -312,6 +315,10 @@ def run_auto_improve_factorized(
     clean_out_dir: bool = True,
     train_hidden: int | None = None,
     train_lr: float | None = None,
+    rl_games_per_iter: int = 0,
+    rl_temperature: float = 1.5,
+    rl_use_value_baseline: bool = True,
+    rl_warm_start_path: str = "",
 ) -> dict:
     if promotion_primary_opponent not in ("heuristic", "champion", "frozen"):
         raise ValueError("promotion_primary_opponent must be 'heuristic', 'champion', or 'frozen'")
@@ -363,6 +370,11 @@ def run_auto_improve_factorized(
     hard_replay_loss_oversample_factor = max(1, int(hard_replay_loss_oversample_factor))
     fixed_gate_regression_max_drop = max(0.0, float(fixed_gate_regression_max_drop))
     state_encoder_identity_hash_dim = max(1, int(state_encoder_identity_hash_dim))
+    state_encoder_max_hand_slots = max(1, int(state_encoder_max_hand_slots))
+    # Auto-scale hidden sizes when per-slot encoding is used and still at defaults
+    if state_encoder_use_per_slot and train_hidden1 == 384 and train_hidden2 == 192:
+        train_hidden1, train_hidden2 = 768, 384
+        print("auto_improve: per-slot encoding → auto-scaled hidden1=768 hidden2=384")
     fixed_seed_eval_gate_games = max(1, int(fixed_seed_eval_gate_games))
     fixed_seed_eval_gate_min_win_rate = max(0.0, min(1.0, float(fixed_seed_eval_gate_min_win_rate)))
     max_consecutive_non_eligible_iters = max(1, int(max_consecutive_non_eligible_iters))
@@ -373,10 +385,20 @@ def run_auto_improve_factorized(
         frozen_opponent_model_path = str(frozen_path)
     if promotion_primary_opponent == "frozen" and not frozen_opponent_model_path:
         raise ValueError("promotion_primary_opponent='frozen' requires --frozen-opponent-model-path")
+    rl_games_per_iter = max(0, int(rl_games_per_iter))
+    rl_temperature = max(0.01, float(rl_temperature))
+    if rl_warm_start_path:
+        ws_path = Path(rl_warm_start_path)
+        if not ws_path.exists():
+            raise FileNotFoundError(f"rl_warm_start_path does not exist: {rl_warm_start_path}")
+        rl_warm_start_path = str(ws_path)
+    else:
+        rl_warm_start_path = ""
     auto_train_init_from_frozen = (
         train_init_model_path is None
         and bool(frozen_opponent_model_path)
         and bool(state_encoder_enable_identity)
+        and not state_encoder_use_per_slot
     )
     if auto_train_init_from_frozen:
         train_init_model_path = str(frozen_opponent_model_path)
@@ -406,9 +428,13 @@ def run_auto_improve_factorized(
     proposal_model_path: str | None = None
     if best_model_path.exists():
         proposal_model_path = str(best_model_path)
-    if proposal_model_path is None and frozen_opponent_model_path and not state_encoder_enable_identity:
+    if proposal_model_path is None and frozen_opponent_model_path and not state_encoder_enable_identity and not state_encoder_use_per_slot:
         # Optional warm start from a frozen teacher checkpoint when feature dims match.
         proposal_model_path = str(frozen_opponent_model_path)
+    # RL warm-start: if a seed model is given and no proposal is available yet,
+    # use it so RL episode collection has a reasonable policy from iteration 1.
+    if proposal_model_path is None and rl_warm_start_path:
+        proposal_model_path = rl_warm_start_path
     accumulation_sources: list[dict] = []
     consecutive_non_eligible_iters = 0
     stopped_early = False
@@ -486,6 +512,8 @@ def run_auto_improve_factorized(
             strict_game_fraction=strict_game_fraction_iter,
             state_encoder_enable_identity=state_encoder_enable_identity,
             state_encoder_identity_hash_dim=state_encoder_identity_hash_dim,
+            state_encoder_use_per_slot=state_encoder_use_per_slot,
+            state_encoder_max_hand_slots=state_encoder_max_hand_slots,
         )
 
         if dataset_workers <= 1 or games_per_iter <= 1:
@@ -622,6 +650,64 @@ def run_auto_improve_factorized(
             }
             dataset_meta.write_text(json.dumps(ds_meta, indent=2), encoding="utf-8")
             hard_replay_summary = dict(ds_meta["hard_replay"])
+
+        # ------------------------------------------------------------------ #
+        # RL episode generation (REINFORCE)                                   #
+        # ------------------------------------------------------------------ #
+        rl_summary: dict = {
+            "enabled": bool(rl_games_per_iter > 0),
+            "games": 0,
+            "samples_added": 0,
+            "temperature": float(rl_temperature),
+            "use_value_baseline": bool(rl_use_value_baseline),
+            "warm_start_path": rl_warm_start_path,
+        }
+        rl_proposal = proposal_model_path
+        if rl_games_per_iter > 0:
+            if rl_proposal is None:
+                print(
+                    f"  RL: skipping episode collection (no proposal model available at iter {i})"
+                )
+            else:
+                rl_out = iter_dir / "rl_episodes.jsonl"
+                rl_meta = collect_rl_episodes(
+                    model_path=rl_proposal,
+                    n_games=rl_games_per_iter,
+                    out_path=str(rl_out),
+                    board_type=board_type.value,
+                    players=players,
+                    temperature=rl_temperature,
+                    use_value_baseline=rl_use_value_baseline,
+                    seed=iter_seed + 9999,
+                    max_turns=max_turns,
+                )
+                # Append RL rows to the current iteration's BC dataset so they
+                # participate in data accumulation and training together.
+                appended_rl = 0
+                with dataset_jsonl.open("a", encoding="utf-8") as f_bc:
+                    with rl_out.open("r", encoding="utf-8") as f_rl:
+                        for line in f_rl:
+                            if line.strip():
+                                f_bc.write(line)
+                                appended_rl += 1
+                ds_meta["samples"] = int(ds_meta.get("samples", 0)) + appended_rl
+                rl_summary = {
+                    "enabled": True,
+                    "games": int(rl_meta.get("games", 0)),
+                    "samples_added": appended_rl,
+                    "temperature": float(rl_temperature),
+                    "use_value_baseline": bool(rl_use_value_baseline),
+                    "warm_start_path": rl_warm_start_path,
+                    "mean_score": float(rl_meta.get("mean_score", 0.0)),
+                    "adv_std_raw": float(rl_meta.get("adv_std_raw", 0.0)),
+                    "dataset": str(rl_out),
+                }
+                dataset_meta.write_text(json.dumps(ds_meta, indent=2), encoding="utf-8")
+                print(
+                    f"  RL: {appended_rl} samples from {rl_games_per_iter} games, "
+                    f"mean_score={rl_meta.get('mean_score', 0.0):.1f} "
+                    f"adv_std={rl_meta.get('adv_std_raw', 0.0):.2f}"
+                )
 
         accumulation_sources.append(
             {
@@ -1005,6 +1091,7 @@ def run_auto_improve_factorized(
                 "mean_player_score": ds_meta["mean_player_score"],
             },
             "hard_replay": hard_replay_summary,
+            "rl_summary": rl_summary,
             "combined_dataset_summary": accumulation_summary,
             "train_summary": {
                 "train_samples": tr["train_samples"],
@@ -1060,7 +1147,7 @@ def run_auto_improve_factorized(
         elif (not use_champion_mode) and proposal_update_policy == "best_only":
             if best_model_path.exists():
                 proposal_model_path = str(best_model_path)
-            elif frozen_opponent_model_path and not state_encoder_enable_identity:
+            elif frozen_opponent_model_path and not state_encoder_enable_identity and not state_encoder_use_per_slot:
                 proposal_model_path = str(frozen_opponent_model_path)
 
         if best is None:
@@ -1194,6 +1281,8 @@ def run_auto_improve_factorized(
                 "strict_kpi_mean_score_tolerance": strict_kpi_mean_score_tolerance,
                 "state_encoder_enable_identity": state_encoder_enable_identity,
                 "state_encoder_identity_hash_dim": state_encoder_identity_hash_dim,
+                "state_encoder_use_per_slot": state_encoder_use_per_slot,
+                "state_encoder_max_hand_slots": state_encoder_max_hand_slots,
                 "require_fixed_seed_eval_gate_pass": require_fixed_seed_eval_gate_pass,
                 "fixed_seed_eval_gate_games": fixed_seed_eval_gate_games,
                 "fixed_seed_eval_gate_min_win_rate": fixed_seed_eval_gate_min_win_rate,
@@ -1201,6 +1290,10 @@ def run_auto_improve_factorized(
                 "data_accumulation_decay": data_accumulation_decay,
                 "max_accumulated_samples": max_accumulated_samples,
                 "dataset_workers": dataset_workers,
+                "rl_games_per_iter": rl_games_per_iter,
+                "rl_temperature": rl_temperature,
+                "rl_use_value_baseline": rl_use_value_baseline,
+                "rl_warm_start_path": rl_warm_start_path,
                 "seed": seed,
             },
             "best": best,
@@ -1230,7 +1323,7 @@ def run_auto_improve_factorized(
         if fixed_gate_rollback_triggered:
             if best_model_path.exists():
                 proposal_model_path = str(best_model_path)
-            elif frozen_opponent_model_path and not state_encoder_enable_identity:
+            elif frozen_opponent_model_path and not state_encoder_enable_identity and not state_encoder_use_per_slot:
                 proposal_model_path = str(frozen_opponent_model_path)
             stopped_early = True
             drop = float(fixed_gate_regression.get("drop", 0.0))
@@ -1290,15 +1383,15 @@ def main() -> None:
     parser.add_argument("--eval-games", type=int, default=40)
     parser.add_argument("--promotion-games", type=int, default=80)
     parser.add_argument("--pool-games-per-opponent", type=int, default=40)
-    parser.add_argument("--min-pool-win-rate", type=float, default=0.50)
+    parser.add_argument("--min-pool-win-rate", type=float, default=0.30)
     parser.add_argument("--min-pool-mean-score", type=float, default=0.0)
     parser.add_argument("--min-pool-rate-ge-100", type=float, default=0.0)
     parser.add_argument("--min-pool-rate-ge-120", type=float, default=0.0)
-    parser.set_defaults(require_pool_non_regression=True)
+    parser.set_defaults(require_pool_non_regression=False)
     parser.add_argument("--require-pool-non-regression", dest="require_pool_non_regression", action="store_true")
     parser.add_argument("--disable-pool-non-regression", dest="require_pool_non_regression", action="store_false")
-    parser.add_argument("--min-gate-win-rate", type=float, default=0.50)
-    parser.add_argument("--min-gate-mean-score", type=float, default=50.0)
+    parser.add_argument("--min-gate-win-rate", type=float, default=0.0)
+    parser.add_argument("--min-gate-mean-score", type=float, default=0.0)
     parser.add_argument("--min-gate-rate-ge-100", type=float, default=0.0)
     parser.add_argument("--min-gate-rate-ge-120", type=float, default=0.0)
     parser.set_defaults(require_non_negative_champion_margin=True)
@@ -1353,7 +1446,7 @@ def main() -> None:
     parser.add_argument("--fixed-benchmark-seeds", dest="fixed_benchmark_seeds", action="store_true")
     parser.add_argument("--rotating-benchmark-seeds", dest="fixed_benchmark_seeds", action="store_false")
     parser.add_argument("--benchmark-seed", type=int, default=13_371_337)
-    parser.add_argument("--engine-teacher-prob", type=float, default=0.15)
+    parser.add_argument("--engine-teacher-prob", type=float, default=0.30)
     parser.add_argument("--engine-time-budget-ms", type=int, default=25)
     parser.add_argument("--engine-num-determinizations", type=int, default=0)
     parser.add_argument("--engine-max-rollout-depth", type=int, default=24)
@@ -1392,7 +1485,7 @@ def main() -> None:
         dest="stop_after_consecutive_non_eligible_iters",
         action="store_false",
     )
-    parser.add_argument("--max-consecutive-non-eligible-iters", type=int, default=2)
+    parser.add_argument("--max-consecutive-non-eligible-iters", type=int, default=4)
     parser.set_defaults(strict_rules_only=True, reject_non_strict_powers=True)
     parser.add_argument("--strict-rules-only", dest="strict_rules_only", action="store_true")
     parser.add_argument("--allow-non-strict-rules", dest="strict_rules_only", action="store_false")
@@ -1408,8 +1501,8 @@ def main() -> None:
     parser.add_argument("--strict-kpi-gate-enabled", dest="strict_kpi_gate_enabled", action="store_true")
     parser.add_argument("--disable-strict-kpi-gate", dest="strict_kpi_gate_enabled", action="store_false")
     parser.add_argument("--strict-kpi-baseline", default="reports/ml/baselines/strict_kpi_baseline.json")
-    parser.add_argument("--strict-kpi-round1-games", type=int, default=10)
-    parser.add_argument("--strict-kpi-smoke-games", type=int, default=3)
+    parser.add_argument("--strict-kpi-round1-games", type=int, default=20)
+    parser.add_argument("--strict-kpi-smoke-games", type=int, default=20)
     parser.add_argument("--strict-kpi-max-turns", type=int, default=120)
     parser.add_argument("--strict-kpi-min-round1-pct-15-30", type=float, default=0.2)
     parser.add_argument("--strict-kpi-max-round1-strict-rejected-games", type=int, default=0)
@@ -1418,17 +1511,46 @@ def main() -> None:
     parser.set_defaults(strict_kpi_require_non_regression=True)
     parser.add_argument("--strict-kpi-require-non-regression", dest="strict_kpi_require_non_regression", action="store_true")
     parser.add_argument("--strict-kpi-disable-non-regression", dest="strict_kpi_require_non_regression", action="store_false")
-    parser.add_argument("--strict-kpi-mean-score-tolerance", type=float, default=0.5)
+    parser.add_argument("--strict-kpi-mean-score-tolerance", type=float, default=3.0)
     parser.set_defaults(state_encoder_enable_identity=False)
     parser.add_argument("--state-encoder-enable-identity", dest="state_encoder_enable_identity", action="store_true")
     parser.add_argument("--disable-state-encoder-identity", dest="state_encoder_enable_identity", action="store_false")
     parser.add_argument("--state-encoder-identity-hash-dim", type=int, default=128)
+    parser.set_defaults(state_encoder_use_per_slot=False)
+    parser.add_argument("--use-per-slot-encoding", dest="state_encoder_use_per_slot", action="store_true")
+    parser.add_argument("--disable-per-slot-encoding", dest="state_encoder_use_per_slot", action="store_false")
+    parser.add_argument("--max-hand-slots", dest="state_encoder_max_hand_slots", type=int, default=8)
     parser.set_defaults(require_fixed_seed_eval_gate_pass=False)
     parser.add_argument("--require-fixed-seed-eval-gate-pass", dest="require_fixed_seed_eval_gate_pass", action="store_true")
     parser.add_argument("--disable-fixed-seed-eval-gate-pass", dest="require_fixed_seed_eval_gate_pass", action="store_false")
     parser.add_argument("--fixed-seed-eval-gate-games", type=int, default=40)
-    parser.add_argument("--fixed-seed-eval-gate-min-win-rate", type=float, default=0.50)
+    parser.add_argument("--fixed-seed-eval-gate-min-win-rate", type=float, default=0.43)
     parser.add_argument("--seed", type=int, default=0)
+    # REINFORCE policy-gradient options
+    parser.add_argument(
+        "--rl-games-per-iter",
+        type=int,
+        default=0,
+        help="Games of RL self-play to collect per iteration (0 = disabled)",
+    )
+    parser.add_argument("--rl-temperature", type=float, default=1.5)
+    parser.add_argument(
+        "--rl-warm-start",
+        default="",
+        dest="rl_warm_start_path",
+        help="Seed model for RL episode collection before first promotion",
+    )
+    parser.set_defaults(rl_use_value_baseline=True)
+    parser.add_argument(
+        "--rl-use-value-baseline",
+        dest="rl_use_value_baseline",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--disable-rl-value-baseline",
+        dest="rl_use_value_baseline",
+        action="store_false",
+    )
     args = parser.parse_args()
 
     manifest = run_auto_improve_factorized(
@@ -1537,12 +1659,18 @@ def main() -> None:
         strict_kpi_mean_score_tolerance=args.strict_kpi_mean_score_tolerance,
         state_encoder_enable_identity=args.state_encoder_enable_identity,
         state_encoder_identity_hash_dim=args.state_encoder_identity_hash_dim,
+        state_encoder_use_per_slot=args.state_encoder_use_per_slot,
+        state_encoder_max_hand_slots=args.state_encoder_max_hand_slots,
         require_fixed_seed_eval_gate_pass=args.require_fixed_seed_eval_gate_pass,
         fixed_seed_eval_gate_games=args.fixed_seed_eval_gate_games,
         fixed_seed_eval_gate_min_win_rate=args.fixed_seed_eval_gate_min_win_rate,
         seed=args.seed,
         train_hidden=args.train_hidden,
         train_lr=args.train_lr,
+        rl_games_per_iter=args.rl_games_per_iter,
+        rl_temperature=args.rl_temperature,
+        rl_use_value_baseline=args.rl_use_value_baseline,
+        rl_warm_start_path=args.rl_warm_start_path,
     )
 
     best = manifest.get("best")

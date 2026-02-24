@@ -17,7 +17,7 @@ from backend.powers.templates.draw_cards import DrawCards, DrawFromTray, DrawBon
 from backend.powers.templates.tuck_cards import TuckFromHand, TuckFromDeck, DiscardToTuck
 from backend.powers.templates.predator import PredatorDice, PredatorLookAt
 from backend.powers.templates.cache_food import CacheFoodFromSupply, CacheFoodFromFeeder, TradeFood
-from backend.powers.templates.play_bird import PlayAdditionalBird
+from backend.powers.templates.play_bird import PlayAdditionalBird, PlayOnTopPower
 from backend.powers.templates.special import (
     RepeatPower, CopyNeighborBrownPower, FlockingPower,
     EndOfRoundLayEggs, EndOfRoundCacheFood, DiscardEggForBenefit,
@@ -27,6 +27,7 @@ from backend.powers.templates.unique import (
     FewestBirdsGainFood, ScoreBonusCardNow, RetrieveDiscardedBonusCard,
     CopyNeighborBonusCard, TradeFoodForAny, RepeatPredatorPower,
     CopyNeighborWhitePower, ConditionalCacheFromNeighbor,
+    SouthernCassowaryPower, TuckToPayCost,
 )
 from backend.powers.templates.strict import (
     DrawThenDiscardFromHand,
@@ -163,6 +164,15 @@ _MANUAL_OVERRIDES: dict[str, PowerEffect] = {
         direction="left", target_habitat=Habitat.FOREST),
     "Common Myna": CopyNeighborBrownPower(
         direction="left", target_habitat=Habitat.GRASSLAND),
+    # White: play on top of another bird for free (covered bird becomes tucked)
+    "Common Buzzard": PlayOnTopPower(),
+    "Red Kite": PlayOnTopPower(),
+    "Eurasian Hobby": PlayOnTopPower(),
+    "Montagu's Harrier": PlayOnTopPower(),
+    # White: discard a forest bird and replace with Cassowary (+4 eggs +2 fruit)
+    "Southern Cassowary": SouthernCassowaryPower(),
+    # White: may substitute rodents in cost with tucked hand cards
+    "Eastern Imperial Eagle": TuckToPayCost(),
 }
 
 

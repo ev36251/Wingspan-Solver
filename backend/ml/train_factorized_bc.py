@@ -701,6 +701,12 @@ def train_bc(
 
                 dh2_drop = np.zeros_like(h2_drop)
 
+                # Policy-gradient scale: 1.0 for BC samples, rl_advantage for RL samples.
+                # For RL samples this multiplies the CE gradient by the advantage,
+                # reinforcing moves that led to above-baseline outcomes and suppressing
+                # moves that led to below-baseline outcomes.
+                pg_scale = float(r["rl_advantage"]) if r.get("is_rl") else 1.0
+
                 # Action head (always)
                 pa = _softmax(logits["action_type"])
                 loss_sum += -math.log(max(1e-9, float(pa[ta])))
@@ -709,6 +715,7 @@ def train_bc(
 
                 da = pa.copy()
                 da[ta] -= 1.0
+                da *= pg_scale
                 dWh["action_type"] += np.outer(h2_drop, da)
                 dbh["action_type"] += da
                 dh2_drop += model.head_W["action_type"] @ da
@@ -720,6 +727,7 @@ def train_bc(
                     loss_sum += -math.log(max(1e-9, float(p[tv])))
                     d = p.copy()
                     d[tv] -= 1.0
+                    d *= pg_scale
                     dWh[hn] += np.outer(h2_drop, d)
                     dbh[hn] += d
                     dh2_drop += model.head_W[hn] @ d

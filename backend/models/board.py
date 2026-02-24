@@ -13,10 +13,17 @@ class BirdSlot:
     cached_food: dict[FoodType, int] = field(default_factory=dict)
     tucked_cards: int = 0
     counts_double: bool = False  # Teal power: counts double for round goals
+    is_sideways: bool = False         # This slot holds a sideways bird (spans 2 cols)
+    is_sideways_blocked: bool = False  # This slot is blocked by an adjacent sideways bird
 
     @property
     def is_empty(self) -> bool:
         return self.bird is None
+
+    @property
+    def is_available(self) -> bool:
+        """True if this slot can receive a new bird (empty and not sideways-blocked)."""
+        return self.bird is None and not self.is_sideways_blocked
 
     @property
     def total_cached_food(self) -> int:
@@ -45,16 +52,17 @@ class HabitatRow:
 
     @property
     def bird_count(self) -> int:
-        return sum(1 for s in self.slots if not s.is_empty)
+        return sum(1 for s in self.slots if s.bird is not None)
 
     @property
     def is_full(self) -> bool:
-        return self.bird_count == 5
+        """True when all slots are occupied or sideways-blocked."""
+        return all(s.bird is not None or s.is_sideways_blocked for s in self.slots)
 
     def next_empty_slot(self) -> int | None:
-        """Index of the leftmost empty slot, or None if full."""
+        """Index of the leftmost available slot (empty and not sideways-blocked), or None if full."""
         for i, slot in enumerate(self.slots):
-            if slot.is_empty:
+            if slot.is_available:
                 return i
         return None
 
