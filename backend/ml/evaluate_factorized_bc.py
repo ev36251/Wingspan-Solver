@@ -16,7 +16,8 @@ from backend.models.enums import ActionType, BoardType
 from backend.solver.move_generator import generate_all_moves, Move
 from backend.solver.self_play import create_training_game
 from backend.solver.simulation import _refill_tray, deep_copy_game, execute_move_on_sim, pick_weighted_random_move
-from backend.ml.factorized_inference import FactorizedPolicyModel
+from backend.ml.factorized_inference import FactorizedPolicyModel, load_policy_model
+from backend.ml.mcts import MCTS
 from backend.ml.state_encoder import StateEncoder
 
 
@@ -56,6 +57,12 @@ def evaluate_factorized_vs_heuristic(
     proposal_top_k: int = 5,
 ) -> EvalResult:
     load_all(EXCEL_FILE)
+
+    try:
+        from threadpoolctl import threadpool_limits
+        threadpool_limits(limits=1, user_api="blas")
+    except ImportError:
+        pass
 
     model = FactorizedPolicyModel(model_path)
     enc = StateEncoder.resolve_for_model(model.meta)
@@ -197,6 +204,146 @@ def evaluate_factorized_vs_heuristic(
         heuristic_rate_100_119=_rate(h_scores, low=100, high=120),
         heuristic_rate_ge_120_bucket=_rate(h_scores, low=120),
     )
+
+
+def evaluate_nn_vs_nn(
+    model_a_path: str,
+    model_b_path: str,
+    games: int = 50,
+    board_type: BoardType = BoardType.OCEANIA,
+    mcts_sims: int = 20,
+    c_puct: float = 1.5,
+    value_blend: float = 0.5,
+    rollout_policy: str = "fast",
+    max_turns: int = 240,
+    seed: int = 0,
+) -> dict:
+    """Evaluate two NN models against each other using MCTS.
+
+    model_a = candidate (reported as 'nn' in the returned dict)
+    model_b = champion  (reported as 'heuristic' for naming compatibility)
+
+    Returns a dict with the same keys as _eval_to_summary() so it can be used
+    directly as gate_summary in auto_improve_alphazero.py.
+    """
+    load_all(EXCEL_FILE)
+
+    try:
+        from threadpoolctl import threadpool_limits
+        threadpool_limits(limits=1, user_api="blas")
+    except ImportError:
+        pass
+
+    model_a = load_policy_model(model_a_path)
+    model_b = load_policy_model(model_b_path)
+    enc_a = StateEncoder.resolve_for_model(model_a.meta)
+    enc_b = StateEncoder.resolve_for_model(model_b.meta)
+
+    mcts_a = MCTS(
+        model_a, enc_a,
+        num_sims=mcts_sims, c_puct=c_puct,
+        value_blend=value_blend, rollout_policy=rollout_policy,
+    )
+    mcts_b = MCTS(
+        model_b, enc_b,
+        num_sims=mcts_sims, c_puct=c_puct,
+        value_blend=value_blend, rollout_policy=rollout_policy,
+    )
+
+    a_wins = 0
+    b_wins = 0
+    ties = 0
+    a_scores: list[int] = []
+    b_scores: list[int] = []
+    margins: list[int] = []
+
+    for g in range(1, games + 1):
+        game = create_training_game(num_players=2, board_type=board_type)
+        # Alternate seat assignments so neither model has a consistent first-mover advantage
+        a_idx = (g + seed) % 2
+        b_idx = 1 - a_idx
+
+        turns = 0
+        while not game.is_game_over and turns < max_turns:
+            p = game.current_player
+            pi = game.current_player_idx
+
+            if p.action_cubes_remaining <= 0:
+                if all(x.action_cubes_remaining <= 0 for x in game.players):
+                    game.advance_round()
+                else:
+                    game.current_player_idx = (game.current_player_idx + 1) % game.num_players
+                turns += 1
+                continue
+
+            moves = generate_all_moves(game, p)
+            if not moves:
+                p.action_cubes_remaining = 0
+                game.current_player_idx = (game.current_player_idx + 1) % game.num_players
+                turns += 1
+                continue
+
+            if pi == a_idx:
+                move = mcts_a.get_best_move(game, pi, temperature=0.0)
+            else:
+                move = mcts_b.get_best_move(game, pi, temperature=0.0)
+
+            if move is None:
+                move = moves[0]
+
+            success = execute_move_on_sim(game, p, move)
+            if success:
+                game.advance_turn()
+                _refill_tray(game)
+            else:
+                fallback = False
+                for m in moves:
+                    if m.action_type in (ActionType.GAIN_FOOD, ActionType.LAY_EGGS):
+                        if execute_move_on_sim(game, p, m):
+                            game.advance_turn()
+                            _refill_tray(game)
+                            fallback = True
+                            break
+                if not fallback:
+                    game.advance_turn()
+                    _refill_tray(game)
+
+            turns += 1
+
+        final_scores = [int(calculate_score(game, pl).total) for pl in game.players]
+        a_score = final_scores[a_idx]
+        b_score = final_scores[b_idx]
+
+        a_scores.append(a_score)
+        b_scores.append(b_score)
+        margins.append(a_score - b_score)
+
+        if a_score > b_score:
+            a_wins += 1
+        elif b_score > a_score:
+            b_wins += 1
+        else:
+            ties += 1
+
+        if g % 10 == 0 or g == games:
+            print(
+                f"game {g}/{games} | a_wins={a_wins} b_wins={b_wins} ties={ties} | "
+                f"a_avg={sum(a_scores)/len(a_scores):.1f} b_avg={sum(b_scores)/len(b_scores):.1f}"
+            )
+
+    n = max(1, len(a_scores))
+    return {
+        "games": games,
+        "nn_wins": a_wins,
+        "heuristic_wins": b_wins,
+        "ties": ties,
+        "nn_mean_score": round(sum(a_scores) / n, 3),
+        "heuristic_mean_score": round(sum(b_scores) / n, 3),
+        "nn_mean_margin": round(sum(margins) / n, 3),
+        "nn_win_rate": round(a_wins / max(1, games), 4),
+        "nn_rate_ge_100": round(sum(1 for s in a_scores if s >= 100) / n, 4),
+        "nn_rate_ge_120": round(sum(1 for s in a_scores if s >= 120) / n, 4),
+    }
 
 
 def main() -> None:

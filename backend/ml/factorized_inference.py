@@ -3,9 +3,18 @@
 from __future__ import annotations
 
 import json
+import math as _math
 from pathlib import Path
 
 import numpy as np
+
+try:
+    import torch as _torch
+    import torch.nn as _nn
+    import torch.nn.functional as _Func
+    _TORCH_AVAILABLE = True
+except ImportError:
+    _TORCH_AVAILABLE = False
 
 from backend.models.player import Player
 from backend.solver.move_generator import Move
@@ -195,3 +204,182 @@ def score_move_with_factorized_model(
         tv = int(t[hn])
         score += float(logits[hn][tv])
     return score
+
+
+# ─── Optional PyTorch MPS acceleration ───────────────────────────────────────
+
+if _TORCH_AVAILABLE:
+    class _TorchInferenceNet(_nn.Module):
+        """Minimal PyTorch MLP for fast inference (mirrors BCModel architecture)."""
+
+        def __init__(
+            self,
+            feature_dim: int,
+            hidden1: int,
+            hidden2: int,
+            head_dims: dict[str, int],
+            has_value: bool,
+            has_bn1: bool,
+            has_bn2: bool,
+            batch_norm_eps: float = 1e-5,
+        ):
+            super().__init__()
+            self.fc1 = _nn.Linear(feature_dim, hidden1)
+            self.bn1 = _nn.BatchNorm1d(hidden1, eps=batch_norm_eps) if has_bn1 else None
+            self.fc2 = _nn.Linear(hidden1, hidden2)
+            self.bn2 = _nn.BatchNorm1d(hidden2, eps=batch_norm_eps) if has_bn2 else None
+            self.heads = _nn.ModuleDict(
+                {k: _nn.Linear(hidden2, d) for k, d in head_dims.items()}
+            )
+            self.value_head = _nn.Linear(hidden2, 1) if has_value else None
+
+        def forward(self, x: "_torch.Tensor"):
+            h = self.fc1(x)
+            if self.bn1 is not None:
+                h = self.bn1(h)
+            h = _Func.relu(h)
+            h = self.fc2(h)
+            if self.bn2 is not None:
+                h = self.bn2(h)
+            h = _Func.relu(h)
+            logits = {k: head(h) for k, head in self.heads.items()}
+            value = self.value_head(h).squeeze(-1) if self.value_head is not None else None
+            return logits, value
+
+    class FactorizedPolicyModelTorch(FactorizedPolicyModel):
+        """Drop-in replacement using PyTorch MPS (Apple Silicon GPU) for fast inference.
+
+        On M1/M2/M3 Macs, MPS reduces forward-pass time dramatically compared to
+        numpy BLAS in multiprocessing workers (no thread contention).
+        Supports batched inference via ``forward_batch()`` for MCTS throughput.
+        """
+
+        def __init__(self, path: str | Path, device: str = "auto"):
+            super().__init__(path)
+            self._init_torch(device)
+
+        def _init_torch(self, device: str) -> None:
+            """Build the PyTorch model using already-loaded numpy weights."""
+            if not self.has_second_layer or self.W2 is None:
+                raise ValueError(
+                    "FactorizedPolicyModelTorch requires a 2-layer model (W2/b2 missing)"
+                )
+
+            hidden1 = int(self.W1.shape[1])
+            hidden2 = int(self.W2.shape[1])
+
+            net = _TorchInferenceNet(
+                feature_dim=self.feature_dim,
+                hidden1=hidden1,
+                hidden2=hidden2,
+                head_dims=dict(self.head_dims),
+                has_value=self.has_value_head,
+                has_bn1=self.has_bn1,
+                has_bn2=self.has_bn2,
+                batch_norm_eps=self.batch_norm_eps,
+            )
+
+            with _torch.no_grad():
+                # npz stores W as (in_dim, out_dim); PyTorch Linear.weight is (out_dim, in_dim)
+                net.fc1.weight.data = _torch.from_numpy(self.W1.T.astype(np.float32))
+                net.fc1.bias.data = _torch.from_numpy(self.b1.astype(np.float32))
+                net.fc2.weight.data = _torch.from_numpy(self.W2.T.astype(np.float32))
+                net.fc2.bias.data = _torch.from_numpy(self.b2.astype(np.float32))
+
+                if self.has_bn1 and self.bn1_gamma is not None:
+                    net.bn1.weight.data = _torch.from_numpy(self.bn1_gamma.astype(np.float32))
+                    net.bn1.bias.data = _torch.from_numpy(self.bn1_beta.astype(np.float32))
+                    net.bn1.running_mean.copy_(_torch.from_numpy(self.bn1_running_mean.astype(np.float32)))
+                    net.bn1.running_var.copy_(_torch.from_numpy(self.bn1_running_var.astype(np.float32)))
+
+                if self.has_bn2 and self.bn2_gamma is not None:
+                    net.bn2.weight.data = _torch.from_numpy(self.bn2_gamma.astype(np.float32))
+                    net.bn2.bias.data = _torch.from_numpy(self.bn2_beta.astype(np.float32))
+                    net.bn2.running_mean.copy_(_torch.from_numpy(self.bn2_running_mean.astype(np.float32)))
+                    net.bn2.running_var.copy_(_torch.from_numpy(self.bn2_running_var.astype(np.float32)))
+
+                for hn, W_h in self.head_W.items():
+                    net.heads[hn].weight.data = _torch.from_numpy(W_h.T.astype(np.float32))
+                    net.heads[hn].bias.data = _torch.from_numpy(self.head_b[hn].astype(np.float32))
+
+                if self.has_value_head and self.W_value is not None:
+                    # W_value in npz is (hidden2,); Linear(hidden2, 1).weight is (1, hidden2)
+                    net.value_head.weight.data = _torch.from_numpy(
+                        np.asarray(self.W_value, dtype=np.float32)
+                    ).unsqueeze(0)
+                    net.value_head.bias.data = _torch.tensor(
+                        [self.b_value], dtype=_torch.float32
+                    )
+
+            if device == "auto":
+                if _torch.backends.mps.is_available():
+                    self._device = _torch.device("mps")
+                elif _torch.cuda.is_available():
+                    self._device = _torch.device("cuda")
+                else:
+                    self._device = _torch.device("cpu")
+            else:
+                self._device = _torch.device(device)
+
+            self._net = net.to(self._device)
+            self._net.eval()
+
+        def forward(
+            self, state: np.ndarray
+        ) -> tuple[dict[str, np.ndarray], float | None]:
+            """Single-sample forward pass on MPS/GPU (or CPU fallback)."""
+            state_arr = np.asarray(state, dtype=np.float32)
+            with _torch.no_grad():
+                x = _torch.from_numpy(state_arr).to(self._device).unsqueeze(0)
+                logits_t, value_t = self._net(x)
+                logits = {k: v[0].cpu().numpy() for k, v in logits_t.items()}
+                value: float | None = None
+                if value_t is not None:
+                    vr = float(value_t[0].cpu().item())
+                    if self.value_prediction_mode in {"score_linear", "score_norm_linear"}:
+                        value = vr
+                    else:
+                        value = float(1.0 / (1.0 + _math.exp(-vr)))
+            return logits, value
+
+        def forward_batch(
+            self, states: np.ndarray
+        ) -> tuple[dict[str, np.ndarray], np.ndarray | None]:
+            """Batched forward pass on a (N, feature_dim) array.
+
+            Returns:
+                logits: dict of (N, head_dim) arrays
+                values: (N,) array of value estimates (post-sigmoid if applicable), or None
+            """
+            states_arr = np.asarray(states, dtype=np.float32)
+            with _torch.no_grad():
+                x = _torch.from_numpy(states_arr).to(self._device)
+                logits_t, value_t = self._net(x)
+                logits = {k: v.cpu().numpy() for k, v in logits_t.items()}
+                values: np.ndarray | None = None
+                if value_t is not None:
+                    raw = value_t.cpu().numpy()
+                    if self.value_prediction_mode in {"score_linear", "score_norm_linear"}:
+                        values = raw
+                    else:
+                        values = 1.0 / (1.0 + np.exp(-raw))
+            return logits, values
+
+
+def load_policy_model(
+    path: str | Path,
+    prefer_torch: bool = True,
+    device: str = "auto",
+) -> "FactorizedPolicyModel":
+    """Load a factorized policy model, preferring PyTorch MPS inference when available.
+
+    PyTorch on MPS (Apple Silicon) gives a large speedup over numpy in multiprocessing
+    workers (avoids BLAS thread contention between parallel processes).
+    Falls back to numpy if PyTorch is unavailable or fails to initialize.
+    """
+    if prefer_torch and _TORCH_AVAILABLE:
+        try:
+            return FactorizedPolicyModelTorch(path, device=device)  # type: ignore[return-value]
+        except Exception:
+            pass
+    return FactorizedPolicyModel(path)

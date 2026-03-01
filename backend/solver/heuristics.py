@@ -430,7 +430,7 @@ def _goal_alignment_value(game: GameState, bird: Bird, habitat: Habitat,
 
         rounds_away = i - (game.current_round - 1)
         time_discount = 1.0 / (1.0 + rounds_away * 0.5)
-        first_place_pts = max(goal.scoring[3], 0)
+        first_place_pts = (i + 1) + 3  # round-dependent: round 1=4, 2=5, 3=6, 4=7
 
         # Opponent-aware multiplier: double down when ahead, push hard when close
         position_mult = 1.0
@@ -484,7 +484,7 @@ def _egg_goal_alignment(game: GameState) -> float:
         if "[egg]" in desc:
             rounds_away = i - (game.current_round - 1)
             time_discount = 1.0 / (1.0 + rounds_away * 0.5)
-            first_place_pts = max(goal.scoring[3], 0)
+            first_place_pts = (i + 1) + 3  # round-dependent: round 1=4, 2=5, 3=6, 4=7
             bonus += time_discount * first_place_pts * 0.15
     return bonus
 
@@ -1161,7 +1161,7 @@ def estimate_move_breakdown(
         row = player.board.get_row(move.habitat)
         slot_idx = row.next_empty_slot()
         if slot_idx is not None:
-            cost += EGG_COST_BY_COLUMN[slot_idx] * 0.3
+            cost += EGG_COST_BY_COLUMN[min(slot_idx, len(EGG_COST_BY_COLUMN) - 1)] * 0.3
         if cost:
             breakdown["costs"] = round(-cost, 2)
 
@@ -1330,7 +1330,7 @@ def _nectar_spend_path_viable(game: GameState, player: Player, added_nectar: int
             slot_idx = row.next_empty_slot()
             if slot_idx is None:
                 continue
-            egg_cost = EGG_COST_BY_COLUMN[slot_idx]
+            egg_cost = EGG_COST_BY_COLUMN[min(slot_idx, len(EGG_COST_BY_COLUMN) - 1)]
             if eggs_total >= egg_cost:
                 return True
     return False
@@ -1413,7 +1413,7 @@ def _evaluate_play_bird(game: GameState, player: Player, move: Move,
             remaining_hand = [b for b in player.hand if b.name != bird.name]
             food_after = player.food_supply.total_non_nectar() - sum(move.food_payment.values())
             nectar_after = player.food_supply.get(FoodType.NECTAR)
-            eggs_after = player.board.total_eggs() - (EGG_COST_BY_COLUMN[slot_idx] if slot_idx is not None else 0)
+            eggs_after = player.board.total_eggs() - (EGG_COST_BY_COLUMN[min(slot_idx, len(EGG_COST_BY_COLUMN) - 1)] if slot_idx is not None else 0)
             best_followup = 0.0
             for candidate in remaining_hand:
                 # Check habitat restriction
@@ -1518,7 +1518,7 @@ def _evaluate_play_bird(game: GameState, player: Player, move: Move,
     row = player.board.get_row(move.habitat)
     slot_idx = row.next_empty_slot()
     if slot_idx is not None:
-        egg_cost = EGG_COST_BY_COLUMN[slot_idx]
+        egg_cost = EGG_COST_BY_COLUMN[min(slot_idx, len(EGG_COST_BY_COLUMN) - 1)]
         value -= egg_cost * 0.3
 
     # Hand constraint synergy: boost if playing this bird unlocks a much better bird
@@ -1792,7 +1792,7 @@ def _evaluate_lay_eggs(game: GameState, player: Player, move: Move,
                             my_progress = _estimate_goal_progress(player, goal)
                             best_opp = max(_estimate_goal_progress(opp, goal) for opp in opponents)
                             if my_progress < best_opp and my_progress + eggs_in_target >= best_opp:
-                                value += max(goal.scoring[3], 0) * 0.25
+                                value += ((i + 1) + 3) * 0.25  # round-dependent 1st-place pts
             # Eggs-in-nest-type goals
             for nt in ("bowl", "cavity", "ground", "platform"):
                 if f"[egg] in [{nt}]" in desc:
@@ -1812,7 +1812,7 @@ def _evaluate_lay_eggs(game: GameState, player: Player, move: Move,
                             my_progress = _estimate_goal_progress(player, goal)
                             best_opp = max(_estimate_goal_progress(opp, goal) for opp in opponents)
                             if my_progress < best_opp and my_progress + eggs_matching >= best_opp:
-                                value += max(goal.scoring[3], 0) * 0.2
+                                value += ((i + 1) + 3) * 0.2  # round-dependent 1st-place pts
 
     # Bonus card awareness: filling birds to thresholds
     if move.egg_distribution:

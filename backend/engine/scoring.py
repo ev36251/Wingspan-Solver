@@ -517,6 +517,23 @@ def goal_progress_for_round(player: Player, goal) -> float:
     return 0.0
 
 
+def _round_goal_pts(placement: int, round_num: int) -> int:
+    """Points for a round-goal placement using standard competitive scoring.
+
+    Round 1: 1st=4, 2nd=1, 3rd=0, 4th=0
+    Round 2: 1st=5, 2nd=2, 3rd=1, 4th=0
+    Round 3: 1st=6, 2nd=3, 3rd=2, 4th=0
+    Round 4: 1st=7, 2nd=4, 3rd=3, 4th=0
+    """
+    if placement == 1:
+        return round_num + 3
+    elif placement == 2:
+        return round_num
+    elif placement == 3:
+        return max(0, round_num - 1)
+    return 0
+
+
 def compute_round_goal_scores(game_state: GameState, round_num: int) -> dict[str, int]:
     """Compute per-player points for one round goal, with tie splitting."""
     if round_num < 1 or round_num > len(game_state.round_goals):
@@ -540,7 +557,7 @@ def compute_round_goal_scores(game_state: GameState, round_num: int) -> dict[str
             j += 1
         tied = progress[i:j]
         placements = list(range(pos, min(pos + len(tied), 5)))
-        pool = sum(goal.score_for_placement(pl) for pl in placements)
+        pool = sum(_round_goal_pts(pl, round_num) for pl in placements)
         share = int(pool // len(tied)) if tied else 0
         for name, _ in tied:
             scores[name] = share

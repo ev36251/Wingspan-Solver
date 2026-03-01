@@ -319,6 +319,10 @@ def load_bonus_cards(filepath: Path) -> list[BonusCard]:
         if name_str.startswith("[automa]"):
             continue
 
+        # Historian is removed when playing with the Oceania expansion (per Oceania rulebook)
+        if name_str == "Historian":
+            continue
+
         set_text = str(row[1] or "").strip()
         game_sets = _parse_bonus_sets(set_text)
 
