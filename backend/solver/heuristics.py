@@ -597,22 +597,37 @@ def _brown_row_power_density(game: GameState, player: Player, habitat: Habitat) 
 def _expected_habitat_activation_shares(game: GameState, player: Player) -> dict[Habitat, float]:
     """Allocate action share across habitats using brown-power density.
 
-    Uses a floor per habitat so low-density rows are still considered.
+    Blends a strategy prior (reflecting that food/forest actions happen most
+    often, since food is needed every time a bird is played) with the observed
+    engine density in each habitat row.
     """
     habitats = (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND)
+
+    # Strategy prior: forest is taken most often (food needed to play every bird),
+    # grassland and wetland are roughly equal but depend on game phase.
+    _PRIORS = {
+        Habitat.FOREST: 0.42,
+        Habitat.GRASSLAND: 0.29,
+        Habitat.WETLAND: 0.29,
+    }
+
     raw = {hab: _brown_row_power_density(game, player, hab) for hab in habitats}
     total_raw = float(sum(raw.values()))
 
     if total_raw <= 1e-9:
-        return {hab: 1.0 / len(habitats) for hab in habitats}
+        return dict(_PRIORS)
 
-    floor = 0.2
-    flex = max(0.0, 1.0 - floor * len(habitats))
-    shares = {hab: floor + (raw[hab] / total_raw) * flex for hab in habitats}
-    norm = float(sum(shares.values()))
+    raw_norm = {hab: raw[hab] / total_raw for hab in habitats}
+
+    # Blend: 40% prior, 60% engine density
+    prior_weight = 0.40
+    blended = {hab: prior_weight * _PRIORS[hab] + (1.0 - prior_weight) * raw_norm[hab]
+               for hab in habitats}
+
+    norm = float(sum(blended.values()))
     if norm <= 1e-9:
-        return {hab: 1.0 / len(habitats) for hab in habitats}
-    return {hab: shares[hab] / norm for hab in habitats}
+        return dict(_PRIORS)
+    return {hab: blended[hab] / norm for hab in habitats}
 
 
 def _is_zero_cost_point_generator(power) -> bool:
@@ -970,6 +985,34 @@ def _can_play_any_bird_now(player: Player) -> bool:
     return False
 
 
+def _hand_tuck_capacity(player: Player) -> int:
+    """Estimate how many hand cards could become tucked-card points via board birds.
+
+    Mass-tuck birds (Chiffchaff, Mute Swan, Eurasian Coot, etc.) turn excess hand
+    cards into end-game points, so a large hand isn't wasteful when they're present.
+    Returns a buffer: cards in hand up to this number above empty board slots are OK.
+    """
+    capacity = 0
+    for row in player.board.all_rows():
+        for slot in row.slots:
+            if not slot.bird or slot.bird.color != PowerColor.BROWN:
+                continue
+            pt = (slot.bird.power_text or "").lower()
+            if "tuck" not in pt or "from your hand" not in pt:
+                continue
+            # "Choose 1-5 birds ... tuck 1 card behind each" = up to 5
+            if "1-5" in pt or "up to 5" in pt:
+                capacity += 5
+            # "Tuck up to 3 cards" or "choose 1-3 birds" = up to 3
+            elif "up to 3" in pt or "1-3" in pt:
+                capacity += 3
+            elif "up to 2" in pt or "1-2" in pt:
+                capacity += 2
+            else:
+                capacity += 1  # "Tuck 1 card from your hand"
+    return capacity
+
+
 def _tempo_penalty(game: GameState, player: Player, move: Move) -> float:
     """Penalty for tempo-wasting actions in low-conversion states."""
     penalty = 0.0
@@ -980,10 +1023,15 @@ def _tempo_penalty(game: GameState, player: Player, move: Move) -> float:
             penalty -= 1.0
 
     elif move.action_type == ActionType.DRAW_CARDS:
-        birds_on_board = sum(row.bird_count for row in player.board.all_rows())
-        hand_cap = max(0, 15 - birds_on_board)
-        if player.hand_size >= hand_cap:
-            penalty -= 0.5
+        empty_slots = sum(
+            1 for row in player.board.all_rows()
+            for slot in row.slots if not slot.bird
+        )
+        tuck_cap = _hand_tuck_capacity(player)
+        effective_cap = empty_slots + tuck_cap
+        excess = player.hand_size - effective_cap
+        if excess > 0:
+            penalty -= excess * 2.0
 
     elif move.action_type == ActionType.PLAY_BIRD and game.current_round >= 4:
         bird = _move_play_bird(game, player, move)
@@ -1031,7 +1079,17 @@ def _estimate_move_value(game: GameState, player: Player, move: Move,
     elif move.action_type == ActionType.LAY_EGGS:
         value = _evaluate_lay_eggs(game, player, move, weights)
         if strategic_phase == "engine":
-            value *= 0.7
+            # Egg urgency: if 0 eggs on board and occupied columns block further
+            # bird plays, eggs are NOT a low-priority action — skip the penalty.
+            egg_urgent = (
+                player.board.total_eggs() == 0
+                and any(
+                    row.bird_count >= 1 and any(s.is_available for s in row.slots)
+                    for row in player.board.all_rows()
+                )
+            )
+            if not egg_urgent:
+                value *= 0.7
         elif strategic_phase == "scoring":
             value *= 1.3
     elif move.action_type == ActionType.DRAW_CARDS:
@@ -1759,6 +1817,40 @@ def _evaluate_lay_eggs(game: GameState, player: Player, move: Move,
         )
         value += power.estimate_value(ctx)
 
+    # Eggs unlock bird plays: bonus for each hand bird that becomes placeable
+    # in a non-zero column after gaining these eggs (mirrors gain_food's
+    # "newly_affordable" +1.5 per bird logic).
+    current_total_eggs = player.board.total_eggs()
+    eggs_after = current_total_eggs + actual_eggs
+    birds_unlocked = 0
+    for bird in player.hand:
+        for row in player.board.all_rows():
+            if row.habitat not in bird.habitats:
+                continue
+            if not any(s.is_available for s in row.slots):
+                continue
+            bc = row.bird_count
+            egg_cost = EGG_COST_BY_COLUMN[bc] if bc < len(EGG_COST_BY_COLUMN) else 2
+            if current_total_eggs < egg_cost <= eggs_after:
+                birds_unlocked += 1
+                break  # Count each hand bird once
+    value += birds_unlocked * 1.5
+
+    # Zero-egg urgency: when 0 eggs block ALL non-free-column bird plays,
+    # add extra pressure (like gain_food's zero-food urgency).
+    if current_total_eggs == 0 and actual_eggs > 0 and player.hand:
+        blocked = sum(
+            1 for bird in player.hand
+            if any(
+                row.habitat in bird.habitats
+                and row.bird_count >= 1
+                and any(s.is_available for s in row.slots)
+                for row in player.board.all_rows()
+            )
+        )
+        if blocked > 0:
+            value += 2.0
+
     # Late game bonus: eggs are guaranteed, zero-risk points
     if game.current_round >= 4:
         value += actual_eggs * 1.0  # Round 4: eggs are the best action
@@ -1989,16 +2081,20 @@ def _evaluate_draw_cards(game: GameState, player: Player, move: Move,
     elif player.hand_size <= 2:
         value += 0.5
     elif player.hand_size >= 8:
-        # Diminishing returns: you can't play them all
-        # Remaining empty slots on the board is the real capacity
+        # Diminishing returns: you can't play them all.
+        # Mass-tuck birds (Chiffchaff, Mute Swan, etc.) absorb excess hand cards as
+        # tucked-card points, so account for their capacity before penalising.
         empty_slots = sum(
             1 for row in player.board.all_rows()
             for slot in row.slots if not slot.bird
         )
-        excess = player.hand_size - empty_slots
+        tuck_cap = _hand_tuck_capacity(player)
+        effective_cap = empty_slots + tuck_cap
+        excess = player.hand_size - effective_cap
         if excess > 0:
-            # More birds in hand than board slots — drawing more is waste
-            value -= excess * 1.5
+            # More birds in hand than board slots + tuck capacity — drawing is wasteful.
+            # Use a steep penalty so it actually overrides high tray-card scores.
+            value -= excess * 3.0
         elif player.hand_size > player.action_cubes_remaining * 2:
             # More birds than you could possibly play with remaining cubes
             value -= (player.hand_size - 6) * 0.5

@@ -198,6 +198,7 @@ def generate_self_play_dataset(
     enable_identity_features: bool | None = None,
     identity_hash_dim: int | None = None,
     use_per_slot_encoding: bool | None = None,
+    use_hand_habitat_features: bool | None = None,
 ) -> dict:
     """Generate a self-play dataset using MCTS.
 
@@ -243,6 +244,9 @@ def generate_self_play_dataset(
         training_enc_overrides["identity_hash_dim"] = identity_hash_dim
     if use_per_slot_encoding is not None and use_per_slot_encoding != bool(meta_enc_cfg.get("use_per_slot_encoding", False)):
         training_enc_overrides["use_per_slot_encoding"] = use_per_slot_encoding
+        needs_training_enc = True
+    if use_hand_habitat_features is not None and use_hand_habitat_features != bool(meta_enc_cfg.get("use_hand_habitat_features", False)):
+        training_enc_overrides["use_hand_habitat_features"] = use_hand_habitat_features
         needs_training_enc = True
 
     training_enc: StateEncoder | None = None

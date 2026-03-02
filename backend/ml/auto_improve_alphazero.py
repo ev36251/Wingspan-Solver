@@ -121,6 +121,7 @@ def _run_az_shard(task: dict) -> dict:
         enable_identity_features=task.get("enable_identity_features"),
         identity_hash_dim=task.get("identity_hash_dim"),
         use_per_slot_encoding=task.get("use_per_slot_encoding"),
+        use_hand_habitat_features=task.get("use_hand_habitat_features"),
     )
     return {
         "jsonl": task["out_jsonl"],
@@ -212,6 +213,7 @@ def run_auto_improve_alphazero(
     state_encoder_enable_identity: bool = False,
     state_encoder_identity_hash_dim: int = 128,
     state_encoder_max_hand_slots: int = 8,
+    state_encoder_use_hand_habitat_features: bool = False,
     # Delta value target normalization
     value_target_score_scale: float = DELTA_SCALE,
     value_target_score_bias: float = DELTA_BIAS,
@@ -331,6 +333,7 @@ def run_auto_improve_alphazero(
             enable_identity_features=state_encoder_enable_identity if state_encoder_enable_identity else None,
             identity_hash_dim=state_encoder_identity_hash_dim if state_encoder_enable_identity else None,
             use_per_slot_encoding=state_encoder_use_per_slot if state_encoder_use_per_slot else None,
+            use_hand_habitat_features=state_encoder_use_hand_habitat_features if state_encoder_use_hand_habitat_features else None,
         )
 
         if dataset_workers <= 1 or games_per_iter <= 1:
@@ -700,6 +703,8 @@ def main() -> None:
     p.add_argument("--use-per-slot-encoding", action="store_true", default=False)
     p.add_argument("--enable-identity-features", action="store_true", default=False)
     p.add_argument("--identity-hash-dim", type=int, default=128)
+    p.add_argument("--use-hand-habitat-features", action="store_true", default=False,
+                   help="Add 15 hand-board synergy features (5/habitat) to the state vector")
     # Data accumulation
     p.add_argument("--data-accumulation-enabled", action="store_true", default=True)
     p.add_argument(
@@ -749,6 +754,7 @@ def main() -> None:
         state_encoder_use_per_slot=args.use_per_slot_encoding,
         state_encoder_enable_identity=args.enable_identity_features,
         state_encoder_identity_hash_dim=args.identity_hash_dim,
+        state_encoder_use_hand_habitat_features=args.use_hand_habitat_features,
         data_accumulation_enabled=args.data_accumulation_enabled,
         max_accumulated_samples=args.max_accumulated_samples,
         dataset_workers=args.dataset_workers,

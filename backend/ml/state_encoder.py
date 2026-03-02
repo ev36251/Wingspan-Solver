@@ -106,6 +106,10 @@ class StateEncoder:
       - 15 board slots × 44 features = 660
       - max_hand_slots hand cards × 33 features = 264 (default)
     Total with per-slot: 145 + 660 + 264 = 1069
+
+    When use_hand_habitat_features=True, appends 15 hand-board synergy
+    features (5 per habitat) AFTER per-slot encoding, so existing model
+    weights are unaffected during warm-start.
     """
 
     max_hand: float = 25.0
@@ -116,6 +120,7 @@ class StateEncoder:
     identity_hash_dim: int = 128
     use_per_slot_encoding: bool = False
     max_hand_slots: int = 8
+    use_hand_habitat_features: bool = False
 
     @classmethod
     def from_metadata(cls, meta: dict | None) -> "StateEncoder":
@@ -125,6 +130,7 @@ class StateEncoder:
             identity_hash_dim=max(1, int(cfg.get("identity_hash_dim", 128))),
             use_per_slot_encoding=bool(cfg.get("use_per_slot_encoding", False)),
             max_hand_slots=max(1, int(cfg.get("max_hand_slots", 8))),
+            use_hand_habitat_features=bool(cfg.get("use_hand_habitat_features", False)),
         )
 
     @classmethod
@@ -136,6 +142,7 @@ class StateEncoder:
         fallback_identity_hash_dim: int = 128,
         fallback_use_per_slot: bool = False,
         fallback_max_hand_slots: int = 8,
+        fallback_use_hand_habitat_features: bool = False,
     ) -> "StateEncoder":
         if isinstance(model_meta, dict) and isinstance(model_meta.get("state_encoder"), dict):
             return cls.from_metadata(model_meta)
@@ -144,6 +151,7 @@ class StateEncoder:
             identity_hash_dim=max(1, int(fallback_identity_hash_dim)),
             use_per_slot_encoding=bool(fallback_use_per_slot),
             max_hand_slots=max(1, int(fallback_max_hand_slots)),
+            use_hand_habitat_features=bool(fallback_use_hand_habitat_features),
         )
 
     def feature_names(self) -> list[str]:
@@ -202,6 +210,8 @@ class StateEncoder:
             base.extend([f"identity.hash_{i:03d}" for i in range(max(1, int(self.identity_hash_dim)))])
         if self.use_per_slot_encoding:
             base.extend(self._per_slot_feature_names())
+        if self.use_hand_habitat_features:
+            base.extend(self._hand_habitat_feature_names())
         return base
 
     def _per_slot_feature_names(self) -> list[str]:
@@ -310,6 +320,67 @@ class StateEncoder:
         for i in range(n):
             bird = hand_sorted[i] if i < len(hand_sorted) else None
             result.extend(BirdFeatureEncoder.encode(bird).tolist())
+
+        return result
+
+    def _hand_habitat_feature_names(self) -> list[str]:
+        """Names for the 15 hand-board synergy features (5 per habitat)."""
+        names: list[str] = []
+        for hab in ("forest", "grassland", "wetland"):
+            names.extend([
+                f"hand.hab.{hab}.count",
+                f"hand.hab.{hab}.affordable",
+                f"hand.hab.{hab}.brown_count",
+                f"hand.hab.{hab}.best_vp",
+                f"hand.hab.{hab}.engine_synergy",
+            ])
+        return names
+
+    def _encode_hand_habitat_features(self, game: GameState, player_index: int) -> list[float]:
+        """Encode 15 hand-board synergy features (5 per habitat).
+
+        For each habitat:
+          [0] hand_count      — hand birds placeable in this habitat / 8
+          [1] hand_affordable — affordable hand birds for this habitat / 8
+          [2] hand_brown      — brown-power hand birds for this habitat / 5
+          [3] hand_best_vp    — best VP of hand birds for this habitat / 9
+          [4] engine_synergy  — board engine strength × hand depth interaction:
+                                (board_brown_count × hand_count) / 25
+
+        Appended AFTER per-slot so existing model weights are untouched
+        during warm-start (new weights zero-initialised).
+        """
+        p = game.players[player_index]
+        result: list[float] = []
+
+        for hab in (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND):
+            row = p.board.get_row(hab)
+
+            # Existing engine strength in this habitat row
+            board_brown_count = sum(
+                1 for slot in row.slots
+                if slot.bird and slot.bird.color == PowerColor.BROWN
+            )
+
+            # Hand birds compatible with this habitat
+            hab_hand = [b for b in p.hand if hab in b.habitats]
+            hand_count = len(hab_hand)
+            hand_affordable = sum(
+                1 for b in hab_hand if can_pay_food_cost(p, b.food_cost)[0]
+            )
+            hand_brown = sum(1 for b in hab_hand if b.color == PowerColor.BROWN)
+            hand_best_vp = float(max((b.victory_points for b in hab_hand), default=0))
+
+            # Interaction term: existing engine × future engine potential
+            # High when both the board already has engine birds AND there are
+            # more engine candidates in hand (Raven + Killdeer + NM scenario).
+            engine_synergy = float(board_brown_count * hand_count)
+
+            result.append(_clamp01(hand_count / 8.0))
+            result.append(_clamp01(hand_affordable / 8.0))
+            result.append(_clamp01(hand_brown / 5.0))
+            result.append(_clamp01(hand_best_vp / 9.0))
+            result.append(_clamp01(engine_synergy / 25.0))
 
         return result
 
@@ -818,4 +889,6 @@ class StateEncoder:
             vec.extend(self._encode_identity_features(game, player_index))
         if self.use_per_slot_encoding:
             vec.extend(self._encode_per_slot(game, player_index))
+        if self.use_hand_habitat_features:
+            vec.extend(self._encode_hand_habitat_features(game, player_index))
         return vec
