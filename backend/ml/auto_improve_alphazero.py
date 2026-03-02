@@ -124,6 +124,7 @@ def _run_az_shard(task: dict) -> dict:
         use_hand_habitat_features=task.get("use_hand_habitat_features"),
         use_tray_per_slot_encoding=task.get("use_tray_per_slot_encoding"),
         use_opponent_board_encoding=task.get("use_opponent_board_encoding"),
+        use_power_features=task.get("use_power_features"),
     )
     return {
         "jsonl": task["out_jsonl"],
@@ -218,6 +219,7 @@ def run_auto_improve_alphazero(
     state_encoder_use_hand_habitat_features: bool = False,
     state_encoder_use_tray_per_slot: bool = False,
     state_encoder_use_opponent_board: bool = False,
+    state_encoder_use_power_features: bool = False,
     # Delta value target normalization
     value_target_score_scale: float = DELTA_SCALE,
     value_target_score_bias: float = DELTA_BIAS,
@@ -340,6 +342,7 @@ def run_auto_improve_alphazero(
             use_hand_habitat_features=state_encoder_use_hand_habitat_features if state_encoder_use_hand_habitat_features else None,
             use_tray_per_slot_encoding=state_encoder_use_tray_per_slot if state_encoder_use_tray_per_slot else None,
             use_opponent_board_encoding=state_encoder_use_opponent_board if state_encoder_use_opponent_board else None,
+            use_power_features=state_encoder_use_power_features if state_encoder_use_power_features else None,
         )
 
         if dataset_workers <= 1 or games_per_iter <= 1:
@@ -714,7 +717,9 @@ def main() -> None:
     p.add_argument("--use-tray-per-slot-encoding", action="store_true", default=False,
                    help="Add 114 tray per-bird features (3 slots × 38) so the NN sees each tray card in full")
     p.add_argument("--use-opponent-board-encoding", action="store_true", default=False,
-                   help="Add 540 opponent board features (15 slots × 36) so the NN sees every bird the opponent has played")
+                   help="Add 750 opponent board features (15 slots × 50) so the NN sees every bird the opponent has played")
+    p.add_argument("--use-power-features", action="store_true", default=False,
+                   help="Add 322 power-effect features for own board+hand (15+8 slots × 14) covering what each power does and who benefits")
     # Data accumulation
     p.add_argument("--data-accumulation-enabled", action="store_true", default=True)
     p.add_argument(
@@ -767,6 +772,7 @@ def main() -> None:
         state_encoder_use_hand_habitat_features=args.use_hand_habitat_features,
         state_encoder_use_tray_per_slot=args.use_tray_per_slot_encoding,
         state_encoder_use_opponent_board=args.use_opponent_board_encoding,
+        state_encoder_use_power_features=args.use_power_features,
         data_accumulation_enabled=args.data_accumulation_enabled,
         max_accumulated_samples=args.max_accumulated_samples,
         dataset_workers=args.dataset_workers,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re as _re
 from dataclasses import dataclass
 
 import numpy as np
@@ -95,6 +96,122 @@ class BirdFeatureEncoder:
         return vec
 
 
+_FOOD_WORDS = (
+    "seed", "fish", "fruit", "invertebrate", "rodent", "nectar", "wild",
+    "any food", "food token", "food from", "food of",
+)
+
+
+class PowerFeatureEncoder:
+    """Encode a bird's power EFFECT as a 14-dimensional float vector.
+
+    Captures WHAT the power does and WHO benefits — things BirdFeatureEncoder's
+    power-color flags cannot express:
+      - A brown bird might give ALL players eggs (Noisy Miner: "All other players
+        may lay 1 egg") vs. give only you food.
+      - A tuck power is engine fuel; a cache power scores at game end.
+      - A compound power (tuck + lay eggs) is stronger than a single-effect one.
+
+    Features:
+      [0]  gain_food        power gives food to the food supply
+      [1]  lay_eggs         power places eggs
+      [2]  tuck_cards       power tucks cards behind birds (engine fuel)
+      [3]  cache_food       power caches food ON a bird (end-game pts)
+      [4]  draw_cards       power draws cards to hand
+      [5]  predator         predator hunt mechanic
+      [6]  play_bird        free bird placement from hand
+      [7]  no_power         bird has no power at all
+      [8]  quantity_norm    primary resource amount / 5  (magnitude proxy)
+      [9]  all_players      ALL players receive a benefit (key: brown powers
+                            can also give opponents resources)
+      [10] per_bird         "for each X" — scales with engine size
+      [11] conditional      has an "if" / "when" constraint
+      [12] compound         two or more distinct effect types combined
+      [13] repeat_or_copy   power repeats another bird's power or copies it
+    """
+
+    DIM = 14
+    _POWER_FEATURE_NAMES = [
+        "gain_food", "lay_eggs", "tuck_cards", "cache_food", "draw_cards",
+        "predator", "play_bird", "no_power", "quantity_norm", "all_players",
+        "per_bird", "conditional", "compound", "repeat_or_copy",
+    ]
+
+    @staticmethod
+    def encode(bird: "Bird | None") -> list[float]:
+        if bird is None:
+            return [0.0] * PowerFeatureEncoder.DIM
+
+        text = (bird.power_text or "").lower()
+
+        if not text:
+            # No power text (high-VP birds with power_color=NONE)
+            return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+        def _has(*kws: str) -> bool:
+            return any(k in text for k in kws)
+
+        # Effect types
+        gain_food = 1.0 if (
+            _has("gain", "take", "receive") and _has(*_FOOD_WORDS)
+        ) else 0.0
+
+        lay_eggs = 1.0 if ("egg" in text and _has("lay", "place")) else 0.0
+
+        tuck_cards = 1.0 if "tuck" in text else 0.0
+
+        cache_food = 1.0 if "cache" in text else 0.0
+
+        draw_cards = 1.0 if (
+            _has("draw", "add to your hand", "keep") and _has("card", "bird")
+        ) else 0.0
+
+        predator = 1.0 if bird.is_predator else 0.0
+
+        # Use word boundary for "play" to avoid false match on "players"
+        play_bird = 1.0 if (
+            bool(_re.search(r'\bplay\b|\bplace\b', text)) and "bird" in text and
+            _has("free", "without paying")
+        ) else 0.0
+
+        no_power = 0.0  # we have power text, so there is a power
+
+        # Magnitude: max small integer in the text (1–5), normalised by 5.
+        # Taking max avoids "discard 1 egg to gain 3 food" picking up the cost (1)
+        # rather than the gain (3).
+        nums = [int(m) for m in _re.findall(r'\b([1-5])\b', text)]
+        quantity_norm = float(max(nums)) / 5.0 if nums else 0.2
+
+        # ALL players benefit — user's key concern: some brown powers share
+        all_players = 1.0 if _has(
+            "all players", "all other players", "each other player",
+            "each player", "players may", "other players may",
+        ) else 0.0
+
+        # Scales with board state ("for each X")
+        per_bird = 1.0 if "for each" in text else 0.0
+
+        # Conditional / situational
+        conditional = 1.0 if _has("if ", "when ", "for each") else 0.0
+
+        # Compound: multiple distinct effect types
+        n_effects = sum([
+            gain_food > 0, lay_eggs > 0, tuck_cards > 0,
+            cache_food > 0, draw_cards > 0, predator > 0, play_bird > 0,
+        ])
+        compound = 1.0 if n_effects >= 2 else 0.0
+
+        # Repeat/copy: mirrors another bird's power (very powerful combinators)
+        repeat_or_copy = 1.0 if _has("repeat", "copy", "mimic") else 0.0
+
+        return [
+            gain_food, lay_eggs, tuck_cards, cache_food, draw_cards,
+            predator, play_bird, no_power, quantity_norm, all_players,
+            per_bird, conditional, compound, repeat_or_copy,
+        ]
+
+
 @dataclass
 class StateEncoder:
     """Encode a game state into a fixed-size float feature vector.
@@ -109,8 +226,12 @@ class StateEncoder:
 
     Optional appended blocks (all backward-compatible via zero-init warm-start):
       use_hand_habitat_features  → +15  hand-board synergy (5 per habitat)
-      use_tray_per_slot_encoding → +114 tray per-bird features (3 slots × 38)
-      use_opponent_board_encoding→ +540 leading opponent board (15 slots × 36)
+      use_tray_per_slot_encoding → +156 tray per-bird features (3 slots × 52)
+                                         (38 structural + 14 power effect)
+      use_opponent_board_encoding→ +750 leading opponent board (15 slots × 50)
+                                         (36 structural + 14 power effect)
+      use_power_features         → +322 power effect vectors for self board+hand
+                                         (15 board + 8 hand) × 14
     """
 
     max_hand: float = 25.0
@@ -124,6 +245,7 @@ class StateEncoder:
     use_hand_habitat_features: bool = False
     use_tray_per_slot_encoding: bool = False
     use_opponent_board_encoding: bool = False
+    use_power_features: bool = False  # power-effect block for self board + hand
 
     @classmethod
     def from_metadata(cls, meta: dict | None) -> "StateEncoder":
@@ -136,6 +258,7 @@ class StateEncoder:
             use_hand_habitat_features=bool(cfg.get("use_hand_habitat_features", False)),
             use_tray_per_slot_encoding=bool(cfg.get("use_tray_per_slot_encoding", False)),
             use_opponent_board_encoding=bool(cfg.get("use_opponent_board_encoding", False)),
+            use_power_features=bool(cfg.get("use_power_features", False)),
         )
 
     @classmethod
@@ -150,6 +273,7 @@ class StateEncoder:
         fallback_use_hand_habitat_features: bool = False,
         fallback_use_tray_per_slot: bool = False,
         fallback_use_opponent_board: bool = False,
+        fallback_use_power_features: bool = False,
     ) -> "StateEncoder":
         if isinstance(model_meta, dict) and isinstance(model_meta.get("state_encoder"), dict):
             return cls.from_metadata(model_meta)
@@ -161,6 +285,7 @@ class StateEncoder:
             use_hand_habitat_features=bool(fallback_use_hand_habitat_features),
             use_tray_per_slot_encoding=bool(fallback_use_tray_per_slot),
             use_opponent_board_encoding=bool(fallback_use_opponent_board),
+            use_power_features=bool(fallback_use_power_features),
         )
 
     def feature_names(self) -> list[str]:
@@ -225,6 +350,8 @@ class StateEncoder:
             base.extend(self._tray_per_slot_feature_names())
         if self.use_opponent_board_encoding:
             base.extend(self._opponent_board_feature_names())
+        if self.use_power_features:
+            base.extend(self._self_power_feature_names())
         return base
 
     def _per_slot_feature_names(self) -> list[str]:
@@ -415,7 +542,11 @@ class StateEncoder:
     ]
 
     def _tray_per_slot_feature_names(self) -> list[str]:
-        """3 tray slots × 38 features = 114 names."""
+        """3 tray slots × 52 features = 156 names.
+
+        Per slot: 33 structural (BirdFeatureEncoder) + 5 play-context
+                + 14 power-effect (PowerFeatureEncoder) = 52.
+        """
         names: list[str] = []
         for i in range(3):
             prefix = f"tray.{i}"
@@ -428,22 +559,17 @@ class StateEncoder:
                 f"{prefix}.hab_grass_open",
                 f"{prefix}.hab_wet_open",
             ])
+            for pf in PowerFeatureEncoder._POWER_FEATURE_NAMES:
+                names.append(f"{prefix}.power.{pf}")
         return names
 
     def _encode_tray_per_slot(self, game: GameState, player_index: int) -> list[float]:
-        """Encode up to 3 tray cards with full bird attributes + play-context.
+        """Encode up to 3 tray cards: 52 features each = 156 total.
 
-        Per tray slot (38 features):
-          [0-32] BirdFeatureEncoder — all structural attributes (VP, habitats,
-                 power color, food cost, nest type, etc.)
-          [33]   is_affordable      — can you pay for this bird right now?
-          [34]   egg_gap_norm       — eggs still needed before you can play it
-          [35]   hab_forest_open    — fits forest AND you have an open forest slot
-          [36]   hab_grass_open     — fits grassland AND open grassland slot
-          [37]   hab_wet_open       — fits wetland AND open wetland slot
-
-        Sorted by VP descending so slot 0 is always the most valuable tray bird.
-        Padded with zeros for empty tray positions.
+        Per tray slot:
+          [0-32]  BirdFeatureEncoder  — structural attributes
+          [33-37] Play-context        — affordable, egg_gap, open hab slots
+          [38-51] PowerFeatureEncoder — what the power does, who benefits
         """
         p = game.players[player_index]
         tray_birds = sorted(
@@ -461,7 +587,8 @@ class StateEncoder:
             bird = tray_birds[i] if i < len(tray_birds) else None
             result.extend(BirdFeatureEncoder.encode(bird).tolist())
             if bird is None:
-                result.extend([0.0, 0.0, 0.0, 0.0, 0.0])
+                result.extend([0.0] * 5)
+                result.extend([0.0] * PowerFeatureEncoder.DIM)
             else:
                 affordable, _ = can_pay_food_cost(p, bird.food_cost)
                 egg_gaps = []
@@ -477,14 +604,15 @@ class StateEncoder:
                 result.append(1.0 if (Habitat.FOREST in bird.habitats and open_forest) else 0.0)
                 result.append(1.0 if (Habitat.GRASSLAND in bird.habitats and open_grass) else 0.0)
                 result.append(1.0 if (Habitat.WETLAND in bird.habitats and open_wet) else 0.0)
+                result.extend(PowerFeatureEncoder.encode(bird))
         return result
 
     # ------------------------------------------------------------------
-    # Opponent board per-slot encoding  (15 slots × 36 features = 540)
+    # Opponent board per-slot encoding  (15 slots × 50 features = 750)
     # ------------------------------------------------------------------
 
     def _opponent_board_feature_names(self) -> list[str]:
-        """15 opponent board slots × 36 features = 540 names."""
+        """15 opponent board slots × 50 features = 750 names."""
         names: list[str] = []
         for hab in ("forest", "grassland", "wetland"):
             for col in range(5):
@@ -496,26 +624,29 @@ class StateEncoder:
                     f"{prefix}.cached_norm",
                     f"{prefix}.tucked_norm",
                 ])
+                for pf in PowerFeatureEncoder._POWER_FEATURE_NAMES:
+                    names.append(f"{prefix}.power.{pf}")
         return names
 
     def _encode_opponent_board(self, game: GameState, player_index: int) -> list[float]:
-        """Encode the leading opponent's board: 15 slots × 36 features = 540.
+        """Encode the leading opponent's board: 15 slots × 50 features = 750.
 
-        Per slot (36 features):
-          [0-32] BirdFeatureEncoder — full bird attributes (power color tells the
-                 NN which powers fire: brown=on-action, white=on-your-action,
-                 pink=once-between-turns, teal=once-per-round)
-          [33]   eggs_norm   — eggs on this bird / egg_limit
-          [34]   cached_norm — cached food on this bird / 10
-          [35]   tucked_norm — tucked cards on this bird / 20
+        Per slot (50 features):
+          [0-32]  BirdFeatureEncoder  — structural attributes (power color tells
+                  timing: brown=on-action, white=on-your-action, pink=between-turns)
+          [33-35] Slot state          — eggs_norm, cached_norm, tucked_norm
+          [36-49] PowerFeatureEncoder — what the power actually does and who
+                  benefits. A pink bird with all_players=1 means free resources
+                  for you on the opponent's turns; a white bird with all_players=0
+                  means nothing for you.
 
-        Leading opponent = the one with the highest current estimated score.
+        Leading opponent = highest current estimated score.
         In 2-player this is always the only opponent.
         Empty slots are zero-padded.
         """
         opponents = [op for i, op in enumerate(game.players) if i != player_index]
         if not opponents:
-            return [0.0] * (15 * 36)
+            return [0.0] * (15 * 50)
 
         leading_opp = max(opponents, key=lambda op: calculate_score(game, op).total)
 
@@ -531,6 +662,56 @@ class StateEncoder:
                 result.append(eggs_norm)
                 result.append(_clamp01(slot.total_cached_food / 10.0))
                 result.append(_clamp01(slot.tucked_cards / 20.0))
+                result.extend(PowerFeatureEncoder.encode(slot.bird))
+        return result
+
+    # ------------------------------------------------------------------
+    # Self board + hand power features  (322 features when enabled)
+    # 15 board slots × 14 + max_hand_slots × 14
+    # Appended AFTER tray/opp-board blocks → backward compatible.
+    # Gives the NN power-effect info for its own birds (the per-slot
+    # encoding already has structural BirdFeatureEncoder features but
+    # no PowerFeatureEncoder — this fills that gap without changing
+    # per-slot slot sizes, preserving warm-start compatibility).
+    # ------------------------------------------------------------------
+
+    def _self_power_feature_names(self) -> list[str]:
+        """(15 board + max_hand_slots hand) × 14 power features."""
+        names: list[str] = []
+        n = max(1, int(self.max_hand_slots))
+        for hab in ("forest", "grassland", "wetland"):
+            for col in range(5):
+                prefix = f"self.board.{hab}.{col}.power"
+                for pf in PowerFeatureEncoder._POWER_FEATURE_NAMES:
+                    names.append(f"{prefix}.{pf}")
+        for i in range(n):
+            prefix = f"self.hand.{i}.power"
+            for pf in PowerFeatureEncoder._POWER_FEATURE_NAMES:
+                names.append(f"{prefix}.{pf}")
+        return names
+
+    def _encode_self_power_features(self, game: GameState, player_index: int) -> list[float]:
+        """Power-effect vectors for own board (15 slots) + hand (max_hand_slots).
+
+        The per-slot encoding already carries structural BirdFeatureEncoder
+        features. This block adds the 14-feature PowerFeatureEncoder on top
+        of those, appended at the end of the vector so v8 warm-start weights
+        remain valid for the first 1599 dimensions.
+        """
+        p = game.players[player_index]
+        result: list[float] = []
+
+        for hab in (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND):
+            row = p.board.get_row(hab)
+            for slot in row.slots:
+                result.extend(PowerFeatureEncoder.encode(slot.bird))
+
+        n = max(1, int(self.max_hand_slots))
+        hand_sorted = sorted(p.hand, key=lambda b: b.victory_points, reverse=True)
+        for i in range(n):
+            bird = hand_sorted[i] if i < len(hand_sorted) else None
+            result.extend(PowerFeatureEncoder.encode(bird))
+
         return result
 
     def encode(self, game: GameState, player_index: int) -> list[float]:
@@ -1044,4 +1225,6 @@ class StateEncoder:
             vec.extend(self._encode_tray_per_slot(game, player_index))
         if self.use_opponent_board_encoding:
             vec.extend(self._encode_opponent_board(game, player_index))
+        if self.use_power_features:
+            vec.extend(self._encode_self_power_features(game, player_index))
         return vec
