@@ -107,9 +107,10 @@ class StateEncoder:
       - max_hand_slots hand cards × 33 features = 264 (default)
     Total with per-slot: 145 + 660 + 264 = 1069
 
-    When use_hand_habitat_features=True, appends 15 hand-board synergy
-    features (5 per habitat) AFTER per-slot encoding, so existing model
-    weights are unaffected during warm-start.
+    Optional appended blocks (all backward-compatible via zero-init warm-start):
+      use_hand_habitat_features  → +15  hand-board synergy (5 per habitat)
+      use_tray_per_slot_encoding → +114 tray per-bird features (3 slots × 38)
+      use_opponent_board_encoding→ +540 leading opponent board (15 slots × 36)
     """
 
     max_hand: float = 25.0
@@ -121,6 +122,8 @@ class StateEncoder:
     use_per_slot_encoding: bool = False
     max_hand_slots: int = 8
     use_hand_habitat_features: bool = False
+    use_tray_per_slot_encoding: bool = False
+    use_opponent_board_encoding: bool = False
 
     @classmethod
     def from_metadata(cls, meta: dict | None) -> "StateEncoder":
@@ -131,6 +134,8 @@ class StateEncoder:
             use_per_slot_encoding=bool(cfg.get("use_per_slot_encoding", False)),
             max_hand_slots=max(1, int(cfg.get("max_hand_slots", 8))),
             use_hand_habitat_features=bool(cfg.get("use_hand_habitat_features", False)),
+            use_tray_per_slot_encoding=bool(cfg.get("use_tray_per_slot_encoding", False)),
+            use_opponent_board_encoding=bool(cfg.get("use_opponent_board_encoding", False)),
         )
 
     @classmethod
@@ -143,6 +148,8 @@ class StateEncoder:
         fallback_use_per_slot: bool = False,
         fallback_max_hand_slots: int = 8,
         fallback_use_hand_habitat_features: bool = False,
+        fallback_use_tray_per_slot: bool = False,
+        fallback_use_opponent_board: bool = False,
     ) -> "StateEncoder":
         if isinstance(model_meta, dict) and isinstance(model_meta.get("state_encoder"), dict):
             return cls.from_metadata(model_meta)
@@ -152,6 +159,8 @@ class StateEncoder:
             use_per_slot_encoding=bool(fallback_use_per_slot),
             max_hand_slots=max(1, int(fallback_max_hand_slots)),
             use_hand_habitat_features=bool(fallback_use_hand_habitat_features),
+            use_tray_per_slot_encoding=bool(fallback_use_tray_per_slot),
+            use_opponent_board_encoding=bool(fallback_use_opponent_board),
         )
 
     def feature_names(self) -> list[str]:
@@ -212,6 +221,10 @@ class StateEncoder:
             base.extend(self._per_slot_feature_names())
         if self.use_hand_habitat_features:
             base.extend(self._hand_habitat_feature_names())
+        if self.use_tray_per_slot_encoding:
+            base.extend(self._tray_per_slot_feature_names())
+        if self.use_opponent_board_encoding:
+            base.extend(self._opponent_board_feature_names())
         return base
 
     def _per_slot_feature_names(self) -> list[str]:
@@ -382,6 +395,142 @@ class StateEncoder:
             result.append(_clamp01(hand_best_vp / 9.0))
             result.append(_clamp01(engine_synergy / 25.0))
 
+        return result
+
+    # ------------------------------------------------------------------
+    # Tray per-slot encoding  (3 slots × 38 features = 114)
+    # ------------------------------------------------------------------
+
+    _BIRD_ATTR_NAMES = [
+        "vp", "egg_limit", "wingspan_norm", "is_flightless",
+        "cost_total", "is_or_cost",
+        "cost_invertebrate", "cost_seed", "cost_fish", "cost_fruit",
+        "cost_rodent", "cost_nectar", "cost_wild",
+        "hab_forest", "hab_grassland", "hab_wetland", "multi_habitat",
+        "nest_bowl", "nest_cavity", "nest_ground", "nest_platform", "nest_wild",
+        "color_brown", "color_white", "color_pink", "color_teal",
+        "color_yellow", "color_none",
+        "is_predator", "is_flocking",
+        "set_core", "set_european", "set_oceania",
+    ]
+
+    def _tray_per_slot_feature_names(self) -> list[str]:
+        """3 tray slots × 38 features = 114 names."""
+        names: list[str] = []
+        for i in range(3):
+            prefix = f"tray.{i}"
+            for attr in self._BIRD_ATTR_NAMES:
+                names.append(f"{prefix}.bird.{attr}")
+            names.extend([
+                f"{prefix}.is_affordable",
+                f"{prefix}.egg_gap_norm",
+                f"{prefix}.hab_forest_open",
+                f"{prefix}.hab_grass_open",
+                f"{prefix}.hab_wet_open",
+            ])
+        return names
+
+    def _encode_tray_per_slot(self, game: GameState, player_index: int) -> list[float]:
+        """Encode up to 3 tray cards with full bird attributes + play-context.
+
+        Per tray slot (38 features):
+          [0-32] BirdFeatureEncoder — all structural attributes (VP, habitats,
+                 power color, food cost, nest type, etc.)
+          [33]   is_affordable      — can you pay for this bird right now?
+          [34]   egg_gap_norm       — eggs still needed before you can play it
+          [35]   hab_forest_open    — fits forest AND you have an open forest slot
+          [36]   hab_grass_open     — fits grassland AND open grassland slot
+          [37]   hab_wet_open       — fits wetland AND open wetland slot
+
+        Sorted by VP descending so slot 0 is always the most valuable tray bird.
+        Padded with zeros for empty tray positions.
+        """
+        p = game.players[player_index]
+        tray_birds = sorted(
+            game.card_tray.face_up,
+            key=lambda b: b.victory_points,
+            reverse=True,
+        )
+        eggs_total = p.board.total_eggs()
+        open_forest = p.board.forest.next_empty_slot() is not None
+        open_grass = p.board.grassland.next_empty_slot() is not None
+        open_wet = p.board.wetland.next_empty_slot() is not None
+
+        result: list[float] = []
+        for i in range(3):
+            bird = tray_birds[i] if i < len(tray_birds) else None
+            result.extend(BirdFeatureEncoder.encode(bird).tolist())
+            if bird is None:
+                result.extend([0.0, 0.0, 0.0, 0.0, 0.0])
+            else:
+                affordable, _ = can_pay_food_cost(p, bird.food_cost)
+                egg_gaps = []
+                for hab in bird.habitats:
+                    row = p.board.get_row(hab)
+                    slot_idx = row.next_empty_slot()
+                    if slot_idx is not None:
+                        egg_cost = EGG_COST_BY_COLUMN[slot_idx]
+                        egg_gaps.append(max(0, egg_cost - eggs_total))
+                egg_gap = min(egg_gaps) if egg_gaps else 10
+                result.append(1.0 if affordable else 0.0)
+                result.append(_clamp01(egg_gap / 10.0))
+                result.append(1.0 if (Habitat.FOREST in bird.habitats and open_forest) else 0.0)
+                result.append(1.0 if (Habitat.GRASSLAND in bird.habitats and open_grass) else 0.0)
+                result.append(1.0 if (Habitat.WETLAND in bird.habitats and open_wet) else 0.0)
+        return result
+
+    # ------------------------------------------------------------------
+    # Opponent board per-slot encoding  (15 slots × 36 features = 540)
+    # ------------------------------------------------------------------
+
+    def _opponent_board_feature_names(self) -> list[str]:
+        """15 opponent board slots × 36 features = 540 names."""
+        names: list[str] = []
+        for hab in ("forest", "grassland", "wetland"):
+            for col in range(5):
+                prefix = f"opp.board.{hab}.{col}"
+                for attr in self._BIRD_ATTR_NAMES:
+                    names.append(f"{prefix}.bird.{attr}")
+                names.extend([
+                    f"{prefix}.eggs_norm",
+                    f"{prefix}.cached_norm",
+                    f"{prefix}.tucked_norm",
+                ])
+        return names
+
+    def _encode_opponent_board(self, game: GameState, player_index: int) -> list[float]:
+        """Encode the leading opponent's board: 15 slots × 36 features = 540.
+
+        Per slot (36 features):
+          [0-32] BirdFeatureEncoder — full bird attributes (power color tells the
+                 NN which powers fire: brown=on-action, white=on-your-action,
+                 pink=once-between-turns, teal=once-per-round)
+          [33]   eggs_norm   — eggs on this bird / egg_limit
+          [34]   cached_norm — cached food on this bird / 10
+          [35]   tucked_norm — tucked cards on this bird / 20
+
+        Leading opponent = the one with the highest current estimated score.
+        In 2-player this is always the only opponent.
+        Empty slots are zero-padded.
+        """
+        opponents = [op for i, op in enumerate(game.players) if i != player_index]
+        if not opponents:
+            return [0.0] * (15 * 36)
+
+        leading_opp = max(opponents, key=lambda op: calculate_score(game, op).total)
+
+        result: list[float] = []
+        for hab in (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND):
+            row = leading_opp.board.get_row(hab)
+            for slot in row.slots:
+                result.extend(BirdFeatureEncoder.encode(slot.bird).tolist())
+                if slot.bird is not None:
+                    eggs_norm = _clamp01(slot.eggs / max(1, slot.bird.egg_limit))
+                else:
+                    eggs_norm = 0.0
+                result.append(eggs_norm)
+                result.append(_clamp01(slot.total_cached_food / 10.0))
+                result.append(_clamp01(slot.tucked_cards / 20.0))
         return result
 
     def encode(self, game: GameState, player_index: int) -> list[float]:
@@ -891,4 +1040,8 @@ class StateEncoder:
             vec.extend(self._encode_per_slot(game, player_index))
         if self.use_hand_habitat_features:
             vec.extend(self._encode_hand_habitat_features(game, player_index))
+        if self.use_tray_per_slot_encoding:
+            vec.extend(self._encode_tray_per_slot(game, player_index))
+        if self.use_opponent_board_encoding:
+            vec.extend(self._encode_opponent_board(game, player_index))
         return vec

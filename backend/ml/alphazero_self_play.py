@@ -199,6 +199,8 @@ def generate_self_play_dataset(
     identity_hash_dim: int | None = None,
     use_per_slot_encoding: bool | None = None,
     use_hand_habitat_features: bool | None = None,
+    use_tray_per_slot_encoding: bool | None = None,
+    use_opponent_board_encoding: bool | None = None,
 ) -> dict:
     """Generate a self-play dataset using MCTS.
 
@@ -247,6 +249,12 @@ def generate_self_play_dataset(
         needs_training_enc = True
     if use_hand_habitat_features is not None and use_hand_habitat_features != bool(meta_enc_cfg.get("use_hand_habitat_features", False)):
         training_enc_overrides["use_hand_habitat_features"] = use_hand_habitat_features
+        needs_training_enc = True
+    if use_tray_per_slot_encoding is not None and use_tray_per_slot_encoding != bool(meta_enc_cfg.get("use_tray_per_slot_encoding", False)):
+        training_enc_overrides["use_tray_per_slot_encoding"] = use_tray_per_slot_encoding
+        needs_training_enc = True
+    if use_opponent_board_encoding is not None and use_opponent_board_encoding != bool(meta_enc_cfg.get("use_opponent_board_encoding", False)):
+        training_enc_overrides["use_opponent_board_encoding"] = use_opponent_board_encoding
         needs_training_enc = True
 
     training_enc: StateEncoder | None = None
