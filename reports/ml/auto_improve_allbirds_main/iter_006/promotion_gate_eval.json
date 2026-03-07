@@ -1,0 +1,13 @@
+{
+  "games": 200,
+  "nn_wins": 52,
+  "opponent_wins": 144,
+  "ties": 4,
+  "nn_mean_score": 46.485,
+  "opponent_mean_score": 60.195,
+  "nn_mean_margin": -13.71,
+  "nn_rate_ge_100": 0.005,
+  "nn_rate_ge_120": 0.0,
+  "primary_opponent": "champion",
+  "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+}

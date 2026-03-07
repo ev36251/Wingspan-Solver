@@ -1,0 +1,2038 @@
+auto_improve_alphazero: per-slot encoding → auto-scaled hidden=768/384
+  Seeded best_model.npz from reports/ml/alphazero_v9/best_model.npz
+
+============================================================
+  AlphaZero iter 1/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_001
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-3xL8TkyoUx9MLTcI5Ds8AL
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=97.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=123.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=116.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=126.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=121.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=131.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=125.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=128.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=128.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=128.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=140.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=146.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=144.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=145.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=165.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=150.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=152.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=154.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=155.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=169.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=163.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=171.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=180.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=172.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=171.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=182.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=178.9s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=179.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=183.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=186.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=193.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=190.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=119.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=204.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=199.4s  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=125.9s
+
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=147.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=129.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=140.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=133.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=212.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=151.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=149.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=145.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=239.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=166.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=159.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=163.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=179.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=179.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=218.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=212.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=262.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=254.5s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-3xL8TkyoUx9MLTcI5Ds8AL
+  Data gen complete: 10400 samples | mean_delta=0.0
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_001/az_dataset.jsonl
+Loaded 10400 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=2.2592 train_acc=0.663 train_v=0.0091 train_mv=0.6261 | val_loss=1.8763 val_acc=0.652 val_v=0.0085 val_mv=0.6294
+epoch 2/30 | lr=0.000040 | train_loss=1.9348 train_acc=0.705 train_v=0.0090 train_mv=0.6255 | val_loss=1.7004 val_acc=0.699 val_v=0.0084 val_mv=0.6287
+epoch 3/30 | lr=0.000060 | train_loss=1.7226 train_acc=0.728 train_v=0.0089 train_mv=0.6247 | val_loss=1.6468 val_acc=0.702 val_v=0.0083 val_mv=0.6277
+epoch 4/30 | lr=0.000080 | train_loss=1.5836 train_acc=0.746 train_v=0.0088 train_mv=0.6234 | val_loss=1.5978 val_acc=0.716 val_v=0.0083 val_mv=0.6263
+epoch 5/30 | lr=0.000100 | train_loss=1.4934 train_acc=0.752 train_v=0.0087 train_mv=0.6218 | val_loss=1.5840 val_acc=0.720 val_v=0.0082 val_mv=0.6247
+epoch 6/30 | lr=0.000100 | train_loss=1.4210 train_acc=0.751 train_v=0.0086 train_mv=0.6200 | val_loss=1.5582 val_acc=0.720 val_v=0.0081 val_mv=0.6230
+epoch 7/30 | lr=0.000100 | train_loss=1.3618 train_acc=0.753 train_v=0.0086 train_mv=0.6183 | val_loss=1.5475 val_acc=0.721 val_v=0.0081 val_mv=0.6213
+epoch 8/30 | lr=0.000100 | train_loss=1.3206 train_acc=0.756 train_v=0.0086 train_mv=0.6165 | val_loss=1.5400 val_acc=0.724 val_v=0.0080 val_mv=0.6197
+epoch 9/30 | lr=0.000100 | train_loss=1.2808 train_acc=0.759 train_v=0.0085 train_mv=0.6148 | val_loss=1.5350 val_acc=0.724 val_v=0.0080 val_mv=0.6181
+epoch 10/30 | lr=0.000100 | train_loss=1.2464 train_acc=0.759 train_v=0.0085 train_mv=0.6131 | val_loss=1.5339 val_acc=0.723 val_v=0.0079 val_mv=0.6165
+epoch 11/30 | lr=0.000070 | train_loss=1.2163 train_acc=0.761 train_v=0.0085 train_mv=0.6117 | val_loss=1.5333 val_acc=0.724 val_v=0.0079 val_mv=0.6153
+epoch 12/30 | lr=0.000070 | train_loss=1.2058 train_acc=0.761 train_v=0.0084 train_mv=0.6105 | val_loss=1.5341 val_acc=0.723 val_v=0.0079 val_mv=0.6142
+epoch 13/30 | lr=0.000070 | train_loss=1.1846 train_acc=0.761 train_v=0.0084 train_mv=0.6093 | val_loss=1.5295 val_acc=0.726 val_v=0.0079 val_mv=0.6131
+epoch 14/30 | lr=0.000070 | train_loss=1.1674 train_acc=0.763 train_v=0.0084 train_mv=0.6081 | val_loss=1.5326 val_acc=0.728 val_v=0.0079 val_mv=0.6120
+epoch 15/30 | lr=0.000070 | train_loss=1.1562 train_acc=0.765 train_v=0.0084 train_mv=0.6070 | val_loss=1.5275 val_acc=0.728 val_v=0.0079 val_mv=0.6109
+epoch 16/30 | lr=0.000049 | train_loss=1.1416 train_acc=0.766 train_v=0.0084 train_mv=0.6059 | val_loss=1.5307 val_acc=0.729 val_v=0.0078 val_mv=0.6101
+epoch 17/30 | lr=0.000049 | train_loss=1.1320 train_acc=0.764 train_v=0.0084 train_mv=0.6052 | val_loss=1.5312 val_acc=0.728 val_v=0.0078 val_mv=0.6094
+epoch 18/30 | lr=0.000049 | train_loss=1.1256 train_acc=0.766 train_v=0.0083 train_mv=0.6044 | val_loss=1.5311 val_acc=0.733 val_v=0.0078 val_mv=0.6086
+epoch 19/30 | lr=0.000049 | train_loss=1.1196 train_acc=0.766 train_v=0.0082 train_mv=0.6035 | val_loss=1.5313 val_acc=0.731 val_v=0.0078 val_mv=0.6079
+epoch 20/30 | lr=0.000049 | train_loss=1.1100 train_acc=0.767 train_v=0.0083 train_mv=0.6027 | val_loss=1.5311 val_acc=0.731 val_v=0.0078 val_mv=0.6071
+epoch 21/30 | lr=0.000034 | train_loss=1.1044 train_acc=0.766 train_v=0.0083 train_mv=0.6021 | val_loss=1.5327 val_acc=0.732 val_v=0.0078 val_mv=0.6066
+epoch 22/30 | lr=0.000034 | train_loss=1.0960 train_acc=0.767 train_v=0.0083 train_mv=0.6015 | val_loss=1.5335 val_acc=0.731 val_v=0.0078 val_mv=0.6060
+epoch 23/30 | lr=0.000034 | train_loss=1.0902 train_acc=0.769 train_v=0.0083 train_mv=0.6009 | val_loss=1.5299 val_acc=0.732 val_v=0.0077 val_mv=0.6055
+epoch 24/30 | lr=0.000034 | train_loss=1.0827 train_acc=0.766 train_v=0.0083 train_mv=0.6004 | val_loss=1.5331 val_acc=0.731 val_v=0.0077 val_mv=0.6050
+epoch 25/30 | lr=0.000034 | train_loss=1.0761 train_acc=0.768 train_v=0.0083 train_mv=0.5998 | val_loss=1.5329 val_acc=0.732 val_v=0.0077 val_mv=0.6045
+  Training done: epochs=25 | val_loss=1.5275
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=10 h_wins=10 ties=0 | nn_avg=63.8 h_avg=68.0
+  Eval: nn_wins=10 / 20 | mean_score=63.8 | win_rate=0.500
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=5 b_wins=5 ties=0 | a_avg=65.7 b_avg=67.4
+game 20/40 | a_wins=13 b_wins=7 ties=0 | a_avg=70.0 b_avg=65.2
+game 30/40 | a_wins=18 b_wins=12 ties=0 | a_avg=69.8 b_avg=66.1
+game 40/40 | a_wins=21 b_wins=16 ties=3 | a_avg=68.5 b_avg=65.8
+  Gate: nn_wins=21 / 40 | win_rate=0.525 | promoted=True
+  ✓ Promoted! best_model.npz updated.
+
+============================================================
+  AlphaZero iter 2/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_002
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-fMCFREuDync0zmgjpGqeaX
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=122.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=125.4s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=128.0s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=130.1s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=131.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=139.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=118.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=116.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=122.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=175.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.1s  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.9s
+
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=125.0s  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=119.5s
+
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=175.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=178.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=180.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=133.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=125.7s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=183.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=136.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=189.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=139.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=143.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=192.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=136.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=145.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=142.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=149.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=144.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=150.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=155.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=163.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=162.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=129.9s  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=163.8s
+
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=169.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=169.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=162.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=166.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=162.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=167.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=185.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=150.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=153.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=181.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=199.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=247.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=194.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=185.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=219.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=209.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=220.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=248.8s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-fMCFREuDync0zmgjpGqeaX
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 20800 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_002/az_dataset_combined.jsonl
+Loaded 20800 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.5169 train_acc=0.733 train_v=0.0092 train_mv=0.6102 | val_loss=1.3980 val_acc=0.741 val_v=0.0093 val_mv=0.6103
+epoch 2/30 | lr=0.000040 | train_loss=1.4891 train_acc=0.738 train_v=0.0092 train_mv=0.6093 | val_loss=1.3921 val_acc=0.740 val_v=0.0092 val_mv=0.6092
+epoch 3/30 | lr=0.000060 | train_loss=1.4498 train_acc=0.736 train_v=0.0091 train_mv=0.6078 | val_loss=1.3870 val_acc=0.741 val_v=0.0092 val_mv=0.6074
+epoch 4/30 | lr=0.000080 | train_loss=1.4060 train_acc=0.740 train_v=0.0090 train_mv=0.6058 | val_loss=1.3848 val_acc=0.744 val_v=0.0092 val_mv=0.6051
+epoch 5/30 | lr=0.000100 | train_loss=1.3641 train_acc=0.742 train_v=0.0090 train_mv=0.6032 | val_loss=1.3821 val_acc=0.745 val_v=0.0092 val_mv=0.6023
+epoch 6/30 | lr=0.000100 | train_loss=1.3295 train_acc=0.743 train_v=0.0090 train_mv=0.6003 | val_loss=1.3855 val_acc=0.744 val_v=0.0091 val_mv=0.5995
+epoch 7/30 | lr=0.000100 | train_loss=1.2930 train_acc=0.740 train_v=0.0089 train_mv=0.5975 | val_loss=1.3832 val_acc=0.745 val_v=0.0091 val_mv=0.5967
+epoch 8/30 | lr=0.000100 | train_loss=1.2676 train_acc=0.741 train_v=0.0089 train_mv=0.5947 | val_loss=1.3847 val_acc=0.746 val_v=0.0090 val_mv=0.5940
+epoch 9/30 | lr=0.000100 | train_loss=1.2449 train_acc=0.744 train_v=0.0089 train_mv=0.5920 | val_loss=1.3851 val_acc=0.746 val_v=0.0090 val_mv=0.5913
+epoch 10/30 | lr=0.000100 | train_loss=1.2129 train_acc=0.745 train_v=0.0089 train_mv=0.5893 | val_loss=1.3873 val_acc=0.744 val_v=0.0090 val_mv=0.5887
+epoch 11/30 | lr=0.000070 | train_loss=1.1876 train_acc=0.747 train_v=0.0088 train_mv=0.5871 | val_loss=1.3882 val_acc=0.745 val_v=0.0090 val_mv=0.5868
+epoch 12/30 | lr=0.000070 | train_loss=1.1763 train_acc=0.746 train_v=0.0088 train_mv=0.5852 | val_loss=1.3893 val_acc=0.745 val_v=0.0090 val_mv=0.5850
+epoch 13/30 | lr=0.000070 | train_loss=1.1594 train_acc=0.746 train_v=0.0088 train_mv=0.5834 | val_loss=1.3862 val_acc=0.743 val_v=0.0090 val_mv=0.5832
+epoch 14/30 | lr=0.000070 | train_loss=1.1465 train_acc=0.751 train_v=0.0088 train_mv=0.5816 | val_loss=1.3882 val_acc=0.744 val_v=0.0090 val_mv=0.5814
+epoch 15/30 | lr=0.000070 | train_loss=1.1381 train_acc=0.750 train_v=0.0087 train_mv=0.5798 | val_loss=1.3917 val_acc=0.745 val_v=0.0090 val_mv=0.5796
+  Training done: epochs=15 | val_loss=1.3821
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=15 h_wins=5 ties=0 | nn_avg=67.5 h_avg=61.5
+  Eval: nn_wins=15 / 20 | mean_score=67.5 | win_rate=0.750
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=7 b_wins=3 ties=0 | a_avg=61.5 b_avg=56.4
+game 20/40 | a_wins=13 b_wins=7 ties=0 | a_avg=66.0 b_avg=63.1
+game 30/40 | a_wins=17 b_wins=12 ties=1 | a_avg=65.6 b_avg=63.3
+game 40/40 | a_wins=23 b_wins=15 ties=2 | a_avg=65.6 b_avg=64.0
+  Gate: nn_wins=23 / 40 | win_rate=0.575 | promoted=True
+  ✓ Promoted! best_model.npz updated.
+
+============================================================
+  AlphaZero iter 3/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_003
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-gAPg9wkkBtjEzhGqwTKAix
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=123.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=124.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=130.1s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=139.9s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=172.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=115.9s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=122.1s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=123.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=120.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=130.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=129.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=135.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=134.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=134.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=135.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=133.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=136.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=140.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=178.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=178.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=138.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=150.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=145.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.1s  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=211.6s
+
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=160.9s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=199.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=163.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=163.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=122.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=171.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=173.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=164.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=162.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=179.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=189.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=144.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=150.7s  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.0s
+
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=196.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=218.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=177.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=177.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=192.9s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=306.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=216.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=230.9s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-gAPg9wkkBtjEzhGqwTKAix
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 31200 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_003/az_dataset_combined.jsonl
+Loaded 31200 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.5847 train_acc=0.715 train_v=0.0098 train_mv=0.6062 | val_loss=1.4216 val_acc=0.726 val_v=0.0097 val_mv=0.6057
+epoch 2/30 | lr=0.000040 | train_loss=1.5509 train_acc=0.718 train_v=0.0098 train_mv=0.6051 | val_loss=1.4129 val_acc=0.727 val_v=0.0097 val_mv=0.6042
+epoch 3/30 | lr=0.000060 | train_loss=1.5292 train_acc=0.715 train_v=0.0097 train_mv=0.6033 | val_loss=1.4126 val_acc=0.727 val_v=0.0097 val_mv=0.6020
+epoch 4/30 | lr=0.000080 | train_loss=1.4834 train_acc=0.717 train_v=0.0097 train_mv=0.6007 | val_loss=1.4105 val_acc=0.729 val_v=0.0097 val_mv=0.5991
+epoch 5/30 | lr=0.000100 | train_loss=1.4486 train_acc=0.720 train_v=0.0097 train_mv=0.5975 | val_loss=1.4117 val_acc=0.728 val_v=0.0096 val_mv=0.5955
+epoch 6/30 | lr=0.000100 | train_loss=1.4095 train_acc=0.722 train_v=0.0096 train_mv=0.5939 | val_loss=1.4133 val_acc=0.728 val_v=0.0096 val_mv=0.5919
+epoch 7/30 | lr=0.000100 | train_loss=1.3772 train_acc=0.724 train_v=0.0096 train_mv=0.5903 | val_loss=1.4142 val_acc=0.726 val_v=0.0096 val_mv=0.5884
+epoch 8/30 | lr=0.000100 | train_loss=1.3435 train_acc=0.722 train_v=0.0096 train_mv=0.5869 | val_loss=1.4110 val_acc=0.728 val_v=0.0096 val_mv=0.5850
+epoch 9/30 | lr=0.000100 | train_loss=1.3198 train_acc=0.723 train_v=0.0096 train_mv=0.5836 | val_loss=1.4133 val_acc=0.730 val_v=0.0096 val_mv=0.5817
+epoch 10/30 | lr=0.000100 | train_loss=1.2881 train_acc=0.725 train_v=0.0096 train_mv=0.5803 | val_loss=1.4195 val_acc=0.729 val_v=0.0096 val_mv=0.5784
+epoch 11/30 | lr=0.000070 | train_loss=1.2647 train_acc=0.727 train_v=0.0095 train_mv=0.5775 | val_loss=1.4181 val_acc=0.729 val_v=0.0096 val_mv=0.5761
+epoch 12/30 | lr=0.000070 | train_loss=1.2488 train_acc=0.726 train_v=0.0096 train_mv=0.5752 | val_loss=1.4191 val_acc=0.731 val_v=0.0096 val_mv=0.5739
+epoch 13/30 | lr=0.000070 | train_loss=1.2365 train_acc=0.726 train_v=0.0096 train_mv=0.5731 | val_loss=1.4215 val_acc=0.729 val_v=0.0096 val_mv=0.5717
+epoch 14/30 | lr=0.000070 | train_loss=1.2195 train_acc=0.728 train_v=0.0095 train_mv=0.5708 | val_loss=1.4279 val_acc=0.731 val_v=0.0096 val_mv=0.5695
+  Training done: epochs=14 | val_loss=1.4105
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=9 h_wins=11 ties=0 | nn_avg=67.5 h_avg=69.2
+  Eval: nn_wins=9 / 20 | mean_score=67.5 | win_rate=0.450
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=3 b_wins=7 ties=0 | a_avg=67.7 b_avg=60.7
+game 20/40 | a_wins=7 b_wins=12 ties=1 | a_avg=70.0 b_avg=67.0
+game 30/40 | a_wins=10 b_wins=17 ties=3 | a_avg=70.1 b_avg=69.1
+game 40/40 | a_wins=16 b_wins=20 ties=4 | a_avg=70.5 b_avg=69.1
+  Gate: nn_wins=16 / 40 | win_rate=0.400 | promoted=False
+
+============================================================
+  AlphaZero iter 4/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_004
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-pjVyhBtPpWdmuuE3UXFfwv
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=122.0s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=123.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=120.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=127.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=128.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=132.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=136.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=139.9s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=146.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=155.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=153.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=162.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=162.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=164.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=169.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=169.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=168.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=170.4s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=179.4s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=181.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=103.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=194.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=194.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=198.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=121.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=122.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=124.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=125.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=129.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=211.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=133.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=134.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=219.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=223.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=140.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=143.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=144.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=147.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=149.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=150.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=154.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=231.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=154.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=155.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=163.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=159.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=166.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=171.7s
+Runner interrupted due to worker preemption. Your Function will be restarted with the same input. For more details, see https://modal.com/docs/guide/preemption
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=263.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=262.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=189.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=163.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=194.2s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-pjVyhBtPpWdmuuE3UXFfwv
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 41600 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_004/az_dataset_combined.jsonl
+Loaded 41600 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.6917 train_acc=0.702 train_v=0.0112 train_mv=0.6087 | val_loss=1.5791 val_acc=0.708 val_v=0.0112 val_mv=0.6094
+epoch 2/30 | lr=0.000040 | train_loss=1.6519 train_acc=0.706 train_v=0.0111 train_mv=0.6073 | val_loss=1.5696 val_acc=0.710 val_v=0.0111 val_mv=0.6076
+epoch 3/30 | lr=0.000060 | train_loss=1.6151 train_acc=0.704 train_v=0.0111 train_mv=0.6051 | val_loss=1.5533 val_acc=0.711 val_v=0.0111 val_mv=0.6049
+epoch 4/30 | lr=0.000080 | train_loss=1.5685 train_acc=0.710 train_v=0.0111 train_mv=0.6018 | val_loss=1.5482 val_acc=0.714 val_v=0.0111 val_mv=0.6013
+epoch 5/30 | lr=0.000100 | train_loss=1.5288 train_acc=0.710 train_v=0.0110 train_mv=0.5978 | val_loss=1.5443 val_acc=0.712 val_v=0.0110 val_mv=0.5969
+epoch 6/30 | lr=0.000100 | train_loss=1.4870 train_acc=0.711 train_v=0.0109 train_mv=0.5935 | val_loss=1.5405 val_acc=0.714 val_v=0.0110 val_mv=0.5927
+epoch 7/30 | lr=0.000100 | train_loss=1.4467 train_acc=0.712 train_v=0.0109 train_mv=0.5892 | val_loss=1.5367 val_acc=0.714 val_v=0.0110 val_mv=0.5885
+epoch 8/30 | lr=0.000100 | train_loss=1.4144 train_acc=0.712 train_v=0.0109 train_mv=0.5850 | val_loss=1.5369 val_acc=0.716 val_v=0.0109 val_mv=0.5844
+epoch 9/30 | lr=0.000100 | train_loss=1.3842 train_acc=0.713 train_v=0.0108 train_mv=0.5810 | val_loss=1.5433 val_acc=0.714 val_v=0.0109 val_mv=0.5805
+epoch 10/30 | lr=0.000100 | train_loss=1.3597 train_acc=0.713 train_v=0.0108 train_mv=0.5770 | val_loss=1.5377 val_acc=0.716 val_v=0.0109 val_mv=0.5766
+epoch 11/30 | lr=0.000070 | train_loss=1.3283 train_acc=0.715 train_v=0.0108 train_mv=0.5737 | val_loss=1.5424 val_acc=0.716 val_v=0.0109 val_mv=0.5740
+epoch 12/30 | lr=0.000070 | train_loss=1.3141 train_acc=0.716 train_v=0.0108 train_mv=0.5710 | val_loss=1.5484 val_acc=0.714 val_v=0.0109 val_mv=0.5713
+epoch 13/30 | lr=0.000070 | train_loss=1.2963 train_acc=0.718 train_v=0.0108 train_mv=0.5684 | val_loss=1.5542 val_acc=0.717 val_v=0.0109 val_mv=0.5688
+epoch 14/30 | lr=0.000070 | train_loss=1.2806 train_acc=0.717 train_v=0.0108 train_mv=0.5658 | val_loss=1.5508 val_acc=0.717 val_v=0.0108 val_mv=0.5663
+epoch 15/30 | lr=0.000070 | train_loss=1.2702 train_acc=0.717 train_v=0.0108 train_mv=0.5633 | val_loss=1.5557 val_acc=0.719 val_v=0.0109 val_mv=0.5638
+epoch 16/30 | lr=0.000049 | train_loss=1.2568 train_acc=0.717 train_v=0.0108 train_mv=0.5611 | val_loss=1.5565 val_acc=0.718 val_v=0.0108 val_mv=0.5621
+epoch 17/30 | lr=0.000049 | train_loss=1.2417 train_acc=0.718 train_v=0.0108 train_mv=0.5594 | val_loss=1.5585 val_acc=0.717 val_v=0.0108 val_mv=0.5604
+  Training done: epochs=17 | val_loss=1.5367
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=6 h_wins=14 ties=0 | nn_avg=64.5 h_avg=66.7
+  Eval: nn_wins=6 / 20 | mean_score=64.5 | win_rate=0.300
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=2 b_wins=6 ties=2 | a_avg=63.6 b_avg=67.9
+game 20/40 | a_wins=6 b_wins=12 ties=2 | a_avg=63.5 b_avg=68.5
+game 30/40 | a_wins=9 b_wins=17 ties=4 | a_avg=63.8 b_avg=66.2
+game 40/40 | a_wins=16 b_wins=19 ties=5 | a_avg=66.0 b_avg=66.5
+  Gate: nn_wins=16 / 40 | win_rate=0.400 | promoted=False
+
+============================================================
+  AlphaZero iter 5/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_005
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-xvcnElgkJEr1vkm09Itd3T
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=125.9s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=133.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=103.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=143.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=111.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=153.9s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=124.9s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=155.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=124.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=170.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=134.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=125.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=135.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=133.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=174.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=136.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=148.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=139.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=134.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=190.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=151.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=154.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=162.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=120.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=153.9s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=197.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=160.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=175.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=208.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=181.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=213.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=159.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=185.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=128.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=176.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=146.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=181.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=146.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=186.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=239.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=189.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=148.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=153.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=173.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=165.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=175.4s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-xvcnElgkJEr1vkm09Itd3T
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 52000 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_005/az_dataset_combined.jsonl
+Loaded 52000 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.7550 train_acc=0.695 train_v=0.0115 train_mv=0.6098 | val_loss=1.6267 val_acc=0.699 val_v=0.0108 val_mv=0.6102
+epoch 2/30 | lr=0.000040 | train_loss=1.7045 train_acc=0.699 train_v=0.0114 train_mv=0.6081 | val_loss=1.6034 val_acc=0.701 val_v=0.0107 val_mv=0.6079
+epoch 3/30 | lr=0.000060 | train_loss=1.6590 train_acc=0.702 train_v=0.0114 train_mv=0.6052 | val_loss=1.5900 val_acc=0.703 val_v=0.0107 val_mv=0.6046
+epoch 4/30 | lr=0.000080 | train_loss=1.6065 train_acc=0.704 train_v=0.0114 train_mv=0.6015 | val_loss=1.5804 val_acc=0.704 val_v=0.0106 val_mv=0.6004
+epoch 5/30 | lr=0.000100 | train_loss=1.5674 train_acc=0.706 train_v=0.0113 train_mv=0.5966 | val_loss=1.5759 val_acc=0.703 val_v=0.0106 val_mv=0.5951
+epoch 6/30 | lr=0.000100 | train_loss=1.5265 train_acc=0.707 train_v=0.0112 train_mv=0.5914 | val_loss=1.5743 val_acc=0.707 val_v=0.0105 val_mv=0.5901
+epoch 7/30 | lr=0.000100 | train_loss=1.4835 train_acc=0.709 train_v=0.0112 train_mv=0.5863 | val_loss=1.5728 val_acc=0.710 val_v=0.0105 val_mv=0.5851
+epoch 8/30 | lr=0.000100 | train_loss=1.4469 train_acc=0.710 train_v=0.0112 train_mv=0.5814 | val_loss=1.5737 val_acc=0.711 val_v=0.0105 val_mv=0.5804
+epoch 9/30 | lr=0.000100 | train_loss=1.4208 train_acc=0.709 train_v=0.0112 train_mv=0.5767 | val_loss=1.5749 val_acc=0.708 val_v=0.0105 val_mv=0.5757
+epoch 10/30 | lr=0.000100 | train_loss=1.3897 train_acc=0.712 train_v=0.0112 train_mv=0.5721 | val_loss=1.5816 val_acc=0.710 val_v=0.0104 val_mv=0.5712
+epoch 11/30 | lr=0.000070 | train_loss=1.3612 train_acc=0.712 train_v=0.0111 train_mv=0.5682 | val_loss=1.5848 val_acc=0.712 val_v=0.0104 val_mv=0.5682
+epoch 12/30 | lr=0.000070 | train_loss=1.3441 train_acc=0.711 train_v=0.0112 train_mv=0.5651 | val_loss=1.5857 val_acc=0.711 val_v=0.0104 val_mv=0.5652
+epoch 13/30 | lr=0.000070 | train_loss=1.3302 train_acc=0.711 train_v=0.0111 train_mv=0.5621 | val_loss=1.5849 val_acc=0.710 val_v=0.0104 val_mv=0.5622
+epoch 14/30 | lr=0.000070 | train_loss=1.3125 train_acc=0.712 train_v=0.0111 train_mv=0.5592 | val_loss=1.5932 val_acc=0.711 val_v=0.0104 val_mv=0.5593
+epoch 15/30 | lr=0.000070 | train_loss=1.3019 train_acc=0.714 train_v=0.0111 train_mv=0.5563 | val_loss=1.5922 val_acc=0.712 val_v=0.0104 val_mv=0.5565
+epoch 16/30 | lr=0.000049 | train_loss=1.2844 train_acc=0.715 train_v=0.0111 train_mv=0.5539 | val_loss=1.5937 val_acc=0.712 val_v=0.0104 val_mv=0.5546
+epoch 17/30 | lr=0.000049 | train_loss=1.2735 train_acc=0.714 train_v=0.0111 train_mv=0.5519 | val_loss=1.5982 val_acc=0.713 val_v=0.0104 val_mv=0.5526
+  Training done: epochs=17 | val_loss=1.5728
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=10 h_wins=10 ties=0 | nn_avg=65.2 h_avg=66.3
+  Eval: nn_wins=10 / 20 | mean_score=65.2 | win_rate=0.500
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=5 b_wins=3 ties=2 | a_avg=63.5 b_avg=67.2
+game 20/40 | a_wins=11 b_wins=7 ties=2 | a_avg=64.7 b_avg=69.2
+game 30/40 | a_wins=15 b_wins=12 ties=3 | a_avg=65.1 b_avg=66.4
+game 40/40 | a_wins=18 b_wins=16 ties=6 | a_avg=65.2 b_avg=65.4
+  Gate: nn_wins=18 / 40 | win_rate=0.450 | promoted=False
+
+============================================================
+  AlphaZero iter 6/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_006
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-b8D0pc15ScA7X88LELkKqT
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=116.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=120.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=121.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=128.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=129.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=136.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=135.5s  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=135.3s
+
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=139.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=141.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=150.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=143.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.9s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=153.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=153.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=153.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=163.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=161.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=164.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=164.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=165.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=164.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=167.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=167.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=171.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=173.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=177.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=184.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=185.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=192.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=134.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=197.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=117.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=207.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=202.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=119.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=159.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=135.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.7s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=220.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=140.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=231.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=142.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=161.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=160.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=162.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=165.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=165.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=247.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=166.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=184.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=229.2s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-b8D0pc15ScA7X88LELkKqT
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 62400 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_006/az_dataset_combined.jsonl
+Loaded 62400 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.7966 train_acc=0.691 train_v=0.0112 train_mv=0.6107 | val_loss=1.6534 val_acc=0.705 val_v=0.0111 val_mv=0.6097
+epoch 2/30 | lr=0.000040 | train_loss=1.7394 train_acc=0.694 train_v=0.0111 train_mv=0.6088 | val_loss=1.6296 val_acc=0.705 val_v=0.0110 val_mv=0.6071
+epoch 3/30 | lr=0.000060 | train_loss=1.6925 train_acc=0.697 train_v=0.0111 train_mv=0.6055 | val_loss=1.6139 val_acc=0.706 val_v=0.0110 val_mv=0.6032
+epoch 4/30 | lr=0.000080 | train_loss=1.6459 train_acc=0.699 train_v=0.0110 train_mv=0.6011 | val_loss=1.6019 val_acc=0.706 val_v=0.0110 val_mv=0.5982
+epoch 5/30 | lr=0.000100 | train_loss=1.6037 train_acc=0.700 train_v=0.0110 train_mv=0.5955 | val_loss=1.5900 val_acc=0.707 val_v=0.0109 val_mv=0.5920
+epoch 6/30 | lr=0.000100 | train_loss=1.5503 train_acc=0.701 train_v=0.0109 train_mv=0.5895 | val_loss=1.5833 val_acc=0.707 val_v=0.0108 val_mv=0.5861
+epoch 7/30 | lr=0.000100 | train_loss=1.5166 train_acc=0.703 train_v=0.0109 train_mv=0.5837 | val_loss=1.5852 val_acc=0.707 val_v=0.0108 val_mv=0.5804
+epoch 8/30 | lr=0.000100 | train_loss=1.4840 train_acc=0.704 train_v=0.0109 train_mv=0.5782 | val_loss=1.5843 val_acc=0.708 val_v=0.0108 val_mv=0.5749
+epoch 9/30 | lr=0.000100 | train_loss=1.4533 train_acc=0.706 train_v=0.0109 train_mv=0.5728 | val_loss=1.5840 val_acc=0.709 val_v=0.0107 val_mv=0.5696
+epoch 10/30 | lr=0.000100 | train_loss=1.4235 train_acc=0.706 train_v=0.0108 train_mv=0.5676 | val_loss=1.5887 val_acc=0.707 val_v=0.0107 val_mv=0.5645
+epoch 11/30 | lr=0.000070 | train_loss=1.3936 train_acc=0.706 train_v=0.0108 train_mv=0.5633 | val_loss=1.5938 val_acc=0.711 val_v=0.0107 val_mv=0.5610
+epoch 12/30 | lr=0.000070 | train_loss=1.3756 train_acc=0.707 train_v=0.0108 train_mv=0.5599 | val_loss=1.5900 val_acc=0.709 val_v=0.0107 val_mv=0.5576
+epoch 13/30 | lr=0.000070 | train_loss=1.3585 train_acc=0.709 train_v=0.0108 train_mv=0.5565 | val_loss=1.5921 val_acc=0.709 val_v=0.0107 val_mv=0.5542
+epoch 14/30 | lr=0.000070 | train_loss=1.3459 train_acc=0.709 train_v=0.0108 train_mv=0.5533 | val_loss=1.5947 val_acc=0.711 val_v=0.0107 val_mv=0.5510
+epoch 15/30 | lr=0.000070 | train_loss=1.3270 train_acc=0.708 train_v=0.0108 train_mv=0.5501 | val_loss=1.5986 val_acc=0.710 val_v=0.0107 val_mv=0.5478
+epoch 16/30 | lr=0.000049 | train_loss=1.3104 train_acc=0.710 train_v=0.0108 train_mv=0.5474 | val_loss=1.5976 val_acc=0.712 val_v=0.0107 val_mv=0.5456
+  Training done: epochs=16 | val_loss=1.5833
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=10 h_wins=9 ties=1 | nn_avg=65.8 h_avg=66.7
+  Eval: nn_wins=10 / 20 | mean_score=65.8 | win_rate=0.500
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=5 b_wins=4 ties=1 | a_avg=65.2 b_avg=65.7
+game 20/40 | a_wins=9 b_wins=10 ties=1 | a_avg=64.2 b_avg=68.0
+game 30/40 | a_wins=16 b_wins=11 ties=3 | a_avg=66.6 b_avg=66.5
+game 40/40 | a_wins=21 b_wins=16 ties=3 | a_avg=66.0 b_avg=66.9
+  Gate: nn_wins=21 / 40 | win_rate=0.525 | promoted=True
+  ✓ Promoted! best_model.npz updated.
+
+============================================================
+  AlphaZero iter 7/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_007
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-rOGIxvYcZ4dCr2aahDSpfl
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=127.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=125.4s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=124.4s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=126.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=122.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=125.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=133.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=133.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=134.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=135.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=139.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=147.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=147.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=147.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=154.7s  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=150.8s
+
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=176.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=170.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=161.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=165.4s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=178.6s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=177.4s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=184.4s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=187.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=184.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=183.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=187.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=189.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=191.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=122.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=194.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=122.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=122.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=147.0s  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.3s
+
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=222.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=145.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=227.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=221.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=146.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=227.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=230.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=231.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=184.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=178.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=180.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=181.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=198.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=273.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=213.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=220.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=215.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=215.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=217.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=244.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=253.9s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-rOGIxvYcZ4dCr2aahDSpfl
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 72800 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_007/az_dataset_combined.jsonl
+Loaded 72800 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.5663 train_acc=0.701 train_v=0.0109 train_mv=0.5861 | val_loss=1.4264 val_acc=0.716 val_v=0.0110 val_mv=0.5844
+epoch 2/30 | lr=0.000040 | train_loss=1.5579 train_acc=0.702 train_v=0.0108 train_mv=0.5840 | val_loss=1.4329 val_acc=0.717 val_v=0.0110 val_mv=0.5817
+epoch 3/30 | lr=0.000060 | train_loss=1.5354 train_acc=0.703 train_v=0.0108 train_mv=0.5808 | val_loss=1.4342 val_acc=0.716 val_v=0.0110 val_mv=0.5778
+epoch 4/30 | lr=0.000080 | train_loss=1.5183 train_acc=0.705 train_v=0.0108 train_mv=0.5763 | val_loss=1.4401 val_acc=0.717 val_v=0.0110 val_mv=0.5727
+epoch 5/30 | lr=0.000100 | train_loss=1.4894 train_acc=0.704 train_v=0.0108 train_mv=0.5707 | val_loss=1.4486 val_acc=0.717 val_v=0.0109 val_mv=0.5665
+epoch 6/30 | lr=0.000100 | train_loss=1.4561 train_acc=0.706 train_v=0.0108 train_mv=0.5648 | val_loss=1.4518 val_acc=0.716 val_v=0.0109 val_mv=0.5607
+epoch 7/30 | lr=0.000100 | train_loss=1.4325 train_acc=0.706 train_v=0.0108 train_mv=0.5591 | val_loss=1.4536 val_acc=0.715 val_v=0.0109 val_mv=0.5550
+epoch 8/30 | lr=0.000100 | train_loss=1.4047 train_acc=0.708 train_v=0.0108 train_mv=0.5536 | val_loss=1.4599 val_acc=0.718 val_v=0.0109 val_mv=0.5496
+epoch 9/30 | lr=0.000100 | train_loss=1.3805 train_acc=0.708 train_v=0.0108 train_mv=0.5483 | val_loss=1.4612 val_acc=0.716 val_v=0.0109 val_mv=0.5443
+epoch 10/30 | lr=0.000100 | train_loss=1.3592 train_acc=0.707 train_v=0.0107 train_mv=0.5433 | val_loss=1.4689 val_acc=0.715 val_v=0.0109 val_mv=0.5393
+epoch 11/30 | lr=0.000070 | train_loss=1.3331 train_acc=0.711 train_v=0.0107 train_mv=0.5391 | val_loss=1.4687 val_acc=0.718 val_v=0.0109 val_mv=0.5359
+  Training done: epochs=11 | val_loss=1.4264
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=9 h_wins=11 ties=0 | nn_avg=62.2 h_avg=65.7
+  Eval: nn_wins=9 / 20 | mean_score=62.2 | win_rate=0.450
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=6 b_wins=4 ties=0 | a_avg=66.5 b_avg=63.7
+game 20/40 | a_wins=11 b_wins=9 ties=0 | a_avg=70.2 b_avg=68.1
+game 30/40 | a_wins=17 b_wins=13 ties=0 | a_avg=69.8 b_avg=68.6
+game 40/40 | a_wins=22 b_wins=18 ties=0 | a_avg=67.8 b_avg=66.3
+  Gate: nn_wins=22 / 40 | win_rate=0.550 | promoted=True
+  ✓ Promoted! best_model.npz updated.
+
+============================================================
+  AlphaZero iter 8/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_008
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-vqmKG8BQJlEHRqKMXGzhOv
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=123.0s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=127.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=133.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=138.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=140.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=139.9s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=143.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=136.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=143.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=144.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=153.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=147.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=159.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=163.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=163.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=171.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=163.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=176.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=173.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=169.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=186.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=173.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=183.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=179.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=190.4s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=192.4s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=196.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=195.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=193.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=118.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=130.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=130.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=142.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=154.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=147.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=165.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=154.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=243.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=159.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=161.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=174.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=177.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=181.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=194.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=197.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=209.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=214.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=218.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=234.7s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-vqmKG8BQJlEHRqKMXGzhOv
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 83200 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_008/az_dataset_combined.jsonl
+Loaded 83200 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.5860 train_acc=0.703 train_v=0.0117 train_mv=0.5848 | val_loss=1.4511 val_acc=0.705 val_v=0.0116 val_mv=0.5849
+epoch 2/30 | lr=0.000040 | train_loss=1.5740 train_acc=0.703 train_v=0.0117 train_mv=0.5825 | val_loss=1.4547 val_acc=0.705 val_v=0.0115 val_mv=0.5819
+epoch 3/30 | lr=0.000060 | train_loss=1.5586 train_acc=0.703 train_v=0.0116 train_mv=0.5788 | val_loss=1.4591 val_acc=0.705 val_v=0.0115 val_mv=0.5776
+epoch 4/30 | lr=0.000080 | train_loss=1.5326 train_acc=0.705 train_v=0.0116 train_mv=0.5738 | val_loss=1.4624 val_acc=0.705 val_v=0.0115 val_mv=0.5720
+epoch 5/30 | lr=0.000100 | train_loss=1.5028 train_acc=0.706 train_v=0.0116 train_mv=0.5676 | val_loss=1.4685 val_acc=0.706 val_v=0.0114 val_mv=0.5653
+epoch 6/30 | lr=0.000100 | train_loss=1.4756 train_acc=0.707 train_v=0.0116 train_mv=0.5610 | val_loss=1.4726 val_acc=0.706 val_v=0.0114 val_mv=0.5589
+epoch 7/30 | lr=0.000100 | train_loss=1.4432 train_acc=0.708 train_v=0.0115 train_mv=0.5547 | val_loss=1.4817 val_acc=0.708 val_v=0.0114 val_mv=0.5528
+epoch 8/30 | lr=0.000100 | train_loss=1.4173 train_acc=0.708 train_v=0.0115 train_mv=0.5486 | val_loss=1.4847 val_acc=0.706 val_v=0.0114 val_mv=0.5469
+epoch 9/30 | lr=0.000100 | train_loss=1.3948 train_acc=0.708 train_v=0.0115 train_mv=0.5429 | val_loss=1.4874 val_acc=0.707 val_v=0.0114 val_mv=0.5413
+epoch 10/30 | lr=0.000100 | train_loss=1.3700 train_acc=0.710 train_v=0.0115 train_mv=0.5373 | val_loss=1.4926 val_acc=0.708 val_v=0.0114 val_mv=0.5360
+epoch 11/30 | lr=0.000070 | train_loss=1.3451 train_acc=0.711 train_v=0.0115 train_mv=0.5328 | val_loss=1.4938 val_acc=0.707 val_v=0.0114 val_mv=0.5324
+  Training done: epochs=11 | val_loss=1.4511
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=11 h_wins=9 ties=0 | nn_avg=65.2 h_avg=69.8
+  Eval: nn_wins=11 / 20 | mean_score=65.2 | win_rate=0.550
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=6 b_wins=3 ties=1 | a_avg=64.8 b_avg=66.0
+game 20/40 | a_wins=8 b_wins=9 ties=3 | a_avg=65.4 b_avg=68.3
+game 30/40 | a_wins=12 b_wins=14 ties=4 | a_avg=64.3 b_avg=66.9
+game 40/40 | a_wins=15 b_wins=20 ties=5 | a_avg=65.8 b_avg=69.0
+  Gate: nn_wins=15 / 40 | win_rate=0.375 | promoted=False
+
+============================================================
+  AlphaZero iter 9/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_009
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-PxFpKWH8Qbo42HNUj2ANjj
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=109.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=110.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=127.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=127.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=118.0s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=125.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=125.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.0s
+Runner interrupted due to worker preemption. Your Function will be restarted with the same input. For more details, see https://modal.com/docs/guide/preemption
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.9s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=134.7s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=146.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=135.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=135.3s
+Runner interrupted due to worker preemption. Your Function will be restarted with the same input. For more details, see https://modal.com/docs/guide/preemption
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=140.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=142.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=143.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=147.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=155.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=152.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=154.9s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=171.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=162.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=161.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=168.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=161.6s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=178.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=186.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=171.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=173.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=186.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=183.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=120.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=121.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=140.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=133.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=143.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=144.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=145.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=228.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=169.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=168.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=240.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=160.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=167.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=179.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=204.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=203.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=225.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=159.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=271.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=201.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=191.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=244.6s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-PxFpKWH8Qbo42HNUj2ANjj
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 93600 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_009/az_dataset_combined.jsonl
+Loaded 93600 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.6098 train_acc=0.703 train_v=0.0118 train_mv=0.5847 | val_loss=1.4764 val_acc=0.708 val_v=0.0108 val_mv=0.5848
+epoch 2/30 | lr=0.000040 | train_loss=1.5975 train_acc=0.703 train_v=0.0118 train_mv=0.5822 | val_loss=1.4769 val_acc=0.707 val_v=0.0108 val_mv=0.5815
+epoch 3/30 | lr=0.000060 | train_loss=1.5768 train_acc=0.705 train_v=0.0118 train_mv=0.5781 | val_loss=1.4789 val_acc=0.709 val_v=0.0108 val_mv=0.5767
+epoch 4/30 | lr=0.000080 | train_loss=1.5507 train_acc=0.704 train_v=0.0118 train_mv=0.5725 | val_loss=1.4833 val_acc=0.708 val_v=0.0108 val_mv=0.5705
+epoch 5/30 | lr=0.000100 | train_loss=1.5199 train_acc=0.706 train_v=0.0117 train_mv=0.5656 | val_loss=1.4855 val_acc=0.709 val_v=0.0108 val_mv=0.5631
+epoch 6/30 | lr=0.000100 | train_loss=1.4908 train_acc=0.705 train_v=0.0117 train_mv=0.5583 | val_loss=1.4920 val_acc=0.710 val_v=0.0107 val_mv=0.5560
+epoch 7/30 | lr=0.000100 | train_loss=1.4584 train_acc=0.706 train_v=0.0117 train_mv=0.5514 | val_loss=1.4926 val_acc=0.711 val_v=0.0107 val_mv=0.5493
+epoch 8/30 | lr=0.000100 | train_loss=1.4338 train_acc=0.708 train_v=0.0117 train_mv=0.5448 | val_loss=1.4965 val_acc=0.710 val_v=0.0107 val_mv=0.5430
+epoch 9/30 | lr=0.000100 | train_loss=1.4066 train_acc=0.708 train_v=0.0117 train_mv=0.5385 | val_loss=1.4989 val_acc=0.711 val_v=0.0107 val_mv=0.5370
+epoch 10/30 | lr=0.000100 | train_loss=1.3820 train_acc=0.709 train_v=0.0117 train_mv=0.5326 | val_loss=1.5079 val_acc=0.710 val_v=0.0107 val_mv=0.5312
+epoch 11/30 | lr=0.000070 | train_loss=1.3546 train_acc=0.710 train_v=0.0116 train_mv=0.5277 | val_loss=1.5060 val_acc=0.711 val_v=0.0107 val_mv=0.5274
+  Training done: epochs=11 | val_loss=1.4764
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=6 h_wins=13 ties=1 | nn_avg=65.2 h_avg=68.7
+  Eval: nn_wins=6 / 20 | mean_score=65.2 | win_rate=0.300
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=5 b_wins=4 ties=1 | a_avg=70.6 b_avg=69.5
+game 20/40 | a_wins=8 b_wins=11 ties=1 | a_avg=68.9 b_avg=73.3
+game 30/40 | a_wins=15 b_wins=14 ties=1 | a_avg=67.4 b_avg=70.1
+game 40/40 | a_wins=22 b_wins=17 ties=1 | a_avg=68.8 b_avg=70.0
+  Gate: nn_wins=22 / 40 | win_rate=0.550 | promoted=True
+  ✓ Promoted! best_model.npz updated.
+
+============================================================
+  AlphaZero iter 10/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_010
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-CJFIutdhntoKMhfWt8PFXc
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=118.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=133.0s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=135.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=145.0s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=146.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=138.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=145.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=148.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=156.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=149.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=141.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=153.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=145.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=157.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=169.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=171.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=167.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=177.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=185.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=177.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=184.9s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=195.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=199.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=129.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=118.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=193.4s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=205.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=130.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=216.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=135.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=218.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=138.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=141.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=233.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=146.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=160.7s  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.7s
+
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=158.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=239.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.4s  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.7s
+
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=161.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=164.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=234.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=168.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=169.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=188.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=194.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=201.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=300.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=232.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=324.6s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-CJFIutdhntoKMhfWt8PFXc
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 104000 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_010/az_dataset_combined.jsonl
+Loaded 104000 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.6186 train_acc=0.704 train_v=0.0117 train_mv=0.5832 | val_loss=1.4947 val_acc=0.706 val_v=0.0114 val_mv=0.5828
+epoch 2/30 | lr=0.000040 | train_loss=1.6065 train_acc=0.704 train_v=0.0116 train_mv=0.5805 | val_loss=1.4972 val_acc=0.706 val_v=0.0114 val_mv=0.5792
+epoch 3/30 | lr=0.000060 | train_loss=1.5854 train_acc=0.705 train_v=0.0116 train_mv=0.5760 | val_loss=1.4961 val_acc=0.707 val_v=0.0113 val_mv=0.5739
+epoch 4/30 | lr=0.000080 | train_loss=1.5576 train_acc=0.705 train_v=0.0116 train_mv=0.5699 | val_loss=1.4996 val_acc=0.706 val_v=0.0113 val_mv=0.5671
+epoch 5/30 | lr=0.000100 | train_loss=1.5317 train_acc=0.705 train_v=0.0116 train_mv=0.5625 | val_loss=1.4991 val_acc=0.706 val_v=0.0113 val_mv=0.5590
+epoch 6/30 | lr=0.000100 | train_loss=1.4986 train_acc=0.706 train_v=0.0115 train_mv=0.5546 | val_loss=1.5019 val_acc=0.707 val_v=0.0112 val_mv=0.5514
+epoch 7/30 | lr=0.000100 | train_loss=1.4680 train_acc=0.708 train_v=0.0115 train_mv=0.5472 | val_loss=1.5048 val_acc=0.706 val_v=0.0112 val_mv=0.5443
+epoch 8/30 | lr=0.000100 | train_loss=1.4414 train_acc=0.708 train_v=0.0115 train_mv=0.5402 | val_loss=1.5094 val_acc=0.707 val_v=0.0112 val_mv=0.5375
+epoch 9/30 | lr=0.000100 | train_loss=1.4166 train_acc=0.710 train_v=0.0115 train_mv=0.5336 | val_loss=1.5111 val_acc=0.707 val_v=0.0112 val_mv=0.5311
+epoch 10/30 | lr=0.000100 | train_loss=1.3947 train_acc=0.709 train_v=0.0115 train_mv=0.5273 | val_loss=1.5136 val_acc=0.707 val_v=0.0111 val_mv=0.5250
+epoch 11/30 | lr=0.000070 | train_loss=1.3665 train_acc=0.710 train_v=0.0115 train_mv=0.5222 | val_loss=1.5159 val_acc=0.707 val_v=0.0111 val_mv=0.5209
+  Training done: epochs=11 | val_loss=1.4947
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=8 h_wins=12 ties=0 | nn_avg=63.1 h_avg=66.7
+  Eval: nn_wins=8 / 20 | mean_score=63.1 | win_rate=0.400
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=5 b_wins=5 ties=0 | a_avg=60.7 b_avg=60.1
+game 20/40 | a_wins=11 b_wins=9 ties=0 | a_avg=63.0 b_avg=63.4
+game 30/40 | a_wins=18 b_wins=12 ties=0 | a_avg=66.2 b_avg=65.3
+game 40/40 | a_wins=26 b_wins=13 ties=1 | a_avg=67.2 b_avg=64.3
+  Gate: nn_wins=26 / 40 | win_rate=0.650 | promoted=True
+  ✓ Promoted! best_model.npz updated.
+
+============================================================
+  AlphaZero iter 11/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_011
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-uFsST0glKXZUWAdh6ATZAh
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=119.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=121.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=124.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=122.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=125.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=125.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=128.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=128.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=132.0s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=133.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=130.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=133.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=133.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=134.4s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=143.0s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=142.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=139.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=142.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=146.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=150.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=149.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=160.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=169.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=169.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=167.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=174.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=177.3s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=182.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=184.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=194.7s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=197.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=200.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=122.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=130.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=133.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=134.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=135.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=144.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=146.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=149.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=153.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=154.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=159.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=163.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=162.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=172.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=175.0s  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=174.7s
+
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=188.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=208.9s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-uFsST0glKXZUWAdh6ATZAh
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 114400 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_011/az_dataset_combined.jsonl
+Loaded 114400 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.6202 train_acc=0.703 train_v=0.0117 train_mv=0.5813 | val_loss=1.5152 val_acc=0.705 val_v=0.0123 val_mv=0.5826
+epoch 2/30 | lr=0.000040 | train_loss=1.6082 train_acc=0.704 train_v=0.0117 train_mv=0.5783 | val_loss=1.5162 val_acc=0.706 val_v=0.0123 val_mv=0.5787
+epoch 3/30 | lr=0.000060 | train_loss=1.5855 train_acc=0.704 train_v=0.0117 train_mv=0.5734 | val_loss=1.5217 val_acc=0.704 val_v=0.0123 val_mv=0.5731
+epoch 4/30 | lr=0.000080 | train_loss=1.5633 train_acc=0.704 train_v=0.0116 train_mv=0.5668 | val_loss=1.5221 val_acc=0.706 val_v=0.0122 val_mv=0.5659
+epoch 5/30 | lr=0.000100 | train_loss=1.5343 train_acc=0.706 train_v=0.0116 train_mv=0.5588 | val_loss=1.5259 val_acc=0.706 val_v=0.0122 val_mv=0.5574
+epoch 6/30 | lr=0.000100 | train_loss=1.4991 train_acc=0.707 train_v=0.0116 train_mv=0.5504 | val_loss=1.5287 val_acc=0.707 val_v=0.0122 val_mv=0.5495
+epoch 7/30 | lr=0.000100 | train_loss=1.4726 train_acc=0.708 train_v=0.0116 train_mv=0.5425 | val_loss=1.5241 val_acc=0.708 val_v=0.0122 val_mv=0.5420
+epoch 8/30 | lr=0.000100 | train_loss=1.4427 train_acc=0.710 train_v=0.0115 train_mv=0.5351 | val_loss=1.5322 val_acc=0.707 val_v=0.0122 val_mv=0.5350
+epoch 9/30 | lr=0.000100 | train_loss=1.4181 train_acc=0.710 train_v=0.0115 train_mv=0.5281 | val_loss=1.5329 val_acc=0.708 val_v=0.0122 val_mv=0.5284
+epoch 10/30 | lr=0.000100 | train_loss=1.3977 train_acc=0.710 train_v=0.0115 train_mv=0.5215 | val_loss=1.5371 val_acc=0.708 val_v=0.0122 val_mv=0.5221
+epoch 11/30 | lr=0.000070 | train_loss=1.3659 train_acc=0.712 train_v=0.0115 train_mv=0.5162 | val_loss=1.5404 val_acc=0.708 val_v=0.0121 val_mv=0.5180
+  Training done: epochs=11 | val_loss=1.5153
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=5 h_wins=15 ties=0 | nn_avg=64.3 h_avg=72.5
+  Eval: nn_wins=5 / 20 | mean_score=64.3 | win_rate=0.250
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=3 b_wins=7 ties=0 | a_avg=70.4 b_avg=74.8
+game 20/40 | a_wins=6 b_wins=14 ties=0 | a_avg=69.8 b_avg=72.6
+game 30/40 | a_wins=10 b_wins=18 ties=2 | a_avg=70.5 b_avg=71.6
+game 40/40 | a_wins=16 b_wins=22 ties=2 | a_avg=71.4 b_avg=70.0
+  Gate: nn_wins=16 / 40 | win_rate=0.400 | promoted=False
+
+============================================================
+  AlphaZero iter 12/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_012
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-05Eq2PUhJOXSu6Nv66ohH3
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=127.9s  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=127.6s
+
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=105.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=107.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=131.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=137.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=143.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=122.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=145.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=124.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=128.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=128.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.1s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=156.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=133.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=147.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=149.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=176.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=181.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=161.4s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=187.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=191.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=195.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=114.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=121.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=129.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=138.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=130.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=129.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=130.9s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=211.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=187.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=212.9s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=215.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=139.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=146.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=149.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=151.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=158.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=165.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=158.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=159.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=159.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=223.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=226.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=188.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=189.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=269.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=294.4s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-05Eq2PUhJOXSu6Nv66ohH3
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 124800 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_012/az_dataset_combined.jsonl
+Loaded 124800 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.6398 train_acc=0.702 train_v=0.0120 train_mv=0.5816 | val_loss=1.5112 val_acc=0.709 val_v=0.0114 val_mv=0.5806
+epoch 2/30 | lr=0.000040 | train_loss=1.6282 train_acc=0.703 train_v=0.0120 train_mv=0.5784 | val_loss=1.5072 val_acc=0.709 val_v=0.0114 val_mv=0.5763
+epoch 3/30 | lr=0.000060 | train_loss=1.6042 train_acc=0.703 train_v=0.0119 train_mv=0.5731 | val_loss=1.5059 val_acc=0.709 val_v=0.0114 val_mv=0.5701
+epoch 4/30 | lr=0.000080 | train_loss=1.5792 train_acc=0.705 train_v=0.0119 train_mv=0.5661 | val_loss=1.5054 val_acc=0.709 val_v=0.0113 val_mv=0.5623
+epoch 5/30 | lr=0.000100 | train_loss=1.5465 train_acc=0.706 train_v=0.0119 train_mv=0.5575 | val_loss=1.5053 val_acc=0.711 val_v=0.0113 val_mv=0.5530
+epoch 6/30 | lr=0.000100 | train_loss=1.5115 train_acc=0.706 train_v=0.0119 train_mv=0.5486 | val_loss=1.5086 val_acc=0.712 val_v=0.0112 val_mv=0.5444
+epoch 7/30 | lr=0.000100 | train_loss=1.4854 train_acc=0.708 train_v=0.0119 train_mv=0.5402 | val_loss=1.5065 val_acc=0.713 val_v=0.0112 val_mv=0.5363
+epoch 8/30 | lr=0.000100 | train_loss=1.4549 train_acc=0.707 train_v=0.0118 train_mv=0.5324 | val_loss=1.5117 val_acc=0.711 val_v=0.0112 val_mv=0.5288
+epoch 9/30 | lr=0.000100 | train_loss=1.4307 train_acc=0.709 train_v=0.0118 train_mv=0.5251 | val_loss=1.5081 val_acc=0.713 val_v=0.0112 val_mv=0.5217
+epoch 10/30 | lr=0.000100 | train_loss=1.4089 train_acc=0.709 train_v=0.0118 train_mv=0.5182 | val_loss=1.5163 val_acc=0.714 val_v=0.0112 val_mv=0.5151
+epoch 11/30 | lr=0.000070 | train_loss=1.3808 train_acc=0.710 train_v=0.0118 train_mv=0.5127 | val_loss=1.5114 val_acc=0.714 val_v=0.0112 val_mv=0.5107
+epoch 12/30 | lr=0.000070 | train_loss=1.3668 train_acc=0.711 train_v=0.0118 train_mv=0.5084 | val_loss=1.5125 val_acc=0.712 val_v=0.0112 val_mv=0.5065
+epoch 13/30 | lr=0.000070 | train_loss=1.3506 train_acc=0.710 train_v=0.0118 train_mv=0.5043 | val_loss=1.5167 val_acc=0.714 val_v=0.0111 val_mv=0.5024
+epoch 14/30 | lr=0.000070 | train_loss=1.3366 train_acc=0.711 train_v=0.0118 train_mv=0.5003 | val_loss=1.5225 val_acc=0.714 val_v=0.0112 val_mv=0.4986
+  Training done: epochs=14 | val_loss=1.5054
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=10 h_wins=8 ties=2 | nn_avg=61.1 h_avg=60.5
+  Eval: nn_wins=10 / 20 | mean_score=61.1 | win_rate=0.500
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=5 b_wins=4 ties=1 | a_avg=72.4 b_avg=70.6
+game 20/40 | a_wins=11 b_wins=5 ties=4 | a_avg=71.7 b_avg=69.5
+game 30/40 | a_wins=14 b_wins=10 ties=6 | a_avg=69.6 b_avg=68.4
+game 40/40 | a_wins=20 b_wins=12 ties=8 | a_avg=68.0 b_avg=67.6
+  Gate: nn_wins=20 / 40 | win_rate=0.500 | promoted=True
+  ✓ Promoted! best_model.npz updated.
+
+============================================================
+  AlphaZero iter 13/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_013
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-nRs8avOl739OnMtamQ4dLa
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=126.1s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=126.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=126.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=128.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=120.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=131.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=132.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=129.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=120.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=130.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=136.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=129.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=146.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=148.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=142.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=160.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=174.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=144.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=144.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=154.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=161.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=165.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=176.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=179.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=180.6s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=185.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=177.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=185.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=169.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=174.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=187.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=115.4s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=203.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=197.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=121.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=219.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=129.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=143.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=138.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=140.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=141.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=223.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=149.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=158.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=166.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=166.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=171.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=166.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=167.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=188.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=197.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=201.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=285.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=207.6s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=303.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=227.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=246.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=272.2s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-nRs8avOl739OnMtamQ4dLa
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 135200 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_013/az_dataset_combined.jsonl
+Loaded 135200 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.5712 train_acc=0.704 train_v=0.0119 train_mv=0.5616 | val_loss=1.4430 val_acc=0.710 val_v=0.0117 val_mv=0.5614
+epoch 2/30 | lr=0.000040 | train_loss=1.5629 train_acc=0.703 train_v=0.0119 train_mv=0.5585 | val_loss=1.4440 val_acc=0.710 val_v=0.0116 val_mv=0.5574
+epoch 3/30 | lr=0.000060 | train_loss=1.5473 train_acc=0.704 train_v=0.0119 train_mv=0.5537 | val_loss=1.4476 val_acc=0.709 val_v=0.0116 val_mv=0.5517
+epoch 4/30 | lr=0.000080 | train_loss=1.5274 train_acc=0.706 train_v=0.0119 train_mv=0.5471 | val_loss=1.4532 val_acc=0.710 val_v=0.0116 val_mv=0.5444
+epoch 5/30 | lr=0.000100 | train_loss=1.5078 train_acc=0.706 train_v=0.0118 train_mv=0.5391 | val_loss=1.4598 val_acc=0.710 val_v=0.0116 val_mv=0.5359
+epoch 6/30 | lr=0.000100 | train_loss=1.4775 train_acc=0.706 train_v=0.0118 train_mv=0.5308 | val_loss=1.4615 val_acc=0.709 val_v=0.0115 val_mv=0.5280
+epoch 7/30 | lr=0.000100 | train_loss=1.4528 train_acc=0.707 train_v=0.0118 train_mv=0.5231 | val_loss=1.4627 val_acc=0.712 val_v=0.0115 val_mv=0.5206
+epoch 8/30 | lr=0.000100 | train_loss=1.4259 train_acc=0.709 train_v=0.0118 train_mv=0.5159 | val_loss=1.4709 val_acc=0.711 val_v=0.0115 val_mv=0.5137
+epoch 9/30 | lr=0.000100 | train_loss=1.4028 train_acc=0.709 train_v=0.0118 train_mv=0.5092 | val_loss=1.4707 val_acc=0.712 val_v=0.0115 val_mv=0.5073
+epoch 10/30 | lr=0.000100 | train_loss=1.3839 train_acc=0.709 train_v=0.0118 train_mv=0.5029 | val_loss=1.4787 val_acc=0.711 val_v=0.0115 val_mv=0.5012
+epoch 11/30 | lr=0.000070 | train_loss=1.3630 train_acc=0.710 train_v=0.0118 train_mv=0.4979 | val_loss=1.4793 val_acc=0.711 val_v=0.0115 val_mv=0.4973
+  Training done: epochs=11 | val_loss=1.4430
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=8 h_wins=11 ties=1 | nn_avg=66.3 h_avg=67.3
+  Eval: nn_wins=8 / 20 | mean_score=66.3 | win_rate=0.400
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=5 b_wins=5 ties=0 | a_avg=65.3 b_avg=72.9
+game 20/40 | a_wins=7 b_wins=12 ties=1 | a_avg=64.8 b_avg=71.8
+game 30/40 | a_wins=14 b_wins=15 ties=1 | a_avg=64.7 b_avg=68.9
+game 40/40 | a_wins=19 b_wins=20 ties=1 | a_avg=66.5 b_avg=69.0
+  Gate: nn_wins=19 / 40 | win_rate=0.475 | promoted=False
+
+============================================================
+  AlphaZero iter 14/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_014
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-pDrQSmsEPeDOAdvhKlBjHz
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=105.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=112.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=125.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=113.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=118.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=118.0s  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=119.9s
+
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=119.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=128.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=128.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=126.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=136.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=139.0s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=140.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=138.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=141.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=141.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=143.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=146.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=153.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=154.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.2s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=173.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=167.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=172.6s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=184.6s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=182.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=175.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=194.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=186.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=198.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=197.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=120.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=120.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=158.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=128.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=133.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=214.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=213.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=149.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=139.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=145.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=145.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=145.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=186.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=160.6s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=250.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=160.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=167.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=182.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=173.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=192.4s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=274.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=260.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=193.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=288.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=218.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=233.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=231.5s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-pDrQSmsEPeDOAdvhKlBjHz
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 145600 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_014/az_dataset_combined.jsonl
+Loaded 145600 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.5892 train_acc=0.702 train_v=0.0122 train_mv=0.5620 | val_loss=1.4420 val_acc=0.715 val_v=0.0114 val_mv=0.5595
+epoch 2/30 | lr=0.000040 | train_loss=1.5783 train_acc=0.703 train_v=0.0122 train_mv=0.5588 | val_loss=1.4419 val_acc=0.718 val_v=0.0114 val_mv=0.5552
+epoch 3/30 | lr=0.000060 | train_loss=1.5641 train_acc=0.703 train_v=0.0122 train_mv=0.5536 | val_loss=1.4442 val_acc=0.716 val_v=0.0114 val_mv=0.5490
+epoch 4/30 | lr=0.000080 | train_loss=1.5430 train_acc=0.704 train_v=0.0122 train_mv=0.5467 | val_loss=1.4501 val_acc=0.717 val_v=0.0113 val_mv=0.5411
+epoch 5/30 | lr=0.000100 | train_loss=1.5190 train_acc=0.703 train_v=0.0121 train_mv=0.5383 | val_loss=1.4613 val_acc=0.718 val_v=0.0113 val_mv=0.5320
+epoch 6/30 | lr=0.000100 | train_loss=1.4914 train_acc=0.705 train_v=0.0121 train_mv=0.5296 | val_loss=1.4623 val_acc=0.718 val_v=0.0113 val_mv=0.5235
+epoch 7/30 | lr=0.000100 | train_loss=1.4630 train_acc=0.706 train_v=0.0121 train_mv=0.5215 | val_loss=1.4642 val_acc=0.718 val_v=0.0113 val_mv=0.5156
+epoch 8/30 | lr=0.000100 | train_loss=1.4391 train_acc=0.706 train_v=0.0121 train_mv=0.5140 | val_loss=1.4706 val_acc=0.717 val_v=0.0112 val_mv=0.5083
+epoch 9/30 | lr=0.000100 | train_loss=1.4176 train_acc=0.706 train_v=0.0120 train_mv=0.5071 | val_loss=1.4710 val_acc=0.719 val_v=0.0112 val_mv=0.5015
+epoch 10/30 | lr=0.000100 | train_loss=1.3983 train_acc=0.708 train_v=0.0120 train_mv=0.5006 | val_loss=1.4746 val_acc=0.719 val_v=0.0112 val_mv=0.4952
+epoch 11/30 | lr=0.000070 | train_loss=1.3719 train_acc=0.708 train_v=0.0120 train_mv=0.4955 | val_loss=1.4795 val_acc=0.718 val_v=0.0112 val_mv=0.4910
+  Training done: epochs=11 | val_loss=1.4420
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=10 h_wins=10 ties=0 | nn_avg=64.8 h_avg=64.3
+  Eval: nn_wins=10 / 20 | mean_score=64.8 | win_rate=0.500
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=7 b_wins=2 ties=1 | a_avg=76.2 b_avg=66.1
+game 20/40 | a_wins=12 b_wins=6 ties=2 | a_avg=74.2 b_avg=67.3
+game 30/40 | a_wins=18 b_wins=9 ties=3 | a_avg=73.9 b_avg=66.3
+game 40/40 | a_wins=24 b_wins=12 ties=4 | a_avg=72.8 b_avg=66.8
+  Gate: nn_wins=24 / 40 | win_rate=0.600 | promoted=True
+  ✓ Promoted! best_model.npz updated.
+
+============================================================
+  AlphaZero iter 15/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_015
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-ncvfuC1SE8b5N7JJLTAUp5
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=132.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=132.1s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=137.8s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=139.7s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=140.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=141.3s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=154.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=106.5s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=158.9s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=162.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=123.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=170.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=126.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=127.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=129.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.7s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=186.0s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=186.1s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=185.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=190.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=146.9s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=194.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=148.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=148.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=196.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=150.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=152.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=157.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=207.5s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=214.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=163.2s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=218.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=119.4s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=175.8s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=224.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=130.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=132.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=177.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=124.1s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=137.0s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=145.1s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=240.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=138.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=245.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=144.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=133.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=155.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=147.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.8s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=169.7s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=163.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=170.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=168.5s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=224.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=159.5s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=208.8s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=267.6s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=232.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=230.9s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=285.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=286.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=311.0s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=370.4s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-ncvfuC1SE8b5N7JJLTAUp5
+  Data gen complete: 10400 samples | mean_delta=0.0
+  Combined dataset: 156000 samples (new=10400 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_015/az_dataset_combined.jsonl
+Loaded 156000 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.5881 train_acc=0.703 train_v=0.0121 train_mv=0.5596 | val_loss=1.4591 val_acc=0.705 val_v=0.0119 val_mv=0.5592
+epoch 2/30 | lr=0.000040 | train_loss=1.5798 train_acc=0.705 train_v=0.0121 train_mv=0.5562 | val_loss=1.4677 val_acc=0.706 val_v=0.0118 val_mv=0.5547
+epoch 3/30 | lr=0.000060 | train_loss=1.5637 train_acc=0.704 train_v=0.0121 train_mv=0.5508 | val_loss=1.4690 val_acc=0.706 val_v=0.0118 val_mv=0.5483
+epoch 4/30 | lr=0.000080 | train_loss=1.5441 train_acc=0.705 train_v=0.0120 train_mv=0.5435 | val_loss=1.4725 val_acc=0.706 val_v=0.0118 val_mv=0.5402
+epoch 5/30 | lr=0.000100 | train_loss=1.5218 train_acc=0.706 train_v=0.0120 train_mv=0.5347 | val_loss=1.4737 val_acc=0.706 val_v=0.0117 val_mv=0.5308
+epoch 6/30 | lr=0.000100 | train_loss=1.4924 train_acc=0.706 train_v=0.0120 train_mv=0.5256 | val_loss=1.4779 val_acc=0.706 val_v=0.0117 val_mv=0.5222
+epoch 7/30 | lr=0.000100 | train_loss=1.4657 train_acc=0.707 train_v=0.0120 train_mv=0.5173 | val_loss=1.4785 val_acc=0.706 val_v=0.0117 val_mv=0.5142
+epoch 8/30 | lr=0.000100 | train_loss=1.4395 train_acc=0.707 train_v=0.0120 train_mv=0.5095 | val_loss=1.4803 val_acc=0.707 val_v=0.0117 val_mv=0.5068
+epoch 9/30 | lr=0.000100 | train_loss=1.4195 train_acc=0.709 train_v=0.0119 train_mv=0.5024 | val_loss=1.4858 val_acc=0.706 val_v=0.0116 val_mv=0.5000
+epoch 10/30 | lr=0.000100 | train_loss=1.3995 train_acc=0.709 train_v=0.0119 train_mv=0.4958 | val_loss=1.4887 val_acc=0.707 val_v=0.0116 val_mv=0.4937
+epoch 11/30 | lr=0.000070 | train_loss=1.3701 train_acc=0.709 train_v=0.0119 train_mv=0.4906 | val_loss=1.4890 val_acc=0.707 val_v=0.0116 val_mv=0.4895
+  Training done: epochs=11 | val_loss=1.4591
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=9 h_wins=10 ties=1 | nn_avg=68.2 h_avg=68.6
+  Eval: nn_wins=9 / 20 | mean_score=68.2 | win_rate=0.450
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=5 b_wins=4 ties=1 | a_avg=73.0 b_avg=66.8
+game 20/40 | a_wins=11 b_wins=7 ties=2 | a_avg=75.4 b_avg=66.8
+game 30/40 | a_wins=17 b_wins=11 ties=2 | a_avg=73.2 b_avg=67.0
+game 40/40 | a_wins=21 b_wins=17 ties=2 | a_avg=71.8 b_avg=68.1
+  Gate: nn_wins=21 / 40 | win_rate=0.525 | promoted=True
+  ✓ Promoted! best_model.npz updated.
+
+============================================================
+  AlphaZero iter 16/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_016
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-xFGwZXgpMw3wGmIARrqftl
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: maximum recursion depth exceeded
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=104 | mean_delta=0.0 | elapsed=62.9s
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/7 | samples=156 | mean_delta=0.0 | elapsed=71.9s
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 6/6 | samples=156 | mean_delta=0.0 | elapsed=88.2s
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/7 | samples=208 | mean_delta=0.0 | elapsed=92.5s
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/7 | samples=156 | mean_delta=0.0 | elapsed=95.0s
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/7 | samples=208 | mean_delta=0.0 | elapsed=99.5s
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=100.4s
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 7/7 | samples=208 | mean_delta=0.0 | elapsed=105.5s
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/7 | samples=208 | mean_delta=0.0 | elapsed=134.3s
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/7 | samples=156 | mean_delta=0.0 | elapsed=118.5s
+  [az-selfplay] game 7/7 | samples=208 | mean_delta=0.0 | elapsed=119.6s
+  [warn] game 7 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=104 | mean_delta=0.0 | elapsed=56.2s
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=140.4s
+  [az-selfplay] game 6/6 | samples=104 | mean_delta=0.0 | elapsed=137.5s
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 7/7 | samples=312 | mean_delta=0.0 | elapsed=147.4s
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=95.5s
+  [az-selfplay] game 6/6 | samples=156 | mean_delta=0.0 | elapsed=79.7s
+  [az-selfplay] game 5/6 | samples=104 | mean_delta=0.0 | elapsed=78.0s
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=98.2s
+  [az-selfplay] game 7/7 | samples=312 | mean_delta=0.0 | elapsed=188.1s
+  [warn] game 7 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=156 | mean_delta=0.0 | elapsed=89.5s
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=98.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=116.7s
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=118.2s
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=117.0s
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/7 | samples=208 | mean_delta=0.0 | elapsed=185.7s
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=122.0s
+  [az-selfplay] game 5/6 | samples=156 | mean_delta=0.0 | elapsed=107.3s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=125.4s
+  [az-selfplay] game 6/6 | samples=156 | mean_delta=0.0 | elapsed=109.3s
+  [az-selfplay] game 6/6 | samples=208 | mean_delta=0.0 | elapsed=113.4s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=197.2s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=131.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=139.6s
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=125.6s
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=141.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=119.0s
+  [az-selfplay] game 6/6 | samples=208 | mean_delta=0.0 | elapsed=129.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=149.8s
+  [az-selfplay] game 5/6 | samples=104 | mean_delta=0.0 | elapsed=142.8s
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=144.5s
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=155.4s
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 7/7 | samples=260 | mean_delta=0.0 | elapsed=256.9s
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=195.7s
+  [az-selfplay] game 6/6 | samples=156 | mean_delta=0.0 | elapsed=209.3s
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=220.3s
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=244.4s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-xFGwZXgpMw3wGmIARrqftl
+  Data gen complete: 7124 samples | mean_delta=0.0
+  Combined dataset: 163124 samples (new=7124 + replay)
+
+  [2/4] Training (30 epochs, hidden=768/384)...
+Loading dataset: reports/ml/alphazero_v10/iter_016/az_dataset_combined.jsonl
+Loaded 163124 samples | feature_dim=2827
+Training device: mps
+warm-start from reports/ml/alphazero_v10/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000020 | train_loss=1.5859 train_acc=0.702 train_v=0.0122 train_mv=0.5575 | val_loss=1.4733 val_acc=0.714 val_v=0.0117 val_mv=0.5562
+epoch 2/30 | lr=0.000040 | train_loss=1.5791 train_acc=0.702 train_v=0.0122 train_mv=0.5540 | val_loss=1.4764 val_acc=0.714 val_v=0.0117 val_mv=0.5516
+epoch 3/30 | lr=0.000060 | train_loss=1.5600 train_acc=0.703 train_v=0.0122 train_mv=0.5484 | val_loss=1.4823 val_acc=0.713 val_v=0.0117 val_mv=0.5450
+epoch 4/30 | lr=0.000080 | train_loss=1.5428 train_acc=0.704 train_v=0.0121 train_mv=0.5409 | val_loss=1.4843 val_acc=0.713 val_v=0.0116 val_mv=0.5367
+epoch 5/30 | lr=0.000100 | train_loss=1.5188 train_acc=0.704 train_v=0.0121 train_mv=0.5320 | val_loss=1.4849 val_acc=0.712 val_v=0.0116 val_mv=0.5271
+epoch 6/30 | lr=0.000100 | train_loss=1.4880 train_acc=0.706 train_v=0.0121 train_mv=0.5228 | val_loss=1.4888 val_acc=0.713 val_v=0.0116 val_mv=0.5183
+epoch 7/30 | lr=0.000100 | train_loss=1.4634 train_acc=0.705 train_v=0.0121 train_mv=0.5143 | val_loss=1.4959 val_acc=0.714 val_v=0.0116 val_mv=0.5102
+epoch 8/30 | lr=0.000100 | train_loss=1.4404 train_acc=0.707 train_v=0.0120 train_mv=0.5066 | val_loss=1.4968 val_acc=0.713 val_v=0.0115 val_mv=0.5027
+epoch 9/30 | lr=0.000100 | train_loss=1.4157 train_acc=0.708 train_v=0.0120 train_mv=0.4994 | val_loss=1.5021 val_acc=0.713 val_v=0.0115 val_mv=0.4958
+epoch 10/30 | lr=0.000100 | train_loss=1.3975 train_acc=0.708 train_v=0.0120 train_mv=0.4928 | val_loss=1.5064 val_acc=0.714 val_v=0.0115 val_mv=0.4894
+epoch 11/30 | lr=0.000070 | train_loss=1.3692 train_acc=0.709 train_v=0.0120 train_mv=0.4875 | val_loss=1.5052 val_acc=0.714 val_v=0.0115 val_mv=0.4852
+  Training done: epochs=11 | val_loss=1.4733
+
+  [3/4] Evaluating vs heuristic (20 games)...
+game 20/20 | nn_wins=8 h_wins=12 ties=0 | nn_avg=64.2 h_avg=69.3
+  Eval: nn_wins=8 / 20 | mean_score=64.2 | win_rate=0.400
+
+  [4/4] Promotion gate (40 games, mode=champion)...
+game 10/40 | a_wins=4 b_wins=5 ties=1 | a_avg=68.1 b_avg=67.9
+game 20/40 | a_wins=11 b_wins=8 ties=1 | a_avg=68.0 b_avg=67.4
+game 30/40 | a_wins=19 b_wins=9 ties=2 | a_avg=70.3 b_avg=67.3
+game 40/40 | a_wins=24 b_wins=14 ties=2 | a_avg=69.9 b_avg=67.3
+  Gate: nn_wins=24 / 40 | win_rate=0.600 | promoted=True
+  ✓ Promoted! best_model.npz updated.
+
+============================================================
+  AlphaZero iter 17/40 | mcts_sims=50
+  out: reports/ml/alphazero_v10/iter_017
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 32 workers)...
+  [modal] dispatching 32 shards (7 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-OrFcF8z1ie1B2PS0nCY0ct
+✓ Created objects.
+├── 🔨 Created mount /Users/EvanRobinson/Desktop/Coded Games/Wingspan 
+│   Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/7 | samples=52 | mean_delta=0.0 | elapsed=70.4s
+Runner interrupted due to worker preemption. Your Function will be restarted with the same input. For more details, see https://modal.com/docs/guide/preemption
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 1 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 7/7 | samples=156 | mean_delta=0.0 | elapsed=119.4s
+  [az-selfplay] game 5/6 | samples=156 | mean_delta=0.0 | elapsed=91.5s
+  [az-selfplay] game 5/6 | samples=156 | mean_delta=0.0 | elapsed=95.1s
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=129.9s
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=97.6s
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 3 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 2 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=130.7s
+  [az-selfplay] game 6/6 | samples=208 | mean_delta=0.0 | elapsed=105.5s
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=114.7s
+  [az-selfplay] game 7/7 | samples=260 | mean_delta=0.0 | elapsed=145.5s
+  [az-selfplay] game 6/6 | samples=208 | mean_delta=0.0 | elapsed=116.9s
+  [az-selfplay] game 6/6 | samples=208 | mean_delta=0.0 | elapsed=120.7s
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=122.5s
+  [az-selfplay] game 5/7 | samples=156 | mean_delta=0.0 | elapsed=140.8s
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 7 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=130.4s
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=131.0s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=163.7s
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=156 | mean_delta=0.0 | elapsed=81.6s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=180.8s
+  [az-selfplay] game 5/6 | samples=156 | mean_delta=0.0 | elapsed=90.0s  [az-selfplay] game 6/6 | samples=156 | mean_delta=0.0 | elapsed=152.8s
+
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=156.8s
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=158.6s
+  [az-selfplay] game 5/7 | samples=260 | mean_delta=0.0 | elapsed=193.7s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=103.7s
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=111.8s
+
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=162.7s
+  [warn] game 7 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 6/6 | samples=208 | mean_delta=0.0 | elapsed=105.3s
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=114.6s
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=109.2s
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 5/6 | samples=208 | mean_delta=0.0 | elapsed=176.1s
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 6/6 | samples=208 | mean_delta=0.0 | elapsed=117.2s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=125.0s
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=134.4s
+  [warn] game 4 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=193.8s
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=144.2s
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=136.7s
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=158.6s
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=232.2s
+  [az-selfplay] game 5/6 | samples=156 | mean_delta=0.0 | elapsed=166.3s
+  [az-selfplay] game 6/6 | samples=260 | mean_delta=0.0 | elapsed=172.9s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=166.5s
+  [az-selfplay] game 7/7 | samples=208 | mean_delta=0.0 | elapsed=175.5s
+  [warn] game 5 failed: 'NoneType' object has no attribute 'color'
+  [warn] game 6 failed: 'NoneType' object has no attribute 'color'
+  [az-selfplay] game 7/7 | samples=364 | mean_delta=0.0 | elapsed=280.4s
+  [az-selfplay] game 5/6 | samples=260 | mean_delta=0.0 | elapsed=250.3s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=203.4s
+  [az-selfplay] game 6/6 | samples=208 | mean_delta=0.0 | elapsed=228.6s
+  [az-selfplay] game 6/6 | samples=312 | mean_delta=0.0 | elapsed=304.9s
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-OrFcF8z1ie1B2PS0nCY0ct
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/auto_improve_alphazero.py", line 821, in <module>
+    main()
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/auto_improve_alphazero.py", line 766, in main
+    result = run_auto_improve_alphazero(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/auto_improve_alphazero.py", line 465, in run_auto_improve_alphazero
+    out_f.write(line)
+OSError: [Errno 28] No space left on device
+  Data gen complete: 7956 samples | mean_delta=0.0

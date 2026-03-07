@@ -1,0 +1,64 @@
+{
+  "model": "reports/ml/auto_improve_stability_v2_replay/iter_003/factorized_model.npz",
+  "board_type": "oceania",
+  "games_per_opponent": 40,
+  "opponents": [
+    "heuristic",
+    "reports/ml/auto_improve_stability_v2_replay/best_model.npz"
+  ],
+  "summary": {
+    "games": 80,
+    "nn_wins": 31,
+    "opponent_wins": 48,
+    "ties": 1,
+    "nn_win_rate": 0.3875,
+    "nn_mean_score": 51.038,
+    "nn_mean_margin": -7.037,
+    "nn_rate_ge_100": 0.0125,
+    "nn_rate_ge_120": 0.0,
+    "nn_max_score": 108,
+    "nn_min_score": 17,
+    "nn_rate_lt_80": 0.95,
+    "nn_rate_80_99": 0.0375,
+    "nn_rate_100_119": 0.0125,
+    "nn_rate_ge_120_bucket": 0.0
+  },
+  "by_opponent": [
+    {
+      "opponent": "heuristic",
+      "games": 40,
+      "nn_wins": 21,
+      "opponent_wins": 18,
+      "ties": 1,
+      "nn_mean_score": 53.8,
+      "opponent_mean_score": 54.05,
+      "nn_mean_margin": -0.25,
+      "nn_rate_ge_100": 0.025,
+      "nn_rate_ge_120": 0.0,
+      "nn_max_score": 108,
+      "nn_min_score": 17,
+      "nn_rate_lt_80": 0.95,
+      "nn_rate_80_99": 0.025,
+      "nn_rate_100_119": 0.025,
+      "nn_rate_ge_120_bucket": 0.0
+    },
+    {
+      "opponent": "reports/ml/auto_improve_stability_v2_replay/best_model.npz",
+      "games": 40,
+      "nn_wins": 10,
+      "opponent_wins": 30,
+      "ties": 0,
+      "nn_mean_score": 48.275,
+      "opponent_mean_score": 62.1,
+      "nn_mean_margin": -13.825,
+      "nn_rate_ge_100": 0.0,
+      "nn_rate_ge_120": 0.0,
+      "nn_max_score": 90,
+      "nn_min_score": 18,
+      "nn_rate_lt_80": 0.95,
+      "nn_rate_80_99": 0.05,
+      "nn_rate_100_119": 0.0,
+      "nn_rate_ge_120_bucket": 0.0
+    }
+  ]
+}

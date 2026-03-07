@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "candidate_path": "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/reports/ml/phase2_stability_step3_v1_20260220_1105/iter_002/strict_kpi_candidate.json",
+  "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+  "checks": [
+    {
+      "name": "min_round1_pct_15_30",
+      "passed": true,
+      "detail": "0.7000 >= 0.2000"
+    },
+    {
+      "name": "max_round1_strict_rejected_games",
+      "passed": true,
+      "detail": "0 <= 0"
+    },
+    {
+      "name": "max_smoke_strict_rejected_games",
+      "passed": true,
+      "detail": "0 <= 0"
+    },
+    {
+      "name": "min_strict_certified_birds",
+      "passed": true,
+      "detail": "446 >= 50"
+    },
+    {
+      "name": "non_regression_round1_mean",
+      "passed": true,
+      "detail": "19.950 >= 18.700"
+    },
+    {
+      "name": "non_regression_smoke_mean_player_score",
+      "passed": true,
+      "detail": "65.833 >= 58.200"
+    }
+  ],
+  "candidate_summary": {
+    "round1_mean": 19.95,
+    "round1_pct_15_30": 0.7,
+    "round1_strict_rejected_games": 0,
+    "smoke_mean_player_score": 65.833,
+    "smoke_strict_rejected_games": 0,
+    "strict_certified_birds": 446
+  }
+}

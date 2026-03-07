@@ -1,0 +1,14 @@
+{
+  "games": 80,
+  "nn_wins": 39,
+  "heuristic_wins": 35,
+  "ties": 6,
+  "nn_mean_score": 63.475,
+  "heuristic_mean_score": 63.062,
+  "nn_mean_margin": 0.412,
+  "nn_win_rate": 0.4875,
+  "nn_rate_ge_100": 0.0,
+  "nn_rate_ge_120": 0.0,
+  "promoted": false,
+  "min_promotion_win_rate": 0.5
+}

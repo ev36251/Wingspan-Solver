@@ -1,0 +1,45 @@
+{
+  "pipeline": "auto_improve_alphazero",
+  "out_dir": "reports/ml/alphazero_smoke",
+  "iterations_completed": 1,
+  "iterations_total": 1,
+  "mcts_sims": 20,
+  "total_elapsed_sec": 458.9,
+  "history": [
+    {
+      "iter": 1,
+      "samples": 260,
+      "mean_delta": 0.0,
+      "train_val_loss": 71.65339827262439,
+      "train_val_action_acc": 0.961538,
+      "eval_summary": {
+        "games": 5,
+        "nn_wins": 1,
+        "heuristic_wins": 4,
+        "ties": 0,
+        "nn_mean_score": 28.4,
+        "heuristic_mean_score": 51.0,
+        "nn_mean_margin": -22.6,
+        "nn_win_rate": 0.2,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0
+      },
+      "gate_summary": {
+        "games": 10,
+        "nn_wins": 3,
+        "heuristic_wins": 7,
+        "ties": 0,
+        "nn_mean_score": 32.6,
+        "heuristic_mean_score": 51.4,
+        "nn_mean_margin": -18.8,
+        "nn_win_rate": 0.3,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "promoted": false,
+        "min_promotion_win_rate": 0.5
+      },
+      "promoted": false,
+      "elapsed_sec": 458.9
+    }
+  ]
+}

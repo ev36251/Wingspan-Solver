@@ -31,54 +31,92 @@ def _draw_one_bird(ctx: PowerContext):
 
 
 class RepeatPower(PowerEffect):
-    """Copy/repeat another brown power in the same habitat.
+    """Repeat another brown 'when activated' power in the same habitat.
 
-    Example: "Repeat a brown [when activated] power on another bird
-    in this habitat."
+    Card text: "Repeat a brown [when activated] power on another bird in this habitat."
+    Only birds in the same row as the repeater are eligible targets.
+
+    Example birds: Gray Catbird, Northern Mockingbird
     """
 
     def __init__(self):
         pass
 
+    def _brown_candidates(self, ctx: PowerContext) -> list[tuple[int, object, object]]:
+        """Return (slot_idx, slot, power) for repeatable brown birds in this habitat."""
+        from backend.models.enums import PowerColor
+        from backend.powers.registry import get_power
+        from backend.powers.base import NoPower, FallbackPower
+
+        row = ctx.player.board.get_row(ctx.habitat)
+        candidates = []
+        for i, slot in enumerate(row.slots):
+            if not slot.bird:
+                continue
+            if slot.bird.color != PowerColor.BROWN:
+                continue
+            if slot.bird.name == ctx.bird.name:
+                continue  # don't repeat self
+            power = get_power(slot.bird)
+            if isinstance(power, (NoPower, FallbackPower, RepeatPower, CopyNeighborBrownPower)):
+                continue  # skip no-ops and mutual-recursion guard
+            candidates.append((i, slot, power))
+        return candidates
+
     def execute(self, ctx: PowerContext) -> PowerResult:
-        # Would need to enumerate other brown powers in the row
-        # For now, estimate as average brown power value
-        return PowerResult(description="Repeat another brown power (simulated)")
+        candidates = self._brown_candidates(ctx)
+        if not candidates:
+            return PowerResult(executed=False,
+                               description="No other brown birds in this habitat to repeat")
+
+        # Pick the candidate with the highest estimated value
+        best = max(
+            candidates,
+            key=lambda c: c[2].estimate_value(
+                PowerContext(
+                    game_state=ctx.game_state, player=ctx.player,
+                    bird=c[1].bird, slot_index=c[0], habitat=ctx.habitat,
+                )
+            ),
+        )
+        slot_idx, slot, power = best
+        sub_ctx = PowerContext(
+            game_state=ctx.game_state, player=ctx.player,
+            bird=slot.bird, slot_index=slot_idx, habitat=ctx.habitat,
+        )
+        if not power.can_execute(sub_ctx):
+            return PowerResult(executed=False,
+                               description=f"Cannot repeat {slot.bird.name}'s power right now")
+        result = power.execute(sub_ctx)
+        result.description = f"Repeated {slot.bird.name}'s power: {result.description}"
+        return result
 
     def describe_activation(self, ctx: PowerContext) -> str:
-        from backend.models.enums import PowerColor
-        row = ctx.player.board.get_row(ctx.habitat)
-        brown_names = [
-            s.bird.name for s in row.slots
-            if s.bird and s.bird.color == PowerColor.BROWN
-            and s.bird.name != ctx.bird.name
-        ]
-        if brown_names:
-            return f"repeat a brown power in {ctx.habitat.value} (options: {', '.join(brown_names)})"
+        candidates = self._brown_candidates(ctx)
+        names = [c[1].bird.name for c in candidates]
+        if names:
+            return f"repeat a brown power in {ctx.habitat.value} (options: {', '.join(names)})"
         return f"repeat a brown power in {ctx.habitat.value} (none available)"
 
     def skip_reason(self, ctx: PowerContext) -> str | None:
-        from backend.models.enums import PowerColor
-        row = ctx.player.board.get_row(ctx.habitat)
-        brown_count = sum(
-            1 for s in row.slots
-            if s.bird and s.bird.color == PowerColor.BROWN
-            and s.bird.name != ctx.bird.name
-        )
-        if brown_count == 0:
-            return "no other brown birds in this habitat"
+        if not self._brown_candidates(ctx):
+            return f"no other brown birds in {ctx.habitat.value}"
         return None
 
     def estimate_value(self, ctx: PowerContext) -> float:
-        # Average brown power is ~1.5
-        from backend.models.enums import PowerColor
-        row = ctx.player.board.get_row(ctx.habitat)
-        brown_count = sum(
-            1 for s in row.slots
-            if s.bird and s.bird.color == PowerColor.BROWN
-            and s.bird.name != ctx.bird.name
+        candidates = self._brown_candidates(ctx)
+        if not candidates:
+            return 0.0
+        best_val = max(
+            c[2].estimate_value(
+                PowerContext(
+                    game_state=ctx.game_state, player=ctx.player,
+                    bird=c[1].bird, slot_index=c[0], habitat=ctx.habitat,
+                )
+            )
+            for c in candidates
         )
-        return 1.5 if brown_count > 0 else 0.0
+        return best_val * 0.9
 
 
 class CopyNeighborBrownPower(PowerEffect):
@@ -164,8 +202,8 @@ class CopyNeighborBrownPower(PowerEffect):
         best_val = 0.0
         for bird in brown_birds:
             power = get_power(bird)
-            if isinstance(power, (NoPower, CopyNeighborBrownPower)):
-                continue
+            if isinstance(power, (NoPower, CopyNeighborBrownPower, RepeatPower)):
+                continue  # skip no-ops and mutual-recursion guard
             neighbor_ctx = PowerContext(
                 game_state=ctx.game_state, player=ctx.player, bird=bird,
                 slot_index=0, habitat=self.target_habitat,
@@ -225,23 +263,145 @@ class CopyNeighborBrownPower(PowerEffect):
 
 
 class MoveBird(PowerEffect):
-    """Move a bird to a different habitat.
+    """Migrate this bird to another habitat when it's the rightmost in its row.
 
-    Example: "Move 1 [bird] from one habitat to another."
+    Card text: "If this bird is to the right of all other birds in its habitat,
+    move it to another habitat."
+
+    The entire slot (bird + eggs + cached food + tucked cards) moves to the next
+    available slot in the chosen destination habitat. The action cube stays in
+    the original row (FAQ clarification: the cube goes where the action was taken).
+
+    Destination choice: the habitat with the most birds that still has an empty
+    slot (maximises column bonus).
     """
 
     def __init__(self):
         pass
 
+    def _is_rightmost(self, ctx: PowerContext) -> bool:
+        """Return True if this bird has no birds to its right in the same row."""
+        row = ctx.player.board.get_row(ctx.habitat)
+        for i in range(ctx.slot_index + 1, len(row.slots)):
+            if row.slots[i].bird is not None:
+                return False
+        return True
+
+    def _score_destination(self, ctx: PowerContext, dest_hab: Habitat) -> float:
+        """Score a destination habitat by the net column-gain delta.
+
+        Adding this bird to `dest_hab` upgrades its column by +1 bird; removing
+        it from the source row downgrades the source column by -1 bird.
+        We compare actual base_gain values so that e.g. going from 0→1 birds in
+        an empty row (which can be a big jump on the Oceania board) is valued
+        correctly, not just "more birds = better".
+        """
+        from backend.config import get_action_column
+        board = ctx.game_state.board_type
+        src_count = ctx.player.board.get_row(ctx.habitat).bird_count
+        src_gain_before = get_action_column(board, ctx.habitat, src_count).base_gain
+        src_gain_after = get_action_column(board, ctx.habitat, max(0, src_count - 1)).base_gain
+        src_loss = src_gain_before - src_gain_after
+
+        dst_count = ctx.player.board.get_row(dest_hab).bird_count
+        dst_gain_before = get_action_column(board, dest_hab, dst_count).base_gain
+        dst_gain_after = get_action_column(board, dest_hab, dst_count + 1).base_gain
+        dst_gain = dst_gain_after - dst_gain_before
+
+        return dst_gain - src_loss
+
+    def _best_destination(self, ctx: PowerContext) -> Habitat | None:
+        """Return the destination habitat that maximises the net column-gain delta."""
+        best_hab = None
+        best_score = float("-inf")
+        for hab in (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND):
+            if hab == ctx.habitat:
+                continue
+            row = ctx.player.board.get_row(hab)
+            if row.next_empty_slot() is None:
+                continue  # full — no room
+            score = self._score_destination(ctx, hab)
+            if score > best_score:
+                best_score = score
+                best_hab = hab
+        return best_hab
+
+    def can_execute(self, ctx: PowerContext) -> bool:
+        if not self._is_rightmost(ctx):
+            return False
+        return self._best_destination(ctx) is not None
+
     def execute(self, ctx: PowerContext) -> PowerResult:
-        # Bird movement is a complex choice — handled by solver
-        return PowerResult(description="May move a bird between habitats")
+        if not self._is_rightmost(ctx):
+            return PowerResult(executed=False,
+                               description="Bird is not rightmost in its habitat")
+
+        dest_hab = self._best_destination(ctx)
+        if dest_hab is None:
+            return PowerResult(executed=False,
+                               description="No available slot in another habitat")
+
+        src_row = ctx.player.board.get_row(ctx.habitat)
+        dst_row = ctx.player.board.get_row(dest_hab)
+        dst_slot_idx = dst_row.next_empty_slot()
+        if dst_slot_idx is None:
+            return PowerResult(executed=False, description="Destination row is full")
+
+        # Move entire slot contents: bird, eggs, cached food, tucked cards
+        src_slot = src_row.slots[ctx.slot_index]
+        dst_slot = dst_row.slots[dst_slot_idx]
+
+        dst_slot.bird = src_slot.bird
+        dst_slot.eggs = src_slot.eggs
+        dst_slot.cached_food = dict(src_slot.cached_food)
+        dst_slot.tucked_cards = src_slot.tucked_cards
+        dst_slot.counts_double = src_slot.counts_double
+
+        # Clear source slot (also unblock adjacent sideways slot if present)
+        src_slot.bird = None
+        src_slot.eggs = 0
+        src_slot.cached_food = {}
+        src_slot.tucked_cards = 0
+        src_slot.counts_double = False
+        if src_slot.is_sideways:
+            src_slot.is_sideways = False
+            next_idx = ctx.slot_index + 1
+            if next_idx < len(src_row.slots):
+                src_row.slots[next_idx].is_sideways_blocked = False
+
+        return PowerResult(
+            description=(
+                f"Migrated {dst_slot.bird.name} from {ctx.habitat.value} "
+                f"to {dest_hab.value} slot {dst_slot_idx + 1}"
+            )
+        )
 
     def describe_activation(self, ctx: PowerContext) -> str:
-        return "move 1 bird from one habitat to another"
+        if not self._is_rightmost(ctx):
+            return f"migrate {ctx.bird.name} (not rightmost — cannot activate)"
+        dest = self._best_destination(ctx)
+        if dest is None:
+            return f"migrate {ctx.bird.name} (no available destination)"
+        return f"migrate {ctx.bird.name} from {ctx.habitat.value} to {dest.value}"
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        if not self._is_rightmost(ctx):
+            return f"{ctx.bird.name} is not the rightmost bird in {ctx.habitat.value}"
+        if self._best_destination(ctx) is None:
+            return "all other habitats are full"
+        return None
 
     def estimate_value(self, ctx: PowerContext) -> float:
-        return 1.0  # Situational
+        if not self.can_execute(ctx):
+            return 0.0
+        dest = self._best_destination(ctx)
+        if dest is None:
+            return 0.0
+        # Net column-gain delta × expected remaining uses of that row
+        net_delta = self._score_destination(ctx, dest)
+        # Even a neutral or slightly negative delta can be worth doing to
+        # reposition for future rounds — floor at 0.2 when the move is legal.
+        return max(0.5 + net_delta * 0.4, 0.2)
 
 
 class DiscardEggForBenefit(PowerEffect):

@@ -1,0 +1,11 @@
+auto_improve_alphazero: per-slot encoding → auto-scaled hidden=768/384
+  Seeded best_model.npz from reports/ml/phase4_slot_v3/best_model.npz
+
+============================================================
+  AlphaZero iter 1/10 | mcts_sims=50
+  out: reports/ml/alphazero_pilot_v1/iter_001
+============================================================
+
+  [1/4] Generating self-play data (200 games, 50 sims, 4 workers)...
+/opt/anaconda3/lib/python3.12/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 6 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

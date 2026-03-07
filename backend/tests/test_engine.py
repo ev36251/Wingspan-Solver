@@ -124,10 +124,18 @@ class TestRules:
     def test_cant_pay_or_cost(self, bird_reg):
         player = Player(name="Test")
         bird = bird_reg.get("American Robin")
-        # No invertebrate or fruit
-        player.food_supply.add(FoodType.FISH, 5)
+        # No invertebrate, no fruit, and only 1 fish (not enough for 2-for-1)
+        player.food_supply.add(FoodType.FISH, 1)
         can_pay, _ = can_pay_food_cost(player, bird.food_cost)
         assert not can_pay
+
+    def test_can_pay_or_cost_via_two_for_one(self, bird_reg):
+        player = Player(name="Test")
+        bird = bird_reg.get("American Robin")
+        # No invertebrate or fruit, but 2+ fish allows 2-for-1 substitution
+        player.food_supply.add(FoodType.FISH, 2)
+        can_pay, _ = can_pay_food_cost(player, bird.food_cost)
+        assert can_pay
 
     def test_find_food_payment_options_or(self, bird_reg):
         player = Player(name="Test")

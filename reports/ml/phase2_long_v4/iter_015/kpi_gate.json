@@ -1,0 +1,33 @@
+{
+  "candidate_path": "reports/ml/phase2_long_v4/iter_015/pool_eval.json",
+  "baseline_path": "reports/ml/phase2_long_v4/iter_001/pool_eval.json",
+  "passed": false,
+  "checks": [
+    {
+      "name": "min_win_rate",
+      "passed": false,
+      "detail": "0.2625 >= 0.3000"
+    },
+    {
+      "name": "min_mean_score",
+      "passed": true,
+      "detail": "43.812 >= 0.000"
+    },
+    {
+      "name": "min_rate_ge_100",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    },
+    {
+      "name": "min_rate_ge_120",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    }
+  ],
+  "candidate_summary": {
+    "nn_win_rate": 0.2625,
+    "nn_mean_score": 43.812,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "candidate_path": "reports/ml/phase2_identity_pilot_v1/iter_004/pool_eval.json",
+  "baseline_path": null,
+  "passed": false,
+  "checks": [
+    {
+      "name": "min_win_rate",
+      "passed": false,
+      "detail": "0.3750 >= 0.5000"
+    },
+    {
+      "name": "min_mean_score",
+      "passed": true,
+      "detail": "54.237 >= 0.000"
+    },
+    {
+      "name": "min_rate_ge_100",
+      "passed": true,
+      "detail": "0.0125 >= 0.0000"
+    },
+    {
+      "name": "min_rate_ge_120",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    }
+  ],
+  "candidate_summary": {
+    "nn_win_rate": 0.375,
+    "nn_mean_score": 54.237,
+    "nn_rate_ge_100": 0.0125,
+    "nn_rate_ge_120": 0.0
+  }
+}

@@ -499,6 +499,7 @@ def train_bc(
     lr_decay_every: int = 3,
     lr_decay_factor: float = 0.5,
     momentum: float = 0.9,
+    weight_decay: float = 0.0,
     val_split: float = 0.1,
     seed: int = 0,
     value_loss_weight: float = 0.5,
@@ -513,6 +514,7 @@ def train_bc(
     early_stop_min_delta: float = 1e-4,
     early_stop_restore_best: bool = True,
     init_model_path: str | None = None,
+    reinit_value_head: bool = False,
     hidden: int | None = None,
     lr: float | None = None,
 ) -> dict:
@@ -608,9 +610,14 @@ def train_bc(
             f"applied={warm_start_summary['applied_count']} "
             f"skipped={warm_start_summary['skipped_count']}"
         )
+        if reinit_value_head and model.value_head is not None:
+            nn.init.kaiming_normal_(model.value_head.weight)
+            nn.init.zeros_(model.value_head.bias)
+            print("reinit_value_head: value head reinitialized to kaiming-normal (bias=0)")
 
     optimizer = torch.optim.SGD(
-        model.parameters(), lr=lr_peak, momentum=max(0.0, min(0.999, float(momentum)))
+        model.parameters(), lr=lr_peak, momentum=max(0.0, min(0.999, float(momentum))),
+        weight_decay=float(weight_decay)
     )
     early_stop_patience = max(1, int(early_stop_patience))
     early_stop_min_delta = max(0.0, float(early_stop_min_delta))
@@ -879,6 +886,8 @@ def main() -> None:
     parser.add_argument("--lr-decay-every", type=int, default=3)
     parser.add_argument("--lr-decay-factor", type=float, default=0.5)
     parser.add_argument("--momentum", type=float, default=0.9)
+    parser.add_argument("--weight-decay", type=float, default=0.0,
+                        help="L2 weight decay for SGD optimizer (default 0)")
     parser.set_defaults(early_stop_enabled=True, early_stop_restore_best=True)
     parser.add_argument("--early-stop-enabled", dest="early_stop_enabled", action="store_true")
     parser.add_argument("--disable-early-stop", dest="early_stop_enabled", action="store_false")
@@ -891,6 +900,12 @@ def main() -> None:
         "--no-early-stop-restore-best", dest="early_stop_restore_best", action="store_false"
     )
     parser.add_argument("--init-model", default=None, help="Optional warm-start model (.npz)")
+    parser.add_argument(
+        "--reinit-value-head",
+        action="store_true",
+        default=False,
+        help="After warm-start, reinitialize the value head to kaiming-normal (clears delta-target confusion)",
+    )
     parser.add_argument("--hidden", type=int, default=None, help="Deprecated: sets hidden1=hidden2")
     parser.add_argument("--lr", type=float, default=None, help="Deprecated: sets lr_peak")
     parser.add_argument("--val-split", type=float, default=0.1)
@@ -918,6 +933,7 @@ def main() -> None:
         lr_decay_every=args.lr_decay_every,
         lr_decay_factor=args.lr_decay_factor,
         momentum=args.momentum,
+        weight_decay=args.weight_decay,
         val_split=args.val_split,
         value_loss_weight=args.value_weight,
         move_value_enabled=args.move_value_enabled,
@@ -931,6 +947,7 @@ def main() -> None:
         early_stop_min_delta=args.early_stop_min_delta,
         early_stop_restore_best=args.early_stop_restore_best,
         init_model_path=args.init_model,
+        reinit_value_head=args.reinit_value_head,
         hidden=args.hidden,
         lr=args.lr,
         seed=args.seed,

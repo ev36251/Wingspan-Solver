@@ -47,9 +47,9 @@ from backend.solver.simulation import (
     execute_move_on_sim,
 )
 
-# Delta value target scale: typical delta range is ≈ ±80 in 2-player Oceania.
+# Absolute score value target scale: maps 60pts→0.5, 90pts→0.75, 120pts→1.0.
 # train_factorized_bc.py reads this from meta["value_target_config"]["score_scale"].
-DELTA_SCALE = 80.0
+DELTA_SCALE = 120.0
 DELTA_BIAS = 0.0
 
 
@@ -122,14 +122,18 @@ def generate_alphazero_game(
 
         if mcts_moves:
             chosen = random.choices(mcts_moves, weights=mcts_probs, k=1)[0]
+            # Policy target is MCTS argmax (clean signal), not the τ=1 sampled move.
+            # chosen is still played for game diversity (exploration).
+            policy_target = mcts_moves[int(np.argmax(mcts_probs))]
         else:
             # Fallback: heuristic argmax (should rarely happen)
             from backend.solver.heuristics import _estimate_move_value, dynamic_weights
             w = dynamic_weights(game)
             chosen = max(moves, key=lambda m: _estimate_move_value(game, player, m, w))
+            policy_target = chosen
 
-        # Encode targets for the chosen move
-        targets = encode_factorized_targets(chosen, player)
+        # Encode targets for the policy-target move (argmax), not the sampled move
+        targets = encode_factorized_targets(policy_target, player)
 
         # Move-ranking features: positive sample + up to 4 negatives
         move_pos = list(encode_move_features(chosen, player))
@@ -161,14 +165,13 @@ def generate_alphazero_game(
         player_turns[player.name] = player_turns.get(player.name, 0) + 1
         turns_total += 1
 
-    # Fill delta value targets: my_score - best_opponent_score
+    # Fill absolute score value targets: my_score (not delta).
+    # Normalized by score_scale (120) during training; maps 60pts→0.5, 90pts→0.75.
     final_scores = {p.name: calculate_score(game, p).total for p in game.players}
     for rec in records:
         my_name = rec["player_name"]
         my_score = float(final_scores.get(my_name, 0))
-        opp_scores = [s for n, s in final_scores.items() if n != my_name]
-        best_opp = float(max(opp_scores)) if opp_scores else 0.0
-        rec["value_target_score"] = my_score - best_opp
+        rec["value_target_score"] = my_score
 
     return records
 
@@ -298,7 +301,9 @@ def generate_self_play_dataset(
                     training_encoder=training_enc,
                 )
             except Exception as exc:
+                import traceback as _tb
                 print(f"  [warn] game {g} failed: {exc}")
+                _tb.print_exc()
                 continue
 
             for rec in game_records:
@@ -339,7 +344,7 @@ def generate_self_play_dataset(
         "std_delta": round(std_delta, 3),
         # This is read by _load_as_arrays to normalise value_target_score
         "value_target_config": {
-            "mode": "delta",
+            "mode": "absolute",
             "score_scale": value_target_score_scale,
             "score_bias": value_target_score_bias,
         },

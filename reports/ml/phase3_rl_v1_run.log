@@ -1,0 +1,834 @@
+game 10/100 | samples=740 | mean_player_score=61.2
+game 20/100 | samples=1480 | mean_player_score=59.5
+game 30/100 | samples=2220 | mean_player_score=59.0
+game 40/100 | samples=2960 | mean_player_score=59.4
+game 50/100 | samples=3700 | mean_player_score=60.1
+game 60/100 | samples=4440 | mean_player_score=60.3
+game 70/100 | samples=5180 | mean_player_score=60.0
+game 80/100 | samples=5920 | mean_player_score=59.6
+game 90/100 | samples=6660 | mean_player_score=60.6
+game 100/100 | samples=7400 | mean_player_score=61.1
+game 10/100 | samples=740 | mean_player_score=62.7
+game 20/100 | samples=1480 | mean_player_score=64.6
+game 30/100 | samples=2220 | mean_player_score=64.7
+game 40/100 | samples=2960 | mean_player_score=63.7
+game 50/100 | samples=3700 | mean_player_score=63.8
+game 60/100 | samples=4440 | mean_player_score=64.3
+game 70/100 | samples=5180 | mean_player_score=64.1
+game 80/100 | samples=5920 | mean_player_score=64.9
+game 90/100 | samples=6660 | mean_player_score=65.3
+game 100/100 | samples=7400 | mean_player_score=65.1
+game 10/100 | samples=740 | mean_player_score=65.7
+game 20/100 | samples=1480 | mean_player_score=63.2
+game 30/100 | samples=2220 | mean_player_score=64.8
+game 40/100 | samples=2960 | mean_player_score=64.9
+game 50/100 | samples=3700 | mean_player_score=64.6
+game 60/100 | samples=4440 | mean_player_score=64.2
+game 70/100 | samples=5180 | mean_player_score=64.5
+game 80/100 | samples=5920 | mean_player_score=65.0
+game 90/100 | samples=6660 | mean_player_score=65.0
+game 100/100 | samples=7400 | mean_player_score=64.3
+game 10/100 | samples=740 | mean_player_score=64.0
+game 20/100 | samples=1480 | mean_player_score=63.7
+game 30/100 | samples=2220 | mean_player_score=62.8
+game 40/100 | samples=2960 | mean_player_score=63.3
+game 50/100 | samples=3700 | mean_player_score=63.4
+game 60/100 | samples=4440 | mean_player_score=64.0
+game 70/100 | samples=5180 | mean_player_score=63.6
+game 80/100 | samples=5920 | mean_player_score=63.5
+game 90/100 | samples=6660 | mean_player_score=62.7
+game 100/100 | samples=7400 | mean_player_score=63.1
+rl_collect game 10/150 | decisions_so_far=520 | mean_score=52.4
+rl_collect game 20/150 | decisions_so_far=1040 | mean_score=52.8
+rl_collect game 30/150 | decisions_so_far=1560 | mean_score=54.1
+rl_collect game 40/150 | decisions_so_far=2080 | mean_score=55.7
+rl_collect game 50/150 | decisions_so_far=2600 | mean_score=56.0
+rl_collect game 60/150 | decisions_so_far=3120 | mean_score=55.5
+rl_collect game 70/150 | decisions_so_far=3640 | mean_score=55.5
+rl_collect game 80/150 | decisions_so_far=4160 | mean_score=55.3
+rl_collect game 90/150 | decisions_so_far=4680 | mean_score=55.6
+rl_collect game 100/150 | decisions_so_far=5200 | mean_score=55.2
+rl_collect game 110/150 | decisions_so_far=5720 | mean_score=55.3
+rl_collect game 120/150 | decisions_so_far=6240 | mean_score=55.5
+rl_collect game 130/150 | decisions_so_far=6760 | mean_score=55.5
+rl_collect game 140/150 | decisions_so_far=7280 | mean_score=55.8
+rl_collect game 150/150 | decisions_so_far=7800 | mean_score=55.6
+rl_collect done | games=150 samples=7800 mean_score=55.6 adv_std=13.18
+  RL: 7800 samples from 150 games, mean_score=55.6 adv_std=13.18
+warm-start applied from reports/ml/phase2_long_v4/best_model.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000100 | train_loss=2.3454 train_acc=0.503 train_v=0.0057 train_mv=0.6631 | val_loss=2.1381 val_acc=0.528 val_v=0.0056 val_mv=0.6634
+epoch 2/30 | lr=0.000300 | train_loss=2.2550 train_acc=0.522 train_v=0.0055 train_mv=0.6625 | val_loss=2.0848 val_acc=0.541 val_v=0.0052 val_mv=0.6625
+epoch 3/30 | lr=0.000500 | train_loss=2.2101 train_acc=0.532 train_v=0.0054 train_mv=0.6613 | val_loss=2.0488 val_acc=0.547 val_v=0.0052 val_mv=0.6611
+epoch 4/30 | lr=0.000500 | train_loss=2.1840 train_acc=0.541 train_v=0.0052 train_mv=0.6599 | val_loss=2.0419 val_acc=0.549 val_v=0.0048 val_mv=0.6598
+epoch 5/30 | lr=0.000500 | train_loss=2.1721 train_acc=0.540 train_v=0.0052 train_mv=0.6585 | val_loss=2.0367 val_acc=0.554 val_v=0.0051 val_mv=0.6585
+epoch 6/30 | lr=0.000500 | train_loss=2.1587 train_acc=0.549 train_v=0.0051 train_mv=0.6572 | val_loss=2.0241 val_acc=0.554 val_v=0.0049 val_mv=0.6572
+epoch 7/30 | lr=0.000500 | train_loss=2.1537 train_acc=0.549 train_v=0.0050 train_mv=0.6560 | val_loss=2.0229 val_acc=0.550 val_v=0.0047 val_mv=0.6560
+epoch 8/30 | lr=0.000500 | train_loss=2.1487 train_acc=0.551 train_v=0.0050 train_mv=0.6548 | val_loss=2.0252 val_acc=0.551 val_v=0.0048 val_mv=0.6549
+epoch 9/30 | lr=0.000350 | train_loss=2.1436 train_acc=0.553 train_v=0.0050 train_mv=0.6538 | val_loss=2.0227 val_acc=0.548 val_v=0.0049 val_mv=0.6541
+epoch 10/30 | lr=0.000350 | train_loss=2.1445 train_acc=0.551 train_v=0.0050 train_mv=0.6531 | val_loss=2.0258 val_acc=0.548 val_v=0.0048 val_mv=0.6534
+epoch 11/30 | lr=0.000350 | train_loss=2.1414 train_acc=0.552 train_v=0.0050 train_mv=0.6523 | val_loss=2.0278 val_acc=0.545 val_v=0.0047 val_mv=0.6527
+epoch 12/30 | lr=0.000350 | train_loss=2.1413 train_acc=0.551 train_v=0.0049 train_mv=0.6516 | val_loss=2.0290 val_acc=0.546 val_v=0.0046 val_mv=0.6520
+epoch 13/30 | lr=0.000350 | train_loss=2.1474 train_acc=0.550 train_v=0.0049 train_mv=0.6509 | val_loss=2.0278 val_acc=0.550 val_v=0.0046 val_mv=0.6513
+epoch 14/30 | lr=0.000245 | train_loss=2.1421 train_acc=0.552 train_v=0.0049 train_mv=0.6503 | val_loss=2.0301 val_acc=0.546 val_v=0.0046 val_mv=0.6508
+game 20/40 | nn_wins=9 h_wins=9 ties=2 | nn_avg=53.8 h_avg=57.4
+game 40/40 | nn_wins=22 h_wins=16 ties=2 | nn_avg=56.4 h_avg=54.1
+game 20/80 | nn_wins=14 h_wins=5 ties=1 | nn_avg=55.5 h_avg=47.6
+game 40/80 | nn_wins=23 h_wins=16 ties=1 | nn_avg=53.6 h_avg=51.2
+game 60/80 | nn_wins=35 h_wins=23 ties=2 | nn_avg=53.8 h_avg=50.4
+game 80/80 | nn_wins=45 h_wins=33 ties=2 | nn_avg=53.9 h_avg=51.0
+opp=heuristic | nn_wins=25/40 | margin=2.35 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=59.9 | mean_winner_score=66.9
+game 20/20 | samples=1040 | mean_player_score=60.6 | mean_winner_score=69.5
+game 20/80 | nn_wins=11 h_wins=6 ties=3 | nn_avg=56.4 h_avg=50.6
+game 40/80 | nn_wins=24 h_wins=13 ties=3 | nn_avg=58.2 h_avg=50.0
+game 60/80 | nn_wins=33 h_wins=24 ties=3 | nn_avg=58.6 h_avg=53.8
+game 80/80 | nn_wins=47 h_wins=30 ties=3 | nn_avg=58.5 h_avg=53.2
+iter 1/10 | samples=37400 | eval_wins=22/40 margin=2.27 | gate_wins=45/80 | pool_win=0.625 ge100=0.000 | kpi_pass=True strict_kpi_pass=True fixed_seed_gate_pass=True promoted=True selected_best=True
+game 10/100 | samples=740 | mean_player_score=59.5
+game 20/100 | samples=1480 | mean_player_score=60.5
+game 30/100 | samples=2220 | mean_player_score=61.1
+game 40/100 | samples=2960 | mean_player_score=61.2
+game 50/100 | samples=3700 | mean_player_score=61.1
+game 60/100 | samples=4440 | mean_player_score=61.2
+game 70/100 | samples=5180 | mean_player_score=61.5
+game 80/100 | samples=5920 | mean_player_score=61.4
+game 90/100 | samples=6660 | mean_player_score=61.1
+game 100/100 | samples=7400 | mean_player_score=61.4
+game 10/100 | samples=740 | mean_player_score=59.5
+game 20/100 | samples=1480 | mean_player_score=63.3
+game 30/100 | samples=2220 | mean_player_score=62.7
+game 40/100 | samples=2960 | mean_player_score=62.9
+game 50/100 | samples=3700 | mean_player_score=63.3
+game 60/100 | samples=4440 | mean_player_score=63.8
+game 70/100 | samples=5180 | mean_player_score=63.4
+game 80/100 | samples=5920 | mean_player_score=63.8
+game 90/100 | samples=6660 | mean_player_score=63.2
+game 100/100 | samples=7400 | mean_player_score=63.3
+game 10/100 | samples=740 | mean_player_score=64.5
+game 20/100 | samples=1480 | mean_player_score=63.5
+game 30/100 | samples=2220 | mean_player_score=62.6
+game 40/100 | samples=2960 | mean_player_score=61.8
+game 50/100 | samples=3700 | mean_player_score=63.3
+game 60/100 | samples=4440 | mean_player_score=63.5
+game 70/100 | samples=5180 | mean_player_score=63.1
+game 80/100 | samples=5920 | mean_player_score=62.8
+game 90/100 | samples=6660 | mean_player_score=62.3
+game 100/100 | samples=7400 | mean_player_score=62.0
+game 10/100 | samples=740 | mean_player_score=62.1
+game 20/100 | samples=1480 | mean_player_score=62.8
+game 30/100 | samples=2220 | mean_player_score=64.5
+game 40/100 | samples=2960 | mean_player_score=64.2
+game 50/100 | samples=3700 | mean_player_score=63.9
+game 60/100 | samples=4440 | mean_player_score=63.6
+game 70/100 | samples=5180 | mean_player_score=64.1
+game 80/100 | samples=5920 | mean_player_score=64.6
+game 90/100 | samples=6660 | mean_player_score=64.0
+game 100/100 | samples=7400 | mean_player_score=63.8
+rl_collect game 10/150 | decisions_so_far=520 | mean_score=53.5
+rl_collect game 20/150 | decisions_so_far=1040 | mean_score=53.6
+rl_collect game 30/150 | decisions_so_far=1560 | mean_score=54.4
+rl_collect game 40/150 | decisions_so_far=2080 | mean_score=55.7
+rl_collect game 50/150 | decisions_so_far=2600 | mean_score=56.2
+rl_collect game 60/150 | decisions_so_far=3120 | mean_score=55.7
+rl_collect game 70/150 | decisions_so_far=3640 | mean_score=56.1
+rl_collect game 80/150 | decisions_so_far=4160 | mean_score=56.0
+rl_collect game 90/150 | decisions_so_far=4680 | mean_score=55.7
+rl_collect game 100/150 | decisions_so_far=5200 | mean_score=55.9
+rl_collect game 110/150 | decisions_so_far=5720 | mean_score=55.4
+rl_collect game 120/150 | decisions_so_far=6240 | mean_score=55.5
+rl_collect game 130/150 | decisions_so_far=6760 | mean_score=55.5
+rl_collect game 140/150 | decisions_so_far=7280 | mean_score=55.4
+rl_collect game 150/150 | decisions_so_far=7800 | mean_score=55.6
+rl_collect done | games=150 samples=7800 mean_score=55.6 adv_std=11.52
+  RL: 7800 samples from 150 games, mean_score=55.6 adv_std=11.52
+epoch 1/30 | lr=0.000100 | train_loss=4.5316 train_acc=0.360 train_v=0.7437 train_mv=0.7140 | val_loss=3.1427 val_acc=0.442 val_v=0.1518 val_mv=0.7136
+epoch 2/30 | lr=0.000300 | train_loss=3.1016 train_acc=0.445 train_v=0.2491 train_mv=0.7103 | val_loss=2.5210 val_acc=0.500 val_v=0.0421 val_mv=0.7080
+epoch 3/30 | lr=0.000500 | train_loss=2.6596 train_acc=0.479 train_v=0.0607 train_mv=0.7034 | val_loss=2.3136 val_acc=0.526 val_v=0.0117 val_mv=0.6994
+epoch 4/30 | lr=0.000500 | train_loss=2.4688 train_acc=0.497 train_v=0.0158 train_mv=0.6955 | val_loss=2.2346 val_acc=0.530 val_v=0.0071 val_mv=0.6917
+epoch 5/30 | lr=0.000500 | train_loss=2.3867 train_acc=0.509 train_v=0.0075 train_mv=0.6885 | val_loss=2.1898 val_acc=0.539 val_v=0.0063 val_mv=0.6849
+epoch 6/30 | lr=0.000500 | train_loss=2.3335 train_acc=0.513 train_v=0.0057 train_mv=0.6822 | val_loss=2.1568 val_acc=0.541 val_v=0.0057 val_mv=0.6789
+epoch 7/30 | lr=0.000500 | train_loss=2.2994 train_acc=0.518 train_v=0.0052 train_mv=0.6767 | val_loss=2.1307 val_acc=0.543 val_v=0.0053 val_mv=0.6735
+epoch 8/30 | lr=0.000500 | train_loss=2.2788 train_acc=0.521 train_v=0.0050 train_mv=0.6718 | val_loss=2.1261 val_acc=0.541 val_v=0.0052 val_mv=0.6687
+epoch 9/30 | lr=0.000350 | train_loss=2.2686 train_acc=0.522 train_v=0.0050 train_mv=0.6679 | val_loss=2.1272 val_acc=0.538 val_v=0.0051 val_mv=0.6657
+epoch 10/30 | lr=0.000350 | train_loss=2.2750 train_acc=0.524 train_v=0.0049 train_mv=0.6651 | val_loss=2.1279 val_acc=0.541 val_v=0.0050 val_mv=0.6628
+epoch 11/30 | lr=0.000350 | train_loss=2.2825 train_acc=0.523 train_v=0.0048 train_mv=0.6625 | val_loss=2.1522 val_acc=0.540 val_v=0.0050 val_mv=0.6602
+epoch 12/30 | lr=0.000350 | train_loss=2.2959 train_acc=0.521 train_v=0.0048 train_mv=0.6600 | val_loss=2.1906 val_acc=0.538 val_v=0.0048 val_mv=0.6578
+epoch 13/30 | lr=0.000350 | train_loss=2.3308 train_acc=0.521 train_v=0.0047 train_mv=0.6578 | val_loss=2.2196 val_acc=0.538 val_v=0.0048 val_mv=0.6556
+game 20/40 | nn_wins=9 h_wins=10 ties=1 | nn_avg=52.8 h_avg=55.4
+game 40/40 | nn_wins=15 h_wins=24 ties=1 | nn_avg=52.0 h_avg=57.4
+game 20/80 | nn_wins=9 h_wins=10 ties=1 | nn_avg=59.4 h_avg=56.4
+game 40/80 | nn_wins=18 h_wins=20 ties=2 | nn_avg=55.0 h_avg=53.1
+game 60/80 | nn_wins=31 h_wins=27 ties=2 | nn_avg=55.4 h_avg=53.0
+game 80/80 | nn_wins=42 h_wins=35 ties=3 | nn_avg=55.2 h_avg=52.6
+opp=heuristic | nn_wins=25/40 | margin=2.67 | nn_ge100=0.000
+opp=reports/ml/phase3_rl_v1/best_model.npz | nn_wins=18/40 | margin=-2.48 | nn_ge100=0.025
+game 10/20 | samples=520 | mean_player_score=63.8 | mean_winner_score=69.8
+game 20/20 | samples=1040 | mean_player_score=59.1 | mean_winner_score=65.3
+game 20/80 | nn_wins=13 h_wins=7 ties=0 | nn_avg=55.8 h_avg=49.3
+game 40/80 | nn_wins=22 h_wins=17 ties=1 | nn_avg=54.5 h_avg=52.8
+game 60/80 | nn_wins=35 h_wins=24 ties=1 | nn_avg=54.4 h_avg=51.7
+game 80/80 | nn_wins=45 h_wins=34 ties=1 | nn_avg=53.3 h_avg=50.7
+iter 2/10 | samples=37400 | eval_wins=15/40 margin=-5.35 | gate_wins=42/80 | pool_win=0.537 ge100=0.013 | kpi_pass=True strict_kpi_pass=True fixed_seed_gate_pass=True promoted=True selected_best=False
+game 10/100 | samples=740 | mean_player_score=65.0
+game 20/100 | samples=1480 | mean_player_score=63.2
+game 30/100 | samples=2220 | mean_player_score=63.1
+game 40/100 | samples=2960 | mean_player_score=63.6
+game 50/100 | samples=3700 | mean_player_score=64.4
+game 60/100 | samples=4440 | mean_player_score=63.3
+game 70/100 | samples=5180 | mean_player_score=62.8
+game 80/100 | samples=5920 | mean_player_score=62.7
+game 90/100 | samples=6660 | mean_player_score=62.8
+game 100/100 | samples=7400 | mean_player_score=63.0
+game 10/100 | samples=740 | mean_player_score=55.9
+game 20/100 | samples=1480 | mean_player_score=56.4
+game 30/100 | samples=2220 | mean_player_score=58.1
+game 40/100 | samples=2960 | mean_player_score=58.9
+game 50/100 | samples=3700 | mean_player_score=59.6
+game 60/100 | samples=4440 | mean_player_score=59.6
+game 70/100 | samples=5180 | mean_player_score=60.7
+game 80/100 | samples=5920 | mean_player_score=60.4
+game 90/100 | samples=6660 | mean_player_score=60.6
+game 100/100 | samples=7400 | mean_player_score=60.7
+game 10/100 | samples=740 | mean_player_score=65.2
+game 20/100 | samples=1480 | mean_player_score=65.2
+game 30/100 | samples=2220 | mean_player_score=63.7
+game 40/100 | samples=2960 | mean_player_score=63.4
+game 50/100 | samples=3700 | mean_player_score=63.3
+game 60/100 | samples=4440 | mean_player_score=63.5
+game 70/100 | samples=5180 | mean_player_score=63.2
+game 80/100 | samples=5920 | mean_player_score=63.2
+game 90/100 | samples=6660 | mean_player_score=63.2
+game 100/100 | samples=7400 | mean_player_score=63.4
+game 10/100 | samples=740 | mean_player_score=59.2
+game 20/100 | samples=1480 | mean_player_score=62.8
+game 30/100 | samples=2220 | mean_player_score=62.3
+game 40/100 | samples=2960 | mean_player_score=63.5
+game 50/100 | samples=3700 | mean_player_score=64.4
+game 60/100 | samples=4440 | mean_player_score=63.6
+game 70/100 | samples=5180 | mean_player_score=62.8
+game 80/100 | samples=5920 | mean_player_score=63.0
+game 90/100 | samples=6660 | mean_player_score=62.3
+game 100/100 | samples=7400 | mean_player_score=62.2
+rl_collect game 10/150 | decisions_so_far=520 | mean_score=58.2
+rl_collect game 20/150 | decisions_so_far=1040 | mean_score=58.2
+rl_collect game 30/150 | decisions_so_far=1560 | mean_score=58.2
+rl_collect game 40/150 | decisions_so_far=2080 | mean_score=58.3
+rl_collect game 50/150 | decisions_so_far=2600 | mean_score=58.4
+rl_collect game 60/150 | decisions_so_far=3120 | mean_score=58.8
+rl_collect game 70/150 | decisions_so_far=3640 | mean_score=58.0
+rl_collect game 80/150 | decisions_so_far=4160 | mean_score=57.9
+rl_collect game 90/150 | decisions_so_far=4680 | mean_score=57.7
+rl_collect game 100/150 | decisions_so_far=5200 | mean_score=57.4
+rl_collect game 110/150 | decisions_so_far=5720 | mean_score=57.4
+rl_collect game 120/150 | decisions_so_far=6240 | mean_score=57.2
+rl_collect game 130/150 | decisions_so_far=6760 | mean_score=57.3
+rl_collect game 140/150 | decisions_so_far=7280 | mean_score=57.4
+rl_collect game 150/150 | decisions_so_far=7800 | mean_score=56.9
+rl_collect done | games=150 samples=7800 mean_score=56.9 adv_std=12.32
+  RL: 7800 samples from 150 games, mean_score=56.9 adv_std=12.32
+epoch 1/30 | lr=0.000100 | train_loss=4.0511 train_acc=0.371 train_v=0.6714 train_mv=0.7105 | val_loss=2.8737 val_acc=0.445 val_v=0.1128 val_mv=0.7100
+epoch 2/30 | lr=0.000300 | train_loss=2.8817 train_acc=0.448 train_v=0.1669 train_mv=0.7056 | val_loss=2.4025 val_acc=0.501 val_v=0.0208 val_mv=0.7025
+epoch 3/30 | lr=0.000500 | train_loss=2.5200 train_acc=0.488 train_v=0.0266 train_mv=0.6966 | val_loss=2.2454 val_acc=0.524 val_v=0.0067 val_mv=0.6917
+epoch 4/30 | lr=0.000500 | train_loss=2.3820 train_acc=0.504 train_v=0.0070 train_mv=0.6868 | val_loss=2.1822 val_acc=0.532 val_v=0.0053 val_mv=0.6825
+epoch 5/30 | lr=0.000500 | train_loss=2.3142 train_acc=0.512 train_v=0.0051 train_mv=0.6786 | val_loss=2.1540 val_acc=0.534 val_v=0.0050 val_mv=0.6748
+epoch 6/30 | lr=0.000500 | train_loss=2.2881 train_acc=0.514 train_v=0.0048 train_mv=0.6717 | val_loss=2.1416 val_acc=0.540 val_v=0.0046 val_mv=0.6682
+epoch 7/30 | lr=0.000500 | train_loss=2.2816 train_acc=0.515 train_v=0.0047 train_mv=0.6659 | val_loss=2.1520 val_acc=0.538 val_v=0.0045 val_mv=0.6627
+epoch 8/30 | lr=0.000500 | train_loss=2.2890 train_acc=0.515 train_v=0.0046 train_mv=0.6609 | val_loss=2.1925 val_acc=0.534 val_v=0.0042 val_mv=0.6579
+epoch 9/30 | lr=0.000350 | train_loss=2.3218 train_acc=0.514 train_v=0.0045 train_mv=0.6572 | val_loss=2.2315 val_acc=0.530 val_v=0.0043 val_mv=0.6550
+epoch 10/30 | lr=0.000350 | train_loss=2.3771 train_acc=0.510 train_v=0.0044 train_mv=0.6545 | val_loss=2.2785 val_acc=0.531 val_v=0.0041 val_mv=0.6523
+epoch 11/30 | lr=0.000350 | train_loss=2.4480 train_acc=0.508 train_v=0.0044 train_mv=0.6521 | val_loss=2.3551 val_acc=0.528 val_v=0.0041 val_mv=0.6500
+game 20/40 | nn_wins=10 h_wins=10 ties=0 | nn_avg=54.7 h_avg=58.9
+game 40/40 | nn_wins=20 h_wins=19 ties=1 | nn_avg=54.6 h_avg=57.5
+game 20/80 | nn_wins=7 h_wins=13 ties=0 | nn_avg=48.2 h_avg=52.5
+game 40/80 | nn_wins=17 h_wins=23 ties=0 | nn_avg=50.8 h_avg=53.6
+game 60/80 | nn_wins=33 h_wins=26 ties=1 | nn_avg=53.9 h_avg=52.9
+game 80/80 | nn_wins=44 h_wins=35 ties=1 | nn_avg=53.7 h_avg=52.0
+opp=heuristic | nn_wins=22/40 | margin=1.27 | nn_ge100=0.000
+opp=reports/ml/phase3_rl_v1/best_model.npz | nn_wins=12/40 | margin=-7.58 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=54.9 | mean_winner_score=61.5
+game 20/20 | samples=1040 | mean_player_score=57.1 | mean_winner_score=65.7
+game 20/80 | nn_wins=9 h_wins=10 ties=1 | nn_avg=51.0 h_avg=51.7
+game 40/80 | nn_wins=17 h_wins=22 ties=1 | nn_avg=50.7 h_avg=53.9
+game 60/80 | nn_wins=24 h_wins=34 ties=2 | nn_avg=51.1 h_avg=53.6
+game 80/80 | nn_wins=37 h_wins=41 ties=2 | nn_avg=50.7 h_avg=53.2
+iter 3/10 | samples=37400 | eval_wins=20/40 margin=-2.95 | gate_wins=44/80 | pool_win=0.425 ge100=0.000 | kpi_pass=True strict_kpi_pass=False fixed_seed_gate_pass=True promoted=False selected_best=False
+game 10/100 | samples=740 | mean_player_score=62.4
+game 20/100 | samples=1480 | mean_player_score=63.9
+game 30/100 | samples=2220 | mean_player_score=63.3
+game 40/100 | samples=2960 | mean_player_score=63.2
+game 50/100 | samples=3700 | mean_player_score=63.7
+game 60/100 | samples=4440 | mean_player_score=63.2
+game 70/100 | samples=5180 | mean_player_score=63.5
+game 80/100 | samples=5920 | mean_player_score=63.0
+game 90/100 | samples=6660 | mean_player_score=62.4
+game 100/100 | samples=7400 | mean_player_score=62.3
+game 10/100 | samples=740 | mean_player_score=62.5
+game 20/100 | samples=1480 | mean_player_score=63.7
+game 30/100 | samples=2220 | mean_player_score=64.2
+game 40/100 | samples=2960 | mean_player_score=64.1
+game 50/100 | samples=3700 | mean_player_score=64.3
+game 60/100 | samples=4440 | mean_player_score=63.3
+game 70/100 | samples=5180 | mean_player_score=63.4
+game 80/100 | samples=5920 | mean_player_score=63.3
+game 90/100 | samples=6660 | mean_player_score=63.8
+game 100/100 | samples=7400 | mean_player_score=63.6
+game 10/100 | samples=740 | mean_player_score=58.0
+game 20/100 | samples=1480 | mean_player_score=62.5
+game 30/100 | samples=2220 | mean_player_score=61.2
+game 40/100 | samples=2960 | mean_player_score=62.1
+game 50/100 | samples=3700 | mean_player_score=62.7
+game 60/100 | samples=4440 | mean_player_score=63.2
+game 70/100 | samples=5180 | mean_player_score=63.9
+game 80/100 | samples=5920 | mean_player_score=63.9
+game 90/100 | samples=6660 | mean_player_score=63.0
+game 100/100 | samples=7400 | mean_player_score=63.2
+game 10/100 | samples=740 | mean_player_score=61.4
+game 20/100 | samples=1480 | mean_player_score=64.6
+game 30/100 | samples=2220 | mean_player_score=64.2
+game 40/100 | samples=2960 | mean_player_score=63.8
+game 50/100 | samples=3700 | mean_player_score=62.8
+game 60/100 | samples=4440 | mean_player_score=63.2
+game 70/100 | samples=5180 | mean_player_score=62.3
+game 80/100 | samples=5920 | mean_player_score=62.6
+game 90/100 | samples=6660 | mean_player_score=62.5
+game 100/100 | samples=7400 | mean_player_score=63.0
+rl_collect game 10/150 | decisions_so_far=520 | mean_score=54.3
+rl_collect game 20/150 | decisions_so_far=1040 | mean_score=54.3
+rl_collect game 30/150 | decisions_so_far=1560 | mean_score=54.9
+rl_collect game 40/150 | decisions_so_far=2080 | mean_score=55.5
+rl_collect game 50/150 | decisions_so_far=2600 | mean_score=54.7
+rl_collect game 60/150 | decisions_so_far=3120 | mean_score=55.3
+rl_collect game 70/150 | decisions_so_far=3640 | mean_score=55.7
+rl_collect game 80/150 | decisions_so_far=4160 | mean_score=55.9
+rl_collect game 90/150 | decisions_so_far=4680 | mean_score=56.1
+rl_collect game 100/150 | decisions_so_far=5200 | mean_score=56.3
+rl_collect game 110/150 | decisions_so_far=5720 | mean_score=56.4
+rl_collect game 120/150 | decisions_so_far=6240 | mean_score=56.4
+rl_collect game 130/150 | decisions_so_far=6760 | mean_score=56.4
+rl_collect game 140/150 | decisions_so_far=7280 | mean_score=56.3
+rl_collect game 150/150 | decisions_so_far=7800 | mean_score=56.3
+rl_collect done | games=150 samples=7800 mean_score=56.3 adv_std=10.95
+  RL: 7800 samples from 150 games, mean_score=56.3 adv_std=10.95
+epoch 1/30 | lr=0.000100 | train_loss=3.8003 train_acc=0.388 train_v=0.5469 train_mv=0.6982 | val_loss=2.7095 val_acc=0.482 val_v=0.0856 val_mv=0.6970
+epoch 2/30 | lr=0.000300 | train_loss=2.7446 train_acc=0.470 train_v=0.1083 train_mv=0.6929 | val_loss=2.3145 val_acc=0.521 val_v=0.0132 val_mv=0.6893
+epoch 3/30 | lr=0.000500 | train_loss=2.4430 train_acc=0.498 train_v=0.0135 train_mv=0.6835 | val_loss=2.1795 val_acc=0.537 val_v=0.0060 val_mv=0.6786
+epoch 4/30 | lr=0.000500 | train_loss=2.3163 train_acc=0.514 train_v=0.0055 train_mv=0.6736 | val_loss=2.1322 val_acc=0.540 val_v=0.0055 val_mv=0.6699
+epoch 5/30 | lr=0.000500 | train_loss=2.2641 train_acc=0.520 train_v=0.0050 train_mv=0.6657 | val_loss=2.1253 val_acc=0.538 val_v=0.0049 val_mv=0.6628
+epoch 6/30 | lr=0.000500 | train_loss=2.2499 train_acc=0.521 train_v=0.0048 train_mv=0.6592 | val_loss=2.1145 val_acc=0.540 val_v=0.0045 val_mv=0.6570
+epoch 7/30 | lr=0.000500 | train_loss=2.2660 train_acc=0.519 train_v=0.0047 train_mv=0.6538 | val_loss=2.1685 val_acc=0.538 val_v=0.0044 val_mv=0.6522
+epoch 8/30 | lr=0.000500 | train_loss=2.3235 train_acc=0.515 train_v=0.0046 train_mv=0.6494 | val_loss=2.2235 val_acc=0.534 val_v=0.0042 val_mv=0.6482
+epoch 9/30 | lr=0.000350 | train_loss=2.4367 train_acc=0.511 train_v=0.0045 train_mv=0.6461 | val_loss=2.3355 val_acc=0.529 val_v=0.0040 val_mv=0.6457
+epoch 10/30 | lr=0.000350 | train_loss=2.5699 train_acc=0.507 train_v=0.0044 train_mv=0.6438 | val_loss=2.4617 val_acc=0.525 val_v=0.0038 val_mv=0.6436
+epoch 11/30 | lr=0.000350 | train_loss=2.7089 train_acc=0.502 train_v=0.0043 train_mv=0.6417 | val_loss=2.6023 val_acc=0.519 val_v=0.0038 val_mv=0.6416
+game 20/40 | nn_wins=12 h_wins=7 ties=1 | nn_avg=55.2 h_avg=48.8
+game 40/40 | nn_wins=24 h_wins=14 ties=2 | nn_avg=55.5 h_avg=50.0
+game 20/80 | nn_wins=15 h_wins=4 ties=1 | nn_avg=63.9 h_avg=54.0
+game 40/80 | nn_wins=28 h_wins=11 ties=1 | nn_avg=61.5 h_avg=54.2
+game 60/80 | nn_wins=36 h_wins=23 ties=1 | nn_avg=60.6 h_avg=56.0
+game 80/80 | nn_wins=46 h_wins=33 ties=1 | nn_avg=59.5 h_avg=56.6
+opp=heuristic | nn_wins=24/40 | margin=1.68 | nn_ge100=0.000
+opp=reports/ml/phase3_rl_v1/best_model.npz | nn_wins=26/40 | margin=2.05 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=64.1 | mean_winner_score=73.2
+game 20/20 | samples=1040 | mean_player_score=62.9 | mean_winner_score=71.7
+game 20/80 | nn_wins=12 h_wins=7 ties=1 | nn_avg=55.4 h_avg=47.6
+game 40/80 | nn_wins=24 h_wins=14 ties=2 | nn_avg=54.8 h_avg=49.1
+game 60/80 | nn_wins=35 h_wins=23 ties=2 | nn_avg=53.1 h_avg=48.1
+game 80/80 | nn_wins=51 h_wins=27 ties=2 | nn_avg=53.8 h_avg=47.1
+iter 4/10 | samples=37400 | eval_wins=24/40 margin=5.50 | gate_wins=46/80 | pool_win=0.625 ge100=0.000 | kpi_pass=True strict_kpi_pass=True fixed_seed_gate_pass=True promoted=True selected_best=True
+game 10/100 | samples=740 | mean_player_score=61.0
+game 20/100 | samples=1480 | mean_player_score=59.6
+game 30/100 | samples=2220 | mean_player_score=60.2
+game 40/100 | samples=2960 | mean_player_score=62.0
+game 50/100 | samples=3700 | mean_player_score=61.8
+game 60/100 | samples=4440 | mean_player_score=61.3
+game 70/100 | samples=5180 | mean_player_score=61.6
+game 80/100 | samples=5920 | mean_player_score=61.4
+game 90/100 | samples=6660 | mean_player_score=61.6
+game 100/100 | samples=7400 | mean_player_score=61.5
+game 10/100 | samples=740 | mean_player_score=62.0
+game 20/100 | samples=1480 | mean_player_score=62.9
+game 30/100 | samples=2220 | mean_player_score=62.0
+game 40/100 | samples=2960 | mean_player_score=62.3
+game 50/100 | samples=3700 | mean_player_score=62.2
+game 60/100 | samples=4440 | mean_player_score=63.1
+game 70/100 | samples=5180 | mean_player_score=62.6
+game 80/100 | samples=5920 | mean_player_score=62.7
+game 90/100 | samples=6660 | mean_player_score=62.8
+game 100/100 | samples=7400 | mean_player_score=63.0
+game 10/100 | samples=740 | mean_player_score=59.5
+game 20/100 | samples=1480 | mean_player_score=61.0
+game 30/100 | samples=2220 | mean_player_score=60.6
+game 40/100 | samples=2960 | mean_player_score=61.2
+game 50/100 | samples=3700 | mean_player_score=60.3
+game 60/100 | samples=4440 | mean_player_score=60.8
+game 70/100 | samples=5180 | mean_player_score=61.1
+game 80/100 | samples=5920 | mean_player_score=60.9
+game 90/100 | samples=6660 | mean_player_score=61.1
+game 100/100 | samples=7400 | mean_player_score=60.4
+game 10/100 | samples=740 | mean_player_score=64.2
+game 20/100 | samples=1480 | mean_player_score=64.9
+game 30/100 | samples=2220 | mean_player_score=64.5
+game 40/100 | samples=2960 | mean_player_score=63.2
+game 50/100 | samples=3700 | mean_player_score=62.6
+game 60/100 | samples=4440 | mean_player_score=63.3
+game 70/100 | samples=5180 | mean_player_score=63.2
+game 80/100 | samples=5920 | mean_player_score=63.7
+game 90/100 | samples=6660 | mean_player_score=63.3
+game 100/100 | samples=7400 | mean_player_score=63.4
+rl_collect game 10/150 | decisions_so_far=520 | mean_score=57.0
+rl_collect game 20/150 | decisions_so_far=1040 | mean_score=55.0
+rl_collect game 30/150 | decisions_so_far=1560 | mean_score=53.5
+rl_collect game 40/150 | decisions_so_far=2080 | mean_score=53.7
+rl_collect game 50/150 | decisions_so_far=2600 | mean_score=53.3
+rl_collect game 60/150 | decisions_so_far=3120 | mean_score=53.1
+rl_collect game 70/150 | decisions_so_far=3640 | mean_score=52.4
+rl_collect game 80/150 | decisions_so_far=4160 | mean_score=52.2
+rl_collect game 90/150 | decisions_so_far=4680 | mean_score=52.2
+rl_collect game 100/150 | decisions_so_far=5200 | mean_score=52.3
+rl_collect game 110/150 | decisions_so_far=5720 | mean_score=52.1
+rl_collect game 120/150 | decisions_so_far=6240 | mean_score=52.0
+rl_collect game 130/150 | decisions_so_far=6760 | mean_score=52.3
+rl_collect game 140/150 | decisions_so_far=7280 | mean_score=52.4
+rl_collect game 150/150 | decisions_so_far=7800 | mean_score=52.4
+rl_collect done | games=150 samples=7800 mean_score=52.4 adv_std=11.05
+  RL: 7800 samples from 150 games, mean_score=52.4 adv_std=11.05
+epoch 1/30 | lr=0.000100 | train_loss=3.7475 train_acc=0.399 train_v=0.5933 train_mv=0.7165 | val_loss=2.6710 val_acc=0.481 val_v=0.0731 val_mv=0.7152
+epoch 2/30 | lr=0.000300 | train_loss=2.6669 train_acc=0.476 train_v=0.0881 train_mv=0.7081 | val_loss=2.2965 val_acc=0.523 val_v=0.0088 val_mv=0.7029
+epoch 3/30 | lr=0.000500 | train_loss=2.3742 train_acc=0.506 train_v=0.0095 train_mv=0.6939 | val_loss=2.1729 val_acc=0.533 val_v=0.0049 val_mv=0.6864
+epoch 4/30 | lr=0.000500 | train_loss=2.2584 train_acc=0.518 train_v=0.0048 train_mv=0.6798 | val_loss=2.1196 val_acc=0.537 val_v=0.0046 val_mv=0.6737
+epoch 5/30 | lr=0.000500 | train_loss=2.2037 train_acc=0.523 train_v=0.0045 train_mv=0.6689 | val_loss=2.0882 val_acc=0.539 val_v=0.0044 val_mv=0.6639
+epoch 6/30 | lr=0.000500 | train_loss=2.1803 train_acc=0.523 train_v=0.0044 train_mv=0.6605 | val_loss=2.0987 val_acc=0.537 val_v=0.0040 val_mv=0.6562
+epoch 7/30 | lr=0.000500 | train_loss=2.1841 train_acc=0.523 train_v=0.0043 train_mv=0.6538 | val_loss=2.1037 val_acc=0.536 val_v=0.0038 val_mv=0.6500
+epoch 8/30 | lr=0.000500 | train_loss=2.2104 train_acc=0.522 train_v=0.0042 train_mv=0.6485 | val_loss=2.1760 val_acc=0.533 val_v=0.0037 val_mv=0.6451
+epoch 9/30 | lr=0.000350 | train_loss=2.2869 train_acc=0.519 train_v=0.0041 train_mv=0.6448 | val_loss=2.2197 val_acc=0.534 val_v=0.0036 val_mv=0.6421
+epoch 10/30 | lr=0.000350 | train_loss=2.3876 train_acc=0.511 train_v=0.0040 train_mv=0.6422 | val_loss=2.3753 val_acc=0.525 val_v=0.0035 val_mv=0.6396
+game 20/40 | nn_wins=10 h_wins=10 ties=0 | nn_avg=48.9 h_avg=51.0
+game 40/40 | nn_wins=20 h_wins=20 ties=0 | nn_avg=47.7 h_avg=50.6
+game 20/80 | nn_wins=6 h_wins=13 ties=1 | nn_avg=47.6 h_avg=54.0
+game 40/80 | nn_wins=15 h_wins=24 ties=1 | nn_avg=48.2 h_avg=52.0
+game 60/80 | nn_wins=21 h_wins=36 ties=3 | nn_avg=48.4 h_avg=53.8
+game 80/80 | nn_wins=32 h_wins=45 ties=3 | nn_avg=48.8 h_avg=53.4
+opp=heuristic | nn_wins=16/40 | margin=-8.12 | nn_ge100=0.000
+opp=reports/ml/phase3_rl_v1/best_model.npz | nn_wins=14/40 | margin=-10.97 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=67.5 | mean_winner_score=74.3
+game 20/20 | samples=1040 | mean_player_score=65.8 | mean_winner_score=74.6
+game 20/80 | nn_wins=9 h_wins=11 ties=0 | nn_avg=44.9 h_avg=51.1
+game 40/80 | nn_wins=14 h_wins=26 ties=0 | nn_avg=46.9 h_avg=55.4
+game 60/80 | nn_wins=25 h_wins=34 ties=1 | nn_avg=48.6 h_avg=53.9
+game 80/80 | nn_wins=34 h_wins=45 ties=1 | nn_avg=49.2 h_avg=53.9
+iter 5/10 | samples=37400 | eval_wins=20/40 margin=-2.88 | gate_wins=32/80 | pool_win=0.375 ge100=0.000 | kpi_pass=True strict_kpi_pass=True fixed_seed_gate_pass=True promoted=True selected_best=False
+game 10/100 | samples=740 | mean_player_score=60.9
+game 20/100 | samples=1480 | mean_player_score=58.6
+game 30/100 | samples=2220 | mean_player_score=58.3
+game 40/100 | samples=2960 | mean_player_score=57.8
+game 50/100 | samples=3700 | mean_player_score=58.3
+game 60/100 | samples=4440 | mean_player_score=58.4
+game 70/100 | samples=5180 | mean_player_score=58.6
+game 80/100 | samples=5920 | mean_player_score=59.0
+game 90/100 | samples=6660 | mean_player_score=59.2
+game 100/100 | samples=7400 | mean_player_score=59.4
+game 10/100 | samples=740 | mean_player_score=62.4
+game 20/100 | samples=1480 | mean_player_score=63.2
+game 30/100 | samples=2220 | mean_player_score=62.5
+game 40/100 | samples=2960 | mean_player_score=63.5
+game 50/100 | samples=3700 | mean_player_score=62.9
+game 60/100 | samples=4440 | mean_player_score=62.8
+game 70/100 | samples=5180 | mean_player_score=62.1
+game 80/100 | samples=5920 | mean_player_score=62.5
+game 90/100 | samples=6660 | mean_player_score=62.5
+game 100/100 | samples=7400 | mean_player_score=62.0
+game 10/100 | samples=740 | mean_player_score=60.3
+game 20/100 | samples=1480 | mean_player_score=60.9
+game 30/100 | samples=2220 | mean_player_score=60.5
+game 40/100 | samples=2960 | mean_player_score=61.8
+game 50/100 | samples=3700 | mean_player_score=62.4
+game 60/100 | samples=4440 | mean_player_score=62.5
+game 70/100 | samples=5180 | mean_player_score=62.5
+game 80/100 | samples=5920 | mean_player_score=63.0
+game 90/100 | samples=6660 | mean_player_score=63.7
+game 100/100 | samples=7400 | mean_player_score=63.5
+game 10/100 | samples=740 | mean_player_score=56.2
+game 20/100 | samples=1480 | mean_player_score=57.0
+game 30/100 | samples=2220 | mean_player_score=58.7
+game 40/100 | samples=2960 | mean_player_score=58.9
+game 50/100 | samples=3700 | mean_player_score=58.2
+game 60/100 | samples=4440 | mean_player_score=58.6
+game 70/100 | samples=5180 | mean_player_score=59.2
+game 80/100 | samples=5920 | mean_player_score=59.5
+game 90/100 | samples=6660 | mean_player_score=60.0
+game 100/100 | samples=7400 | mean_player_score=60.1
+rl_collect game 10/150 | decisions_so_far=520 | mean_score=54.9
+rl_collect game 20/150 | decisions_so_far=1040 | mean_score=55.0
+rl_collect game 30/150 | decisions_so_far=1560 | mean_score=54.6
+rl_collect game 40/150 | decisions_so_far=2080 | mean_score=54.9
+rl_collect game 50/150 | decisions_so_far=2600 | mean_score=54.8
+rl_collect game 60/150 | decisions_so_far=3120 | mean_score=55.7
+rl_collect game 70/150 | decisions_so_far=3640 | mean_score=55.5
+rl_collect game 80/150 | decisions_so_far=4160 | mean_score=56.0
+rl_collect game 90/150 | decisions_so_far=4680 | mean_score=55.7
+rl_collect game 100/150 | decisions_so_far=5200 | mean_score=54.9
+rl_collect game 110/150 | decisions_so_far=5720 | mean_score=54.9
+rl_collect game 120/150 | decisions_so_far=6240 | mean_score=55.0
+rl_collect game 130/150 | decisions_so_far=6760 | mean_score=54.8
+rl_collect game 140/150 | decisions_so_far=7280 | mean_score=54.5
+rl_collect game 150/150 | decisions_so_far=7800 | mean_score=54.7
+rl_collect done | games=150 samples=7800 mean_score=54.7 adv_std=11.91
+  RL: 7800 samples from 150 games, mean_score=54.7 adv_std=11.91
+epoch 1/30 | lr=0.000100 | train_loss=3.6450 train_acc=0.401 train_v=0.5214 train_mv=0.6765 | val_loss=2.5895 val_acc=0.489 val_v=0.0672 val_mv=0.6757
+epoch 2/30 | lr=0.000300 | train_loss=2.6457 train_acc=0.478 train_v=0.0809 train_mv=0.6716 | val_loss=2.2344 val_acc=0.530 val_v=0.0088 val_mv=0.6685
+epoch 3/30 | lr=0.000500 | train_loss=2.3524 train_acc=0.504 train_v=0.0085 train_mv=0.6631 | val_loss=2.1044 val_acc=0.541 val_v=0.0054 val_mv=0.6590
+epoch 4/30 | lr=0.000500 | train_loss=2.2284 train_acc=0.519 train_v=0.0048 train_mv=0.6548 | val_loss=2.0627 val_acc=0.542 val_v=0.0047 val_mv=0.6517
+epoch 5/30 | lr=0.000500 | train_loss=2.1698 train_acc=0.525 train_v=0.0046 train_mv=0.6485 | val_loss=2.0200 val_acc=0.545 val_v=0.0044 val_mv=0.6460
+epoch 6/30 | lr=0.000500 | train_loss=2.1374 train_acc=0.530 train_v=0.0045 train_mv=0.6435 | val_loss=2.0239 val_acc=0.544 val_v=0.0044 val_mv=0.6416
+epoch 7/30 | lr=0.000500 | train_loss=2.1212 train_acc=0.531 train_v=0.0044 train_mv=0.6396 | val_loss=2.0120 val_acc=0.549 val_v=0.0040 val_mv=0.6380
+epoch 8/30 | lr=0.000500 | train_loss=2.1271 train_acc=0.529 train_v=0.0043 train_mv=0.6364 | val_loss=2.0444 val_acc=0.543 val_v=0.0037 val_mv=0.6351
+epoch 9/30 | lr=0.000350 | train_loss=2.1512 train_acc=0.528 train_v=0.0042 train_mv=0.6342 | val_loss=2.0565 val_acc=0.541 val_v=0.0037 val_mv=0.6334
+epoch 10/30 | lr=0.000350 | train_loss=2.1948 train_acc=0.525 train_v=0.0041 train_mv=0.6326 | val_loss=2.1390 val_acc=0.533 val_v=0.0036 val_mv=0.6319
+epoch 11/30 | lr=0.000350 | train_loss=2.2949 train_acc=0.519 train_v=0.0041 train_mv=0.6313 | val_loss=2.2606 val_acc=0.526 val_v=0.0035 val_mv=0.6305
+epoch 12/30 | lr=0.000350 | train_loss=2.4793 train_acc=0.512 train_v=0.0040 train_mv=0.6300 | val_loss=2.4686 val_acc=0.520 val_v=0.0034 val_mv=0.6293
+game 20/40 | nn_wins=9 h_wins=10 ties=1 | nn_avg=50.0 h_avg=52.9
+game 40/40 | nn_wins=16 h_wins=23 ties=1 | nn_avg=50.4 h_avg=54.3
+game 20/80 | nn_wins=8 h_wins=12 ties=0 | nn_avg=50.4 h_avg=58.4
+game 40/80 | nn_wins=17 h_wins=23 ties=0 | nn_avg=49.3 h_avg=55.1
+game 60/80 | nn_wins=22 h_wins=38 ties=0 | nn_avg=47.6 h_avg=56.7
+game 80/80 | nn_wins=32 h_wins=48 ties=0 | nn_avg=48.0 h_avg=55.2
+opp=heuristic | nn_wins=16/40 | margin=-8.50 | nn_ge100=0.000
+opp=reports/ml/phase3_rl_v1/best_model.npz | nn_wins=11/40 | margin=-10.30 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=54.7 | mean_winner_score=62.9
+game 20/20 | samples=1040 | mean_player_score=55.8 | mean_winner_score=64.2
+game 20/80 | nn_wins=8 h_wins=12 ties=0 | nn_avg=45.2 h_avg=51.4
+game 40/80 | nn_wins=16 h_wins=22 ties=2 | nn_avg=47.4 h_avg=54.1
+game 60/80 | nn_wins=20 h_wins=38 ties=2 | nn_avg=45.5 h_avg=54.5
+game 80/80 | nn_wins=27 h_wins=49 ties=4 | nn_avg=45.4 h_avg=53.6
+iter 6/10 | samples=37400 | eval_wins=16/40 margin=-3.95 | gate_wins=32/80 | pool_win=0.338 ge100=0.000 | kpi_pass=True strict_kpi_pass=False fixed_seed_gate_pass=True promoted=False selected_best=False
+game 10/100 | samples=740 | mean_player_score=66.8
+game 20/100 | samples=1480 | mean_player_score=63.9
+game 30/100 | samples=2220 | mean_player_score=64.1
+game 40/100 | samples=2960 | mean_player_score=62.8
+game 50/100 | samples=3700 | mean_player_score=63.5
+game 60/100 | samples=4440 | mean_player_score=63.8
+game 70/100 | samples=5180 | mean_player_score=62.6
+game 80/100 | samples=5920 | mean_player_score=62.9
+game 90/100 | samples=6660 | mean_player_score=62.3
+game 100/100 | samples=7400 | mean_player_score=62.4
+game 10/100 | samples=740 | mean_player_score=61.7
+game 20/100 | samples=1480 | mean_player_score=59.6
+game 30/100 | samples=2220 | mean_player_score=61.8
+game 40/100 | samples=2960 | mean_player_score=61.9
+game 50/100 | samples=3700 | mean_player_score=61.4
+game 60/100 | samples=4440 | mean_player_score=61.4
+game 70/100 | samples=5180 | mean_player_score=60.9
+game 80/100 | samples=5920 | mean_player_score=61.7
+game 90/100 | samples=6660 | mean_player_score=61.6
+game 100/100 | samples=7400 | mean_player_score=62.1
+game 10/100 | samples=740 | mean_player_score=59.2
+game 20/100 | samples=1480 | mean_player_score=59.8
+game 30/100 | samples=2220 | mean_player_score=61.4
+game 40/100 | samples=2960 | mean_player_score=61.6
+game 50/100 | samples=3700 | mean_player_score=60.4
+game 60/100 | samples=4440 | mean_player_score=60.6
+game 70/100 | samples=5180 | mean_player_score=60.6
+game 80/100 | samples=5920 | mean_player_score=60.8
+game 90/100 | samples=6660 | mean_player_score=60.5
+game 100/100 | samples=7400 | mean_player_score=60.3
+game 10/100 | samples=740 | mean_player_score=68.4
+game 20/100 | samples=1480 | mean_player_score=67.5
+game 30/100 | samples=2220 | mean_player_score=65.4
+game 40/100 | samples=2960 | mean_player_score=64.5
+game 50/100 | samples=3700 | mean_player_score=65.5
+game 60/100 | samples=4440 | mean_player_score=65.5
+game 70/100 | samples=5180 | mean_player_score=64.6
+game 80/100 | samples=5920 | mean_player_score=64.2
+game 90/100 | samples=6660 | mean_player_score=64.2
+game 100/100 | samples=7400 | mean_player_score=63.9
+rl_collect game 10/150 | decisions_so_far=520 | mean_score=55.0
+rl_collect game 20/150 | decisions_so_far=1040 | mean_score=55.3
+rl_collect game 30/150 | decisions_so_far=1560 | mean_score=55.4
+rl_collect game 40/150 | decisions_so_far=2080 | mean_score=54.5
+rl_collect game 50/150 | decisions_so_far=2600 | mean_score=54.1
+rl_collect game 60/150 | decisions_so_far=3120 | mean_score=54.5
+rl_collect game 70/150 | decisions_so_far=3640 | mean_score=53.6
+rl_collect game 80/150 | decisions_so_far=4160 | mean_score=53.7
+rl_collect game 90/150 | decisions_so_far=4680 | mean_score=53.7
+rl_collect game 100/150 | decisions_so_far=5200 | mean_score=53.5
+rl_collect game 110/150 | decisions_so_far=5720 | mean_score=53.1
+rl_collect game 120/150 | decisions_so_far=6240 | mean_score=53.3
+rl_collect game 130/150 | decisions_so_far=6760 | mean_score=53.7
+rl_collect game 140/150 | decisions_so_far=7280 | mean_score=53.7
+rl_collect game 150/150 | decisions_so_far=7800 | mean_score=53.4
+rl_collect done | games=150 samples=7800 mean_score=53.4 adv_std=10.93
+  RL: 7800 samples from 150 games, mean_score=53.4 adv_std=10.93
+epoch 1/30 | lr=0.000100 | train_loss=3.5718 train_acc=0.401 train_v=0.4277 train_mv=0.7159 | val_loss=2.6210 val_acc=0.489 val_v=0.0564 val_mv=0.7134
+epoch 2/30 | lr=0.000300 | train_loss=2.6119 train_acc=0.476 train_v=0.0630 train_mv=0.7059 | val_loss=2.2503 val_acc=0.525 val_v=0.0085 val_mv=0.6991
+epoch 3/30 | lr=0.000500 | train_loss=2.3306 train_acc=0.504 train_v=0.0074 train_mv=0.6893 | val_loss=2.1297 val_acc=0.535 val_v=0.0055 val_mv=0.6806
+epoch 4/30 | lr=0.000500 | train_loss=2.2153 train_acc=0.515 train_v=0.0049 train_mv=0.6735 | val_loss=2.0896 val_acc=0.537 val_v=0.0045 val_mv=0.6672
+epoch 5/30 | lr=0.000500 | train_loss=2.1708 train_acc=0.519 train_v=0.0047 train_mv=0.6620 | val_loss=2.0670 val_acc=0.537 val_v=0.0044 val_mv=0.6573
+epoch 6/30 | lr=0.000500 | train_loss=2.1755 train_acc=0.518 train_v=0.0045 train_mv=0.6535 | val_loss=2.1134 val_acc=0.531 val_v=0.0041 val_mv=0.6500
+epoch 7/30 | lr=0.000500 | train_loss=2.2569 train_acc=0.512 train_v=0.0043 train_mv=0.6471 | val_loss=2.2524 val_acc=0.529 val_v=0.0038 val_mv=0.6444
+epoch 8/30 | lr=0.000500 | train_loss=2.5176 train_acc=0.502 train_v=0.0042 train_mv=0.6422 | val_loss=2.6213 val_acc=0.512 val_v=0.0036 val_mv=0.6400
+epoch 9/30 | lr=0.000350 | train_loss=2.8698 train_acc=0.497 train_v=0.0041 train_mv=0.6389 | val_loss=2.9754 val_acc=0.509 val_v=0.0036 val_mv=0.6375
+epoch 10/30 | lr=0.000350 | train_loss=3.1558 train_acc=0.493 train_v=0.0040 train_mv=0.6366 | val_loss=3.0578 val_acc=0.513 val_v=0.0034 val_mv=0.6354
+game 20/40 | nn_wins=6 h_wins=11 ties=3 | nn_avg=53.2 h_avg=55.2
+game 40/40 | nn_wins=18 h_wins=15 ties=7 | nn_avg=53.9 h_avg=51.9
+game 20/80 | nn_wins=8 h_wins=12 ties=0 | nn_avg=53.0 h_avg=53.4
+game 40/80 | nn_wins=19 h_wins=20 ties=1 | nn_avg=51.2 h_avg=52.0
+game 60/80 | nn_wins=25 h_wins=34 ties=1 | nn_avg=49.2 h_avg=52.9
+game 80/80 | nn_wins=35 h_wins=43 ties=2 | nn_avg=50.4 h_avg=52.6
+opp=heuristic | nn_wins=13/40 | margin=-2.55 | nn_ge100=0.025
+opp=reports/ml/phase3_rl_v1/best_model.npz | nn_wins=11/40 | margin=-7.12 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=59.0 | mean_winner_score=66.1
+game 20/20 | samples=1040 | mean_player_score=61.1 | mean_winner_score=69.7
+game 20/80 | nn_wins=9 h_wins=11 ties=0 | nn_avg=48.1 h_avg=51.4
+game 40/80 | nn_wins=17 h_wins=22 ties=1 | nn_avg=48.7 h_avg=52.6
+game 60/80 | nn_wins=25 h_wins=34 ties=1 | nn_avg=47.9 h_avg=53.5
+game 80/80 | nn_wins=31 h_wins=47 ties=2 | nn_avg=47.5 h_avg=53.9
+iter 7/10 | samples=37400 | eval_wins=18/40 margin=1.93 | gate_wins=35/80 | pool_win=0.300 ge100=0.013 | kpi_pass=True strict_kpi_pass=True fixed_seed_gate_pass=True promoted=True selected_best=False
+game 10/100 | samples=740 | mean_player_score=58.6
+game 20/100 | samples=1480 | mean_player_score=63.7
+game 30/100 | samples=2220 | mean_player_score=61.5
+game 40/100 | samples=2960 | mean_player_score=60.6
+game 50/100 | samples=3700 | mean_player_score=60.5
+game 60/100 | samples=4440 | mean_player_score=60.5
+game 70/100 | samples=5180 | mean_player_score=61.5
+game 80/100 | samples=5920 | mean_player_score=61.7
+game 90/100 | samples=6660 | mean_player_score=61.6
+game 100/100 | samples=7400 | mean_player_score=61.1
+game 10/100 | samples=740 | mean_player_score=62.5
+game 20/100 | samples=1480 | mean_player_score=63.1
+game 30/100 | samples=2220 | mean_player_score=60.1
+game 40/100 | samples=2960 | mean_player_score=62.2
+game 50/100 | samples=3700 | mean_player_score=61.8
+game 60/100 | samples=4440 | mean_player_score=62.1
+game 70/100 | samples=5180 | mean_player_score=61.8
+game 80/100 | samples=5920 | mean_player_score=61.0
+game 90/100 | samples=6660 | mean_player_score=61.4
+game 100/100 | samples=7400 | mean_player_score=61.6
+game 10/100 | samples=740 | mean_player_score=60.1
+game 20/100 | samples=1480 | mean_player_score=61.7
+game 30/100 | samples=2220 | mean_player_score=60.9
+game 40/100 | samples=2960 | mean_player_score=60.5
+game 50/100 | samples=3700 | mean_player_score=60.5
+game 60/100 | samples=4440 | mean_player_score=60.4
+game 70/100 | samples=5180 | mean_player_score=60.7
+game 80/100 | samples=5920 | mean_player_score=60.8
+game 90/100 | samples=6660 | mean_player_score=61.3
+game 100/100 | samples=7400 | mean_player_score=61.4
+game 10/100 | samples=740 | mean_player_score=57.8
+game 20/100 | samples=1480 | mean_player_score=59.0
+game 30/100 | samples=2220 | mean_player_score=60.7
+game 40/100 | samples=2960 | mean_player_score=60.9
+game 50/100 | samples=3700 | mean_player_score=60.9
+game 60/100 | samples=4440 | mean_player_score=61.9
+game 70/100 | samples=5180 | mean_player_score=61.6
+game 80/100 | samples=5920 | mean_player_score=61.1
+game 90/100 | samples=6660 | mean_player_score=61.2
+game 100/100 | samples=7400 | mean_player_score=61.4
+rl_collect game 10/150 | decisions_so_far=520 | mean_score=53.4
+rl_collect game 20/150 | decisions_so_far=1040 | mean_score=52.1
+rl_collect game 30/150 | decisions_so_far=1560 | mean_score=51.9
+rl_collect game 40/150 | decisions_so_far=2080 | mean_score=52.2
+rl_collect game 50/150 | decisions_so_far=2600 | mean_score=52.8
+rl_collect game 60/150 | decisions_so_far=3120 | mean_score=52.4
+rl_collect game 70/150 | decisions_so_far=3640 | mean_score=52.1
+rl_collect game 80/150 | decisions_so_far=4160 | mean_score=52.5
+rl_collect game 90/150 | decisions_so_far=4680 | mean_score=52.3
+rl_collect game 100/150 | decisions_so_far=5200 | mean_score=52.2
+rl_collect game 110/150 | decisions_so_far=5720 | mean_score=51.8
+rl_collect game 120/150 | decisions_so_far=6240 | mean_score=51.7
+rl_collect game 130/150 | decisions_so_far=6760 | mean_score=51.8
+rl_collect game 140/150 | decisions_so_far=7280 | mean_score=52.1
+rl_collect game 150/150 | decisions_so_far=7800 | mean_score=52.2
+rl_collect done | games=150 samples=7800 mean_score=52.2 adv_std=11.10
+  RL: 7800 samples from 150 games, mean_score=52.2 adv_std=11.10
+epoch 1/30 | lr=0.000100 | train_loss=3.6247 train_acc=0.404 train_v=0.4773 train_mv=0.7068 | val_loss=2.5603 val_acc=0.486 val_v=0.0660 val_mv=0.7048
+epoch 2/30 | lr=0.000300 | train_loss=2.5782 train_acc=0.482 train_v=0.0818 train_mv=0.6987 | val_loss=2.2217 val_acc=0.520 val_v=0.0095 val_mv=0.6933
+epoch 3/30 | lr=0.000500 | train_loss=2.3116 train_acc=0.506 train_v=0.0091 train_mv=0.6852 | val_loss=2.0962 val_acc=0.535 val_v=0.0058 val_mv=0.6782
+epoch 4/30 | lr=0.000500 | train_loss=2.2007 train_acc=0.517 train_v=0.0051 train_mv=0.6721 | val_loss=2.0504 val_acc=0.538 val_v=0.0050 val_mv=0.6669
+epoch 5/30 | lr=0.000500 | train_loss=2.1527 train_acc=0.522 train_v=0.0049 train_mv=0.6622 | val_loss=2.0306 val_acc=0.539 val_v=0.0047 val_mv=0.6584
+epoch 6/30 | lr=0.000500 | train_loss=2.1258 train_acc=0.525 train_v=0.0047 train_mv=0.6546 | val_loss=2.0190 val_acc=0.539 val_v=0.0045 val_mv=0.6519
+epoch 7/30 | lr=0.000500 | train_loss=2.1355 train_acc=0.522 train_v=0.0046 train_mv=0.6488 | val_loss=2.0413 val_acc=0.536 val_v=0.0041 val_mv=0.6467
+epoch 8/30 | lr=0.000500 | train_loss=2.1926 train_acc=0.517 train_v=0.0044 train_mv=0.6442 | val_loss=2.1634 val_acc=0.527 val_v=0.0038 val_mv=0.6427
+epoch 9/30 | lr=0.000350 | train_loss=2.3398 train_acc=0.509 train_v=0.0043 train_mv=0.6410 | val_loss=2.3417 val_acc=0.519 val_v=0.0037 val_mv=0.6403
+epoch 10/30 | lr=0.000350 | train_loss=2.5875 train_acc=0.502 train_v=0.0042 train_mv=0.6387 | val_loss=2.6251 val_acc=0.513 val_v=0.0037 val_mv=0.6383
+epoch 11/30 | lr=0.000350 | train_loss=2.9157 train_acc=0.495 train_v=0.0041 train_mv=0.6368 | val_loss=2.8295 val_acc=0.514 val_v=0.0035 val_mv=0.6365
+game 20/40 | nn_wins=10 h_wins=9 ties=1 | nn_avg=43.5 h_avg=48.4
+game 40/40 | nn_wins=19 h_wins=19 ties=2 | nn_avg=43.8 h_avg=51.2
+game 20/80 | nn_wins=6 h_wins=11 ties=3 | nn_avg=45.3 h_avg=50.7
+game 40/80 | nn_wins=15 h_wins=22 ties=3 | nn_avg=47.2 h_avg=53.0
+game 60/80 | nn_wins=25 h_wins=32 ties=3 | nn_avg=46.9 h_avg=51.4
+game 80/80 | nn_wins=37 h_wins=40 ties=3 | nn_avg=47.5 h_avg=52.4
+opp=heuristic | nn_wins=12/40 | margin=-10.50 | nn_ge100=0.000
+opp=reports/ml/phase3_rl_v1/best_model.npz | nn_wins=11/40 | margin=-10.28 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=55.9 | mean_winner_score=62.8
+game 20/20 | samples=1040 | mean_player_score=58.2 | mean_winner_score=67.4
+game 20/80 | nn_wins=9 h_wins=11 ties=0 | nn_avg=52.1 h_avg=51.0
+game 40/80 | nn_wins=16 h_wins=24 ties=0 | nn_avg=47.5 h_avg=52.2
+game 60/80 | nn_wins=21 h_wins=39 ties=0 | nn_avg=46.9 h_avg=52.1
+game 80/80 | nn_wins=30 h_wins=50 ties=0 | nn_avg=47.2 h_avg=51.9
+iter 8/10 | samples=37400 | eval_wins=19/40 margin=-7.42 | gate_wins=37/80 | pool_win=0.287 ge100=0.000 | kpi_pass=False strict_kpi_pass=True fixed_seed_gate_pass=True promoted=False selected_best=False
+game 10/100 | samples=740 | mean_player_score=63.8
+game 20/100 | samples=1480 | mean_player_score=61.2
+game 30/100 | samples=2220 | mean_player_score=63.1
+game 40/100 | samples=2960 | mean_player_score=62.4
+game 50/100 | samples=3700 | mean_player_score=62.8
+game 60/100 | samples=4440 | mean_player_score=62.3
+game 70/100 | samples=5180 | mean_player_score=62.9
+game 80/100 | samples=5920 | mean_player_score=62.1
+game 90/100 | samples=6660 | mean_player_score=61.6
+game 100/100 | samples=7400 | mean_player_score=61.5
+game 10/100 | samples=740 | mean_player_score=60.3
+game 20/100 | samples=1480 | mean_player_score=61.0
+game 30/100 | samples=2220 | mean_player_score=60.1
+game 40/100 | samples=2960 | mean_player_score=60.1
+game 50/100 | samples=3700 | mean_player_score=60.5
+game 60/100 | samples=4440 | mean_player_score=59.7
+game 70/100 | samples=5180 | mean_player_score=60.0
+game 80/100 | samples=5920 | mean_player_score=60.3
+game 90/100 | samples=6660 | mean_player_score=60.9
+game 100/100 | samples=7400 | mean_player_score=61.1
+game 10/100 | samples=740 | mean_player_score=63.1
+game 20/100 | samples=1480 | mean_player_score=63.0
+game 30/100 | samples=2220 | mean_player_score=63.1
+game 40/100 | samples=2960 | mean_player_score=62.4
+game 50/100 | samples=3700 | mean_player_score=61.0
+game 60/100 | samples=4440 | mean_player_score=61.0
+game 70/100 | samples=5180 | mean_player_score=61.0
+game 80/100 | samples=5920 | mean_player_score=61.1
+game 90/100 | samples=6660 | mean_player_score=62.0
+game 100/100 | samples=7400 | mean_player_score=61.8
+game 10/100 | samples=740 | mean_player_score=61.8
+game 20/100 | samples=1480 | mean_player_score=60.1
+game 30/100 | samples=2220 | mean_player_score=61.9
+game 40/100 | samples=2960 | mean_player_score=61.4
+game 50/100 | samples=3700 | mean_player_score=62.0
+game 60/100 | samples=4440 | mean_player_score=61.9
+game 70/100 | samples=5180 | mean_player_score=63.1
+game 80/100 | samples=5920 | mean_player_score=62.9
+game 90/100 | samples=6660 | mean_player_score=62.2
+game 100/100 | samples=7400 | mean_player_score=62.3
+rl_collect game 10/150 | decisions_so_far=520 | mean_score=57.3
+rl_collect game 20/150 | decisions_so_far=1040 | mean_score=55.4
+rl_collect game 30/150 | decisions_so_far=1560 | mean_score=55.3
+rl_collect game 40/150 | decisions_so_far=2080 | mean_score=54.7
+rl_collect game 50/150 | decisions_so_far=2600 | mean_score=54.9
+rl_collect game 60/150 | decisions_so_far=3120 | mean_score=55.0
+rl_collect game 70/150 | decisions_so_far=3640 | mean_score=54.3
+rl_collect game 80/150 | decisions_so_far=4160 | mean_score=54.3
+rl_collect game 90/150 | decisions_so_far=4680 | mean_score=54.0
+rl_collect game 100/150 | decisions_so_far=5200 | mean_score=53.8
+rl_collect game 110/150 | decisions_so_far=5720 | mean_score=54.0
+rl_collect game 120/150 | decisions_so_far=6240 | mean_score=54.0
+rl_collect game 130/150 | decisions_so_far=6760 | mean_score=53.7
+rl_collect game 140/150 | decisions_so_far=7280 | mean_score=53.9
+rl_collect game 150/150 | decisions_so_far=7800 | mean_score=54.2
+rl_collect done | games=150 samples=7800 mean_score=54.2 adv_std=11.74
+  RL: 7800 samples from 150 games, mean_score=54.2 adv_std=11.74
+epoch 1/30 | lr=0.000100 | train_loss=3.6488 train_acc=0.407 train_v=0.4126 train_mv=0.7261 | val_loss=2.5877 val_acc=0.495 val_v=0.0532 val_mv=0.7233
+epoch 2/30 | lr=0.000300 | train_loss=2.6011 train_acc=0.480 train_v=0.0615 train_mv=0.7159 | val_loss=2.2171 val_acc=0.532 val_v=0.0085 val_mv=0.7088
+epoch 3/30 | lr=0.000500 | train_loss=2.3137 train_acc=0.508 train_v=0.0077 train_mv=0.6989 | val_loss=2.1046 val_acc=0.540 val_v=0.0054 val_mv=0.6898
+epoch 4/30 | lr=0.000500 | train_loss=2.2011 train_acc=0.520 train_v=0.0050 train_mv=0.6824 | val_loss=2.0441 val_acc=0.545 val_v=0.0049 val_mv=0.6757
+epoch 5/30 | lr=0.000500 | train_loss=2.1566 train_acc=0.523 train_v=0.0047 train_mv=0.6701 | val_loss=2.0316 val_acc=0.546 val_v=0.0045 val_mv=0.6651
+epoch 6/30 | lr=0.000500 | train_loss=2.1425 train_acc=0.526 train_v=0.0046 train_mv=0.6608 | val_loss=2.0439 val_acc=0.543 val_v=0.0042 val_mv=0.6571
+epoch 7/30 | lr=0.000500 | train_loss=2.1850 train_acc=0.522 train_v=0.0044 train_mv=0.6537 | val_loss=2.1091 val_acc=0.542 val_v=0.0039 val_mv=0.6509
+epoch 8/30 | lr=0.000500 | train_loss=2.3230 train_acc=0.512 train_v=0.0043 train_mv=0.6481 | val_loss=2.2809 val_acc=0.530 val_v=0.0038 val_mv=0.6461
+epoch 9/30 | lr=0.000350 | train_loss=2.5589 train_acc=0.505 train_v=0.0042 train_mv=0.6443 | val_loss=2.5055 val_acc=0.527 val_v=0.0037 val_mv=0.6433
+epoch 10/30 | lr=0.000350 | train_loss=2.8238 train_acc=0.500 train_v=0.0041 train_mv=0.6417 | val_loss=2.9573 val_acc=0.506 val_v=0.0037 val_mv=0.6408
+game 20/40 | nn_wins=9 h_wins=11 ties=0 | nn_avg=50.0 h_avg=54.5
+game 40/40 | nn_wins=19 h_wins=20 ties=1 | nn_avg=50.0 h_avg=52.7
+game 20/80 | nn_wins=12 h_wins=7 ties=1 | nn_avg=58.1 h_avg=50.5
+game 40/80 | nn_wins=22 h_wins=16 ties=2 | nn_avg=54.1 h_avg=50.7
+game 60/80 | nn_wins=32 h_wins=26 ties=2 | nn_avg=52.9 h_avg=53.1
+game 80/80 | nn_wins=42 h_wins=36 ties=2 | nn_avg=52.2 h_avg=51.8
+opp=heuristic | nn_wins=17/40 | margin=-3.27 | nn_ge100=0.000
+opp=reports/ml/phase3_rl_v1/best_model.npz | nn_wins=14/40 | margin=-4.85 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=61.5 | mean_winner_score=71.1
+game 20/20 | samples=1040 | mean_player_score=61.2 | mean_winner_score=70.3
+game 20/80 | nn_wins=8 h_wins=10 ties=2 | nn_avg=49.0 h_avg=54.6
+game 40/80 | nn_wins=16 h_wins=20 ties=4 | nn_avg=47.5 h_avg=54.8
+game 60/80 | nn_wins=24 h_wins=31 ties=5 | nn_avg=48.7 h_avg=54.5
+game 80/80 | nn_wins=34 h_wins=41 ties=5 | nn_avg=48.0 h_avg=53.8
+iter 9/10 | samples=37400 | eval_wins=19/40 margin=-2.73 | gate_wins=42/80 | pool_win=0.388 ge100=0.000 | kpi_pass=True strict_kpi_pass=False fixed_seed_gate_pass=True promoted=False selected_best=False
+game 10/100 | samples=740 | mean_player_score=60.1
+game 20/100 | samples=1480 | mean_player_score=59.3
+game 30/100 | samples=2220 | mean_player_score=61.5
+game 40/100 | samples=2960 | mean_player_score=60.3
+game 50/100 | samples=3700 | mean_player_score=61.4
+game 60/100 | samples=4440 | mean_player_score=60.8
+game 70/100 | samples=5180 | mean_player_score=60.6
+game 80/100 | samples=5920 | mean_player_score=60.6
+game 90/100 | samples=6660 | mean_player_score=60.5
+game 100/100 | samples=7400 | mean_player_score=60.9
+game 10/100 | samples=740 | mean_player_score=56.9
+game 20/100 | samples=1480 | mean_player_score=59.0
+game 30/100 | samples=2220 | mean_player_score=60.8
+game 40/100 | samples=2960 | mean_player_score=60.9
+game 50/100 | samples=3700 | mean_player_score=61.5
+game 60/100 | samples=4440 | mean_player_score=61.7
+game 70/100 | samples=5180 | mean_player_score=61.9
+game 80/100 | samples=5920 | mean_player_score=62.2
+game 90/100 | samples=6660 | mean_player_score=62.2
+game 100/100 | samples=7400 | mean_player_score=62.5
+game 10/100 | samples=740 | mean_player_score=64.7
+game 20/100 | samples=1480 | mean_player_score=62.8
+game 30/100 | samples=2220 | mean_player_score=61.0
+game 40/100 | samples=2960 | mean_player_score=62.9
+game 50/100 | samples=3700 | mean_player_score=61.6
+game 60/100 | samples=4440 | mean_player_score=62.0
+game 70/100 | samples=5180 | mean_player_score=61.5
+game 80/100 | samples=5920 | mean_player_score=61.5
+game 90/100 | samples=6660 | mean_player_score=61.4
+game 100/100 | samples=7400 | mean_player_score=61.2
+game 10/100 | samples=740 | mean_player_score=66.9
+game 20/100 | samples=1480 | mean_player_score=65.0
+game 30/100 | samples=2220 | mean_player_score=64.6
+game 40/100 | samples=2960 | mean_player_score=63.9
+game 50/100 | samples=3700 | mean_player_score=63.4
+game 60/100 | samples=4440 | mean_player_score=64.0
+game 70/100 | samples=5180 | mean_player_score=63.8
+game 80/100 | samples=5920 | mean_player_score=64.2
+game 90/100 | samples=6660 | mean_player_score=64.5
+game 100/100 | samples=7400 | mean_player_score=64.6
+rl_collect game 10/150 | decisions_so_far=520 | mean_score=51.7
+rl_collect game 20/150 | decisions_so_far=1040 | mean_score=52.6
+rl_collect game 30/150 | decisions_so_far=1560 | mean_score=53.8
+rl_collect game 40/150 | decisions_so_far=2080 | mean_score=53.8
+rl_collect game 50/150 | decisions_so_far=2600 | mean_score=53.3
+rl_collect game 60/150 | decisions_so_far=3120 | mean_score=53.6
+rl_collect game 70/150 | decisions_so_far=3640 | mean_score=53.4
+rl_collect game 80/150 | decisions_so_far=4160 | mean_score=53.3
+rl_collect game 90/150 | decisions_so_far=4680 | mean_score=53.5
+rl_collect game 100/150 | decisions_so_far=5200 | mean_score=53.4
+rl_collect game 110/150 | decisions_so_far=5720 | mean_score=53.8
+rl_collect game 120/150 | decisions_so_far=6240 | mean_score=53.8
+rl_collect game 130/150 | decisions_so_far=6760 | mean_score=53.5
+rl_collect game 140/150 | decisions_so_far=7280 | mean_score=53.2
+rl_collect game 150/150 | decisions_so_far=7800 | mean_score=53.3
+rl_collect done | games=150 samples=7800 mean_score=53.3 adv_std=11.34
+  RL: 7800 samples from 150 games, mean_score=53.3 adv_std=11.34
+epoch 1/30 | lr=0.000100 | train_loss=3.5932 train_acc=0.409 train_v=0.4621 train_mv=0.7059 | val_loss=2.5870 val_acc=0.500 val_v=0.0597 val_mv=0.7040
+epoch 2/30 | lr=0.000300 | train_loss=2.5900 train_acc=0.482 train_v=0.0737 train_mv=0.6972 | val_loss=2.2143 val_acc=0.539 val_v=0.0090 val_mv=0.6910
+epoch 3/30 | lr=0.000500 | train_loss=2.3021 train_acc=0.513 train_v=0.0086 train_mv=0.6827 | val_loss=2.0898 val_acc=0.545 val_v=0.0050 val_mv=0.6743
+epoch 4/30 | lr=0.000500 | train_loss=2.1834 train_acc=0.524 train_v=0.0049 train_mv=0.6690 | val_loss=2.0330 val_acc=0.552 val_v=0.0046 val_mv=0.6621
+epoch 5/30 | lr=0.000500 | train_loss=2.1305 train_acc=0.531 train_v=0.0047 train_mv=0.6590 | val_loss=2.0050 val_acc=0.551 val_v=0.0042 val_mv=0.6531
+epoch 6/30 | lr=0.000500 | train_loss=2.1078 train_acc=0.531 train_v=0.0045 train_mv=0.6517 | val_loss=1.9964 val_acc=0.551 val_v=0.0042 val_mv=0.6463
+epoch 7/30 | lr=0.000500 | train_loss=2.1266 train_acc=0.527 train_v=0.0043 train_mv=0.6461 | val_loss=2.0595 val_acc=0.540 val_v=0.0039 val_mv=0.6411
+epoch 8/30 | lr=0.000500 | train_loss=2.2395 train_acc=0.516 train_v=0.0042 train_mv=0.6418 | val_loss=2.2388 val_acc=0.531 val_v=0.0037 val_mv=0.6371
+epoch 9/30 | lr=0.000350 | train_loss=2.5041 train_acc=0.505 train_v=0.0041 train_mv=0.6390 | val_loss=2.5112 val_acc=0.522 val_v=0.0035 val_mv=0.6348
+epoch 10/30 | lr=0.000350 | train_loss=2.7913 train_acc=0.500 train_v=0.0040 train_mv=0.6370 | val_loss=2.8370 val_acc=0.514 val_v=0.0034 val_mv=0.6328
+epoch 11/30 | lr=0.000350 | train_loss=3.1265 train_acc=0.496 train_v=0.0039 train_mv=0.6353 | val_loss=3.0079 val_acc=0.518 val_v=0.0033 val_mv=0.6311
+game 20/40 | nn_wins=8 h_wins=11 ties=1 | nn_avg=45.5 h_avg=50.2
+game 40/40 | nn_wins=15 h_wins=24 ties=1 | nn_avg=47.3 h_avg=54.0
+game 20/80 | nn_wins=11 h_wins=9 ties=0 | nn_avg=53.0 h_avg=50.0
+game 40/80 | nn_wins=19 h_wins=21 ties=0 | nn_avg=51.2 h_avg=51.3
+game 60/80 | nn_wins=26 h_wins=32 ties=2 | nn_avg=49.4 h_avg=51.2
+game 80/80 | nn_wins=37 h_wins=40 ties=3 | nn_avg=49.5 h_avg=50.9
+opp=heuristic | nn_wins=24/40 | margin=2.73 | nn_ge100=0.000
+opp=reports/ml/phase3_rl_v1/best_model.npz | nn_wins=10/40 | margin=-5.15 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=63.5 | mean_winner_score=71.4
+game 20/20 | samples=1040 | mean_player_score=60.4 | mean_winner_score=69.2
+game 20/80 | nn_wins=10 h_wins=9 ties=1 | nn_avg=50.5 h_avg=47.9
+game 40/80 | nn_wins=20 h_wins=18 ties=2 | nn_avg=53.0 h_avg=51.8
+game 60/80 | nn_wins=29 h_wins=28 ties=3 | nn_avg=50.5 h_avg=50.6
+game 80/80 | nn_wins=38 h_wins=38 ties=4 | nn_avg=49.3 h_avg=49.6
+iter 10/10 | samples=37400 | eval_wins=15/40 margin=-6.65 | gate_wins=37/80 | pool_win=0.425 ge100=0.000 | kpi_pass=True strict_kpi_pass=True fixed_seed_gate_pass=True promoted=True selected_best=False
+auto-improve-factorized complete | best_promoted=yes

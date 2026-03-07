@@ -1,0 +1,330 @@
+auto_improve: per-slot encoding → auto-scaled hidden1=768 hidden2=384
+game 10/100 | samples=740 | mean_player_score=59.5
+game 20/100 | samples=1480 | mean_player_score=59.5
+game 30/100 | samples=2220 | mean_player_score=57.8
+game 40/100 | samples=2960 | mean_player_score=58.5
+game 50/100 | samples=3700 | mean_player_score=59.5
+game 60/100 | samples=4440 | mean_player_score=59.5
+game 70/100 | samples=5180 | mean_player_score=58.8
+game 80/100 | samples=5920 | mean_player_score=58.6
+game 90/100 | samples=6660 | mean_player_score=58.7
+game 100/100 | samples=7400 | mean_player_score=58.4
+game 10/100 | samples=740 | mean_player_score=59.1
+game 20/100 | samples=1480 | mean_player_score=59.4
+game 30/100 | samples=2220 | mean_player_score=57.9
+game 40/100 | samples=2960 | mean_player_score=58.9
+game 50/100 | samples=3700 | mean_player_score=58.0
+game 60/100 | samples=4440 | mean_player_score=58.1
+game 70/100 | samples=5180 | mean_player_score=58.1
+game 80/100 | samples=5920 | mean_player_score=58.9
+game 90/100 | samples=6660 | mean_player_score=58.6
+game 100/100 | samples=7400 | mean_player_score=58.9
+game 10/100 | samples=740 | mean_player_score=59.5
+game 20/100 | samples=1480 | mean_player_score=58.1
+game 30/100 | samples=2220 | mean_player_score=59.0
+game 40/100 | samples=2960 | mean_player_score=59.0
+game 50/100 | samples=3700 | mean_player_score=59.0
+game 60/100 | samples=4440 | mean_player_score=59.0
+game 70/100 | samples=5180 | mean_player_score=58.6
+game 80/100 | samples=5920 | mean_player_score=58.6
+game 90/100 | samples=6660 | mean_player_score=58.0
+game 100/100 | samples=7400 | mean_player_score=58.0
+Loading dataset: reports/ml/phase4_slot_v1/iter_001/bc_dataset_combined.jsonl
+Loaded 29600 samples | feature_dim=1072
+Training device: mps
+warm-start from reports/ml/champions/current_champion.npz | applied=30 skipped=0
+epoch 1/30 | lr=0.000100 | train_loss=49.7663 train_acc=0.460 train_v=94.0487 train_mv=0.6917 | val_loss=4.6194 val_acc=0.517 val_v=4.3976 val_mv=0.6915
+epoch 2/30 | lr=0.000300 | train_loss=3.8368 train_acc=0.502 train_v=2.5188 train_mv=0.6909 | val_loss=4.5442 val_acc=0.565 val_v=4.5261 val_mv=0.6903
+epoch 3/30 | lr=0.000500 | train_loss=3.0849 train_acc=0.535 train_v=1.3350 train_mv=0.6892 | val_loss=3.3619 val_acc=0.585 val_v=2.4402 val_mv=0.6883
+epoch 4/30 | lr=0.000500 | train_loss=2.6779 train_acc=0.562 train_v=0.7946 train_mv=0.6872 | val_loss=2.8899 val_acc=0.610 val_v=1.6672 val_mv=0.6864
+epoch 5/30 | lr=0.000500 | train_loss=2.4517 train_acc=0.573 train_v=0.5243 train_mv=0.6852 | val_loss=2.5772 val_acc=0.616 val_v=1.1397 val_mv=0.6845
+epoch 6/30 | lr=0.000500 | train_loss=2.2948 train_acc=0.588 train_v=0.3818 train_mv=0.6833 | val_loss=2.3638 val_acc=0.630 val_v=0.8197 val_mv=0.6828
+epoch 7/30 | lr=0.000500 | train_loss=2.1962 train_acc=0.598 train_v=0.3096 train_mv=0.6815 | val_loss=2.2356 val_acc=0.636 val_v=0.6073 val_mv=0.6810
+epoch 8/30 | lr=0.000500 | train_loss=2.1057 train_acc=0.600 train_v=0.2612 train_mv=0.6797 | val_loss=2.1579 val_acc=0.647 val_v=0.5630 val_mv=0.6794
+epoch 9/30 | lr=0.000350 | train_loss=2.0320 train_acc=0.611 train_v=0.2334 train_mv=0.6783 | val_loss=2.1248 val_acc=0.644 val_v=0.5491 val_mv=0.6782
+epoch 10/30 | lr=0.000350 | train_loss=1.9821 train_acc=0.620 train_v=0.2209 train_mv=0.6771 | val_loss=2.0640 val_acc=0.650 val_v=0.4953 val_mv=0.6771
+epoch 11/30 | lr=0.000350 | train_loss=1.9427 train_acc=0.620 train_v=0.2152 train_mv=0.6760 | val_loss=1.9877 val_acc=0.652 val_v=0.3906 val_mv=0.6761
+epoch 12/30 | lr=0.000350 | train_loss=1.8999 train_acc=0.625 train_v=0.2077 train_mv=0.6749 | val_loss=1.9512 val_acc=0.657 val_v=0.3833 val_mv=0.6750
+epoch 13/30 | lr=0.000350 | train_loss=1.8527 train_acc=0.626 train_v=0.1984 train_mv=0.6738 | val_loss=1.9262 val_acc=0.658 val_v=0.3960 val_mv=0.6740
+epoch 14/30 | lr=0.000245 | train_loss=1.8070 train_acc=0.637 train_v=0.1941 train_mv=0.6729 | val_loss=1.9431 val_acc=0.661 val_v=0.4367 val_mv=0.6733
+epoch 15/30 | lr=0.000245 | train_loss=1.7800 train_acc=0.633 train_v=0.1893 train_mv=0.6722 | val_loss=1.8800 val_acc=0.663 val_v=0.3734 val_mv=0.6726
+epoch 16/30 | lr=0.000245 | train_loss=1.7472 train_acc=0.638 train_v=0.1863 train_mv=0.6715 | val_loss=1.8837 val_acc=0.665 val_v=0.4184 val_mv=0.6720
+epoch 17/30 | lr=0.000245 | train_loss=1.7240 train_acc=0.644 train_v=0.1873 train_mv=0.6708 | val_loss=1.8309 val_acc=0.668 val_v=0.3553 val_mv=0.6713
+epoch 18/30 | lr=0.000245 | train_loss=1.6894 train_acc=0.643 train_v=0.1851 train_mv=0.6701 | val_loss=1.8132 val_acc=0.674 val_v=0.3491 val_mv=0.6706
+epoch 19/30 | lr=0.000171 | train_loss=1.6620 train_acc=0.651 train_v=0.1831 train_mv=0.6695 | val_loss=1.7983 val_acc=0.674 val_v=0.3711 val_mv=0.6702
+epoch 20/30 | lr=0.000171 | train_loss=1.6457 train_acc=0.650 train_v=0.1833 train_mv=0.6691 | val_loss=1.7748 val_acc=0.676 val_v=0.3435 val_mv=0.6697
+epoch 21/30 | lr=0.000171 | train_loss=1.6260 train_acc=0.653 train_v=0.1827 train_mv=0.6686 | val_loss=1.7680 val_acc=0.675 val_v=0.3557 val_mv=0.6693
+epoch 22/30 | lr=0.000171 | train_loss=1.6091 train_acc=0.655 train_v=0.1791 train_mv=0.6682 | val_loss=1.7583 val_acc=0.674 val_v=0.3682 val_mv=0.6689
+epoch 23/30 | lr=0.000171 | train_loss=1.5878 train_acc=0.653 train_v=0.1827 train_mv=0.6677 | val_loss=1.7244 val_acc=0.677 val_v=0.3286 val_mv=0.6684
+epoch 24/30 | lr=0.000120 | train_loss=1.5730 train_acc=0.654 train_v=0.1802 train_mv=0.6673 | val_loss=1.7197 val_acc=0.675 val_v=0.3307 val_mv=0.6682
+epoch 25/30 | lr=0.000120 | train_loss=1.5573 train_acc=0.659 train_v=0.1796 train_mv=0.6670 | val_loss=1.7075 val_acc=0.680 val_v=0.3275 val_mv=0.6679
+epoch 26/30 | lr=0.000120 | train_loss=1.5431 train_acc=0.660 train_v=0.1796 train_mv=0.6667 | val_loss=1.7052 val_acc=0.678 val_v=0.3483 val_mv=0.6676
+epoch 27/30 | lr=0.000120 | train_loss=1.5316 train_acc=0.661 train_v=0.1769 train_mv=0.6664 | val_loss=1.6826 val_acc=0.679 val_v=0.3155 val_mv=0.6673
+epoch 28/30 | lr=0.000120 | train_loss=1.5163 train_acc=0.663 train_v=0.1740 train_mv=0.6661 | val_loss=1.6695 val_acc=0.677 val_v=0.3110 val_mv=0.6670
+epoch 29/30 | lr=0.000084 | train_loss=1.5115 train_acc=0.661 train_v=0.1786 train_mv=0.6659 | val_loss=1.6697 val_acc=0.680 val_v=0.3204 val_mv=0.6668
+epoch 30/30 | lr=0.000084 | train_loss=1.5046 train_acc=0.667 train_v=0.1793 train_mv=0.6657 | val_loss=1.6652 val_acc=0.683 val_v=0.3262 val_mv=0.6666
+game 20/40 | nn_wins=12 h_wins=8 ties=0 | nn_avg=50.0 h_avg=48.6
+game 40/40 | nn_wins=21 h_wins=18 ties=1 | nn_avg=50.0 h_avg=47.7
+game 20/80 | nn_wins=7 h_wins=13 ties=0 | nn_avg=45.2 h_avg=52.4
+game 40/80 | nn_wins=17 h_wins=23 ties=0 | nn_avg=48.2 h_avg=51.4
+game 60/80 | nn_wins=31 h_wins=29 ties=0 | nn_avg=50.0 h_avg=50.0
+game 80/80 | nn_wins=40 h_wins=40 ties=0 | nn_avg=50.3 h_avg=50.7
+opp=heuristic | nn_wins=21/40 | margin=-1.40 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=63.0 | mean_winner_score=66.6
+game 20/20 | samples=1040 | mean_player_score=59.9 | mean_winner_score=67.0
+game 20/80 | nn_wins=7 h_wins=11 ties=2 | nn_avg=50.5 h_avg=52.0
+game 40/80 | nn_wins=20 h_wins=18 ties=2 | nn_avg=50.3 h_avg=50.6
+game 60/80 | nn_wins=29 h_wins=29 ties=2 | nn_avg=50.8 h_avg=49.7
+game 80/80 | nn_wins=37 h_wins=40 ties=3 | nn_avg=50.9 h_avg=50.8
+iter 1/10 | samples=29600 | eval_wins=21/40 margin=2.33 | gate_wins=40/80 | pool_win=0.525 ge100=0.000 | kpi_pass=True strict_kpi_pass=True fixed_seed_gate_pass=True promoted=True selected_best=True
+game 10/100 | samples=740 | mean_player_score=61.8
+game 20/100 | samples=1480 | mean_player_score=63.6
+game 30/100 | samples=2220 | mean_player_score=63.9
+game 40/100 | samples=2960 | mean_player_score=62.9
+game 50/100 | samples=3700 | mean_player_score=62.7
+game 60/100 | samples=4440 | mean_player_score=63.2
+game 70/100 | samples=5180 | mean_player_score=62.9
+game 80/100 | samples=5920 | mean_player_score=63.2
+game 90/100 | samples=6660 | mean_player_score=62.9
+game 100/100 | samples=7400 | mean_player_score=63.0
+game 10/100 | samples=740 | mean_player_score=62.8
+game 20/100 | samples=1480 | mean_player_score=61.0
+game 30/100 | samples=2220 | mean_player_score=61.8
+game 40/100 | samples=2960 | mean_player_score=61.4
+game 50/100 | samples=3700 | mean_player_score=62.5
+game 60/100 | samples=4440 | mean_player_score=63.0
+game 70/100 | samples=5180 | mean_player_score=63.0
+game 80/100 | samples=5920 | mean_player_score=62.9
+game 90/100 | samples=6660 | mean_player_score=63.0
+game 100/100 | samples=7400 | mean_player_score=62.8
+game 10/100 | samples=740 | mean_player_score=61.6
+game 20/100 | samples=1480 | mean_player_score=64.5
+game 30/100 | samples=2220 | mean_player_score=63.9
+game 40/100 | samples=2960 | mean_player_score=63.2
+game 50/100 | samples=3700 | mean_player_score=62.7
+game 60/100 | samples=4440 | mean_player_score=62.7
+game 70/100 | samples=5180 | mean_player_score=62.3
+game 80/100 | samples=5920 | mean_player_score=62.5
+game 90/100 | samples=6660 | mean_player_score=62.3
+game 100/100 | samples=7400 | mean_player_score=62.6
+game 10/100 | samples=740 | mean_player_score=57.3
+game 20/100 | samples=1480 | mean_player_score=61.4
+game 30/100 | samples=2220 | mean_player_score=61.1
+game 40/100 | samples=2960 | mean_player_score=61.8
+game 50/100 | samples=3700 | mean_player_score=60.8
+game 60/100 | samples=4440 | mean_player_score=61.1
+game 70/100 | samples=5180 | mean_player_score=61.2
+game 80/100 | samples=5920 | mean_player_score=61.3
+game 90/100 | samples=6660 | mean_player_score=62.1
+game 100/100 | samples=7400 | mean_player_score=62.0
+Loading dataset: reports/ml/phase4_slot_v1/iter_002/bc_dataset_combined.jsonl
+Loaded 59200 samples | feature_dim=1072
+Training device: mps
+epoch 1/30 | lr=0.000100 | train_loss=2.8898 train_acc=0.414 train_v=0.1196 train_mv=0.6889 | val_loss=2.4489 val_acc=0.495 val_v=0.0345 val_mv=0.6885
+epoch 2/30 | lr=0.000300 | train_loss=2.3267 train_acc=0.510 train_v=0.0563 train_mv=0.6867 | val_loss=2.1183 val_acc=0.543 val_v=0.0144 val_mv=0.6855
+epoch 3/30 | lr=0.000500 | train_loss=2.1002 train_acc=0.545 train_v=0.0212 train_mv=0.6826 | val_loss=1.9661 val_acc=0.572 val_v=0.0079 val_mv=0.6807
+epoch 4/30 | lr=0.000500 | train_loss=1.9467 train_acc=0.569 train_v=0.0095 train_mv=0.6778 | val_loss=1.8639 val_acc=0.587 val_v=0.0064 val_mv=0.6763
+epoch 5/30 | lr=0.000500 | train_loss=1.8356 train_acc=0.580 train_v=0.0063 train_mv=0.6734 | val_loss=1.7773 val_acc=0.597 val_v=0.0064 val_mv=0.6723
+epoch 6/30 | lr=0.000500 | train_loss=1.7338 train_acc=0.591 train_v=0.0054 train_mv=0.6694 | val_loss=1.7031 val_acc=0.607 val_v=0.0059 val_mv=0.6686
+epoch 7/30 | lr=0.000500 | train_loss=1.6532 train_acc=0.599 train_v=0.0051 train_mv=0.6657 | val_loss=1.6441 val_acc=0.612 val_v=0.0061 val_mv=0.6653
+epoch 8/30 | lr=0.000500 | train_loss=1.5833 train_acc=0.607 train_v=0.0050 train_mv=0.6624 | val_loss=1.5932 val_acc=0.617 val_v=0.0052 val_mv=0.6622
+epoch 9/30 | lr=0.000350 | train_loss=1.5082 train_acc=0.617 train_v=0.0049 train_mv=0.6597 | val_loss=1.5455 val_acc=0.624 val_v=0.0057 val_mv=0.6602
+epoch 10/30 | lr=0.000350 | train_loss=1.4654 train_acc=0.621 train_v=0.0049 train_mv=0.6576 | val_loss=1.5141 val_acc=0.631 val_v=0.0056 val_mv=0.6583
+epoch 11/30 | lr=0.000350 | train_loss=1.4302 train_acc=0.626 train_v=0.0049 train_mv=0.6557 | val_loss=1.4800 val_acc=0.631 val_v=0.0055 val_mv=0.6565
+epoch 12/30 | lr=0.000350 | train_loss=1.3973 train_acc=0.630 train_v=0.0048 train_mv=0.6538 | val_loss=1.4670 val_acc=0.638 val_v=0.0053 val_mv=0.6548
+epoch 13/30 | lr=0.000350 | train_loss=1.3602 train_acc=0.636 train_v=0.0048 train_mv=0.6521 | val_loss=1.4503 val_acc=0.642 val_v=0.0053 val_mv=0.6532
+epoch 14/30 | lr=0.000245 | train_loss=1.3157 train_acc=0.643 train_v=0.0049 train_mv=0.6507 | val_loss=1.4163 val_acc=0.646 val_v=0.0053 val_mv=0.6522
+epoch 15/30 | lr=0.000245 | train_loss=1.2920 train_acc=0.643 train_v=0.0048 train_mv=0.6496 | val_loss=1.3976 val_acc=0.648 val_v=0.0054 val_mv=0.6511
+epoch 16/30 | lr=0.000245 | train_loss=1.2780 train_acc=0.647 train_v=0.0048 train_mv=0.6485 | val_loss=1.3925 val_acc=0.652 val_v=0.0054 val_mv=0.6502
+epoch 17/30 | lr=0.000245 | train_loss=1.2613 train_acc=0.649 train_v=0.0048 train_mv=0.6475 | val_loss=1.3826 val_acc=0.650 val_v=0.0054 val_mv=0.6492
+epoch 18/30 | lr=0.000245 | train_loss=1.2483 train_acc=0.648 train_v=0.0048 train_mv=0.6465 | val_loss=1.3709 val_acc=0.655 val_v=0.0053 val_mv=0.6483
+epoch 19/30 | lr=0.000171 | train_loss=1.2174 train_acc=0.659 train_v=0.0048 train_mv=0.6457 | val_loss=1.3522 val_acc=0.656 val_v=0.0053 val_mv=0.6477
+epoch 20/30 | lr=0.000171 | train_loss=1.2061 train_acc=0.659 train_v=0.0048 train_mv=0.6450 | val_loss=1.3449 val_acc=0.660 val_v=0.0053 val_mv=0.6471
+epoch 21/30 | lr=0.000171 | train_loss=1.1913 train_acc=0.660 train_v=0.0048 train_mv=0.6444 | val_loss=1.3423 val_acc=0.660 val_v=0.0055 val_mv=0.6465
+epoch 22/30 | lr=0.000171 | train_loss=1.1813 train_acc=0.662 train_v=0.0048 train_mv=0.6438 | val_loss=1.3363 val_acc=0.660 val_v=0.0052 val_mv=0.6459
+epoch 23/30 | lr=0.000171 | train_loss=1.1715 train_acc=0.664 train_v=0.0048 train_mv=0.6432 | val_loss=1.3308 val_acc=0.660 val_v=0.0051 val_mv=0.6454
+epoch 24/30 | lr=0.000120 | train_loss=1.1584 train_acc=0.668 train_v=0.0048 train_mv=0.6427 | val_loss=1.3222 val_acc=0.664 val_v=0.0053 val_mv=0.6450
+epoch 25/30 | lr=0.000120 | train_loss=1.1487 train_acc=0.667 train_v=0.0048 train_mv=0.6423 | val_loss=1.3195 val_acc=0.666 val_v=0.0052 val_mv=0.6446
+epoch 26/30 | lr=0.000120 | train_loss=1.1431 train_acc=0.667 train_v=0.0048 train_mv=0.6419 | val_loss=1.3158 val_acc=0.667 val_v=0.0051 val_mv=0.6442
+epoch 27/30 | lr=0.000120 | train_loss=1.1354 train_acc=0.672 train_v=0.0047 train_mv=0.6415 | val_loss=1.3136 val_acc=0.671 val_v=0.0053 val_mv=0.6439
+epoch 28/30 | lr=0.000120 | train_loss=1.1215 train_acc=0.675 train_v=0.0048 train_mv=0.6411 | val_loss=1.3085 val_acc=0.672 val_v=0.0050 val_mv=0.6435
+epoch 29/30 | lr=0.000084 | train_loss=1.1145 train_acc=0.672 train_v=0.0048 train_mv=0.6408 | val_loss=1.3055 val_acc=0.669 val_v=0.0053 val_mv=0.6433
+epoch 30/30 | lr=0.000084 | train_loss=1.1074 train_acc=0.677 train_v=0.0048 train_mv=0.6405 | val_loss=1.3028 val_acc=0.671 val_v=0.0053 val_mv=0.6430
+game 20/40 | nn_wins=15 h_wins=5 ties=0 | nn_avg=57.0 h_avg=48.8
+game 40/40 | nn_wins=26 h_wins=14 ties=0 | nn_avg=56.0 h_avg=51.0
+game 20/80 | nn_wins=12 h_wins=8 ties=0 | nn_avg=56.4 h_avg=48.8
+game 40/80 | nn_wins=24 h_wins=16 ties=0 | nn_avg=58.6 h_avg=50.9
+game 60/80 | nn_wins=34 h_wins=26 ties=0 | nn_avg=56.8 h_avg=51.6
+game 80/80 | nn_wins=45 h_wins=35 ties=0 | nn_avg=56.4 h_avg=52.2
+opp=heuristic | nn_wins=24/40 | margin=6.83 | nn_ge100=0.000
+opp=reports/ml/phase4_slot_v1/best_model.npz | nn_wins=26/40 | margin=8.40 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=62.7 | mean_winner_score=71.1
+game 20/20 | samples=1040 | mean_player_score=62.5 | mean_winner_score=70.2
+game 20/80 | nn_wins=9 h_wins=11 ties=0 | nn_avg=54.8 h_avg=52.6
+game 40/80 | nn_wins=21 h_wins=18 ties=1 | nn_avg=53.7 h_avg=49.2
+game 60/80 | nn_wins=34 h_wins=25 ties=1 | nn_avg=54.3 h_avg=50.7
+game 80/80 | nn_wins=44 h_wins=35 ties=1 | nn_avg=55.2 h_avg=51.9
+iter 2/10 | samples=29600 | eval_wins=26/40 margin=5.08 | gate_wins=45/80 | pool_win=0.625 ge100=0.000 | kpi_pass=True strict_kpi_pass=True fixed_seed_gate_pass=True promoted=True selected_best=True
+game 10/100 | samples=740 | mean_player_score=64.8
+game 20/100 | samples=1480 | mean_player_score=65.0
+game 30/100 | samples=2220 | mean_player_score=65.9
+game 40/100 | samples=2960 | mean_player_score=66.3
+game 50/100 | samples=3700 | mean_player_score=65.6
+game 60/100 | samples=4440 | mean_player_score=64.4
+game 70/100 | samples=5180 | mean_player_score=63.6
+game 80/100 | samples=5920 | mean_player_score=63.1
+game 90/100 | samples=6660 | mean_player_score=62.5
+game 100/100 | samples=7400 | mean_player_score=62.3
+game 10/100 | samples=740 | mean_player_score=63.4
+game 20/100 | samples=1480 | mean_player_score=61.5
+game 30/100 | samples=2220 | mean_player_score=63.0
+game 40/100 | samples=2960 | mean_player_score=63.4
+game 50/100 | samples=3700 | mean_player_score=63.5
+game 60/100 | samples=4440 | mean_player_score=63.6
+game 70/100 | samples=5180 | mean_player_score=62.9
+game 80/100 | samples=5920 | mean_player_score=62.7
+game 90/100 | samples=6660 | mean_player_score=62.6
+game 100/100 | samples=7400 | mean_player_score=62.0
+game 10/100 | samples=740 | mean_player_score=58.6
+game 20/100 | samples=1480 | mean_player_score=59.6
+game 30/100 | samples=2220 | mean_player_score=59.9
+game 40/100 | samples=2960 | mean_player_score=60.8
+game 50/100 | samples=3700 | mean_player_score=61.0
+game 60/100 | samples=4440 | mean_player_score=60.8
+game 70/100 | samples=5180 | mean_player_score=61.2
+game 80/100 | samples=5920 | mean_player_score=61.9
+game 90/100 | samples=6660 | mean_player_score=62.1
+game 100/100 | samples=7400 | mean_player_score=62.5
+game 10/100 | samples=740 | mean_player_score=68.0
+game 20/100 | samples=1480 | mean_player_score=66.8
+game 30/100 | samples=2220 | mean_player_score=64.6
+game 40/100 | samples=2960 | mean_player_score=64.2
+game 50/100 | samples=3700 | mean_player_score=63.6
+game 60/100 | samples=4440 | mean_player_score=63.5
+game 70/100 | samples=5180 | mean_player_score=63.9
+game 80/100 | samples=5920 | mean_player_score=63.6
+game 90/100 | samples=6660 | mean_player_score=63.8
+game 100/100 | samples=7400 | mean_player_score=63.9
+Loading dataset: reports/ml/phase4_slot_v1/iter_003/bc_dataset_combined.jsonl
+Loaded 88800 samples | feature_dim=1072
+Training device: mps
+epoch 1/30 | lr=0.000100 | train_loss=2.7967 train_acc=0.406 train_v=0.1142 train_mv=0.6886 | val_loss=2.4293 val_acc=0.506 val_v=0.0315 val_mv=0.6876
+epoch 2/30 | lr=0.000300 | train_loss=2.2689 train_acc=0.505 train_v=0.0424 train_mv=0.6850 | val_loss=2.1147 val_acc=0.549 val_v=0.0105 val_mv=0.6823
+epoch 3/30 | lr=0.000500 | train_loss=2.0507 train_acc=0.539 train_v=0.0124 train_mv=0.6783 | val_loss=1.9555 val_acc=0.572 val_v=0.0067 val_mv=0.6744
+epoch 4/30 | lr=0.000500 | train_loss=1.8983 train_acc=0.558 train_v=0.0061 train_mv=0.6710 | val_loss=1.8265 val_acc=0.588 val_v=0.0063 val_mv=0.6676
+epoch 5/30 | lr=0.000500 | train_loss=1.7801 train_acc=0.574 train_v=0.0052 train_mv=0.6646 | val_loss=1.7414 val_acc=0.595 val_v=0.0059 val_mv=0.6617
+epoch 6/30 | lr=0.000500 | train_loss=1.6878 train_acc=0.585 train_v=0.0050 train_mv=0.6591 | val_loss=1.6696 val_acc=0.610 val_v=0.0062 val_mv=0.6565
+epoch 7/30 | lr=0.000500 | train_loss=1.6157 train_acc=0.591 train_v=0.0049 train_mv=0.6543 | val_loss=1.6113 val_acc=0.618 val_v=0.0053 val_mv=0.6520
+epoch 8/30 | lr=0.000500 | train_loss=1.5533 train_acc=0.601 train_v=0.0048 train_mv=0.6501 | val_loss=1.5694 val_acc=0.621 val_v=0.0051 val_mv=0.6481
+epoch 9/30 | lr=0.000350 | train_loss=1.4823 train_acc=0.610 train_v=0.0048 train_mv=0.6469 | val_loss=1.5237 val_acc=0.629 val_v=0.0054 val_mv=0.6456
+epoch 10/30 | lr=0.000350 | train_loss=1.4436 train_acc=0.612 train_v=0.0048 train_mv=0.6445 | val_loss=1.4842 val_acc=0.630 val_v=0.0053 val_mv=0.6433
+epoch 11/30 | lr=0.000350 | train_loss=1.4071 train_acc=0.616 train_v=0.0048 train_mv=0.6423 | val_loss=1.4616 val_acc=0.636 val_v=0.0054 val_mv=0.6412
+epoch 12/30 | lr=0.000350 | train_loss=1.3785 train_acc=0.622 train_v=0.0047 train_mv=0.6403 | val_loss=1.4378 val_acc=0.636 val_v=0.0051 val_mv=0.6393
+epoch 13/30 | lr=0.000350 | train_loss=1.3520 train_acc=0.626 train_v=0.0047 train_mv=0.6385 | val_loss=1.4169 val_acc=0.637 val_v=0.0051 val_mv=0.6375
+epoch 14/30 | lr=0.000245 | train_loss=1.3146 train_acc=0.629 train_v=0.0047 train_mv=0.6370 | val_loss=1.3917 val_acc=0.644 val_v=0.0051 val_mv=0.6364
+epoch 15/30 | lr=0.000245 | train_loss=1.2922 train_acc=0.634 train_v=0.0047 train_mv=0.6359 | val_loss=1.3781 val_acc=0.647 val_v=0.0054 val_mv=0.6353
+epoch 16/30 | lr=0.000245 | train_loss=1.2706 train_acc=0.637 train_v=0.0047 train_mv=0.6348 | val_loss=1.3636 val_acc=0.646 val_v=0.0050 val_mv=0.6343
+epoch 17/30 | lr=0.000245 | train_loss=1.2613 train_acc=0.639 train_v=0.0047 train_mv=0.6338 | val_loss=1.3585 val_acc=0.651 val_v=0.0051 val_mv=0.6333
+epoch 18/30 | lr=0.000245 | train_loss=1.2466 train_acc=0.640 train_v=0.0046 train_mv=0.6328 | val_loss=1.3430 val_acc=0.651 val_v=0.0051 val_mv=0.6323
+epoch 19/30 | lr=0.000171 | train_loss=1.2208 train_acc=0.645 train_v=0.0046 train_mv=0.6321 | val_loss=1.3280 val_acc=0.653 val_v=0.0050 val_mv=0.6317
+epoch 20/30 | lr=0.000171 | train_loss=1.2077 train_acc=0.647 train_v=0.0046 train_mv=0.6315 | val_loss=1.3228 val_acc=0.656 val_v=0.0052 val_mv=0.6311
+epoch 21/30 | lr=0.000171 | train_loss=1.1983 train_acc=0.650 train_v=0.0046 train_mv=0.6309 | val_loss=1.3181 val_acc=0.657 val_v=0.0049 val_mv=0.6305
+epoch 22/30 | lr=0.000171 | train_loss=1.1836 train_acc=0.652 train_v=0.0046 train_mv=0.6303 | val_loss=1.3127 val_acc=0.657 val_v=0.0049 val_mv=0.6300
+epoch 23/30 | lr=0.000171 | train_loss=1.1769 train_acc=0.653 train_v=0.0046 train_mv=0.6297 | val_loss=1.3075 val_acc=0.660 val_v=0.0050 val_mv=0.6295
+epoch 24/30 | lr=0.000120 | train_loss=1.1603 train_acc=0.651 train_v=0.0046 train_mv=0.6293 | val_loss=1.2980 val_acc=0.661 val_v=0.0050 val_mv=0.6291
+epoch 25/30 | lr=0.000120 | train_loss=1.1511 train_acc=0.656 train_v=0.0046 train_mv=0.6289 | val_loss=1.2989 val_acc=0.661 val_v=0.0050 val_mv=0.6287
+epoch 26/30 | lr=0.000120 | train_loss=1.1444 train_acc=0.655 train_v=0.0046 train_mv=0.6286 | val_loss=1.2898 val_acc=0.662 val_v=0.0050 val_mv=0.6284
+epoch 27/30 | lr=0.000120 | train_loss=1.1416 train_acc=0.656 train_v=0.0046 train_mv=0.6282 | val_loss=1.2869 val_acc=0.668 val_v=0.0050 val_mv=0.6280
+epoch 28/30 | lr=0.000120 | train_loss=1.1332 train_acc=0.659 train_v=0.0046 train_mv=0.6279 | val_loss=1.2866 val_acc=0.667 val_v=0.0051 val_mv=0.6277
+epoch 29/30 | lr=0.000084 | train_loss=1.1268 train_acc=0.658 train_v=0.0046 train_mv=0.6276 | val_loss=1.2797 val_acc=0.667 val_v=0.0049 val_mv=0.6275
+epoch 30/30 | lr=0.000084 | train_loss=1.1158 train_acc=0.662 train_v=0.0046 train_mv=0.6274 | val_loss=1.2768 val_acc=0.671 val_v=0.0050 val_mv=0.6273
+game 20/40 | nn_wins=14 h_wins=5 ties=1 | nn_avg=56.0 h_avg=49.2
+game 40/40 | nn_wins=25 h_wins=14 ties=1 | nn_avg=58.0 h_avg=51.9
+game 20/80 | nn_wins=11 h_wins=9 ties=0 | nn_avg=54.0 h_avg=54.5
+game 40/80 | nn_wins=24 h_wins=16 ties=0 | nn_avg=55.0 h_avg=53.3
+game 60/80 | nn_wins=34 h_wins=26 ties=0 | nn_avg=55.2 h_avg=53.4
+game 80/80 | nn_wins=45 h_wins=35 ties=0 | nn_avg=54.3 h_avg=52.5
+opp=heuristic | nn_wins=18/40 | margin=-1.50 | nn_ge100=0.000
+opp=reports/ml/phase4_slot_v1/best_model.npz | nn_wins=21/40 | margin=0.78 | nn_ge100=0.000
+game 10/20 | samples=520 | mean_player_score=55.6 | mean_winner_score=63.3
+game 20/20 | samples=1040 | mean_player_score=57.8 | mean_winner_score=66.8
+game 20/80 | nn_wins=12 h_wins=8 ties=0 | nn_avg=53.0 h_avg=50.6
+game 40/80 | nn_wins=24 h_wins=15 ties=1 | nn_avg=51.8 h_avg=51.6
+game 60/80 | nn_wins=34 h_wins=25 ties=1 | nn_avg=53.7 h_avg=50.5
+game 80/80 | nn_wins=49 h_wins=30 ties=1 | nn_avg=55.3 h_avg=51.4
+iter 3/10 | samples=29600 | eval_wins=25/40 margin=6.08 | gate_wins=45/80 | pool_win=0.487 ge100=0.000 | kpi_pass=True strict_kpi_pass=True fixed_seed_gate_pass=True promoted=True selected_best=True
+game 10/100 | samples=740 | mean_player_score=65.0
+game 20/100 | samples=1480 | mean_player_score=64.5
+game 30/100 | samples=2220 | mean_player_score=64.6
+game 40/100 | samples=2960 | mean_player_score=62.2
+game 50/100 | samples=3700 | mean_player_score=62.9
+game 60/100 | samples=4440 | mean_player_score=63.4
+game 70/100 | samples=5180 | mean_player_score=63.1
+game 80/100 | samples=5920 | mean_player_score=62.4
+game 90/100 | samples=6660 | mean_player_score=62.5
+game 100/100 | samples=7400 | mean_player_score=62.4
+game 10/100 | samples=740 | mean_player_score=62.5
+game 20/100 | samples=1480 | mean_player_score=61.4
+game 30/100 | samples=2220 | mean_player_score=62.4
+game 40/100 | samples=2960 | mean_player_score=61.5
+game 50/100 | samples=3700 | mean_player_score=61.7
+game 60/100 | samples=4440 | mean_player_score=62.8
+game 70/100 | samples=5180 | mean_player_score=63.1
+game 80/100 | samples=5920 | mean_player_score=63.0
+game 90/100 | samples=6660 | mean_player_score=62.5
+game 100/100 | samples=7400 | mean_player_score=63.0
+multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.12/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+                    ^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/multiprocessing/pool.py", line 48, in mapstar
+    return list(map(*args))
+           ^^^^^^^^^^^^^^^^
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/auto_improve_factorized.py", line 134, in _run_dataset_shard
+    meta = generate_bc_dataset(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/generate_bc_dataset.py", line 568, in generate_bc_dataset
+    best = _select_policy_move(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/generate_bc_dataset.py", line 244, in _select_policy_move
+    look = _rerank_with_lookahead(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/generate_bc_dataset.py", line 186, in _rerank_with_lookahead
+    best2 = max(moves2, key=lambda m: _heuristic_score_move(sim, p2, m))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/generate_bc_dataset.py", line 186, in <lambda>
+    best2 = max(moves2, key=lambda m: _heuristic_score_move(sim, p2, m))
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/generate_bc_dataset.py", line 53, in _heuristic_score_move
+    return float(_estimate_move_value(game, player, move, w))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/solver/heuristics.py", line 1015, in _estimate_move_value
+    value = _evaluate_play_bird(game, player, move, weights)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/solver/heuristics.py", line 1416, in _evaluate_play_bird
+    eggs_after = player.board.total_eggs() - (EGG_COST_BY_COLUMN[slot_idx] if slot_idx is not None else 0)
+                                              ~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+IndexError: tuple index out of range
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/auto_improve_factorized.py", line 1681, in <module>
+    main()
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/auto_improve_factorized.py", line 1556, in main
+    manifest = run_auto_improve_factorized(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/backend/ml/auto_improve_factorized.py", line 564, in run_auto_improve_factorized
+    shard_results = pool.map(_run_dataset_shard, shard_tasks)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/multiprocessing/pool.py", line 367, in map
+    return self._map_async(func, iterable, mapstar, chunksize).get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.12/multiprocessing/pool.py", line 774, in get
+    raise self._value
+IndexError: tuple index out of range

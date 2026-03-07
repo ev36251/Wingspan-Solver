@@ -102,17 +102,18 @@ def activate_row(game_state: GameState, player: Player,
                     continue
 
         if power.can_execute(ctx):
+            bird_ref = slot.bird  # save before execute — MoveBird may clear slot.bird
             result = power.execute(ctx)
             _record_power_event(
                 game_state,
                 timing="brown",
                 player=player,
-                bird=slot.bird,
+                bird=bird_ref,
                 executed=bool(result.executed),
             )
             if result.executed:
                 activations.append(PowerActivation(
-                    bird_name=slot.bird.name,
+                    bird_name=bird_ref.name,
                     slot_index=i,
                     result=result,
                 ))
@@ -320,9 +321,9 @@ def execute_play_bird(
                 return ActionResult(False, ActionType.PLAY_BIRD,
                                     f"Could only remove {eggs_removed}/{egg_cost} eggs")
 
-        # Pay food cost
+        # Pay food cost (draws from cached food on slots if supply is short)
         for food_type, count in food_payment.items():
-            if not player.food_supply.spend(food_type, count):
+            if not _smart_spend_food(player, food_type, count):
                 return ActionResult(False, ActionType.PLAY_BIRD,
                                     f"Failed to spend {count} {food_type.value}")
         nectar_spent = food_payment.get(FoodType.NECTAR, 0)
@@ -393,9 +394,9 @@ def execute_play_bird(
             return ActionResult(False, ActionType.PLAY_BIRD,
                                 f"Could only remove {eggs_removed}/{egg_cost} eggs")
 
-    # Pay food cost
+    # Pay food cost (draws from cached food on slots if supply is short)
     for food_type, count in food_payment.items():
-        if not player.food_supply.spend(food_type, count):
+        if not _smart_spend_food(player, food_type, count):
             return ActionResult(False, ActionType.PLAY_BIRD,
                                 f"Failed to spend {count} {food_type.value}")
 
@@ -485,8 +486,11 @@ def execute_play_bird_discounted(
     if player.board.total_eggs() < egg_cost:
         return ActionResult(False, ActionType.PLAY_BIRD,
                             f"Need {egg_cost} egg(s) to play in column {slot_idx + 1}")
-    # Validate food payment against supply (discounted payment provided)
-    if any(player.food_supply.get(ft) < cnt for ft, cnt in food_payment.items()):
+    # Validate food payment against supply + cached (discounted payment provided)
+    from backend.engine.rules import _get_cached_food_pool
+    _cached_val = _get_cached_food_pool(player)
+    if any(player.food_supply.get(ft) + _cached_val.get(ft, 0) < cnt
+           for ft, cnt in food_payment.items()):
         return ActionResult(False, ActionType.PLAY_BIRD, "Not enough food to pay")
     row = player.board.get_row(habitat)
     slot_idx = row.next_empty_slot()
@@ -513,9 +517,9 @@ def execute_play_bird_discounted(
             return ActionResult(False, ActionType.PLAY_BIRD,
                                 f"Could only remove {eggs_removed}/{egg_cost} eggs")
 
-    # Pay food cost
+    # Pay food cost (draws from cached food on slots if supply is short)
     for food_type, count in food_payment.items():
-        if not player.food_supply.spend(food_type, count):
+        if not _smart_spend_food(player, food_type, count):
             return ActionResult(False, ActionType.PLAY_BIRD,
                                 f"Failed to spend {count} {food_type.value}")
 
@@ -567,6 +571,49 @@ def execute_play_bird_discounted(
         trigger_result=result,
     )
     return result
+
+
+def _smart_spend_food(player: Player, food_type: FoodType, count: int) -> bool:
+    """Spend food, drawing from cached food on bird slots if supply is short.
+
+    First spends from the player's food supply; if the supply is short, deducts
+    the remainder from cached food stored on bird slots (greedy: leftmost slot
+    with that food type first).  Returns True if the full amount was spent.
+    """
+    supply_have = player.food_supply.get(food_type)
+    from_supply = min(supply_have, count)
+    need_cached = count - from_supply
+
+    if need_cached > 0:
+        # Verify enough cached food exists before committing to any deduction
+        cached_have = sum(
+            slot.cached_food.get(food_type, 0)
+            for _, _, slot in player.board.all_slots()
+        )
+        if cached_have < need_cached:
+            return False
+
+        # Deduct from cached food (leftmost slot first)
+        remaining = need_cached
+        for _, _, slot in player.board.all_slots():
+            available = slot.cached_food.get(food_type, 0)
+            if available <= 0:
+                continue
+            use = min(available, remaining)
+            slot.cached_food[food_type] = available - use
+            if slot.cached_food[food_type] == 0:
+                del slot.cached_food[food_type]
+            remaining -= use
+            if remaining == 0:
+                break
+
+        if remaining > 0:
+            return False  # safety: shouldn't happen after pre-check
+
+    if from_supply > 0:
+        player.food_supply.spend(food_type, from_supply)
+
+    return True
 
 
 def _auto_select_egg_payment(player: Player, count: int) -> list[tuple[Habitat, int]] | None:

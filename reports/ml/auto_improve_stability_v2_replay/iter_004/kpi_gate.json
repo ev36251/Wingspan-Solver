@@ -1,0 +1,53 @@
+{
+  "candidate_path": "reports/ml/auto_improve_stability_v2_replay/iter_004/pool_eval.json",
+  "baseline_path": "reports/ml/auto_improve_stability_v2_replay/iter_002/pool_eval.json",
+  "passed": false,
+  "checks": [
+    {
+      "name": "min_win_rate",
+      "passed": false,
+      "detail": "0.2750 >= 0.5000"
+    },
+    {
+      "name": "min_mean_score",
+      "passed": true,
+      "detail": "44.888 >= 0.000"
+    },
+    {
+      "name": "min_rate_ge_100",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    },
+    {
+      "name": "min_rate_ge_120",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    },
+    {
+      "name": "non_regression_win_rate",
+      "passed": false,
+      "detail": "0.2750 >= 0.6750"
+    },
+    {
+      "name": "non_regression_mean_score",
+      "passed": false,
+      "detail": "44.888 >= 60.375"
+    },
+    {
+      "name": "non_regression_rate_ge_100",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    },
+    {
+      "name": "non_regression_rate_ge_120",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    }
+  ],
+  "candidate_summary": {
+    "nn_win_rate": 0.275,
+    "nn_mean_score": 44.888,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0
+  }
+}

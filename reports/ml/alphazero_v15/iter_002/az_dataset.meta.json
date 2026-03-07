@@ -1,0 +1,40 @@
+{
+  "feature_dim": 2827,
+  "target_heads": {
+    "action_type": 4,
+    "play_habitat": 4,
+    "gain_food_primary": 7,
+    "draw_mode": 4,
+    "lay_eggs_bin": 11,
+    "play_cost_bin": 7,
+    "play_power_color": 7
+  },
+  "games": 200,
+  "samples": 10400,
+  "elapsed_sec": 5702.39,
+  "players": 2,
+  "board_type": "oceania",
+  "mcts_sims": 50,
+  "c_puct": 1.5,
+  "value_blend": 1.0,
+  "rollout_policy": "fast",
+  "temperature_cutoff": 8,
+  "seed": 2000,
+  "mean_delta": 35.518,
+  "std_delta": 2.738,
+  "value_target_config": {
+    "mode": "absolute",
+    "score_scale": 80.0,
+    "score_bias": 0.0
+  },
+  "state_encoder": {
+    "enable_identity_features": true,
+    "identity_hash_dim": 512,
+    "use_per_slot_encoding": true,
+    "max_hand_slots": 8,
+    "use_hand_habitat_features": true,
+    "use_tray_per_slot_encoding": true,
+    "use_opponent_board_encoding": true,
+    "use_power_features": true
+  }
+}

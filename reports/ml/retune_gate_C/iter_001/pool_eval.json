@@ -1,0 +1,45 @@
+{
+  "model": "reports/ml/retune_gate_C/iter_001/factorized_model.npz",
+  "board_type": "oceania",
+  "games_per_opponent": 12,
+  "opponents": [
+    "heuristic"
+  ],
+  "summary": {
+    "games": 12,
+    "nn_wins": 0,
+    "opponent_wins": 12,
+    "ties": 0,
+    "nn_win_rate": 0.0,
+    "nn_mean_score": 25.25,
+    "nn_mean_margin": -25.417,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0,
+    "nn_max_score": 55,
+    "nn_min_score": 15,
+    "nn_rate_lt_80": 1.0,
+    "nn_rate_80_99": 0.0,
+    "nn_rate_100_119": 0.0,
+    "nn_rate_ge_120_bucket": 0.0
+  },
+  "by_opponent": [
+    {
+      "opponent": "heuristic",
+      "games": 12,
+      "nn_wins": 0,
+      "opponent_wins": 12,
+      "ties": 0,
+      "nn_mean_score": 25.25,
+      "opponent_mean_score": 50.667,
+      "nn_mean_margin": -25.417,
+      "nn_rate_ge_100": 0.0,
+      "nn_rate_ge_120": 0.0,
+      "nn_max_score": 55,
+      "nn_min_score": 15,
+      "nn_rate_lt_80": 1.0,
+      "nn_rate_80_99": 0.0,
+      "nn_rate_100_119": 0.0,
+      "nn_rate_ge_120_bucket": 0.0
+    }
+  ]
+}

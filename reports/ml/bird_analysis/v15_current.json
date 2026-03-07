@@ -1,0 +1,6495 @@
+{
+  "model_path": "reports/ml/alphazero_v15/best_model.npz",
+  "n_states_standalone": 100,
+  "n_states_synergy": 50,
+  "top_n": 30,
+  "synergy_top_k": 25,
+  "standalone_rankings": [
+    {
+      "bird": "Pied-Billed Grebe",
+      "avg_score": 50.4023,
+      "max_score": 59.2697,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Purple Gallinule",
+      "avg_score": 49.0115,
+      "max_score": 53.9616,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Little Egret",
+      "avg_score": 48.4959,
+      "max_score": 55.4192,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Sarus Crane",
+      "avg_score": 47.7857,
+      "max_score": 53.2706,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Ruddy Duck",
+      "avg_score": 47.1594,
+      "max_score": 55.5153,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Australian Ibis",
+      "avg_score": 46.8171,
+      "max_score": 52.4493,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Mute Swan",
+      "avg_score": 46.6313,
+      "max_score": 51.6561,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Snowy Egret",
+      "avg_score": 46.3597,
+      "max_score": 55.6252,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Sandpiper",
+      "avg_score": 46.242,
+      "max_score": 55.4371,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Mallard",
+      "avg_score": 46.0705,
+      "max_score": 54.9828,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Merganser",
+      "avg_score": 45.8969,
+      "max_score": 54.6972,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Yellow Bittern",
+      "avg_score": 45.8189,
+      "max_score": 54.3777,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Rhinoceros Auklet",
+      "avg_score": 45.6693,
+      "max_score": 55.1701,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Forster's Tern",
+      "avg_score": 45.6448,
+      "max_score": 53.8892,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Audouin's Gull",
+      "avg_score": 45.5574,
+      "max_score": 53.6403,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Brolga",
+      "avg_score": 45.4034,
+      "max_score": 50.7583,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Double-Crested Cormorant",
+      "avg_score": 45.3972,
+      "max_score": 53.0369,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Willet",
+      "avg_score": 45.3585,
+      "max_score": 54.2233,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Purple Heron",
+      "avg_score": 45.2892,
+      "max_score": 52.335,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Plumbeous Redstart",
+      "avg_score": 45.1238,
+      "max_score": 52.4739,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Wilson's Snipe",
+      "avg_score": 44.9938,
+      "max_score": 54.0812,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Maned Duck",
+      "avg_score": 44.9228,
+      "max_score": 54.1983,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Grey Shrikethrush",
+      "avg_score": 44.3161,
+      "max_score": 51.6863,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Breasted Merganser",
+      "avg_score": 44.164,
+      "max_score": 52.2787,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Savi's Warbler",
+      "avg_score": 44.091,
+      "max_score": 51.66,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Faced Heron",
+      "avg_score": 43.8325,
+      "max_score": 49.5924,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Green Heron",
+      "avg_score": 43.6466,
+      "max_score": 51.4398,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Brahminy Kite",
+      "avg_score": 43.5394,
+      "max_score": 50.1483,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Northern Gannet",
+      "avg_score": 43.5228,
+      "max_score": 52.0989,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Northern Shoveler",
+      "avg_score": 43.4442,
+      "max_score": 48.7716,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "White Stork",
+      "avg_score": 43.334,
+      "max_score": 48.333,
+      "playable_rate": 1.0,
+      "point_value": 8,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Yellowthroat",
+      "avg_score": 43.2284,
+      "max_score": 51.8048,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Greater Roadrunner",
+      "avg_score": 43.1662,
+      "max_score": 48.8379,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black Tern",
+      "avg_score": 42.8869,
+      "max_score": 51.3423,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "P\u016bkeko",
+      "avg_score": 42.8316,
+      "max_score": 49.4463,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "King Rail",
+      "avg_score": 42.7733,
+      "max_score": 47.7407,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Trumpeter Swan",
+      "avg_score": 42.7446,
+      "max_score": 47.9822,
+      "playable_rate": 1.0,
+      "point_value": 9,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "none",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Faced Ibis",
+      "avg_score": 42.7439,
+      "max_score": 48.9459,
+      "playable_rate": 1.0,
+      "point_value": 8,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Grey Warbler",
+      "avg_score": 42.7399,
+      "max_score": 47.7043,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Throated Dipper",
+      "avg_score": 42.6558,
+      "max_score": 50.337,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Spotted Sandpiper",
+      "avg_score": 42.6382,
+      "max_score": 51.1915,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Kingfisher",
+      "avg_score": 42.616,
+      "max_score": 48.9499,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Ring-Billed Gull",
+      "avg_score": 42.5626,
+      "max_score": 49.6949,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Willow Tit",
+      "avg_score": 42.5596,
+      "max_score": 48.9046,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "American Bittern",
+      "avg_score": 42.5319,
+      "max_score": 48.2578,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Marsh-Harrier",
+      "avg_score": 42.4748,
+      "max_score": 50.2972,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Tree Swallow",
+      "avg_score": 42.4042,
+      "max_score": 50.8349,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Stork-Billed Kingfisher",
+      "avg_score": 42.2811,
+      "max_score": 51.4934,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "American Coot",
+      "avg_score": 42.1997,
+      "max_score": 48.9672,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Loon",
+      "avg_score": 42.162,
+      "max_score": 50.3285,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Breasted Nuthatch",
+      "avg_score": 42.1273,
+      "max_score": 48.4094,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Rock Pigeon",
+      "avg_score": 42.1273,
+      "max_score": 49.9268,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Little Ringed Plover",
+      "avg_score": 42.0505,
+      "max_score": 50.3563,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Lesser Frigatebird",
+      "avg_score": 41.9797,
+      "max_score": 47.2944,
+      "playable_rate": 1.0,
+      "point_value": 9,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Little Bittern",
+      "avg_score": 41.9703,
+      "max_score": 49.8905,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Little Grebe",
+      "avg_score": 41.9137,
+      "max_score": 47.5619,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Breasted Nuthatch",
+      "avg_score": 41.7918,
+      "max_score": 48.0501,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Crimson Chat",
+      "avg_score": 41.6944,
+      "max_score": 48.6622,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black-Crowned Night-Heron",
+      "avg_score": 41.6768,
+      "max_score": 47.7898,
+      "playable_rate": 1.0,
+      "point_value": 9,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Yellow-Rumped Warbler",
+      "avg_score": 41.6706,
+      "max_score": 48.4709,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Kelp Gull",
+      "avg_score": 41.586,
+      "max_score": 49.3578,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Mountain Chickadee",
+      "avg_score": 41.517,
+      "max_score": 48.3177,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black Skimmer",
+      "avg_score": 41.4935,
+      "max_score": 50.7817,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black-Bellied Whistling-Duck",
+      "avg_score": 41.4577,
+      "max_score": 50.1063,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Musk Duck",
+      "avg_score": 41.3534,
+      "max_score": 48.6373,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Wood Stork",
+      "avg_score": 41.3423,
+      "max_score": 45.5554,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Clark's Grebe",
+      "avg_score": 41.3267,
+      "max_score": 49.8466,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Moorhen",
+      "avg_score": 41.1687,
+      "max_score": 46.924,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Chihuahuan Raven",
+      "avg_score": 41.161,
+      "max_score": 46.753,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Australian Zebra Finch",
+      "avg_score": 41.1286,
+      "max_score": 47.7046,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Many-Colored Fruit-Dove",
+      "avg_score": 41.0627,
+      "max_score": 46.3832,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Backed Shrike",
+      "avg_score": 41.0624,
+      "max_score": 47.0123,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Great Crested Grebe",
+      "avg_score": 41.0554,
+      "max_score": 49.5686,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Pink-Eared Duck",
+      "avg_score": 41.0062,
+      "max_score": 49.07,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Eyed Vireo",
+      "avg_score": 40.9338,
+      "max_score": 45.8669,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Carolina Chickadee",
+      "avg_score": 40.8281,
+      "max_score": 48.0517,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Coot",
+      "avg_score": 40.8128,
+      "max_score": 49.3085,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Vented Bulbul",
+      "avg_score": 40.7669,
+      "max_score": 46.5896,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black Drongo",
+      "avg_score": 40.6671,
+      "max_score": 46.4256,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Greater Flamingo",
+      "avg_score": 40.6453,
+      "max_score": 46.7803,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Anhinga",
+      "avg_score": 40.6397,
+      "max_score": 48.9077,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Grey Teal",
+      "avg_score": 40.6099,
+      "max_score": 49.3713,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Crested Ibis",
+      "avg_score": 40.5285,
+      "max_score": 45.4256,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Throated Kingfisher",
+      "avg_score": 40.5006,
+      "max_score": 46.4368,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "American Kestrel",
+      "avg_score": 40.4549,
+      "max_score": 45.8539,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Wilson's Storm Petrel",
+      "avg_score": 40.4294,
+      "max_score": 45.8594,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Grandala",
+      "avg_score": 40.4123,
+      "max_score": 47.5087,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Crowned Crane",
+      "avg_score": 40.3553,
+      "max_score": 44.6021,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Grey Butcherbird",
+      "avg_score": 40.327,
+      "max_score": 45.4199,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Burrowing Owl",
+      "avg_score": 40.2532,
+      "max_score": 46.3988,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Ferruginous Hawk",
+      "avg_score": 40.226,
+      "max_score": 46.0162,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Spotted Towhee",
+      "avg_score": 40.1824,
+      "max_score": 48.6981,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Backed Woodpecker",
+      "avg_score": 40.1081,
+      "max_score": 45.8009,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Osprey",
+      "avg_score": 40.0915,
+      "max_score": 48.8221,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Rufous-Banded Honeyeater",
+      "avg_score": 40.0902,
+      "max_score": 47.6924,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland",
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Song Sparrow",
+      "avg_score": 40.0349,
+      "max_score": 49.8013,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Capped Robin",
+      "avg_score": 40.004,
+      "max_score": 47.178,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Ibisbill",
+      "avg_score": 39.9479,
+      "max_score": 44.7304,
+      "playable_rate": 1.0,
+      "point_value": 8,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "American White Pelican",
+      "avg_score": 39.9378,
+      "max_score": 49.7163,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Mississippi Kite",
+      "avg_score": 39.8762,
+      "max_score": 45.7868,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Whooping Crane",
+      "avg_score": 39.8588,
+      "max_score": 44.7622,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black-Throated Diver",
+      "avg_score": 39.5209,
+      "max_score": 47.6024,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Zebra Dove",
+      "avg_score": 39.5202,
+      "max_score": 48.064,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black-Headed Gull",
+      "avg_score": 39.5163,
+      "max_score": 47.2039,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Anna's Hummingbird",
+      "avg_score": 39.4384,
+      "max_score": 48.6702,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Ruby-Crowned Kinglet",
+      "avg_score": 39.4325,
+      "max_score": 44.6277,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Squacco Heron",
+      "avg_score": 39.3345,
+      "max_score": 47.805,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eastern Screech-Owl",
+      "avg_score": 39.3335,
+      "max_score": 47.1678,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Olive-Backed Sunbird",
+      "avg_score": 39.307,
+      "max_score": 47.0611,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eastern Phoebe",
+      "avg_score": 39.2598,
+      "max_score": 48.9263,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Tufted Titmouse",
+      "avg_score": 39.2504,
+      "max_score": 45.0027,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Australian Shelduck",
+      "avg_score": 39.2461,
+      "max_score": 47.1896,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Royal Spoonbill",
+      "avg_score": 39.2276,
+      "max_score": 47.414,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "American Robin",
+      "avg_score": 39.1847,
+      "max_score": 45.8284,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Roseate Spoonbill",
+      "avg_score": 39.0672,
+      "max_score": 43.5526,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Brewer's Blackbird",
+      "avg_score": 39.0084,
+      "max_score": 45.014,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Lazuli Bunting",
+      "avg_score": 39.0044,
+      "max_score": 45.8589,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Rook",
+      "avg_score": 38.9894,
+      "max_score": 45.7643,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Franklin's Gull",
+      "avg_score": 38.981,
+      "max_score": 46.957,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Bellied Woodpecker",
+      "avg_score": 38.9263,
+      "max_score": 46.4874,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Green Pheasant",
+      "avg_score": 38.9013,
+      "max_score": 44.5579,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Myna",
+      "avg_score": 38.8514,
+      "max_score": 48.3779,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Regent Bowerbird",
+      "avg_score": 38.8461,
+      "max_score": 45.231,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Hooded Merganser",
+      "avg_score": 38.8327,
+      "max_score": 47.6148,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Canvasback",
+      "avg_score": 38.7189,
+      "max_score": 46.4223,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Brown Shrike",
+      "avg_score": 38.621,
+      "max_score": 46.1248,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Raven",
+      "avg_score": 38.5922,
+      "max_score": 43.8726,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Chiffchaff",
+      "avg_score": 38.5445,
+      "max_score": 44.9036,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Rufous Night-Heron",
+      "avg_score": 38.4733,
+      "max_score": 46.4106,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Australasian Shoveler",
+      "avg_score": 38.4574,
+      "max_score": 46.7881,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Cassin's Sparrow",
+      "avg_score": 38.431,
+      "max_score": 45.4934,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Blue-Gray Gnatcatcher",
+      "avg_score": 38.4291,
+      "max_score": 45.0229,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Noisy Miner",
+      "avg_score": 38.3716,
+      "max_score": 43.5128,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Tawny Frogmouth",
+      "avg_score": 38.3703,
+      "max_score": 44.1941,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Clark's Nutcracker",
+      "avg_score": 38.3398,
+      "max_score": 44.7173,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Jay",
+      "avg_score": 38.3303,
+      "max_score": 44.0358,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Sandhill Crane",
+      "avg_score": 38.2923,
+      "max_score": 43.2508,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Goldcrest",
+      "avg_score": 38.2838,
+      "max_score": 47.655,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Mourning Dove",
+      "avg_score": 38.232,
+      "max_score": 47.7904,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Downy Woodpecker",
+      "avg_score": 38.2169,
+      "max_score": 43.5,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Great Cormorant",
+      "avg_score": 38.1689,
+      "max_score": 47.0694,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Cooper's Hawk",
+      "avg_score": 38.1306,
+      "max_score": 45.6768,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Little Penguin",
+      "avg_score": 38.0566,
+      "max_score": 44.3826,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Chipping Sparrow",
+      "avg_score": 38.0411,
+      "max_score": 46.6734,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Indigo Bunting",
+      "avg_score": 38.0373,
+      "max_score": 43.6393,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Headed Woodpecker",
+      "avg_score": 38.0244,
+      "max_score": 44.0218,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Scaled Quail",
+      "avg_score": 38.001,
+      "max_score": 46.7916,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Sri Lanka Frogmouth",
+      "avg_score": 37.9805,
+      "max_score": 44.9931,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Great Spotted Woodpecker",
+      "avg_score": 37.9564,
+      "max_score": 44.2471,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Shouldered Hawk",
+      "avg_score": 37.9243,
+      "max_score": 44.4114,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Green Pygmy-Goose",
+      "avg_score": 37.723,
+      "max_score": 45.9834,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black-Chinned Hummingbird",
+      "avg_score": 37.7055,
+      "max_score": 46.7819,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Grasshopper Sparrow",
+      "avg_score": 37.6724,
+      "max_score": 47.1347,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black Noddy",
+      "avg_score": 37.6293,
+      "max_score": 44.4621,
+      "playable_rate": 1.0,
+      "point_value": 9,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eleonora's Falcon",
+      "avg_score": 37.6109,
+      "max_score": 45.4623,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Peaceful Dove",
+      "avg_score": 37.5633,
+      "max_score": 46.1012,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Wood Duck",
+      "avg_score": 37.4576,
+      "max_score": 44.3981,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "South Island Robin",
+      "avg_score": 37.4445,
+      "max_score": 46.3199,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black-Shouldered Kite",
+      "avg_score": 37.4042,
+      "max_score": 43.5419,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Carolina Wren",
+      "avg_score": 37.2654,
+      "max_score": 42.5833,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black-Tailed Godwit",
+      "avg_score": 37.2641,
+      "max_score": 41.7309,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Painted Whitestart",
+      "avg_score": 37.2222,
+      "max_score": 45.187,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "New Holland Honeyeater",
+      "avg_score": 37.2042,
+      "max_score": 44.9096,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Western Meadowlark",
+      "avg_score": 37.1346,
+      "max_score": 44.2899,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Iora",
+      "avg_score": 37.086,
+      "max_score": 45.5639,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Broad-Winged Hawk",
+      "avg_score": 37.0487,
+      "max_score": 44.956,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Baya Weaver",
+      "avg_score": 37.0365,
+      "max_score": 42.2505,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Scissor-Tailed Flycatcher",
+      "avg_score": 37.0333,
+      "max_score": 42.5823,
+      "playable_rate": 1.0,
+      "point_value": 8,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Great Egret",
+      "avg_score": 37.0178,
+      "max_score": 41.3124,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Greater Adjutant",
+      "avg_score": 36.8998,
+      "max_score": 42.8191,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Forest Owlet",
+      "avg_score": 36.8805,
+      "max_score": 43.2127,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Blue Rock-Thrush",
+      "avg_score": 36.8657,
+      "max_score": 47.3961,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Bluethroat",
+      "avg_score": 36.8642,
+      "max_score": 42.3857,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Golden-Headed Cisticola",
+      "avg_score": 36.8573,
+      "max_score": 44.8929,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Western Tanager",
+      "avg_score": 36.7059,
+      "max_score": 43.5585,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Laughing Kookaburra",
+      "avg_score": 36.6509,
+      "max_score": 48.6779,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Vaux's Swift",
+      "avg_score": 36.6409,
+      "max_score": 44.813,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Spotted Dove",
+      "avg_score": 36.5729,
+      "max_score": 48.3432,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Swainson's Hawk",
+      "avg_score": 36.5112,
+      "max_score": 42.9855,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Dickcissel",
+      "avg_score": 36.4199,
+      "max_score": 41.7907,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Northern Harrier",
+      "avg_score": 36.4192,
+      "max_score": 46.0515,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Eagle-Owl",
+      "avg_score": 36.3441,
+      "max_score": 42.2415,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Canada Goose",
+      "avg_score": 36.2935,
+      "max_score": 44.2583,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Steller's Jay",
+      "avg_score": 36.2886,
+      "max_score": 42.8995,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Barn Swallow",
+      "avg_score": 36.2872,
+      "max_score": 43.9949,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Scaly-Breasted Munia",
+      "avg_score": 36.2735,
+      "max_score": 44.4673,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Green Magpie",
+      "avg_score": 36.2689,
+      "max_score": 42.5919,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black Swan",
+      "avg_score": 36.2521,
+      "max_score": 41.7658,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Himalayan Monal",
+      "avg_score": 36.2487,
+      "max_score": 41.9916,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Ruddy Shelduck",
+      "avg_score": 36.224,
+      "max_score": 40.7911,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "European Bee-Eater",
+      "avg_score": 36.1787,
+      "max_score": 43.3423,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Stubble Quail",
+      "avg_score": 36.1215,
+      "max_score": 43.617,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Rose-Breasted Grosbeak",
+      "avg_score": 36.0713,
+      "max_score": 42.3966,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Crested Laughingthrush",
+      "avg_score": 36.0436,
+      "max_score": 42.3445,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Gray Catbird",
+      "avg_score": 36.0107,
+      "max_score": 41.7751,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Throated Swift",
+      "avg_score": 35.9987,
+      "max_score": 42.1891,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red Avadavat",
+      "avg_score": 35.9613,
+      "max_score": 46.0718,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Bald Eagle",
+      "avg_score": 35.9594,
+      "max_score": 40.1831,
+      "playable_rate": 1.0,
+      "point_value": 9,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Baird's Sparrow",
+      "avg_score": 35.9562,
+      "max_score": 41.9263,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Nutcracker",
+      "avg_score": 35.9427,
+      "max_score": 43.1616,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Necked Avocet",
+      "avg_score": 35.9263,
+      "max_score": 44.0589,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Chaffinch",
+      "avg_score": 35.9131,
+      "max_score": 44.5266,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red Knot",
+      "avg_score": 35.8864,
+      "max_score": 40.9081,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Great Tit",
+      "avg_score": 35.8589,
+      "max_score": 42.1865,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Small Minivet",
+      "avg_score": 35.7585,
+      "max_score": 41.1795,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Ruby-Throated Hummingbird",
+      "avg_score": 35.6535,
+      "max_score": 44.0289,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Horsfield's Bushlark",
+      "avg_score": 35.642,
+      "max_score": 42.2257,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "European Robin",
+      "avg_score": 35.4926,
+      "max_score": 41.6884,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Barn Owl",
+      "avg_score": 35.4224,
+      "max_score": 42.4637,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "California Quail",
+      "avg_score": 35.3835,
+      "max_score": 41.0907,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Savannah Sparrow",
+      "avg_score": 35.3434,
+      "max_score": 42.103,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Grey Heron",
+      "avg_score": 35.2812,
+      "max_score": 40.2645,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Rainbow Lorikeet",
+      "avg_score": 35.2191,
+      "max_score": 42.8266,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Killdeer",
+      "avg_score": 35.167,
+      "max_score": 44.2537,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Emu",
+      "avg_score": 35.0807,
+      "max_score": 40.5169,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Golden Eagle",
+      "avg_score": 35.0546,
+      "max_score": 40.0003,
+      "playable_rate": 1.0,
+      "point_value": 8,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Desert Wheatear",
+      "avg_score": 35.0387,
+      "max_score": 43.6312,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Yellow-Headed Blackbird",
+      "avg_score": 35.0227,
+      "max_score": 43.3103,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Barred Owl",
+      "avg_score": 34.8955,
+      "max_score": 41.8577,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Legged Partridge",
+      "avg_score": 34.8498,
+      "max_score": 41.0446,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Budgerigar",
+      "avg_score": 34.8411,
+      "max_score": 44.103,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Northern Flicker",
+      "avg_score": 34.7604,
+      "max_score": 40.3204,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black Woodpecker",
+      "avg_score": 34.7555,
+      "max_score": 41.5385,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Smew",
+      "avg_score": 34.7541,
+      "max_score": 39.9918,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Great Hornbill",
+      "avg_score": 34.7522,
+      "max_score": 40.7883,
+      "playable_rate": 1.0,
+      "point_value": 9,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Yellow-Bellied Sapsucker",
+      "avg_score": 34.7481,
+      "max_score": 41.2339,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Cockatiel",
+      "avg_score": 34.6941,
+      "max_score": 44.9951,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Thekla's Lark",
+      "avg_score": 34.6434,
+      "max_score": 41.3147,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Wrybill",
+      "avg_score": 34.5701,
+      "max_score": 38.9828,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Korimako",
+      "avg_score": 34.5525,
+      "max_score": 41.3886,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Pygmy Nuthatch",
+      "avg_score": 34.5466,
+      "max_score": 40.7406,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Tailed Hawk",
+      "avg_score": 34.5085,
+      "max_score": 41.2452,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "European Roller",
+      "avg_score": 34.5081,
+      "max_score": 39.0799,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Crested Lark",
+      "avg_score": 34.4624,
+      "max_score": 41.371,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Kestrel",
+      "avg_score": 34.4333,
+      "max_score": 44.714,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Northern Bobwhite",
+      "avg_score": 34.3994,
+      "max_score": 40.1475,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Cedar Waxwing",
+      "avg_score": 34.3808,
+      "max_score": 41.0047,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Coppersmith Barbet",
+      "avg_score": 34.3691,
+      "max_score": 40.7994,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Teal",
+      "avg_score": 34.3297,
+      "max_score": 38.6858,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Chestnut-Collared Longspur",
+      "avg_score": 34.322,
+      "max_score": 39.1698,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Grackle",
+      "avg_score": 34.194,
+      "max_score": 41.0884,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Purple Martin",
+      "avg_score": 34.1921,
+      "max_score": 43.4733,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "American Crow",
+      "avg_score": 34.1765,
+      "max_score": 42.7402,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Baltimore Oriole",
+      "avg_score": 34.027,
+      "max_score": 40.2911,
+      "playable_rate": 1.0,
+      "point_value": 9,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Treecreeper",
+      "avg_score": 34.0078,
+      "max_score": 40.7575,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Nightingale",
+      "avg_score": 33.9703,
+      "max_score": 43.4398,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Hermit Thrush",
+      "avg_score": 33.9194,
+      "max_score": 40.1516,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Spotless Crake",
+      "avg_score": 33.9109,
+      "max_score": 38.63,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Orange-Footed Scrubfowl",
+      "avg_score": 33.8273,
+      "max_score": 40.1572,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Pileated Woodpecker",
+      "avg_score": 33.8266,
+      "max_score": 39.8762,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Bellied Sea-Eagle",
+      "avg_score": 33.82,
+      "max_score": 41.3462,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland",
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Headed Duck",
+      "avg_score": 33.801,
+      "max_score": 38.5706,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Mistletoebird",
+      "avg_score": 33.7974,
+      "max_score": 41.0241,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Kerer\u016b",
+      "avg_score": 33.7473,
+      "max_score": 40.3219,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Hoopoe",
+      "avg_score": 33.6822,
+      "max_score": 38.8886,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Grey-Headed Mannikin",
+      "avg_score": 33.6486,
+      "max_score": 40.443,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Peregrine Falcon",
+      "avg_score": 33.6485,
+      "max_score": 40.2408,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Coal Tit",
+      "avg_score": 33.546,
+      "max_score": 39.8249,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Superb Lyrebird",
+      "avg_score": 33.5413,
+      "max_score": 40.0369,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Golden Pheasant",
+      "avg_score": 33.5259,
+      "max_score": 38.0923,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Blue Jay",
+      "avg_score": 33.5035,
+      "max_score": 39.9087,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Juniper Titmouse",
+      "avg_score": 33.4473,
+      "max_score": 39.2442,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Green Bee-Eater",
+      "avg_score": 33.4338,
+      "max_score": 38.9028,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Trumpeter Finch",
+      "avg_score": 33.4291,
+      "max_score": 37.2775,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Pine Siskin",
+      "avg_score": 33.3825,
+      "max_score": 39.782,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Montagu's Harrier",
+      "avg_score": 33.3753,
+      "max_score": 37.4509,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Pacific Black Duck",
+      "avg_score": 33.3594,
+      "max_score": 38.7333,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Ash-Throated Flycatcher",
+      "avg_score": 33.2889,
+      "max_score": 38.211,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Blue Grosbeak",
+      "avg_score": 33.2824,
+      "max_score": 39.0029,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Australian Reed Warbler",
+      "avg_score": 33.2744,
+      "max_score": 38.0575,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Hawfinch",
+      "avg_score": 33.2498,
+      "max_score": 39.5227,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Count Raggi's Bird-of-Paradise",
+      "avg_score": 33.171,
+      "max_score": 40.0613,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Willie-Wagtail",
+      "avg_score": 33.1678,
+      "max_score": 41.7462,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Indian Peafowl",
+      "avg_score": 33.1628,
+      "max_score": 37.3595,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black-Necked Stilt",
+      "avg_score": 33.1595,
+      "max_score": 37.5962,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Abbott's Booby",
+      "avg_score": 33.1582,
+      "max_score": 37.8067,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Graceful Prinia",
+      "avg_score": 33.1067,
+      "max_score": 40.8848,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Magpie",
+      "avg_score": 33.0936,
+      "max_score": 38.9888,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Winged Blackbird",
+      "avg_score": 33.085,
+      "max_score": 42.4432,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Atlantic Puffin",
+      "avg_score": 33.0468,
+      "max_score": 37.6589,
+      "playable_rate": 1.0,
+      "point_value": 8,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Rose-Ringed Parakeet",
+      "avg_score": 33.0383,
+      "max_score": 39.7764,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Rosy Starling",
+      "avg_score": 33.0098,
+      "max_score": 39.9317,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Brant",
+      "avg_score": 32.9975,
+      "max_score": 37.2621,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Pesquet's Parrot",
+      "avg_score": 32.9804,
+      "max_score": 39.8507,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Magpie-Lark",
+      "avg_score": 32.9721,
+      "max_score": 39.5262,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Mountain Bluebird",
+      "avg_score": 32.9242,
+      "max_score": 37.9758,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Wattled Lapwing",
+      "avg_score": 32.879,
+      "max_score": 40.4985,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "House Wren",
+      "avg_score": 32.8664,
+      "max_score": 39.9968,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Brown Falcon",
+      "avg_score": 32.7735,
+      "max_score": 40.0497,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Nuthatch",
+      "avg_score": 32.7539,
+      "max_score": 39.2124,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Hooded Crow",
+      "avg_score": 32.7464,
+      "max_score": 36.7957,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Verditer Flycatcher",
+      "avg_score": 32.6719,
+      "max_score": 38.7359,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Acorn Woodpecker",
+      "avg_score": 32.6491,
+      "max_score": 40.2281,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Short-Toed Treecreeper",
+      "avg_score": 32.5851,
+      "max_score": 39.1373,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Prothonotary Warbler",
+      "avg_score": 32.5675,
+      "max_score": 38.3001,
+      "playable_rate": 1.0,
+      "point_value": 8,
+      "habitats": [
+        "wetland",
+        "forest"
+      ],
+      "power_color": "none",
+      "n_scored": 100
+    },
+    {
+      "bird": "Spoon-Billed Sandpiper",
+      "avg_score": 32.4426,
+      "max_score": 37.6727,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Bullfinch",
+      "avg_score": 32.4299,
+      "max_score": 39.0069,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Yellow-Breasted Chat",
+      "avg_score": 32.4207,
+      "max_score": 37.7795,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Great Indian Bustard",
+      "avg_score": 32.3495,
+      "max_score": 36.7026,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Painted Bunting",
+      "avg_score": 32.3257,
+      "max_score": 36.8154,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Wedge-Tailed Eagle",
+      "avg_score": 32.2854,
+      "max_score": 38.0268,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Greater Prairie-Chicken",
+      "avg_score": 32.2502,
+      "max_score": 37.0873,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Griffon Vulture",
+      "avg_score": 32.2427,
+      "max_score": 38.4292,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Barrow's Goldeneye",
+      "avg_score": 32.117,
+      "max_score": 37.8179,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Great Crested Flycatcher",
+      "avg_score": 32.1072,
+      "max_score": 38.2221,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eastern Bluebird",
+      "avg_score": 32.0674,
+      "max_score": 37.3763,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Browed Tit-Warbler",
+      "avg_score": 32.0479,
+      "max_score": 38.6973,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Galah",
+      "avg_score": 32.0149,
+      "max_score": 37.8543,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Inca Dove",
+      "avg_score": 31.9029,
+      "max_score": 36.1346,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Breasted Woodswallow",
+      "avg_score": 31.8501,
+      "max_score": 35.5735,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Little Owl",
+      "avg_score": 31.7981,
+      "max_score": 38.7826,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Oriental Magpie-Robin",
+      "avg_score": 31.7673,
+      "max_score": 39.1713,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "American Oystercatcher",
+      "avg_score": 31.6701,
+      "max_score": 36.3708,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red Junglefowl",
+      "avg_score": 31.5499,
+      "max_score": 39.817,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "American Woodcock",
+      "avg_score": 31.5264,
+      "max_score": 36.6564,
+      "playable_rate": 1.0,
+      "point_value": 9,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "none",
+      "n_scored": 100
+    },
+    {
+      "bird": "Bewick's Wren",
+      "avg_score": 31.4591,
+      "max_score": 37.0925,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Say's Phoebe",
+      "avg_score": 31.4523,
+      "max_score": 36.0452,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Violet-Green Swallow",
+      "avg_score": 31.4175,
+      "max_score": 38.8417,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Crested Pigeon",
+      "avg_score": 31.4051,
+      "max_score": 38.6551,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "House Finch",
+      "avg_score": 31.3894,
+      "max_score": 39.5213,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Fish Crow",
+      "avg_score": 31.2407,
+      "max_score": 39.6265,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eastern Rosella",
+      "avg_score": 31.219,
+      "max_score": 37.1467,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black Redstart",
+      "avg_score": 31.175,
+      "max_score": 36.3682,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Starling",
+      "avg_score": 31.1233,
+      "max_score": 40.3632,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Large-Billed Crow",
+      "avg_score": 31.0581,
+      "max_score": 37.8061,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Asian Emerald Dove",
+      "avg_score": 31.0166,
+      "max_score": 35.4806,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Twite",
+      "avg_score": 30.9842,
+      "max_score": 37.7318,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Chimney Swift",
+      "avg_score": 30.9529,
+      "max_score": 38.4564,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black-Billed Magpie",
+      "avg_score": 30.766,
+      "max_score": 35.3956,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Great Blue Heron",
+      "avg_score": 30.7554,
+      "max_score": 35.5154,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Desert Finch",
+      "avg_score": 30.7191,
+      "max_score": 35.0875,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Sparrowhawk",
+      "avg_score": 30.6775,
+      "max_score": 36.0913,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Collared-Dove",
+      "avg_score": 30.6325,
+      "max_score": 36.5131,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Bobolink",
+      "avg_score": 30.6154,
+      "max_score": 34.8514,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "American Redstart",
+      "avg_score": 30.5263,
+      "max_score": 36.6778,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "House Sparrow",
+      "avg_score": 30.5174,
+      "max_score": 38.801,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Northern Mockingbird",
+      "avg_score": 30.4978,
+      "max_score": 38.4151,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Long-Tailed Tit",
+      "avg_score": 30.4907,
+      "max_score": 35.0493,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Wild Turkey",
+      "avg_score": 30.4328,
+      "max_score": 34.8199,
+      "playable_rate": 1.0,
+      "point_value": 8,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "none",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Blackbird",
+      "avg_score": 30.4239,
+      "max_score": 35.7618,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Oriental Bay-Owl",
+      "avg_score": 30.4114,
+      "max_score": 36.6851,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Masked Lapwing",
+      "avg_score": 30.4036,
+      "max_score": 38.8968,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Winged Parrot",
+      "avg_score": 30.2393,
+      "max_score": 35.665,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red Crossbill",
+      "avg_score": 30.2284,
+      "max_score": 35.5215,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Indian Vulture",
+      "avg_score": 30.2256,
+      "max_score": 36.0713,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Lincoln's Sparrow",
+      "avg_score": 30.2104,
+      "max_score": 36.7975,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Azure Tit",
+      "avg_score": 30.2073,
+      "max_score": 36.2786,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Nighthawk",
+      "avg_score": 30.1699,
+      "max_score": 38.3928,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Sulphur-Crested Cockatoo",
+      "avg_score": 30.1443,
+      "max_score": 37.1275,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Great Horned Owl",
+      "avg_score": 30.1426,
+      "max_score": 36.313,
+      "playable_rate": 1.0,
+      "point_value": 8,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Bushtit",
+      "avg_score": 30.1285,
+      "max_score": 37.7375,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Swift",
+      "avg_score": 30.1002,
+      "max_score": 38.4111,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Dunnock",
+      "avg_score": 30.0357,
+      "max_score": 35.2316,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Bearded Reedling",
+      "avg_score": 30.0311,
+      "max_score": 33.6449,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Parrot Crossbill",
+      "avg_score": 29.9845,
+      "max_score": 36.7977,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Pheasant Coucal",
+      "avg_score": 29.9108,
+      "max_score": 34.2104,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "House Crow",
+      "avg_score": 29.9022,
+      "max_score": 39.7371,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Moltoni's Warbler",
+      "avg_score": 29.8388,
+      "max_score": 36.4707,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Little Pied Cormorant",
+      "avg_score": 29.8184,
+      "max_score": 35.2358,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Ruff",
+      "avg_score": 29.7221,
+      "max_score": 37.1519,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Belted Kingfisher",
+      "avg_score": 29.6858,
+      "max_score": 34.3696,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Plains-Wanderer",
+      "avg_score": 29.6631,
+      "max_score": 34.1356,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red Wattlebird",
+      "avg_score": 29.6392,
+      "max_score": 33.8664,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "American Avocet",
+      "avg_score": 29.6246,
+      "max_score": 34.812,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Brown Pelican",
+      "avg_score": 29.6016,
+      "max_score": 34.9365,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Mandarin Duck",
+      "avg_score": 29.5904,
+      "max_score": 34.3374,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Fire-Fronted Serin",
+      "avg_score": 29.5739,
+      "max_score": 35.7073,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Snowy Owl",
+      "avg_score": 29.5434,
+      "max_score": 34.5367,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Princess Stephanie's Astrapia",
+      "avg_score": 29.4176,
+      "max_score": 35.6036,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Sri Lanka Blue-Magpie",
+      "avg_score": 29.3739,
+      "max_score": 34.779,
+      "playable_rate": 1.0,
+      "point_value": 9,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Northern Cardinal",
+      "avg_score": 29.2943,
+      "max_score": 35.2417,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "White-Crowned Sparrow",
+      "avg_score": 29.2591,
+      "max_score": 37.5818,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "American Goldfinch",
+      "avg_score": 29.2402,
+      "max_score": 33.3183,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Lewin's Honeyeater",
+      "avg_score": 29.1646,
+      "max_score": 35.4831,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "T\u016b\u012b",
+      "avg_score": 29.1531,
+      "max_score": 36.3382,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Satyr Tragopan",
+      "avg_score": 29.1406,
+      "max_score": 35.6824,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black-Naped Oriole",
+      "avg_score": 29.1275,
+      "max_score": 33.8859,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Dark-Eyed Junco",
+      "avg_score": 29.0676,
+      "max_score": 37.0449,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Welcome Swallow",
+      "avg_score": 28.7197,
+      "max_score": 34.7545,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Major Mitchell's Cockatoo",
+      "avg_score": 28.7045,
+      "max_score": 35.6948,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Little Bustard",
+      "avg_score": 28.6943,
+      "max_score": 33.2272,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Sprague's Pipit",
+      "avg_score": 28.6698,
+      "max_score": 32.8959,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Blue-Winged Warbler",
+      "avg_score": 28.6662,
+      "max_score": 35.3332,
+      "playable_rate": 1.0,
+      "point_value": 8,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "none",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Buzzard",
+      "avg_score": 28.5974,
+      "max_score": 37.4116,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Brambling",
+      "avg_score": 28.5137,
+      "max_score": 34.4321,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Lesser Whitethroat",
+      "avg_score": 28.4132,
+      "max_score": 35.3938,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Cockaded Woodpecker",
+      "avg_score": 28.3842,
+      "max_score": 33.6626,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Australian Magpie",
+      "avg_score": 28.2839,
+      "max_score": 34.2902,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Greylag Goose",
+      "avg_score": 28.1735,
+      "max_score": 32.3082,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eastern Imperial Eagle",
+      "avg_score": 28.0809,
+      "max_score": 33.4691,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red Kite",
+      "avg_score": 28.0566,
+      "max_score": 34.1803,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Corsican Nuthatch",
+      "avg_score": 27.9122,
+      "max_score": 32.755,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Hobby",
+      "avg_score": 27.8537,
+      "max_score": 33.8696,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Red-Backed Fairywren",
+      "avg_score": 27.7653,
+      "max_score": 32.2515,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Australian Raven",
+      "avg_score": 27.7203,
+      "max_score": 33.8275,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Bell's Vireo",
+      "avg_score": 27.6558,
+      "max_score": 32.9944,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "North Island Brown Kiwi",
+      "avg_score": 27.6448,
+      "max_score": 32.5664,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Rufous Owl",
+      "avg_score": 27.5909,
+      "max_score": 33.8533,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Spotted Owl",
+      "avg_score": 27.5296,
+      "max_score": 33.0637,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Golden Oriole",
+      "avg_score": 27.4664,
+      "max_score": 31.6003,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Yellowhammer",
+      "avg_score": 27.376,
+      "max_score": 33.5411,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Sacred Kingfisher",
+      "avg_score": 27.344,
+      "max_score": 33.7419,
+      "playable_rate": 1.0,
+      "point_value": 0,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "California Condor",
+      "avg_score": 27.3176,
+      "max_score": 32.6548,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Green Woodpecker",
+      "avg_score": 27.2743,
+      "max_score": 35.6416,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Goldeneye",
+      "avg_score": 27.1903,
+      "max_score": 31.5107,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "forest"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Splendid Fairywren",
+      "avg_score": 27.1092,
+      "max_score": 31.8536,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eastern Whipbird",
+      "avg_score": 27.0661,
+      "max_score": 33.0573,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Kea",
+      "avg_score": 27.0624,
+      "max_score": 32.7283,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Cassin's Finch",
+      "avg_score": 26.9953,
+      "max_score": 32.2989,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "European Honey Buzzard",
+      "avg_score": 26.8999,
+      "max_score": 33.5344,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Spangled Drongo",
+      "avg_score": 26.6877,
+      "max_score": 32.9129,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "White Wagtail",
+      "avg_score": 26.663,
+      "max_score": 35.0482,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "European Turtle Dove",
+      "avg_score": 26.5994,
+      "max_score": 30.8403,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Brown-Headed Cowbird",
+      "avg_score": 26.4889,
+      "max_score": 32.8705,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Cerulean Warbler",
+      "avg_score": 26.3262,
+      "max_score": 31.6704,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Gould's Finch",
+      "avg_score": 26.2834,
+      "max_score": 36.0426,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black Stork",
+      "avg_score": 26.2487,
+      "max_score": 30.2977,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Malleefowl",
+      "avg_score": 26.081,
+      "max_score": 30.6899,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Australasian Pipit",
+      "avg_score": 25.9732,
+      "max_score": 30.9348,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Northern Goshawk",
+      "avg_score": 25.9048,
+      "max_score": 31.0072,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Philippine Eagle",
+      "avg_score": 25.8715,
+      "max_score": 32.7804,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Snow Bunting",
+      "avg_score": 25.8527,
+      "max_score": 31.5752,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Yellow-Billed Cuckoo",
+      "avg_score": 25.6943,
+      "max_score": 30.7209,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Australian Owlet-Nightjar",
+      "avg_score": 25.4867,
+      "max_score": 32.405,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Carrion Crow",
+      "avg_score": 25.404,
+      "max_score": 34.0114,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Silvereye",
+      "avg_score": 25.3446,
+      "max_score": 34.1002,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "brown",
+      "n_scored": 100
+    },
+    {
+      "bird": "Bonelli's Eagle",
+      "avg_score": 25.3394,
+      "max_score": 31.4741,
+      "playable_rate": 1.0,
+      "point_value": 8,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Bronzed Cowbird",
+      "avg_score": 25.2643,
+      "max_score": 30.3457,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "K\u0101k\u0101p\u014d",
+      "avg_score": 25.2493,
+      "max_score": 31.0996,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eastern Kingbird",
+      "avg_score": 25.0783,
+      "max_score": 30.5602,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Cetti's Warbler",
+      "avg_score": 25.051,
+      "max_score": 29.5259,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Black Vulture",
+      "avg_score": 24.7035,
+      "max_score": 28.7603,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Horsfield's Bronze-Cuckoo",
+      "avg_score": 24.5857,
+      "max_score": 32.661,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Tailorbird",
+      "avg_score": 24.4308,
+      "max_score": 29.2739,
+      "playable_rate": 1.0,
+      "point_value": 2,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "yellow",
+      "n_scored": 100
+    },
+    {
+      "bird": "Horned Lark",
+      "avg_score": 23.967,
+      "max_score": 29.2401,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Hooded Warbler",
+      "avg_score": 23.8446,
+      "max_score": 29.4322,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "none",
+      "n_scored": 100
+    },
+    {
+      "bird": "Common Cuckoo",
+      "avg_score": 23.6521,
+      "max_score": 28.1511,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Blyth's Hornbill",
+      "avg_score": 23.4936,
+      "max_score": 29.6512,
+      "playable_rate": 1.0,
+      "point_value": 7,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "white",
+      "n_scored": 100
+    },
+    {
+      "bird": "Violet Cuckoo",
+      "avg_score": 23.4302,
+      "max_score": 29.0946,
+      "playable_rate": 1.0,
+      "point_value": 5,
+      "habitats": [
+        "forest"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Turkey Vulture",
+      "avg_score": 23.4028,
+      "max_score": 28.3404,
+      "playable_rate": 1.0,
+      "point_value": 1,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "European Goldfinch",
+      "avg_score": 23.2636,
+      "max_score": 28.3715,
+      "playable_rate": 1.0,
+      "point_value": 6,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Eurasian Tree Sparrow",
+      "avg_score": 22.3943,
+      "max_score": 27.4578,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "forest",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Gray Wagtail",
+      "avg_score": 21.1836,
+      "max_score": 29.5921,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "teal",
+      "n_scored": 100
+    },
+    {
+      "bird": "Loggerhead Shrike",
+      "avg_score": 19.8466,
+      "max_score": 25.9714,
+      "playable_rate": 1.0,
+      "point_value": 3,
+      "habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    },
+    {
+      "bird": "Asian Koel",
+      "avg_score": 18.8343,
+      "max_score": 25.2013,
+      "playable_rate": 1.0,
+      "point_value": 4,
+      "habitats": [
+        "wetland",
+        "forest",
+        "grassland"
+      ],
+      "power_color": "pink",
+      "n_scored": 100
+    }
+  ],
+  "top_synergies": [
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Wilson's Snipe",
+      "synergy": 7.096,
+      "score_with_b": 54.3792,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Red-Breasted Merganser",
+      "synergy": 6.9562,
+      "score_with_b": 54.2394,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Plumbeous Redstart",
+      "synergy": 6.0814,
+      "score_with_b": 53.3647,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Brolga",
+      "synergy": 6.0595,
+      "score_with_b": 53.3427,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Common Sandpiper",
+      "synergy": 5.8374,
+      "score_with_b": 53.1206,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Little Egret",
+      "synergy": 5.3331,
+      "score_with_b": 52.6164,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Mute Swan",
+      "synergy": 5.0584,
+      "score_with_b": 52.3416,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Willet",
+      "synergy": 4.8372,
+      "score_with_b": 52.1204,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Ruddy Duck",
+      "synergy": 4.6004,
+      "score_with_b": 51.8837,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Purple Gallinule",
+      "synergy": 4.1746,
+      "score_with_b": 51.4579,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Savi's Warbler",
+      "synergy": 4.1372,
+      "score_with_b": 51.4204,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Pied-Billed Grebe",
+      "synergy": 4.1098,
+      "score_with_b": 51.393,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Yellow Bittern",
+      "synergy": 4.0855,
+      "score_with_b": 51.3687,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Forster's Tern",
+      "synergy": 4.0566,
+      "score_with_b": 51.3399,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Rhinoceros Auklet",
+      "synergy": 3.9942,
+      "score_with_b": 51.2774,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Audouin's Gull",
+      "synergy": 3.8061,
+      "score_with_b": 51.0893,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Mallard",
+      "synergy": 3.683,
+      "score_with_b": 50.9662,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Purple Heron",
+      "synergy": 3.6823,
+      "score_with_b": 47.7321,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Sarus Crane",
+      "synergy": 3.5891,
+      "score_with_b": 50.8723,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Common Merganser",
+      "synergy": 3.5853,
+      "score_with_b": 50.8685,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Maned Duck",
+      "synergy": 3.028,
+      "score_with_b": 50.3113,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Red-Breasted Merganser",
+      "synergy": 2.9787,
+      "score_with_b": 47.0285,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Double-Crested Cormorant",
+      "synergy": 2.877,
+      "score_with_b": 50.1602,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Little Egret",
+      "synergy": 2.7595,
+      "score_with_b": 46.8093,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Snowy Egret",
+      "synergy": 2.639,
+      "score_with_b": 46.6888,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Savi's Warbler",
+      "synergy": 2.6119,
+      "score_with_b": 46.6617,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Plumbeous Redstart",
+      "synergy": 2.5295,
+      "score_with_b": 46.5793,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Rhinoceros Auklet",
+      "synergy": 2.4583,
+      "score_with_b": 46.5081,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Purple Heron",
+      "synergy": 2.329,
+      "score_with_b": 49.6122,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Double-Crested Cormorant",
+      "synergy": 2.3237,
+      "score_with_b": 46.3735,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Maned Duck",
+      "synergy": 2.2302,
+      "score_with_b": 46.28,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Mallard",
+      "synergy": 2.0733,
+      "score_with_b": 46.1231,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Audouin's Gull",
+      "synergy": 2.0508,
+      "score_with_b": 46.1006,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Common Sandpiper",
+      "synergy": 1.9264,
+      "score_with_b": 45.9763,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Forster's Tern",
+      "synergy": 1.8539,
+      "score_with_b": 45.9037,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Brolga",
+      "synergy": 1.5798,
+      "score_with_b": 45.6296,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Wilson's Snipe",
+      "synergy": 1.544,
+      "score_with_b": 45.5938,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Ruddy Duck",
+      "synergy": 1.473,
+      "score_with_b": 45.5228,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Common Merganser",
+      "synergy": 1.398,
+      "score_with_b": 45.4478,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Mute Swan",
+      "synergy": 1.3949,
+      "score_with_b": 45.4447,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Willet",
+      "synergy": 1.2504,
+      "score_with_b": 45.3002,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Snowy Egret",
+      "synergy": 1.2464,
+      "score_with_b": 48.5296,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Australian Ibis",
+      "synergy": 1.2415,
+      "score_with_b": 45.2913,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland",
+        "grassland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Pied-Billed Grebe",
+      "synergy": 1.1711,
+      "score_with_b": 45.221,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Purple Gallinule",
+      "synergy": 0.6947,
+      "score_with_b": 44.7445,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Sarus Crane",
+      "synergy": 0.3133,
+      "score_with_b": 44.3631,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Grey Shrikethrush",
+      "bird_b": "Yellow Bittern",
+      "synergy": 0.0911,
+      "score_with_b": 44.1409,
+      "score_baseline": 44.0498,
+      "a_habitats": [
+        "forest"
+      ],
+      "b_habitats": [
+        "wetland"
+      ]
+    },
+    {
+      "bird_a": "Australian Ibis",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -2.9276,
+      "score_with_b": 44.3556,
+      "score_baseline": 47.2832,
+      "a_habitats": [
+        "wetland",
+        "grassland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Sarus Crane",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -3.0583,
+      "score_with_b": 45.1309,
+      "score_baseline": 48.1893,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Little Egret",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -3.1219,
+      "score_with_b": 45.4876,
+      "score_baseline": 48.6095,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    }
+  ],
+  "bottom_synergies": [
+    {
+      "bird_a": "Yellow Bittern",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -3.2302,
+      "score_with_b": 42.709,
+      "score_baseline": 45.9392,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Purple Gallinule",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -3.4545,
+      "score_with_b": 46.0862,
+      "score_baseline": 49.5407,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Brolga",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -3.5125,
+      "score_with_b": 42.2323,
+      "score_baseline": 45.7447,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Audouin's Gull",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -3.5301,
+      "score_with_b": 41.796,
+      "score_baseline": 45.3261,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Double-Crested Cormorant",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -3.5549,
+      "score_with_b": 41.9872,
+      "score_baseline": 45.5421,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Maned Duck",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -3.7476,
+      "score_with_b": 41.0859,
+      "score_baseline": 44.8335,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Common Sandpiper",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -3.7624,
+      "score_with_b": 42.4053,
+      "score_baseline": 46.1677,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Ruddy Duck",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -3.8601,
+      "score_with_b": 43.5621,
+      "score_baseline": 47.4222,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Common Merganser",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -3.9089,
+      "score_with_b": 42.0015,
+      "score_baseline": 45.9104,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Red-Breasted Merganser",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -4.0679,
+      "score_with_b": 40.1584,
+      "score_baseline": 44.2263,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Pied-Billed Grebe",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -4.1663,
+      "score_with_b": 46.4231,
+      "score_baseline": 50.5894,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Forster's Tern",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -4.1979,
+      "score_with_b": 41.4355,
+      "score_baseline": 45.6333,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Purple Heron",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -4.3399,
+      "score_with_b": 40.9958,
+      "score_baseline": 45.3357,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Plumbeous Redstart",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -4.4076,
+      "score_with_b": 40.9324,
+      "score_baseline": 45.3401,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Willet",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -4.4727,
+      "score_with_b": 40.6392,
+      "score_baseline": 45.1119,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Mallard",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -4.5385,
+      "score_with_b": 41.6147,
+      "score_baseline": 46.1532,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Snowy Egret",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -4.9946,
+      "score_with_b": 41.1528,
+      "score_baseline": 46.1475,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Savi's Warbler",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -5.5118,
+      "score_with_b": 39.0631,
+      "score_baseline": 44.5749,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Rhinoceros Auklet",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -5.5204,
+      "score_with_b": 39.837,
+      "score_baseline": 45.3574,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    },
+    {
+      "bird_a": "Wilson's Snipe",
+      "bird_b": "Grey Shrikethrush",
+      "synergy": -5.8607,
+      "score_with_b": 39.4582,
+      "score_baseline": 45.3189,
+      "a_habitats": [
+        "wetland"
+      ],
+      "b_habitats": [
+        "forest"
+      ]
+    }
+  ]
+}

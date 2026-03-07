@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+python -m backend.ml.auto_improve_factorized \
+  --out-dir "$1" \
+  --iterations 4 \
+  --games-per-iter 250 \
+  --lookahead-depth 1 \
+  --proposal-top-k 4 \
+  --dataset-workers 4 \
+  --train-epochs 50 \
+  --train-batch 256 \
+  --train-dropout 0.15 \
+  --train-lr-init 2e-4 \
+  --train-lr-peak 8e-4 \
+  --train-lr-warmup-epochs 5 \
+  --train-lr-decay-every 8 \
+  --train-lr-decay-factor 0.8 \
+  --train-momentum 0.9 \
+  --train-early-stop-patience 8 \
+  --train-value-weight 0.3 \
+  --eval-games 40 \
+  --promotion-games 80 \
+  --pool-games-per-opponent 40 \
+  --min-pool-win-rate 0.50 \
+  --require-pool-non-regression \
+  --min-gate-win-rate 0.50 \
+  --min-gate-mean-score 50.0 \
+  --strict-kpi-require-non-regression \
+  --proposal-update-policy best_only \
+  --selection-requires-gate-pass \
+  --best-min-win-rate-delta 0.02 \
+  --best-min-mean-score-delta 0.5 \
+  --best-max-margin-regression 1.0 \
+  --fixed-benchmark-seeds \
+  --benchmark-seed 13371337 \
+  --data-accumulation-decay 0.7 \
+  --max-accumulated-samples 300000 \
+  --engine-teacher-prob 0.25 \
+  --seed 20260217 \
+  --hard-replay-games 0 \
+  --train-init-model-path reports/ml/auto_improve_stability_v4_tuned_tol3/iter_001/factorized_model.npz \
+  --train-init-every-iter \
+  --state-encoder-enable-identity \
+  --state-encoder-identity-hash-dim 32 \
+  --strict-kpi-mean-score-tolerance 0.5 \
+  --require-fixed-seed-eval-gate-pass \
+  --fixed-seed-eval-gate-games 200 \
+  --fixed-seed-eval-gate-min-win-rate 0.5 \
+  --frozen-opponent-model-path reports/ml/auto_improve_stability_v4_tuned_tol3/iter_001/factorized_model.npz \
+  --disable-champion-self-play

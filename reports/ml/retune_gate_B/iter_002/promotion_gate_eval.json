@@ -1,0 +1,13 @@
+{
+  "games": 24,
+  "nn_wins": 14,
+  "opponent_wins": 9,
+  "ties": 1,
+  "nn_mean_score": 24.542,
+  "opponent_mean_score": 23.542,
+  "nn_mean_margin": 1.0,
+  "nn_rate_ge_100": 0.0,
+  "nn_rate_ge_120": 0.0,
+  "primary_opponent": "champion",
+  "opponent_spec": "reports/ml/retune_gate_B/best_model.npz"
+}

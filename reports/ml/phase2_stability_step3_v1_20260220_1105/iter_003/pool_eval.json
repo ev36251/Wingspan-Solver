@@ -1,0 +1,64 @@
+{
+  "model": "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/reports/ml/phase2_stability_step3_v1_20260220_1105/iter_003/factorized_model.npz",
+  "board_type": "oceania",
+  "games_per_opponent": 40,
+  "opponents": [
+    "heuristic",
+    "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/reports/ml/auto_improve_stability_v4_tuned_tol3/iter_001/factorized_model.npz"
+  ],
+  "summary": {
+    "games": 80,
+    "nn_wins": 36,
+    "opponent_wins": 42,
+    "ties": 2,
+    "nn_win_rate": 0.45,
+    "nn_mean_score": 51.625,
+    "nn_mean_margin": -1.837,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0,
+    "nn_max_score": 94,
+    "nn_min_score": 26,
+    "nn_rate_lt_80": 0.975,
+    "nn_rate_80_99": 0.025,
+    "nn_rate_100_119": 0.0,
+    "nn_rate_ge_120_bucket": 0.0
+  },
+  "by_opponent": [
+    {
+      "opponent": "heuristic",
+      "games": 40,
+      "nn_wins": 20,
+      "opponent_wins": 19,
+      "ties": 1,
+      "nn_mean_score": 51.05,
+      "opponent_mean_score": 52.275,
+      "nn_mean_margin": -1.225,
+      "nn_rate_ge_100": 0.0,
+      "nn_rate_ge_120": 0.0,
+      "nn_max_score": 80,
+      "nn_min_score": 27,
+      "nn_rate_lt_80": 0.975,
+      "nn_rate_80_99": 0.025,
+      "nn_rate_100_119": 0.0,
+      "nn_rate_ge_120_bucket": 0.0
+    },
+    {
+      "opponent": "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/reports/ml/auto_improve_stability_v4_tuned_tol3/iter_001/factorized_model.npz",
+      "games": 40,
+      "nn_wins": 16,
+      "opponent_wins": 23,
+      "ties": 1,
+      "nn_mean_score": 52.2,
+      "opponent_mean_score": 54.65,
+      "nn_mean_margin": -2.45,
+      "nn_rate_ge_100": 0.0,
+      "nn_rate_ge_120": 0.0,
+      "nn_max_score": 94,
+      "nn_min_score": 26,
+      "nn_rate_lt_80": 0.975,
+      "nn_rate_80_99": 0.025,
+      "nn_rate_100_119": 0.0,
+      "nn_rate_ge_120_bucket": 0.0
+    }
+  ]
+}

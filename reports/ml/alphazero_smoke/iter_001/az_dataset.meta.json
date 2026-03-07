@@ -1,0 +1,34 @@
+{
+  "feature_dim": 148,
+  "target_heads": {
+    "action_type": 4,
+    "play_habitat": 4,
+    "gain_food_primary": 7,
+    "draw_mode": 4,
+    "lay_eggs_bin": 11,
+    "play_cost_bin": 7,
+    "play_power_color": 7
+  },
+  "games": 5,
+  "samples": 260,
+  "elapsed_sec": 413.83,
+  "players": 2,
+  "board_type": "oceania",
+  "mcts_sims": 20,
+  "c_puct": 1.5,
+  "value_blend": 0.5,
+  "rollout_policy": "fast",
+  "temperature_cutoff": 8,
+  "seed": 1000,
+  "mean_delta": 0.0,
+  "std_delta": 8.775,
+  "value_target_config": {
+    "mode": "delta",
+    "score_scale": 80.0,
+    "score_bias": 0.0
+  },
+  "state_encoder": {
+    "enable_identity_features": false,
+    "identity_hash_dim": 128
+  }
+}

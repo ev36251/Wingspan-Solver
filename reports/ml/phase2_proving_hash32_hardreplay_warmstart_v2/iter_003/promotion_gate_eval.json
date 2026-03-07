@@ -1,0 +1,13 @@
+{
+  "games": 80,
+  "nn_wins": 16,
+  "opponent_wins": 64,
+  "ties": 0,
+  "nn_mean_score": 44.275,
+  "opponent_mean_score": 59.913,
+  "nn_mean_margin": -15.637,
+  "nn_rate_ge_100": 0.0,
+  "nn_rate_ge_120": 0.0,
+  "primary_opponent": "frozen",
+  "opponent_spec": "reports/ml/auto_improve_stability_v4_tuned_tol3/iter_001/factorized_model.npz"
+}

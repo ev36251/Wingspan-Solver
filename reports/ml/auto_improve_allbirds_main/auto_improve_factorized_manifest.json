@@ -1,0 +1,2580 @@
+{
+  "version": 1,
+  "started_at_epoch": 1771056223,
+  "updated_at_epoch": 1771266504,
+  "elapsed_sec": 210281.26,
+  "config": {
+    "iterations": 8,
+    "players": 2,
+    "board_type": "oceania",
+    "max_turns": 220,
+    "games_per_iter": 800,
+    "proposal_top_k": 6,
+    "lookahead_depth": 2,
+    "n_step": 2,
+    "gamma": 0.97,
+    "bootstrap_mix": 0.35,
+    "value_target_score_scale": 160.0,
+    "value_target_score_bias": 0.0,
+    "late_round_oversample_factor": 2,
+    "train_epochs": 30,
+    "train_batch": 128,
+    "train_hidden1": 384,
+    "train_hidden2": 192,
+    "train_dropout": 0.2,
+    "train_lr_init": 0.0001,
+    "train_lr_peak": 0.0005,
+    "train_lr_warmup_epochs": 3,
+    "train_lr_decay_every": 5,
+    "train_lr_decay_factor": 0.7,
+    "train_early_stop_enabled": true,
+    "train_early_stop_patience": 5,
+    "train_early_stop_min_delta": 0.0001,
+    "train_early_stop_restore_best": true,
+    "deprecated_train_args_used": [],
+    "train_hidden": 384,
+    "train_lr": 0.0005,
+    "train_value_weight": 0.5,
+    "val_split": 0.1,
+    "eval_games": 80,
+    "promotion_games": 200,
+    "pool_games_per_opponent": 60,
+    "min_pool_win_rate": 0.0,
+    "min_pool_mean_score": 0.0,
+    "min_pool_rate_ge_100": 0.0,
+    "min_pool_rate_ge_120": 0.0,
+    "require_pool_non_regression": false,
+    "min_gate_win_rate": 0.2,
+    "min_gate_mean_score": 25.0,
+    "min_gate_rate_ge_100": 0.0,
+    "min_gate_rate_ge_120": 0.0,
+    "champion_self_play_enabled": true,
+    "champion_switch_after_first_promotion": true,
+    "champion_teacher_source": "engine_only",
+    "champion_engine_time_budget_ms": 50,
+    "champion_engine_num_determinizations": 8,
+    "champion_engine_max_rollout_depth": 24,
+    "promotion_primary_opponent": "champion",
+    "engine_teacher_prob": 0.15,
+    "engine_time_budget_ms": 25,
+    "engine_num_determinizations": 0,
+    "engine_max_rollout_depth": 24,
+    "strict_rules_only": true,
+    "reject_non_strict_powers": true,
+    "strict_curriculum_enabled": false,
+    "strict_fraction_start": 1.0,
+    "strict_fraction_end": 0.0,
+    "strict_fraction_warmup_iters": 5,
+    "strict_kpi_gate_enabled": true,
+    "strict_kpi_baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+    "strict_kpi_round1_games": 10,
+    "strict_kpi_smoke_games": 3,
+    "strict_kpi_max_turns": 120,
+    "strict_kpi_min_round1_pct_15_30": 0.2,
+    "strict_kpi_max_round1_strict_rejected_games": 0,
+    "strict_kpi_max_smoke_strict_rejected_games": 0,
+    "strict_kpi_min_strict_certified_birds": 50,
+    "strict_kpi_require_non_regression": false,
+    "strict_kpi_mean_score_tolerance": 0.5,
+    "data_accumulation_enabled": true,
+    "data_accumulation_decay": 0.5,
+    "max_accumulated_samples": 200000,
+    "seed": 20260214
+  },
+  "best": {
+    "iteration": 2,
+    "seed": 20262214,
+    "generation_mode": "bootstrap_mixed",
+    "strict_game_fraction": 1.0,
+    "dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.jsonl",
+    "dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.meta.json",
+    "train_dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset_combined.jsonl",
+    "train_dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset_combined.meta.json",
+    "model": "reports/ml/auto_improve_allbirds_main/iter_002/factorized_model.npz",
+    "dataset_summary": {
+      "samples": 59200,
+      "mean_player_score": 49.801
+    },
+    "combined_dataset_summary": {
+      "enabled": true,
+      "decay": 0.5,
+      "max_accumulated_samples": 200000,
+      "target_total": 118400,
+      "combined_samples": 118400,
+      "total_available": 118400,
+      "sources": [
+        {
+          "iteration": 1,
+          "dataset": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset.jsonl",
+          "samples_available": 59200,
+          "weight": 0.5,
+          "quota": 59200,
+          "written": 59200
+        },
+        {
+          "iteration": 2,
+          "dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.jsonl",
+          "samples_available": 59200,
+          "weight": 1.0,
+          "quota": 59200,
+          "written": 59200
+        }
+      ]
+    },
+    "train_summary": {
+      "train_samples": 106560,
+      "val_samples": 11840,
+      "last_epoch": {
+        "epoch": 30,
+        "lr_epoch": 8.403e-05,
+        "train_loss": 38.080979,
+        "train_action_acc": 0.506278,
+        "train_value_mse": 71.416483,
+        "train_move_rank_loss": 0.690614,
+        "train_move_rank_margin_mean": 0.007594,
+        "train_move_pair_acc": 0.337122,
+        "val_loss": 31.538635,
+        "val_action_acc": 0.536909,
+        "val_value_mse": 58.748981,
+        "val_move_rank_loss": 0.691081,
+        "val_move_rank_margin_mean": 0.006642,
+        "val_move_pair_acc": 0.336381,
+        "is_best_epoch": false
+      }
+    },
+    "eval_summary": {
+      "games": 80,
+      "nn_wins": 44,
+      "heuristic_wins": 36,
+      "ties": 0,
+      "nn_mean_score": 53.388,
+      "heuristic_mean_score": 50.812,
+      "nn_mean_margin": 2.575,
+      "nn_rate_ge_100": 0.0,
+      "nn_rate_ge_120": 0.0,
+      "heuristic_rate_ge_100": 0.0,
+      "heuristic_rate_ge_120": 0.0,
+      "nn_max_score": 94,
+      "nn_min_score": 18,
+      "heuristic_max_score": 89,
+      "heuristic_min_score": 19,
+      "nn_rate_lt_80": 0.975,
+      "nn_rate_80_99": 0.025,
+      "nn_rate_100_119": 0.0,
+      "nn_rate_ge_120_bucket": 0.0,
+      "heuristic_rate_lt_80": 0.95,
+      "heuristic_rate_80_99": 0.05,
+      "heuristic_rate_100_119": 0.0,
+      "heuristic_rate_ge_120_bucket": 0.0
+    },
+    "promotion_gate": {
+      "games": 200,
+      "result": {
+        "games": 200,
+        "nn_wins": 105,
+        "heuristic_wins": 91,
+        "ties": 4,
+        "nn_mean_score": 54.48,
+        "heuristic_mean_score": 52.535,
+        "nn_mean_margin": 1.945,
+        "nn_rate_ge_100": 0.005,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.005,
+        "heuristic_rate_ge_120": 0.0,
+        "nn_max_score": 100,
+        "nn_min_score": 13,
+        "heuristic_max_score": 100,
+        "heuristic_min_score": 20,
+        "nn_rate_lt_80": 0.9,
+        "nn_rate_80_99": 0.095,
+        "nn_rate_100_119": 0.005,
+        "nn_rate_ge_120_bucket": 0.0,
+        "heuristic_rate_lt_80": 0.95,
+        "heuristic_rate_80_99": 0.045,
+        "heuristic_rate_100_119": 0.005,
+        "heuristic_rate_ge_120_bucket": 0.0,
+        "opponent_wins": 91,
+        "opponent_mean_score": 52.535,
+        "primary_opponent": "heuristic",
+        "opponent_spec": "heuristic"
+      },
+      "score_primary_pass": true,
+      "win_secondary_pass": true,
+      "win_rate": 0.525,
+      "promoted": true
+    },
+    "promotion_primary_eval": {
+      "primary_opponent": "heuristic",
+      "result": {
+        "games": 200,
+        "nn_wins": 105,
+        "heuristic_wins": 91,
+        "ties": 4,
+        "nn_mean_score": 54.48,
+        "heuristic_mean_score": 52.535,
+        "nn_mean_margin": 1.945,
+        "nn_rate_ge_100": 0.005,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.005,
+        "heuristic_rate_ge_120": 0.0,
+        "nn_max_score": 100,
+        "nn_min_score": 13,
+        "heuristic_max_score": 100,
+        "heuristic_min_score": 20,
+        "nn_rate_lt_80": 0.9,
+        "nn_rate_80_99": 0.095,
+        "nn_rate_100_119": 0.005,
+        "nn_rate_ge_120_bucket": 0.0,
+        "heuristic_rate_lt_80": 0.95,
+        "heuristic_rate_80_99": 0.045,
+        "heuristic_rate_100_119": 0.005,
+        "heuristic_rate_ge_120_bucket": 0.0,
+        "opponent_wins": 91,
+        "opponent_mean_score": 52.535,
+        "primary_opponent": "heuristic",
+        "opponent_spec": "heuristic"
+      }
+    },
+    "pool_eval": {
+      "model": "reports/ml/auto_improve_allbirds_main/iter_002/factorized_model.npz",
+      "board_type": "oceania",
+      "games_per_opponent": 60,
+      "opponents": [
+        "heuristic"
+      ],
+      "summary": {
+        "games": 60,
+        "nn_wins": 44,
+        "opponent_wins": 15,
+        "ties": 1,
+        "nn_win_rate": 0.7333,
+        "nn_mean_score": 58.583,
+        "nn_mean_margin": 7.95,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "nn_max_score": 97,
+        "nn_min_score": 16,
+        "nn_rate_lt_80": 0.9333,
+        "nn_rate_80_99": 0.0667,
+        "nn_rate_100_119": 0.0,
+        "nn_rate_ge_120_bucket": 0.0
+      },
+      "by_opponent": [
+        {
+          "opponent": "heuristic",
+          "games": 60,
+          "nn_wins": 44,
+          "opponent_wins": 15,
+          "ties": 1,
+          "nn_mean_score": 58.583,
+          "opponent_mean_score": 50.633,
+          "nn_mean_margin": 7.95,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "nn_max_score": 97,
+          "nn_min_score": 16,
+          "nn_rate_lt_80": 0.9333,
+          "nn_rate_80_99": 0.0667,
+          "nn_rate_100_119": 0.0,
+          "nn_rate_ge_120_bucket": 0.0
+        }
+      ]
+    },
+    "kpi_gate": {
+      "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_002/pool_eval.json",
+      "baseline_path": null,
+      "passed": true,
+      "checks": [
+        {
+          "name": "min_win_rate",
+          "passed": true,
+          "detail": "0.7333 >= 0.0000"
+        },
+        {
+          "name": "min_mean_score",
+          "passed": true,
+          "detail": "58.583 >= 0.000"
+        },
+        {
+          "name": "min_rate_ge_100",
+          "passed": true,
+          "detail": "0.0000 >= 0.0000"
+        },
+        {
+          "name": "min_rate_ge_120",
+          "passed": true,
+          "detail": "0.0000 >= 0.0000"
+        }
+      ],
+      "candidate_summary": {
+        "nn_win_rate": 0.7333,
+        "nn_mean_score": 58.583,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0
+      }
+    },
+    "strict_kpi_gate": {
+      "passed": true,
+      "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_002/strict_kpi_candidate.json",
+      "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+      "checks": [
+        {
+          "name": "min_round1_pct_15_30",
+          "passed": true,
+          "detail": "0.8000 >= 0.2000"
+        },
+        {
+          "name": "max_round1_strict_rejected_games",
+          "passed": true,
+          "detail": "0 <= 0"
+        },
+        {
+          "name": "max_smoke_strict_rejected_games",
+          "passed": true,
+          "detail": "0 <= 0"
+        },
+        {
+          "name": "min_strict_certified_birds",
+          "passed": true,
+          "detail": "446 >= 50"
+        }
+      ],
+      "candidate_summary": {
+        "round1_mean": 21.35,
+        "round1_pct_15_30": 0.8,
+        "round1_strict_rejected_games": 0,
+        "smoke_mean_player_score": 49.833,
+        "smoke_strict_rejected_games": 0,
+        "strict_certified_birds": 446
+      }
+    }
+  },
+  "history": [
+    {
+      "iteration": 1,
+      "seed": 20261214,
+      "generation_mode": "bootstrap_mixed",
+      "strict_game_fraction": 1.0,
+      "dataset": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset.meta.json",
+      "train_dataset": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset_combined.jsonl",
+      "train_dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset_combined.meta.json",
+      "model": "reports/ml/auto_improve_allbirds_main/iter_001/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 59200,
+        "mean_player_score": 58.68
+      },
+      "combined_dataset_summary": {
+        "enabled": true,
+        "decay": 0.5,
+        "max_accumulated_samples": 200000,
+        "target_total": 59200,
+        "combined_samples": 59200,
+        "total_available": 59200,
+        "sources": [
+          {
+            "iteration": 1,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 1.0,
+            "quota": 59200,
+            "written": 59200
+          }
+        ]
+      },
+      "train_summary": {
+        "train_samples": 53280,
+        "val_samples": 5920,
+        "last_epoch": {
+          "epoch": 30,
+          "lr_epoch": 8.403e-05,
+          "train_loss": 40.447056,
+          "train_action_acc": 0.446378,
+          "train_value_mse": 75.426476,
+          "train_move_rank_loss": 0.673849,
+          "train_move_rank_margin_mean": 0.043715,
+          "train_move_pair_acc": 0.397377,
+          "val_loss": 32.730898,
+          "val_action_acc": 0.490034,
+          "val_value_mse": 60.593916,
+          "val_move_rank_loss": 0.673779,
+          "val_move_rank_margin_mean": 0.043833,
+          "val_move_pair_acc": 0.395566,
+          "is_best_epoch": true
+        }
+      },
+      "eval_summary": {
+        "games": 80,
+        "nn_wins": 12,
+        "heuristic_wins": 65,
+        "ties": 3,
+        "nn_mean_score": 35.75,
+        "heuristic_mean_score": 51.825,
+        "nn_mean_margin": -16.075,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.0,
+        "heuristic_rate_ge_120": 0.0,
+        "nn_max_score": 72,
+        "nn_min_score": 12,
+        "heuristic_max_score": 97,
+        "heuristic_min_score": 23,
+        "nn_rate_lt_80": 1.0,
+        "nn_rate_80_99": 0.0,
+        "nn_rate_100_119": 0.0,
+        "nn_rate_ge_120_bucket": 0.0,
+        "heuristic_rate_lt_80": 0.975,
+        "heuristic_rate_80_99": 0.025,
+        "heuristic_rate_100_119": 0.0,
+        "heuristic_rate_ge_120_bucket": 0.0
+      },
+      "promotion_gate": {
+        "games": 200,
+        "result": {
+          "games": 200,
+          "nn_wins": 30,
+          "heuristic_wins": 166,
+          "ties": 4,
+          "nn_mean_score": 33.13,
+          "heuristic_mean_score": 52.45,
+          "nn_mean_margin": -19.32,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "heuristic_rate_ge_100": 0.005,
+          "heuristic_rate_ge_120": 0.0,
+          "nn_max_score": 98,
+          "nn_min_score": 11,
+          "heuristic_max_score": 100,
+          "heuristic_min_score": 24,
+          "nn_rate_lt_80": 0.995,
+          "nn_rate_80_99": 0.005,
+          "nn_rate_100_119": 0.0,
+          "nn_rate_ge_120_bucket": 0.0,
+          "heuristic_rate_lt_80": 0.95,
+          "heuristic_rate_80_99": 0.045,
+          "heuristic_rate_100_119": 0.005,
+          "heuristic_rate_ge_120_bucket": 0.0,
+          "opponent_wins": 166,
+          "opponent_mean_score": 52.45,
+          "primary_opponent": "heuristic",
+          "opponent_spec": "heuristic"
+        },
+        "score_primary_pass": true,
+        "win_secondary_pass": false,
+        "win_rate": 0.15,
+        "promoted": false
+      },
+      "promotion_primary_eval": {
+        "primary_opponent": "heuristic",
+        "result": {
+          "games": 200,
+          "nn_wins": 30,
+          "heuristic_wins": 166,
+          "ties": 4,
+          "nn_mean_score": 33.13,
+          "heuristic_mean_score": 52.45,
+          "nn_mean_margin": -19.32,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "heuristic_rate_ge_100": 0.005,
+          "heuristic_rate_ge_120": 0.0,
+          "nn_max_score": 98,
+          "nn_min_score": 11,
+          "heuristic_max_score": 100,
+          "heuristic_min_score": 24,
+          "nn_rate_lt_80": 0.995,
+          "nn_rate_80_99": 0.005,
+          "nn_rate_100_119": 0.0,
+          "nn_rate_ge_120_bucket": 0.0,
+          "heuristic_rate_lt_80": 0.95,
+          "heuristic_rate_80_99": 0.045,
+          "heuristic_rate_100_119": 0.005,
+          "heuristic_rate_ge_120_bucket": 0.0,
+          "opponent_wins": 166,
+          "opponent_mean_score": 52.45,
+          "primary_opponent": "heuristic",
+          "opponent_spec": "heuristic"
+        }
+      },
+      "pool_eval": {
+        "model": "reports/ml/auto_improve_allbirds_main/iter_001/factorized_model.npz",
+        "board_type": "oceania",
+        "games_per_opponent": 60,
+        "opponents": [
+          "heuristic"
+        ],
+        "summary": {
+          "games": 60,
+          "nn_wins": 12,
+          "opponent_wins": 48,
+          "ties": 0,
+          "nn_win_rate": 0.2,
+          "nn_mean_score": 34.717,
+          "nn_mean_margin": -16.383,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "nn_max_score": 91,
+          "nn_min_score": 13,
+          "nn_rate_lt_80": 0.9833,
+          "nn_rate_80_99": 0.0167,
+          "nn_rate_100_119": 0.0,
+          "nn_rate_ge_120_bucket": 0.0
+        },
+        "by_opponent": [
+          {
+            "opponent": "heuristic",
+            "games": 60,
+            "nn_wins": 12,
+            "opponent_wins": 48,
+            "ties": 0,
+            "nn_mean_score": 34.717,
+            "opponent_mean_score": 51.1,
+            "nn_mean_margin": -16.383,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 91,
+            "nn_min_score": 13,
+            "nn_rate_lt_80": 0.9833,
+            "nn_rate_80_99": 0.0167,
+            "nn_rate_100_119": 0.0,
+            "nn_rate_ge_120_bucket": 0.0
+          }
+        ]
+      },
+      "kpi_gate": {
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_001/pool_eval.json",
+        "baseline_path": null,
+        "passed": true,
+        "checks": [
+          {
+            "name": "min_win_rate",
+            "passed": true,
+            "detail": "0.2000 >= 0.0000"
+          },
+          {
+            "name": "min_mean_score",
+            "passed": true,
+            "detail": "34.717 >= 0.000"
+          },
+          {
+            "name": "min_rate_ge_100",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          },
+          {
+            "name": "min_rate_ge_120",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          }
+        ],
+        "candidate_summary": {
+          "nn_win_rate": 0.2,
+          "nn_mean_score": 34.717,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        }
+      },
+      "strict_kpi_gate": {
+        "passed": true,
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_001/strict_kpi_candidate.json",
+        "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+        "checks": [
+          {
+            "name": "min_round1_pct_15_30",
+            "passed": true,
+            "detail": "0.6500 >= 0.2000"
+          },
+          {
+            "name": "max_round1_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "max_smoke_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "min_strict_certified_birds",
+            "passed": true,
+            "detail": "446 >= 50"
+          }
+        ],
+        "candidate_summary": {
+          "round1_mean": 20.75,
+          "round1_pct_15_30": 0.65,
+          "round1_strict_rejected_games": 0,
+          "smoke_mean_player_score": 64.667,
+          "smoke_strict_rejected_games": 0,
+          "strict_certified_birds": 446
+        }
+      }
+    },
+    {
+      "iteration": 2,
+      "seed": 20262214,
+      "generation_mode": "bootstrap_mixed",
+      "strict_game_fraction": 1.0,
+      "dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.meta.json",
+      "train_dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset_combined.jsonl",
+      "train_dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset_combined.meta.json",
+      "model": "reports/ml/auto_improve_allbirds_main/iter_002/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 59200,
+        "mean_player_score": 49.801
+      },
+      "combined_dataset_summary": {
+        "enabled": true,
+        "decay": 0.5,
+        "max_accumulated_samples": 200000,
+        "target_total": 118400,
+        "combined_samples": 118400,
+        "total_available": 118400,
+        "sources": [
+          {
+            "iteration": 1,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.5,
+            "quota": 59200,
+            "written": 59200
+          },
+          {
+            "iteration": 2,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 1.0,
+            "quota": 59200,
+            "written": 59200
+          }
+        ]
+      },
+      "train_summary": {
+        "train_samples": 106560,
+        "val_samples": 11840,
+        "last_epoch": {
+          "epoch": 30,
+          "lr_epoch": 8.403e-05,
+          "train_loss": 38.080979,
+          "train_action_acc": 0.506278,
+          "train_value_mse": 71.416483,
+          "train_move_rank_loss": 0.690614,
+          "train_move_rank_margin_mean": 0.007594,
+          "train_move_pair_acc": 0.337122,
+          "val_loss": 31.538635,
+          "val_action_acc": 0.536909,
+          "val_value_mse": 58.748981,
+          "val_move_rank_loss": 0.691081,
+          "val_move_rank_margin_mean": 0.006642,
+          "val_move_pair_acc": 0.336381,
+          "is_best_epoch": false
+        }
+      },
+      "eval_summary": {
+        "games": 80,
+        "nn_wins": 44,
+        "heuristic_wins": 36,
+        "ties": 0,
+        "nn_mean_score": 53.388,
+        "heuristic_mean_score": 50.812,
+        "nn_mean_margin": 2.575,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.0,
+        "heuristic_rate_ge_120": 0.0,
+        "nn_max_score": 94,
+        "nn_min_score": 18,
+        "heuristic_max_score": 89,
+        "heuristic_min_score": 19,
+        "nn_rate_lt_80": 0.975,
+        "nn_rate_80_99": 0.025,
+        "nn_rate_100_119": 0.0,
+        "nn_rate_ge_120_bucket": 0.0,
+        "heuristic_rate_lt_80": 0.95,
+        "heuristic_rate_80_99": 0.05,
+        "heuristic_rate_100_119": 0.0,
+        "heuristic_rate_ge_120_bucket": 0.0
+      },
+      "promotion_gate": {
+        "games": 200,
+        "result": {
+          "games": 200,
+          "nn_wins": 105,
+          "heuristic_wins": 91,
+          "ties": 4,
+          "nn_mean_score": 54.48,
+          "heuristic_mean_score": 52.535,
+          "nn_mean_margin": 1.945,
+          "nn_rate_ge_100": 0.005,
+          "nn_rate_ge_120": 0.0,
+          "heuristic_rate_ge_100": 0.005,
+          "heuristic_rate_ge_120": 0.0,
+          "nn_max_score": 100,
+          "nn_min_score": 13,
+          "heuristic_max_score": 100,
+          "heuristic_min_score": 20,
+          "nn_rate_lt_80": 0.9,
+          "nn_rate_80_99": 0.095,
+          "nn_rate_100_119": 0.005,
+          "nn_rate_ge_120_bucket": 0.0,
+          "heuristic_rate_lt_80": 0.95,
+          "heuristic_rate_80_99": 0.045,
+          "heuristic_rate_100_119": 0.005,
+          "heuristic_rate_ge_120_bucket": 0.0,
+          "opponent_wins": 91,
+          "opponent_mean_score": 52.535,
+          "primary_opponent": "heuristic",
+          "opponent_spec": "heuristic"
+        },
+        "score_primary_pass": true,
+        "win_secondary_pass": true,
+        "win_rate": 0.525,
+        "promoted": true
+      },
+      "promotion_primary_eval": {
+        "primary_opponent": "heuristic",
+        "result": {
+          "games": 200,
+          "nn_wins": 105,
+          "heuristic_wins": 91,
+          "ties": 4,
+          "nn_mean_score": 54.48,
+          "heuristic_mean_score": 52.535,
+          "nn_mean_margin": 1.945,
+          "nn_rate_ge_100": 0.005,
+          "nn_rate_ge_120": 0.0,
+          "heuristic_rate_ge_100": 0.005,
+          "heuristic_rate_ge_120": 0.0,
+          "nn_max_score": 100,
+          "nn_min_score": 13,
+          "heuristic_max_score": 100,
+          "heuristic_min_score": 20,
+          "nn_rate_lt_80": 0.9,
+          "nn_rate_80_99": 0.095,
+          "nn_rate_100_119": 0.005,
+          "nn_rate_ge_120_bucket": 0.0,
+          "heuristic_rate_lt_80": 0.95,
+          "heuristic_rate_80_99": 0.045,
+          "heuristic_rate_100_119": 0.005,
+          "heuristic_rate_ge_120_bucket": 0.0,
+          "opponent_wins": 91,
+          "opponent_mean_score": 52.535,
+          "primary_opponent": "heuristic",
+          "opponent_spec": "heuristic"
+        }
+      },
+      "pool_eval": {
+        "model": "reports/ml/auto_improve_allbirds_main/iter_002/factorized_model.npz",
+        "board_type": "oceania",
+        "games_per_opponent": 60,
+        "opponents": [
+          "heuristic"
+        ],
+        "summary": {
+          "games": 60,
+          "nn_wins": 44,
+          "opponent_wins": 15,
+          "ties": 1,
+          "nn_win_rate": 0.7333,
+          "nn_mean_score": 58.583,
+          "nn_mean_margin": 7.95,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "nn_max_score": 97,
+          "nn_min_score": 16,
+          "nn_rate_lt_80": 0.9333,
+          "nn_rate_80_99": 0.0667,
+          "nn_rate_100_119": 0.0,
+          "nn_rate_ge_120_bucket": 0.0
+        },
+        "by_opponent": [
+          {
+            "opponent": "heuristic",
+            "games": 60,
+            "nn_wins": 44,
+            "opponent_wins": 15,
+            "ties": 1,
+            "nn_mean_score": 58.583,
+            "opponent_mean_score": 50.633,
+            "nn_mean_margin": 7.95,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 97,
+            "nn_min_score": 16,
+            "nn_rate_lt_80": 0.9333,
+            "nn_rate_80_99": 0.0667,
+            "nn_rate_100_119": 0.0,
+            "nn_rate_ge_120_bucket": 0.0
+          }
+        ]
+      },
+      "kpi_gate": {
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_002/pool_eval.json",
+        "baseline_path": null,
+        "passed": true,
+        "checks": [
+          {
+            "name": "min_win_rate",
+            "passed": true,
+            "detail": "0.7333 >= 0.0000"
+          },
+          {
+            "name": "min_mean_score",
+            "passed": true,
+            "detail": "58.583 >= 0.000"
+          },
+          {
+            "name": "min_rate_ge_100",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          },
+          {
+            "name": "min_rate_ge_120",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          }
+        ],
+        "candidate_summary": {
+          "nn_win_rate": 0.7333,
+          "nn_mean_score": 58.583,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        }
+      },
+      "strict_kpi_gate": {
+        "passed": true,
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_002/strict_kpi_candidate.json",
+        "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+        "checks": [
+          {
+            "name": "min_round1_pct_15_30",
+            "passed": true,
+            "detail": "0.8000 >= 0.2000"
+          },
+          {
+            "name": "max_round1_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "max_smoke_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "min_strict_certified_birds",
+            "passed": true,
+            "detail": "446 >= 50"
+          }
+        ],
+        "candidate_summary": {
+          "round1_mean": 21.35,
+          "round1_pct_15_30": 0.8,
+          "round1_strict_rejected_games": 0,
+          "smoke_mean_player_score": 49.833,
+          "smoke_strict_rejected_games": 0,
+          "strict_certified_birds": 446
+        }
+      }
+    },
+    {
+      "iteration": 3,
+      "seed": 20263214,
+      "generation_mode": "champion_nn_vs_nn",
+      "strict_game_fraction": 1.0,
+      "dataset": "reports/ml/auto_improve_allbirds_main/iter_003/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_003/bc_dataset.meta.json",
+      "train_dataset": "reports/ml/auto_improve_allbirds_main/iter_003/bc_dataset_combined.jsonl",
+      "train_dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_003/bc_dataset_combined.meta.json",
+      "model": "reports/ml/auto_improve_allbirds_main/iter_003/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 59200,
+        "mean_player_score": 49.797
+      },
+      "combined_dataset_summary": {
+        "enabled": true,
+        "decay": 0.5,
+        "max_accumulated_samples": 200000,
+        "target_total": 177600,
+        "combined_samples": 177600,
+        "total_available": 177600,
+        "sources": [
+          {
+            "iteration": 1,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.25,
+            "quota": 59200,
+            "written": 59200
+          },
+          {
+            "iteration": 2,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.5,
+            "quota": 59200,
+            "written": 59200
+          },
+          {
+            "iteration": 3,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_003/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 1.0,
+            "quota": 59200,
+            "written": 59200
+          }
+        ]
+      },
+      "train_summary": {
+        "train_samples": 159840,
+        "val_samples": 17760,
+        "last_epoch": {
+          "epoch": 30,
+          "lr_epoch": 8.403e-05,
+          "train_loss": 36.342782,
+          "train_action_acc": 0.513607,
+          "train_value_mse": 68.016167,
+          "train_move_rank_loss": 0.681556,
+          "train_move_rank_margin_mean": 0.028106,
+          "train_move_pair_acc": 0.387489,
+          "val_loss": 30.469032,
+          "val_action_acc": 0.544651,
+          "val_value_mse": 56.570153,
+          "val_move_rank_loss": 0.680894,
+          "val_move_rank_margin_mean": 0.029542,
+          "val_move_pair_acc": 0.39002,
+          "is_best_epoch": true
+        }
+      },
+      "eval_summary": {
+        "games": 80,
+        "nn_wins": 37,
+        "heuristic_wins": 41,
+        "ties": 2,
+        "nn_mean_score": 50.525,
+        "heuristic_mean_score": 53.163,
+        "nn_mean_margin": -2.638,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.0,
+        "heuristic_rate_ge_120": 0.0,
+        "nn_max_score": 88,
+        "nn_min_score": 18,
+        "heuristic_max_score": 90,
+        "heuristic_min_score": 27,
+        "nn_rate_lt_80": 0.9625,
+        "nn_rate_80_99": 0.0375,
+        "nn_rate_100_119": 0.0,
+        "nn_rate_ge_120_bucket": 0.0,
+        "heuristic_rate_lt_80": 0.95,
+        "heuristic_rate_80_99": 0.05,
+        "heuristic_rate_100_119": 0.0,
+        "heuristic_rate_ge_120_bucket": 0.0
+      },
+      "promotion_gate": {
+        "games": 200,
+        "result": {
+          "games": 200,
+          "nn_wins": 38,
+          "opponent_wins": 158,
+          "ties": 4,
+          "nn_mean_score": 43.485,
+          "opponent_mean_score": 60.495,
+          "nn_mean_margin": -17.01,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        },
+        "score_primary_pass": true,
+        "win_secondary_pass": false,
+        "win_rate": 0.19,
+        "promoted": false
+      },
+      "promotion_primary_eval": {
+        "primary_opponent": "champion",
+        "result": {
+          "games": 200,
+          "nn_wins": 38,
+          "opponent_wins": 158,
+          "ties": 4,
+          "nn_mean_score": 43.485,
+          "opponent_mean_score": 60.495,
+          "nn_mean_margin": -17.01,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        }
+      },
+      "pool_eval": {
+        "model": "reports/ml/auto_improve_allbirds_main/iter_003/factorized_model.npz",
+        "board_type": "oceania",
+        "games_per_opponent": 60,
+        "opponents": [
+          "heuristic",
+          "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        ],
+        "summary": {
+          "games": 120,
+          "nn_wins": 55,
+          "opponent_wins": 64,
+          "ties": 1,
+          "nn_win_rate": 0.4583,
+          "nn_mean_score": 48.984,
+          "nn_mean_margin": -5.591,
+          "nn_rate_ge_100": 0.0083,
+          "nn_rate_ge_120": 0.0,
+          "nn_max_score": 109,
+          "nn_min_score": 15,
+          "nn_rate_lt_80": 0.9584,
+          "nn_rate_80_99": 0.0333,
+          "nn_rate_100_119": 0.0083,
+          "nn_rate_ge_120_bucket": 0.0
+        },
+        "by_opponent": [
+          {
+            "opponent": "heuristic",
+            "games": 60,
+            "nn_wins": 33,
+            "opponent_wins": 27,
+            "ties": 0,
+            "nn_mean_score": 49.95,
+            "opponent_mean_score": 50.583,
+            "nn_mean_margin": -0.633,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 96,
+            "nn_min_score": 17,
+            "nn_rate_lt_80": 0.95,
+            "nn_rate_80_99": 0.05,
+            "nn_rate_100_119": 0.0,
+            "nn_rate_ge_120_bucket": 0.0
+          },
+          {
+            "opponent": "reports/ml/auto_improve_allbirds_main/best_model.npz",
+            "games": 60,
+            "nn_wins": 22,
+            "opponent_wins": 37,
+            "ties": 1,
+            "nn_mean_score": 48.017,
+            "opponent_mean_score": 58.567,
+            "nn_mean_margin": -10.55,
+            "nn_rate_ge_100": 0.0167,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 109,
+            "nn_min_score": 15,
+            "nn_rate_lt_80": 0.9667,
+            "nn_rate_80_99": 0.0167,
+            "nn_rate_100_119": 0.0167,
+            "nn_rate_ge_120_bucket": 0.0
+          }
+        ]
+      },
+      "kpi_gate": {
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_003/pool_eval.json",
+        "baseline_path": "reports/ml/auto_improve_allbirds_main/iter_002/pool_eval.json",
+        "passed": true,
+        "checks": [
+          {
+            "name": "min_win_rate",
+            "passed": true,
+            "detail": "0.4583 >= 0.0000"
+          },
+          {
+            "name": "min_mean_score",
+            "passed": true,
+            "detail": "48.984 >= 0.000"
+          },
+          {
+            "name": "min_rate_ge_100",
+            "passed": true,
+            "detail": "0.0083 >= 0.0000"
+          },
+          {
+            "name": "min_rate_ge_120",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          }
+        ],
+        "candidate_summary": {
+          "nn_win_rate": 0.4583,
+          "nn_mean_score": 48.984,
+          "nn_rate_ge_100": 0.0083,
+          "nn_rate_ge_120": 0.0
+        }
+      },
+      "strict_kpi_gate": {
+        "passed": true,
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_003/strict_kpi_candidate.json",
+        "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+        "checks": [
+          {
+            "name": "min_round1_pct_15_30",
+            "passed": true,
+            "detail": "0.7000 >= 0.2000"
+          },
+          {
+            "name": "max_round1_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "max_smoke_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "min_strict_certified_birds",
+            "passed": true,
+            "detail": "446 >= 50"
+          }
+        ],
+        "candidate_summary": {
+          "round1_mean": 20.8,
+          "round1_pct_15_30": 0.7,
+          "round1_strict_rejected_games": 0,
+          "smoke_mean_player_score": 58.333,
+          "smoke_strict_rejected_games": 0,
+          "strict_certified_birds": 446
+        }
+      }
+    },
+    {
+      "iteration": 4,
+      "seed": 20264214,
+      "generation_mode": "champion_nn_vs_nn",
+      "strict_game_fraction": 1.0,
+      "dataset": "reports/ml/auto_improve_allbirds_main/iter_004/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_004/bc_dataset.meta.json",
+      "train_dataset": "reports/ml/auto_improve_allbirds_main/iter_004/bc_dataset_combined.jsonl",
+      "train_dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_004/bc_dataset_combined.meta.json",
+      "model": "reports/ml/auto_improve_allbirds_main/iter_004/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 59200,
+        "mean_player_score": 49.807
+      },
+      "combined_dataset_summary": {
+        "enabled": true,
+        "decay": 0.5,
+        "max_accumulated_samples": 200000,
+        "target_total": 200000,
+        "combined_samples": 200000,
+        "total_available": 236800,
+        "sources": [
+          {
+            "iteration": 1,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.125,
+            "quota": 34133,
+            "written": 34133
+          },
+          {
+            "iteration": 2,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.25,
+            "quota": 47467,
+            "written": 47467
+          },
+          {
+            "iteration": 3,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_003/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.5,
+            "quota": 59200,
+            "written": 59200
+          },
+          {
+            "iteration": 4,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_004/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 1.0,
+            "quota": 59200,
+            "written": 59200
+          }
+        ]
+      },
+      "train_summary": {
+        "train_samples": 180000,
+        "val_samples": 20000,
+        "last_epoch": {
+          "epoch": 30,
+          "lr_epoch": 8.403e-05,
+          "train_loss": 35.063662,
+          "train_action_acc": 0.531161,
+          "train_value_mse": 65.517569,
+          "train_move_rank_loss": 0.665891,
+          "train_move_rank_margin_mean": 0.065658,
+          "train_move_pair_acc": 0.445597,
+          "val_loss": 30.000651,
+          "val_action_acc": 0.56015,
+          "val_value_mse": 55.733619,
+          "val_move_rank_loss": 0.665911,
+          "val_move_rank_margin_mean": 0.065613,
+          "val_move_pair_acc": 0.4467,
+          "is_best_epoch": false
+        }
+      },
+      "eval_summary": {
+        "games": 80,
+        "nn_wins": 41,
+        "heuristic_wins": 38,
+        "ties": 1,
+        "nn_mean_score": 50.513,
+        "heuristic_mean_score": 52.45,
+        "nn_mean_margin": -1.938,
+        "nn_rate_ge_100": 0.0375,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.0,
+        "heuristic_rate_ge_120": 0.0,
+        "nn_max_score": 105,
+        "nn_min_score": 13,
+        "heuristic_max_score": 95,
+        "heuristic_min_score": 18,
+        "nn_rate_lt_80": 0.9375,
+        "nn_rate_80_99": 0.025,
+        "nn_rate_100_119": 0.0375,
+        "nn_rate_ge_120_bucket": 0.0,
+        "heuristic_rate_lt_80": 0.9375,
+        "heuristic_rate_80_99": 0.0625,
+        "heuristic_rate_100_119": 0.0,
+        "heuristic_rate_ge_120_bucket": 0.0
+      },
+      "promotion_gate": {
+        "games": 200,
+        "result": {
+          "games": 200,
+          "nn_wins": 69,
+          "opponent_wins": 131,
+          "ties": 0,
+          "nn_mean_score": 48.675,
+          "opponent_mean_score": 57.1,
+          "nn_mean_margin": -8.425,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        },
+        "score_primary_pass": true,
+        "win_secondary_pass": true,
+        "win_rate": 0.345,
+        "promoted": true
+      },
+      "promotion_primary_eval": {
+        "primary_opponent": "champion",
+        "result": {
+          "games": 200,
+          "nn_wins": 69,
+          "opponent_wins": 131,
+          "ties": 0,
+          "nn_mean_score": 48.675,
+          "opponent_mean_score": 57.1,
+          "nn_mean_margin": -8.425,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        }
+      },
+      "pool_eval": {
+        "model": "reports/ml/auto_improve_allbirds_main/iter_004/factorized_model.npz",
+        "board_type": "oceania",
+        "games_per_opponent": 60,
+        "opponents": [
+          "heuristic",
+          "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        ],
+        "summary": {
+          "games": 120,
+          "nn_wins": 63,
+          "opponent_wins": 55,
+          "ties": 2,
+          "nn_win_rate": 0.525,
+          "nn_mean_score": 54.675,
+          "nn_mean_margin": 1.092,
+          "nn_rate_ge_100": 0.0083,
+          "nn_rate_ge_120": 0.0,
+          "nn_max_score": 103,
+          "nn_min_score": 19,
+          "nn_rate_lt_80": 0.9083,
+          "nn_rate_80_99": 0.0833,
+          "nn_rate_100_119": 0.0083,
+          "nn_rate_ge_120_bucket": 0.0
+        },
+        "by_opponent": [
+          {
+            "opponent": "heuristic",
+            "games": 60,
+            "nn_wins": 37,
+            "opponent_wins": 22,
+            "ties": 1,
+            "nn_mean_score": 55.45,
+            "opponent_mean_score": 51.3,
+            "nn_mean_margin": 4.15,
+            "nn_rate_ge_100": 0.0167,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 103,
+            "nn_min_score": 19,
+            "nn_rate_lt_80": 0.8833,
+            "nn_rate_80_99": 0.1,
+            "nn_rate_100_119": 0.0167,
+            "nn_rate_ge_120_bucket": 0.0
+          },
+          {
+            "opponent": "reports/ml/auto_improve_allbirds_main/best_model.npz",
+            "games": 60,
+            "nn_wins": 26,
+            "opponent_wins": 33,
+            "ties": 1,
+            "nn_mean_score": 53.9,
+            "opponent_mean_score": 55.867,
+            "nn_mean_margin": -1.967,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 99,
+            "nn_min_score": 21,
+            "nn_rate_lt_80": 0.9333,
+            "nn_rate_80_99": 0.0667,
+            "nn_rate_100_119": 0.0,
+            "nn_rate_ge_120_bucket": 0.0
+          }
+        ]
+      },
+      "kpi_gate": {
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_004/pool_eval.json",
+        "baseline_path": "reports/ml/auto_improve_allbirds_main/iter_002/pool_eval.json",
+        "passed": true,
+        "checks": [
+          {
+            "name": "min_win_rate",
+            "passed": true,
+            "detail": "0.5250 >= 0.0000"
+          },
+          {
+            "name": "min_mean_score",
+            "passed": true,
+            "detail": "54.675 >= 0.000"
+          },
+          {
+            "name": "min_rate_ge_100",
+            "passed": true,
+            "detail": "0.0083 >= 0.0000"
+          },
+          {
+            "name": "min_rate_ge_120",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          }
+        ],
+        "candidate_summary": {
+          "nn_win_rate": 0.525,
+          "nn_mean_score": 54.675,
+          "nn_rate_ge_100": 0.0083,
+          "nn_rate_ge_120": 0.0
+        }
+      },
+      "strict_kpi_gate": {
+        "passed": true,
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_004/strict_kpi_candidate.json",
+        "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+        "checks": [
+          {
+            "name": "min_round1_pct_15_30",
+            "passed": true,
+            "detail": "0.7500 >= 0.2000"
+          },
+          {
+            "name": "max_round1_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "max_smoke_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "min_strict_certified_birds",
+            "passed": true,
+            "detail": "446 >= 50"
+          }
+        ],
+        "candidate_summary": {
+          "round1_mean": 19.5,
+          "round1_pct_15_30": 0.75,
+          "round1_strict_rejected_games": 0,
+          "smoke_mean_player_score": 63.0,
+          "smoke_strict_rejected_games": 0,
+          "strict_certified_birds": 446
+        }
+      }
+    },
+    {
+      "iteration": 5,
+      "seed": 20265214,
+      "generation_mode": "champion_nn_vs_nn",
+      "strict_game_fraction": 1.0,
+      "dataset": "reports/ml/auto_improve_allbirds_main/iter_005/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_005/bc_dataset.meta.json",
+      "train_dataset": "reports/ml/auto_improve_allbirds_main/iter_005/bc_dataset_combined.jsonl",
+      "train_dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_005/bc_dataset_combined.meta.json",
+      "model": "reports/ml/auto_improve_allbirds_main/iter_005/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 59200,
+        "mean_player_score": 49.763
+      },
+      "combined_dataset_summary": {
+        "enabled": true,
+        "decay": 0.5,
+        "max_accumulated_samples": 200000,
+        "target_total": 200000,
+        "combined_samples": 200000,
+        "total_available": 296000,
+        "sources": [
+          {
+            "iteration": 1,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.0625,
+            "quota": 18598,
+            "written": 18598
+          },
+          {
+            "iteration": 2,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.125,
+            "quota": 25049,
+            "written": 25049
+          },
+          {
+            "iteration": 3,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_003/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.25,
+            "quota": 37953,
+            "written": 37953
+          },
+          {
+            "iteration": 4,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_004/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.5,
+            "quota": 59200,
+            "written": 59200
+          },
+          {
+            "iteration": 5,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_005/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 1.0,
+            "quota": 59200,
+            "written": 59200
+          }
+        ]
+      },
+      "train_summary": {
+        "train_samples": 180000,
+        "val_samples": 20000,
+        "last_epoch": {
+          "epoch": 30,
+          "lr_epoch": 8.403e-05,
+          "train_loss": 33.772511,
+          "train_action_acc": 0.540844,
+          "train_value_mse": 62.927117,
+          "train_move_rank_loss": 0.635676,
+          "train_move_rank_margin_mean": 0.141303,
+          "train_move_pair_acc": 0.522146,
+          "val_loss": 29.253069,
+          "val_action_acc": 0.57105,
+          "val_value_mse": 54.257844,
+          "val_move_rank_loss": 0.636759,
+          "val_move_rank_margin_mean": 0.139153,
+          "val_move_pair_acc": 0.518813,
+          "is_best_epoch": false
+        }
+      },
+      "eval_summary": {
+        "games": 80,
+        "nn_wins": 43,
+        "heuristic_wins": 36,
+        "ties": 1,
+        "nn_mean_score": 52.388,
+        "heuristic_mean_score": 50.138,
+        "nn_mean_margin": 2.25,
+        "nn_rate_ge_100": 0.025,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.0,
+        "heuristic_rate_ge_120": 0.0,
+        "nn_max_score": 103,
+        "nn_min_score": 24,
+        "heuristic_max_score": 91,
+        "heuristic_min_score": 26,
+        "nn_rate_lt_80": 0.9375,
+        "nn_rate_80_99": 0.0375,
+        "nn_rate_100_119": 0.025,
+        "nn_rate_ge_120_bucket": 0.0,
+        "heuristic_rate_lt_80": 0.9625,
+        "heuristic_rate_80_99": 0.0375,
+        "heuristic_rate_100_119": 0.0,
+        "heuristic_rate_ge_120_bucket": 0.0
+      },
+      "promotion_gate": {
+        "games": 200,
+        "result": {
+          "games": 200,
+          "nn_wins": 75,
+          "opponent_wins": 120,
+          "ties": 5,
+          "nn_mean_score": 54.57,
+          "opponent_mean_score": 59.45,
+          "nn_mean_margin": -4.88,
+          "nn_rate_ge_100": 0.005,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        },
+        "score_primary_pass": true,
+        "win_secondary_pass": true,
+        "win_rate": 0.375,
+        "promoted": true
+      },
+      "promotion_primary_eval": {
+        "primary_opponent": "champion",
+        "result": {
+          "games": 200,
+          "nn_wins": 75,
+          "opponent_wins": 120,
+          "ties": 5,
+          "nn_mean_score": 54.57,
+          "opponent_mean_score": 59.45,
+          "nn_mean_margin": -4.88,
+          "nn_rate_ge_100": 0.005,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        }
+      },
+      "pool_eval": {
+        "model": "reports/ml/auto_improve_allbirds_main/iter_005/factorized_model.npz",
+        "board_type": "oceania",
+        "games_per_opponent": 60,
+        "opponents": [
+          "heuristic",
+          "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        ],
+        "summary": {
+          "games": 120,
+          "nn_wins": 57,
+          "opponent_wins": 62,
+          "ties": 1,
+          "nn_win_rate": 0.475,
+          "nn_mean_score": 55.017,
+          "nn_mean_margin": 1.133,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "nn_max_score": 94,
+          "nn_min_score": 19,
+          "nn_rate_lt_80": 0.9334,
+          "nn_rate_80_99": 0.0667,
+          "nn_rate_100_119": 0.0,
+          "nn_rate_ge_120_bucket": 0.0
+        },
+        "by_opponent": [
+          {
+            "opponent": "heuristic",
+            "games": 60,
+            "nn_wins": 33,
+            "opponent_wins": 27,
+            "ties": 0,
+            "nn_mean_score": 54.917,
+            "opponent_mean_score": 49.5,
+            "nn_mean_margin": 5.417,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 91,
+            "nn_min_score": 19,
+            "nn_rate_lt_80": 0.9,
+            "nn_rate_80_99": 0.1,
+            "nn_rate_100_119": 0.0,
+            "nn_rate_ge_120_bucket": 0.0
+          },
+          {
+            "opponent": "reports/ml/auto_improve_allbirds_main/best_model.npz",
+            "games": 60,
+            "nn_wins": 24,
+            "opponent_wins": 35,
+            "ties": 1,
+            "nn_mean_score": 55.117,
+            "opponent_mean_score": 58.267,
+            "nn_mean_margin": -3.15,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 94,
+            "nn_min_score": 23,
+            "nn_rate_lt_80": 0.9667,
+            "nn_rate_80_99": 0.0333,
+            "nn_rate_100_119": 0.0,
+            "nn_rate_ge_120_bucket": 0.0
+          }
+        ]
+      },
+      "kpi_gate": {
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_005/pool_eval.json",
+        "baseline_path": "reports/ml/auto_improve_allbirds_main/iter_002/pool_eval.json",
+        "passed": true,
+        "checks": [
+          {
+            "name": "min_win_rate",
+            "passed": true,
+            "detail": "0.4750 >= 0.0000"
+          },
+          {
+            "name": "min_mean_score",
+            "passed": true,
+            "detail": "55.017 >= 0.000"
+          },
+          {
+            "name": "min_rate_ge_100",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          },
+          {
+            "name": "min_rate_ge_120",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          }
+        ],
+        "candidate_summary": {
+          "nn_win_rate": 0.475,
+          "nn_mean_score": 55.017,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        }
+      },
+      "strict_kpi_gate": {
+        "passed": true,
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_005/strict_kpi_candidate.json",
+        "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+        "checks": [
+          {
+            "name": "min_round1_pct_15_30",
+            "passed": true,
+            "detail": "0.6000 >= 0.2000"
+          },
+          {
+            "name": "max_round1_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "max_smoke_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "min_strict_certified_birds",
+            "passed": true,
+            "detail": "446 >= 50"
+          }
+        ],
+        "candidate_summary": {
+          "round1_mean": 19.65,
+          "round1_pct_15_30": 0.6,
+          "round1_strict_rejected_games": 0,
+          "smoke_mean_player_score": 49.0,
+          "smoke_strict_rejected_games": 0,
+          "strict_certified_birds": 446
+        }
+      }
+    },
+    {
+      "iteration": 6,
+      "seed": 20266214,
+      "generation_mode": "champion_nn_vs_nn",
+      "strict_game_fraction": 1.0,
+      "dataset": "reports/ml/auto_improve_allbirds_main/iter_006/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_006/bc_dataset.meta.json",
+      "train_dataset": "reports/ml/auto_improve_allbirds_main/iter_006/bc_dataset_combined.jsonl",
+      "train_dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_006/bc_dataset_combined.meta.json",
+      "model": "reports/ml/auto_improve_allbirds_main/iter_006/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 59200,
+        "mean_player_score": 49.895
+      },
+      "combined_dataset_summary": {
+        "enabled": true,
+        "decay": 0.5,
+        "max_accumulated_samples": 200000,
+        "target_total": 200000,
+        "combined_samples": 200000,
+        "total_available": 355200,
+        "sources": [
+          {
+            "iteration": 1,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.03125,
+            "quota": 11670,
+            "written": 11670
+          },
+          {
+            "iteration": 2,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.0625,
+            "quota": 14844,
+            "written": 14844
+          },
+          {
+            "iteration": 3,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_003/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.125,
+            "quota": 21194,
+            "written": 21194
+          },
+          {
+            "iteration": 4,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_004/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.25,
+            "quota": 33892,
+            "written": 33892
+          },
+          {
+            "iteration": 5,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_005/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.5,
+            "quota": 59200,
+            "written": 59200
+          },
+          {
+            "iteration": 6,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_006/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 1.0,
+            "quota": 59200,
+            "written": 59200
+          }
+        ]
+      },
+      "train_summary": {
+        "train_samples": 180000,
+        "val_samples": 20000,
+        "last_epoch": {
+          "epoch": 30,
+          "lr_epoch": 8.403e-05,
+          "train_loss": 33.436054,
+          "train_action_acc": 0.54115,
+          "train_value_mse": 62.24072,
+          "train_move_rank_loss": 0.66156,
+          "train_move_rank_margin_mean": 0.070945,
+          "train_move_pair_acc": 0.54534,
+          "val_loss": 28.36717,
+          "val_action_acc": 0.5776,
+          "val_value_mse": 52.492027,
+          "val_move_rank_loss": 0.661432,
+          "val_move_rank_margin_mean": 0.071222,
+          "val_move_pair_acc": 0.5437,
+          "is_best_epoch": false
+        }
+      },
+      "eval_summary": {
+        "games": 80,
+        "nn_wins": 31,
+        "heuristic_wins": 47,
+        "ties": 2,
+        "nn_mean_score": 45.413,
+        "heuristic_mean_score": 52.55,
+        "nn_mean_margin": -7.138,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.0,
+        "heuristic_rate_ge_120": 0.0,
+        "nn_max_score": 89,
+        "nn_min_score": 15,
+        "heuristic_max_score": 91,
+        "heuristic_min_score": 26,
+        "nn_rate_lt_80": 0.9625,
+        "nn_rate_80_99": 0.0375,
+        "nn_rate_100_119": 0.0,
+        "nn_rate_ge_120_bucket": 0.0,
+        "heuristic_rate_lt_80": 0.9625,
+        "heuristic_rate_80_99": 0.0375,
+        "heuristic_rate_100_119": 0.0,
+        "heuristic_rate_ge_120_bucket": 0.0
+      },
+      "promotion_gate": {
+        "games": 200,
+        "result": {
+          "games": 200,
+          "nn_wins": 52,
+          "opponent_wins": 144,
+          "ties": 4,
+          "nn_mean_score": 46.485,
+          "opponent_mean_score": 60.195,
+          "nn_mean_margin": -13.71,
+          "nn_rate_ge_100": 0.005,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        },
+        "score_primary_pass": true,
+        "win_secondary_pass": true,
+        "win_rate": 0.26,
+        "promoted": true
+      },
+      "promotion_primary_eval": {
+        "primary_opponent": "champion",
+        "result": {
+          "games": 200,
+          "nn_wins": 52,
+          "opponent_wins": 144,
+          "ties": 4,
+          "nn_mean_score": 46.485,
+          "opponent_mean_score": 60.195,
+          "nn_mean_margin": -13.71,
+          "nn_rate_ge_100": 0.005,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        }
+      },
+      "pool_eval": {
+        "model": "reports/ml/auto_improve_allbirds_main/iter_006/factorized_model.npz",
+        "board_type": "oceania",
+        "games_per_opponent": 60,
+        "opponents": [
+          "heuristic",
+          "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        ],
+        "summary": {
+          "games": 120,
+          "nn_wins": 33,
+          "opponent_wins": 84,
+          "ties": 3,
+          "nn_win_rate": 0.275,
+          "nn_mean_score": 43.258,
+          "nn_mean_margin": -10.417,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "nn_max_score": 82,
+          "nn_min_score": 17,
+          "nn_rate_lt_80": 0.9834,
+          "nn_rate_80_99": 0.0167,
+          "nn_rate_100_119": 0.0,
+          "nn_rate_ge_120_bucket": 0.0
+        },
+        "by_opponent": [
+          {
+            "opponent": "heuristic",
+            "games": 60,
+            "nn_wins": 17,
+            "opponent_wins": 40,
+            "ties": 3,
+            "nn_mean_score": 42.783,
+            "opponent_mean_score": 48.483,
+            "nn_mean_margin": -5.7,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 82,
+            "nn_min_score": 19,
+            "nn_rate_lt_80": 0.9667,
+            "nn_rate_80_99": 0.0333,
+            "nn_rate_100_119": 0.0,
+            "nn_rate_ge_120_bucket": 0.0
+          },
+          {
+            "opponent": "reports/ml/auto_improve_allbirds_main/best_model.npz",
+            "games": 60,
+            "nn_wins": 16,
+            "opponent_wins": 44,
+            "ties": 0,
+            "nn_mean_score": 43.733,
+            "opponent_mean_score": 58.867,
+            "nn_mean_margin": -15.133,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 77,
+            "nn_min_score": 17,
+            "nn_rate_lt_80": 1.0,
+            "nn_rate_80_99": 0.0,
+            "nn_rate_100_119": 0.0,
+            "nn_rate_ge_120_bucket": 0.0
+          }
+        ]
+      },
+      "kpi_gate": {
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_006/pool_eval.json",
+        "baseline_path": "reports/ml/auto_improve_allbirds_main/iter_002/pool_eval.json",
+        "passed": true,
+        "checks": [
+          {
+            "name": "min_win_rate",
+            "passed": true,
+            "detail": "0.2750 >= 0.0000"
+          },
+          {
+            "name": "min_mean_score",
+            "passed": true,
+            "detail": "43.258 >= 0.000"
+          },
+          {
+            "name": "min_rate_ge_100",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          },
+          {
+            "name": "min_rate_ge_120",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          }
+        ],
+        "candidate_summary": {
+          "nn_win_rate": 0.275,
+          "nn_mean_score": 43.258,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        }
+      },
+      "strict_kpi_gate": {
+        "passed": true,
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_006/strict_kpi_candidate.json",
+        "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+        "checks": [
+          {
+            "name": "min_round1_pct_15_30",
+            "passed": true,
+            "detail": "0.6500 >= 0.2000"
+          },
+          {
+            "name": "max_round1_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "max_smoke_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "min_strict_certified_birds",
+            "passed": true,
+            "detail": "446 >= 50"
+          }
+        ],
+        "candidate_summary": {
+          "round1_mean": 18.0,
+          "round1_pct_15_30": 0.65,
+          "round1_strict_rejected_games": 0,
+          "smoke_mean_player_score": 52.5,
+          "smoke_strict_rejected_games": 0,
+          "strict_certified_birds": 446
+        }
+      }
+    },
+    {
+      "iteration": 7,
+      "seed": 20267214,
+      "generation_mode": "champion_nn_vs_nn",
+      "strict_game_fraction": 1.0,
+      "dataset": "reports/ml/auto_improve_allbirds_main/iter_007/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_007/bc_dataset.meta.json",
+      "train_dataset": "reports/ml/auto_improve_allbirds_main/iter_007/bc_dataset_combined.jsonl",
+      "train_dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_007/bc_dataset_combined.meta.json",
+      "model": "reports/ml/auto_improve_allbirds_main/iter_007/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 59200,
+        "mean_player_score": 49.664
+      },
+      "combined_dataset_summary": {
+        "enabled": true,
+        "decay": 0.5,
+        "max_accumulated_samples": 200000,
+        "target_total": 200000,
+        "combined_samples": 200000,
+        "total_available": 414400,
+        "sources": [
+          {
+            "iteration": 1,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.015625,
+            "quota": 8506,
+            "written": 8506
+          },
+          {
+            "iteration": 2,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.03125,
+            "quota": 10081,
+            "written": 10081
+          },
+          {
+            "iteration": 3,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_003/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.0625,
+            "quota": 13230,
+            "written": 13230
+          },
+          {
+            "iteration": 4,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_004/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.125,
+            "quota": 19530,
+            "written": 19530
+          },
+          {
+            "iteration": 5,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_005/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.25,
+            "quota": 32128,
+            "written": 32128
+          },
+          {
+            "iteration": 6,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_006/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.5,
+            "quota": 57325,
+            "written": 57325
+          },
+          {
+            "iteration": 7,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_007/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 1.0,
+            "quota": 59200,
+            "written": 59200
+          }
+        ]
+      },
+      "train_summary": {
+        "train_samples": 180000,
+        "val_samples": 20000,
+        "last_epoch": {
+          "epoch": 30,
+          "lr_epoch": 8.403e-05,
+          "train_loss": 33.090159,
+          "train_action_acc": 0.552533,
+          "train_value_mse": 61.607444,
+          "train_move_rank_loss": 0.637396,
+          "train_move_rank_margin_mean": 0.133418,
+          "train_move_pair_acc": 0.546668,
+          "val_loss": 27.74356,
+          "val_action_acc": 0.5856,
+          "val_value_mse": 51.262555,
+          "val_move_rank_loss": 0.636511,
+          "val_move_rank_margin_mean": 0.135476,
+          "val_move_pair_acc": 0.550887,
+          "is_best_epoch": true
+        }
+      },
+      "eval_summary": {
+        "games": 80,
+        "nn_wins": 30,
+        "heuristic_wins": 49,
+        "ties": 1,
+        "nn_mean_score": 45.562,
+        "heuristic_mean_score": 51.462,
+        "nn_mean_margin": -5.9,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.0,
+        "heuristic_rate_ge_120": 0.0,
+        "nn_max_score": 81,
+        "nn_min_score": 16,
+        "heuristic_max_score": 86,
+        "heuristic_min_score": 19,
+        "nn_rate_lt_80": 0.9875,
+        "nn_rate_80_99": 0.0125,
+        "nn_rate_100_119": 0.0,
+        "nn_rate_ge_120_bucket": 0.0,
+        "heuristic_rate_lt_80": 0.95,
+        "heuristic_rate_80_99": 0.05,
+        "heuristic_rate_100_119": 0.0,
+        "heuristic_rate_ge_120_bucket": 0.0
+      },
+      "promotion_gate": {
+        "games": 200,
+        "result": {
+          "games": 200,
+          "nn_wins": 58,
+          "opponent_wins": 140,
+          "ties": 2,
+          "nn_mean_score": 44.075,
+          "opponent_mean_score": 57.405,
+          "nn_mean_margin": -13.33,
+          "nn_rate_ge_100": 0.005,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        },
+        "score_primary_pass": true,
+        "win_secondary_pass": true,
+        "win_rate": 0.29,
+        "promoted": true
+      },
+      "promotion_primary_eval": {
+        "primary_opponent": "champion",
+        "result": {
+          "games": 200,
+          "nn_wins": 58,
+          "opponent_wins": 140,
+          "ties": 2,
+          "nn_mean_score": 44.075,
+          "opponent_mean_score": 57.405,
+          "nn_mean_margin": -13.33,
+          "nn_rate_ge_100": 0.005,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        }
+      },
+      "pool_eval": {
+        "model": "reports/ml/auto_improve_allbirds_main/iter_007/factorized_model.npz",
+        "board_type": "oceania",
+        "games_per_opponent": 60,
+        "opponents": [
+          "heuristic",
+          "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        ],
+        "summary": {
+          "games": 120,
+          "nn_wins": 36,
+          "opponent_wins": 81,
+          "ties": 3,
+          "nn_win_rate": 0.3,
+          "nn_mean_score": 45.234,
+          "nn_mean_margin": -10.784,
+          "nn_rate_ge_100": 0.0083,
+          "nn_rate_ge_120": 0.0,
+          "nn_max_score": 102,
+          "nn_min_score": 13,
+          "nn_rate_lt_80": 0.975,
+          "nn_rate_80_99": 0.0167,
+          "nn_rate_100_119": 0.0083,
+          "nn_rate_ge_120_bucket": 0.0
+        },
+        "by_opponent": [
+          {
+            "opponent": "heuristic",
+            "games": 60,
+            "nn_wins": 17,
+            "opponent_wins": 41,
+            "ties": 2,
+            "nn_mean_score": 45.8,
+            "opponent_mean_score": 53.167,
+            "nn_mean_margin": -7.367,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 93,
+            "nn_min_score": 18,
+            "nn_rate_lt_80": 0.9667,
+            "nn_rate_80_99": 0.0333,
+            "nn_rate_100_119": 0.0,
+            "nn_rate_ge_120_bucket": 0.0
+          },
+          {
+            "opponent": "reports/ml/auto_improve_allbirds_main/best_model.npz",
+            "games": 60,
+            "nn_wins": 19,
+            "opponent_wins": 40,
+            "ties": 1,
+            "nn_mean_score": 44.667,
+            "opponent_mean_score": 58.867,
+            "nn_mean_margin": -14.2,
+            "nn_rate_ge_100": 0.0167,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 102,
+            "nn_min_score": 13,
+            "nn_rate_lt_80": 0.9833,
+            "nn_rate_80_99": 0.0,
+            "nn_rate_100_119": 0.0167,
+            "nn_rate_ge_120_bucket": 0.0
+          }
+        ]
+      },
+      "kpi_gate": {
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_007/pool_eval.json",
+        "baseline_path": "reports/ml/auto_improve_allbirds_main/iter_002/pool_eval.json",
+        "passed": true,
+        "checks": [
+          {
+            "name": "min_win_rate",
+            "passed": true,
+            "detail": "0.3000 >= 0.0000"
+          },
+          {
+            "name": "min_mean_score",
+            "passed": true,
+            "detail": "45.234 >= 0.000"
+          },
+          {
+            "name": "min_rate_ge_100",
+            "passed": true,
+            "detail": "0.0083 >= 0.0000"
+          },
+          {
+            "name": "min_rate_ge_120",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          }
+        ],
+        "candidate_summary": {
+          "nn_win_rate": 0.3,
+          "nn_mean_score": 45.234,
+          "nn_rate_ge_100": 0.0083,
+          "nn_rate_ge_120": 0.0
+        }
+      },
+      "strict_kpi_gate": {
+        "passed": true,
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_007/strict_kpi_candidate.json",
+        "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+        "checks": [
+          {
+            "name": "min_round1_pct_15_30",
+            "passed": true,
+            "detail": "0.7500 >= 0.2000"
+          },
+          {
+            "name": "max_round1_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "max_smoke_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "min_strict_certified_birds",
+            "passed": true,
+            "detail": "446 >= 50"
+          }
+        ],
+        "candidate_summary": {
+          "round1_mean": 21.0,
+          "round1_pct_15_30": 0.75,
+          "round1_strict_rejected_games": 0,
+          "smoke_mean_player_score": 61.5,
+          "smoke_strict_rejected_games": 0,
+          "strict_certified_birds": 446
+        }
+      }
+    },
+    {
+      "iteration": 8,
+      "seed": 20268214,
+      "generation_mode": "champion_nn_vs_nn",
+      "strict_game_fraction": 1.0,
+      "dataset": "reports/ml/auto_improve_allbirds_main/iter_008/bc_dataset.jsonl",
+      "dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_008/bc_dataset.meta.json",
+      "train_dataset": "reports/ml/auto_improve_allbirds_main/iter_008/bc_dataset_combined.jsonl",
+      "train_dataset_meta": "reports/ml/auto_improve_allbirds_main/iter_008/bc_dataset_combined.meta.json",
+      "model": "reports/ml/auto_improve_allbirds_main/iter_008/factorized_model.npz",
+      "dataset_summary": {
+        "samples": 59200,
+        "mean_player_score": 50.009
+      },
+      "combined_dataset_summary": {
+        "enabled": true,
+        "decay": 0.5,
+        "max_accumulated_samples": 200000,
+        "target_total": 200000,
+        "combined_samples": 200000,
+        "total_available": 473600,
+        "sources": [
+          {
+            "iteration": 1,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_001/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.007812,
+            "quota": 6669,
+            "written": 6669
+          },
+          {
+            "iteration": 2,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_002/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.015625,
+            "quota": 7453,
+            "written": 7453
+          },
+          {
+            "iteration": 3,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_003/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.03125,
+            "quota": 9022,
+            "written": 9022
+          },
+          {
+            "iteration": 4,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_004/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.0625,
+            "quota": 12159,
+            "written": 12159
+          },
+          {
+            "iteration": 5,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_005/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.125,
+            "quota": 18433,
+            "written": 18433
+          },
+          {
+            "iteration": 6,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_006/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.25,
+            "quota": 30983,
+            "written": 30983
+          },
+          {
+            "iteration": 7,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_007/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 0.5,
+            "quota": 56081,
+            "written": 56081
+          },
+          {
+            "iteration": 8,
+            "dataset": "reports/ml/auto_improve_allbirds_main/iter_008/bc_dataset.jsonl",
+            "samples_available": 59200,
+            "weight": 1.0,
+            "quota": 59200,
+            "written": 59200
+          }
+        ]
+      },
+      "train_summary": {
+        "train_samples": 180000,
+        "val_samples": 20000,
+        "last_epoch": {
+          "epoch": 30,
+          "lr_epoch": 8.403e-05,
+          "train_loss": 32.743247,
+          "train_action_acc": 0.561772,
+          "train_value_mse": 60.909241,
+          "train_move_rank_loss": 0.64329,
+          "train_move_rank_margin_mean": 0.118931,
+          "train_move_pair_acc": 0.538882,
+          "val_loss": 27.132435,
+          "val_action_acc": 0.59925,
+          "val_value_mse": 50.07864,
+          "val_move_rank_loss": 0.643602,
+          "val_move_rank_margin_mean": 0.118505,
+          "val_move_pair_acc": 0.535162,
+          "is_best_epoch": true
+        }
+      },
+      "eval_summary": {
+        "games": 80,
+        "nn_wins": 18,
+        "heuristic_wins": 60,
+        "ties": 2,
+        "nn_mean_score": 40.112,
+        "heuristic_mean_score": 51.888,
+        "nn_mean_margin": -11.775,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "heuristic_rate_ge_100": 0.0,
+        "heuristic_rate_ge_120": 0.0,
+        "nn_max_score": 77,
+        "nn_min_score": 18,
+        "heuristic_max_score": 87,
+        "heuristic_min_score": 17,
+        "nn_rate_lt_80": 1.0,
+        "nn_rate_80_99": 0.0,
+        "nn_rate_100_119": 0.0,
+        "nn_rate_ge_120_bucket": 0.0,
+        "heuristic_rate_lt_80": 0.975,
+        "heuristic_rate_80_99": 0.025,
+        "heuristic_rate_100_119": 0.0,
+        "heuristic_rate_ge_120_bucket": 0.0
+      },
+      "promotion_gate": {
+        "games": 200,
+        "result": {
+          "games": 200,
+          "nn_wins": 40,
+          "opponent_wins": 157,
+          "ties": 3,
+          "nn_mean_score": 38.95,
+          "opponent_mean_score": 61.455,
+          "nn_mean_margin": -22.505,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        },
+        "score_primary_pass": true,
+        "win_secondary_pass": true,
+        "win_rate": 0.2,
+        "promoted": true
+      },
+      "promotion_primary_eval": {
+        "primary_opponent": "champion",
+        "result": {
+          "games": 200,
+          "nn_wins": 40,
+          "opponent_wins": 157,
+          "ties": 3,
+          "nn_mean_score": 38.95,
+          "opponent_mean_score": 61.455,
+          "nn_mean_margin": -22.505,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "primary_opponent": "champion",
+          "opponent_spec": "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        }
+      },
+      "pool_eval": {
+        "model": "reports/ml/auto_improve_allbirds_main/iter_008/factorized_model.npz",
+        "board_type": "oceania",
+        "games_per_opponent": 60,
+        "opponents": [
+          "heuristic",
+          "reports/ml/auto_improve_allbirds_main/best_model.npz"
+        ],
+        "summary": {
+          "games": 120,
+          "nn_wins": 28,
+          "opponent_wins": 91,
+          "ties": 1,
+          "nn_win_rate": 0.2333,
+          "nn_mean_score": 37.791,
+          "nn_mean_margin": -16.459,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0,
+          "nn_max_score": 91,
+          "nn_min_score": 15,
+          "nn_rate_lt_80": 0.9916,
+          "nn_rate_80_99": 0.0083,
+          "nn_rate_100_119": 0.0,
+          "nn_rate_ge_120_bucket": 0.0
+        },
+        "by_opponent": [
+          {
+            "opponent": "heuristic",
+            "games": 60,
+            "nn_wins": 15,
+            "opponent_wins": 44,
+            "ties": 1,
+            "nn_mean_score": 39.45,
+            "opponent_mean_score": 53.3,
+            "nn_mean_margin": -13.85,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 74,
+            "nn_min_score": 20,
+            "nn_rate_lt_80": 1.0,
+            "nn_rate_80_99": 0.0,
+            "nn_rate_100_119": 0.0,
+            "nn_rate_ge_120_bucket": 0.0
+          },
+          {
+            "opponent": "reports/ml/auto_improve_allbirds_main/best_model.npz",
+            "games": 60,
+            "nn_wins": 13,
+            "opponent_wins": 47,
+            "ties": 0,
+            "nn_mean_score": 36.133,
+            "opponent_mean_score": 55.2,
+            "nn_mean_margin": -19.067,
+            "nn_rate_ge_100": 0.0,
+            "nn_rate_ge_120": 0.0,
+            "nn_max_score": 91,
+            "nn_min_score": 15,
+            "nn_rate_lt_80": 0.9833,
+            "nn_rate_80_99": 0.0167,
+            "nn_rate_100_119": 0.0,
+            "nn_rate_ge_120_bucket": 0.0
+          }
+        ]
+      },
+      "kpi_gate": {
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_008/pool_eval.json",
+        "baseline_path": "reports/ml/auto_improve_allbirds_main/iter_002/pool_eval.json",
+        "passed": true,
+        "checks": [
+          {
+            "name": "min_win_rate",
+            "passed": true,
+            "detail": "0.2333 >= 0.0000"
+          },
+          {
+            "name": "min_mean_score",
+            "passed": true,
+            "detail": "37.791 >= 0.000"
+          },
+          {
+            "name": "min_rate_ge_100",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          },
+          {
+            "name": "min_rate_ge_120",
+            "passed": true,
+            "detail": "0.0000 >= 0.0000"
+          }
+        ],
+        "candidate_summary": {
+          "nn_win_rate": 0.2333,
+          "nn_mean_score": 37.791,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        }
+      },
+      "strict_kpi_gate": {
+        "passed": true,
+        "candidate_path": "reports/ml/auto_improve_allbirds_main/iter_008/strict_kpi_candidate.json",
+        "baseline_path": "reports/ml/baselines/strict_kpi_baseline.json",
+        "checks": [
+          {
+            "name": "min_round1_pct_15_30",
+            "passed": true,
+            "detail": "0.8500 >= 0.2000"
+          },
+          {
+            "name": "max_round1_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "max_smoke_strict_rejected_games",
+            "passed": true,
+            "detail": "0 <= 0"
+          },
+          {
+            "name": "min_strict_certified_birds",
+            "passed": true,
+            "detail": "446 >= 50"
+          }
+        ],
+        "candidate_summary": {
+          "round1_mean": 20.5,
+          "round1_pct_15_30": 0.85,
+          "round1_strict_rejected_games": 0,
+          "smoke_mean_player_score": 51.167,
+          "smoke_strict_rejected_games": 0,
+          "strict_certified_birds": 446
+        }
+      }
+    }
+  ]
+}

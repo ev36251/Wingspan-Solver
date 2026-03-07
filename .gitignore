@@ -32,3 +32,7 @@ frontend/.svelte-kit/
 
 # Data backups
 *.zip
+
+# ML model weights and datasets (too large for git; use Git LFS if needed)
+reports/**/*.npz
+reports/**/*.jsonl

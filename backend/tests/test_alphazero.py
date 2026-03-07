@@ -277,7 +277,7 @@ class TestAlphaZeroSelfPlay:
         assert meta["samples"] > 0
         assert meta["feature_dim"] > 0
         assert "value_target_config" in meta
-        assert meta["value_target_config"]["mode"] == "delta"
+        assert meta["value_target_config"]["mode"] == "absolute"
 
     def test_dataset_jsonl_is_valid(self, tmp_path):
         """Each JSONL line must parse as JSON with expected fields."""
@@ -330,8 +330,8 @@ class TestAlphaZeroSelfPlay:
         assert "value_target_config" in meta
         assert "score_scale" in meta["value_target_config"]
         assert "score_bias" in meta["value_target_config"]
-        # Scale should be 80.0 for delta targets
-        assert meta["value_target_config"]["score_scale"] == pytest.approx(80.0)
+        # Scale should be 120.0 for absolute score targets
+        assert meta["value_target_config"]["score_scale"] == pytest.approx(120.0)
 
 
 # ---------------------------------------------------------------------------

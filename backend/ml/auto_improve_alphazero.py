@@ -199,12 +199,15 @@ def run_auto_improve_alphazero(
     train_lr_decay_every: int = 5,
     train_lr_decay_factor: float = 0.7,
     train_momentum: float = 0.9,
+    train_weight_decay: float = 0.0,
     train_value_weight: float = 0.5,
     train_early_stop_enabled: bool = True,
     train_early_stop_patience: int = 5,
     train_early_stop_min_delta: float = 1e-4,
     train_init_model_path: str | None = None,
     train_init_first_iter_only: bool = False,
+    train_reinit_value_head: bool = False,
+    seed_champion_from_init: bool = True,
     # Eval / promotion
     eval_games: int = 40,
     promotion_games: int = 80,
@@ -229,9 +232,12 @@ def run_auto_improve_alphazero(
     max_accumulated_samples: int = 200_000,
     # Parallelism
     dataset_workers: int = 4,
+    use_modal: bool = False,
+    modal_cpu_per_worker: int = 2,
     # Misc
     seed: int = 0,
     clean_out_dir: bool = True,
+    start_iter: int = 1,
     train_hidden: int | None = None,
 ) -> dict:
     """Run the AlphaZero self-play training pipeline.
@@ -280,14 +286,40 @@ def run_auto_improve_alphazero(
     started = time.time()
     champion_eval_summary: dict | None = None   # last promotion-gate eval vs heuristic
 
-    # Start with user-supplied init model as the "champion"
-    if train_init_model_path and not best_model_path.exists():
+    # Optionally seed the champion from the init model.
+    # Set seed_champion_from_init=False to use the init model only for data
+    # generation on iter 1, letting iter 1 auto-promote (replicates v10 behaviour).
+    if train_init_model_path and not best_model_path.exists() and seed_champion_from_init:
         shutil.copy2(train_init_model_path, best_model_path)
         print(f"  Seeded best_model.npz from {train_init_model_path}")
 
     accumulation_sources: list[dict] = []   # for replay buffer
 
-    for i in range(1, iterations + 1):
+    # ----------------------------------------------------------------
+    # Resume: restore history + replay buffer from completed iterations
+    # ----------------------------------------------------------------
+    if start_iter > 1:
+        if manifest_path.exists():
+            existing = json.loads(manifest_path.read_text(encoding="utf-8"))
+            history = [h for h in existing.get("history", []) if h["iter"] < start_iter]
+            print(f"  [resume] Loaded {len(history)} iter records from existing manifest.")
+        for past_i in range(1, start_iter):
+            past_jsonl = base / f"iter_{past_i:03d}" / "az_dataset.jsonl"
+            if past_jsonl.exists():
+                import subprocess as _sp
+                try:
+                    wc = _sp.check_output(["wc", "-l", str(past_jsonl)], text=True)
+                    rows = int(wc.strip().split()[0])
+                except Exception:
+                    rows = 0
+                accumulation_sources.append({"jsonl": str(past_jsonl), "rows": rows, "iter": past_i})
+        # Apply decay budget (same logic as main loop)
+        while sum(int(s.get("rows", 0)) for s in accumulation_sources) > max_accumulated_samples:
+            accumulation_sources.pop(0)
+        print(f"  [resume] Replay buffer: {len(accumulation_sources)} iter sources restored.")
+        print(f"  [resume] Starting from iteration {start_iter} / {iterations}.")
+
+    for i in range(start_iter, iterations + 1):
         iter_seed = seed + i * 1000
         iter_dir = base / f"iter_{i:03d}"
         iter_dir.mkdir(parents=True, exist_ok=True)
@@ -297,6 +329,19 @@ def run_auto_improve_alphazero(
         model_path = iter_dir / "model.npz"
         eval_path = iter_dir / "eval.json"
         gate_path = iter_dir / "promotion_gate.json"
+
+        # Disk space check: warn at <20 GB free, abort at <5 GB free
+        _stat = os.statvfs(str(base))
+        _free_gb = (_stat.f_bavail * _stat.f_frsize) / 1e9
+        if _free_gb < 5.0:
+            raise RuntimeError(
+                f"DISK FULL: only {_free_gb:.1f} GB free on {base}. "
+                "Aborting to prevent data corruption. "
+                "Free up space and resume with --start-iter {i}."
+            )
+        elif _free_gb < 20.0:
+            print(f"  [WARN] Low disk space: {_free_gb:.1f} GB free. "
+                  "Consider cleaning up old training runs.")
 
         print(f"\n{'='*60}")
         print(f"  AlphaZero iter {i}/{iterations} | mcts_sims={mcts_sims}")
@@ -390,6 +435,18 @@ def run_auto_improve_alphazero(
                 )
                 shutil.copy2(t["out_jsonl"], dataset_jsonl)
                 shutil.copy2(t["out_meta"], dataset_meta_path)
+            elif use_modal:
+                from backend.ml.modal_selfplay import dispatch_shards_modal
+                shard_results = dispatch_shards_modal(
+                    shard_tasks,
+                    model_path=data_gen_model,
+                    cpu_per_worker=modal_cpu_per_worker,
+                )
+                ds_meta = _merge_az_shards(
+                    shard_results,
+                    out_jsonl=dataset_jsonl,
+                    out_meta=dataset_meta_path,
+                )
             else:
                 ctx = mp.get_context("spawn")
                 with ctx.Pool(processes=len(shard_tasks)) as pool:
@@ -403,6 +460,13 @@ def run_auto_improve_alphazero(
         n_samples = int(ds_meta.get("samples", 0))
         print(f"  Data gen complete: {n_samples} samples | "
               f"mean_delta={ds_meta.get('mean_delta', 0.0):.1f}")
+
+        # Clean up shard directory now that data is merged — shards are large
+        # and redundant once az_dataset.jsonl exists.
+        shard_dir_cleanup = iter_dir / "shards"
+        if shard_dir_cleanup.exists():
+            shutil.rmtree(shard_dir_cleanup)
+            print(f"  Cleaned up shard directory.")
 
         # ----------------------------------------------------------------
         # Optional data accumulation (replay buffer)
@@ -504,17 +568,29 @@ def run_auto_improve_alphazero(
             lr_decay_every=train_lr_decay_every,
             lr_decay_factor=train_lr_decay_factor,
             momentum=train_momentum,
+            weight_decay=train_weight_decay,
             value_loss_weight=train_value_weight,
             early_stop_enabled=train_early_stop_enabled,
             early_stop_patience=train_early_stop_patience,
             early_stop_min_delta=train_early_stop_min_delta,
             init_model_path=warmstart_path,
+            reinit_value_head=train_reinit_value_head and not any(h.get("promoted", False) for h in history),
             seed=iter_seed,
         )
         print(
             f"  Training done: epochs={train_result.get('epochs_completed')} | "
             f"val_loss={train_result.get('best_val_loss', 0.0):.4f}"
         )
+
+        # Clean up combined JSONL now that training is done — it's 2-3 GB and
+        # not needed again (replay buffer uses the raw az_dataset.jsonl).
+        if data_accumulation_enabled:
+            combined_jsonl_cleanup = iter_dir / "az_dataset_combined.jsonl"
+            combined_meta_cleanup = iter_dir / "az_dataset_combined.meta.json"
+            for _f in (combined_jsonl_cleanup, combined_meta_cleanup):
+                if _f.exists():
+                    _f.unlink()
+            print(f"  Cleaned up combined JSONL (freed ~2-3 GB).")
 
         # ----------------------------------------------------------------
         # Step 3: Eval vs heuristic
@@ -684,6 +760,8 @@ def main() -> None:
     p.add_argument("--train-lr-peak", type=float, default=5e-4)
     p.add_argument("--train-lr-warmup-epochs", type=int, default=3)
     p.add_argument("--train-early-stop-patience", type=int, default=5)
+    p.add_argument("--train-weight-decay", type=float, default=0.0,
+                   help="L2 weight decay for SGD optimizer (default 0)")
     p.add_argument("--train-value-weight", type=float, default=0.5)
     p.add_argument("--train-init-model-path", default=None)
     p.add_argument(
@@ -691,6 +769,19 @@ def main() -> None:
         action="store_true",
         default=False,
         help="Use init model only for warm-start on iter 1; champion after that",
+    )
+    p.add_argument(
+        "--train-reinit-value-head",
+        action="store_true",
+        default=False,
+        help="On iter 1, reinitialize value head weights after warm-start (clears delta-target confusion)",
+    )
+    p.add_argument(
+        "--no-seed-champion",
+        action="store_true",
+        default=False,
+        help="Do not copy init model to best_model.npz; iter 1 auto-promotes. "
+             "Use when you want the init model only for data generation, not as the starting champion.",
     )
     # Eval / promotion
     p.add_argument("--eval-games", type=int, default=20)
@@ -726,11 +817,32 @@ def main() -> None:
         "--no-data-accumulation", dest="data_accumulation_enabled", action="store_false"
     )
     p.add_argument("--max-accumulated-samples", type=int, default=200_000)
+    p.add_argument(
+        "--value-target-score-scale",
+        type=float,
+        default=DELTA_SCALE,
+        help="Normalization scale for value target (default 120 for absolute mode).",
+    )
     # Parallelism
     p.add_argument("--dataset-workers", type=int, default=4)
+    p.add_argument(
+        "--use-modal",
+        action="store_true",
+        default=False,
+        help="Dispatch self-play shard workers to Modal.com instead of local processes. "
+             "Requires: pip install modal && modal setup",
+    )
+    p.add_argument(
+        "--modal-cpu-per-worker",
+        type=int,
+        default=2,
+        help="vCPUs to request per Modal container (default: 2)",
+    )
     # Misc
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--no-clean", dest="clean_out_dir", action="store_false", default=True)
+    p.add_argument("--start-iter", type=int, default=1,
+                   help="Resume from this iteration (skips earlier iters, restores history/replay buffer)")
 
     args = p.parse_args()
 
@@ -758,9 +870,12 @@ def main() -> None:
         train_lr_peak=args.train_lr_peak,
         train_lr_warmup_epochs=args.train_lr_warmup_epochs,
         train_early_stop_patience=args.train_early_stop_patience,
+        train_weight_decay=args.train_weight_decay,
         train_value_weight=args.train_value_weight,
         train_init_model_path=args.train_init_model_path,
         train_init_first_iter_only=args.train_init_first_iter_only,
+        train_reinit_value_head=args.train_reinit_value_head,
+        seed_champion_from_init=not args.no_seed_champion,
         eval_games=args.eval_games,
         promotion_games=args.promotion_games,
         min_promotion_win_rate=args.min_promotion_win_rate,
@@ -775,9 +890,13 @@ def main() -> None:
         state_encoder_use_power_features=args.use_power_features,
         data_accumulation_enabled=args.data_accumulation_enabled,
         max_accumulated_samples=args.max_accumulated_samples,
+        value_target_score_scale=args.value_target_score_scale,
         dataset_workers=args.dataset_workers,
+        use_modal=args.use_modal,
+        modal_cpu_per_worker=args.modal_cpu_per_worker,
         seed=args.seed,
         clean_out_dir=args.clean_out_dir,
+        start_iter=args.start_iter,
     )
 
     print(

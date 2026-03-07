@@ -1,0 +1,53 @@
+{
+  "candidate_path": "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/reports/ml/phase2_stability_step3_v1_20260220_1105/iter_003/pool_eval.json",
+  "baseline_path": "/Users/EvanRobinson/Desktop/Coded Games/Wingspan Solver/reports/ml/phase2_stability_step3_v1_20260220_1105/iter_002/pool_eval.json",
+  "passed": false,
+  "checks": [
+    {
+      "name": "min_win_rate",
+      "passed": false,
+      "detail": "0.4500 >= 0.5000"
+    },
+    {
+      "name": "min_mean_score",
+      "passed": true,
+      "detail": "51.625 >= 0.000"
+    },
+    {
+      "name": "min_rate_ge_100",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    },
+    {
+      "name": "min_rate_ge_120",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    },
+    {
+      "name": "non_regression_win_rate",
+      "passed": false,
+      "detail": "0.4500 >= 0.5750"
+    },
+    {
+      "name": "non_regression_mean_score",
+      "passed": false,
+      "detail": "51.625 >= 57.975"
+    },
+    {
+      "name": "non_regression_rate_ge_100",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    },
+    {
+      "name": "non_regression_rate_ge_120",
+      "passed": true,
+      "detail": "0.0000 >= 0.0000"
+    }
+  ],
+  "candidate_summary": {
+    "nn_win_rate": 0.45,
+    "nn_mean_score": 51.625,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0
+  }
+}

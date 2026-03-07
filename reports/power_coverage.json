@@ -1,0 +1,9 @@
+{
+  "total_birds": 446,
+  "by_source": {
+    "strict": 440,
+    "no_power": 6
+  },
+  "strict_certified_birds": 446,
+  "non_strict_birds": []
+}
