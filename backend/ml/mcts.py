@@ -98,6 +98,11 @@ class MCTS:
         c_puct: float = 1.5,
         value_blend: float = 0.5,
         rollout_policy: str = "fast",
+        root_dirichlet_epsilon: float = 0.0,
+        root_dirichlet_alpha: float = 0.3,
+        backup_win_weight: float = 0.8,
+        backup_score_weight: float = 0.2,
+        tie_value_target: float = 0.5,
     ):
         self.model = model
         self.encoder = encoder
@@ -105,6 +110,11 @@ class MCTS:
         self.c_puct = c_puct
         self.value_blend = value_blend
         self.rollout_policy = rollout_policy
+        self.root_dirichlet_epsilon = max(0.0, min(1.0, float(root_dirichlet_epsilon)))
+        self.root_dirichlet_alpha = max(1e-6, float(root_dirichlet_alpha))
+        self.backup_win_weight = float(backup_win_weight)
+        self.backup_score_weight = float(backup_score_weight)
+        self.tie_value_target = max(0.0, min(1.0, float(tie_value_target)))
 
     # ------------------------------------------------------------------
     # Public API
@@ -204,8 +214,9 @@ class MCTS:
             path.append(node)
 
         # ---- Expansion -----------------------------------------------
-        # Capture value_raw here so _evaluate can skip a redundant forward pass.
-        precomputed_value_raw: float | None = None
+        # Capture value estimates here so backup utility can skip redundant forward passes.
+        precomputed_score_raw: float | None = None
+        precomputed_win_prob: float | None = None
         if not sim.is_game_over and not node.children:
             if sim.current_player_idx == player_idx:
                 player = sim.players[player_idx]
@@ -215,9 +226,15 @@ class MCTS:
                         state_vec = np.asarray(
                             self.encoder.encode(sim, player_idx), dtype=np.float32
                         )
-                        logits, value_raw = self.model.forward(state_vec)
-                        if value_raw is not None:
-                            precomputed_value_raw = value_raw
+                        if hasattr(self.model, "forward_with_values"):
+                            logits, score_raw, win_prob = self.model.forward_with_values(state_vec)
+                        else:
+                            logits, score_raw = self.model.forward(state_vec)
+                            win_prob = None
+                        if score_raw is not None:
+                            precomputed_score_raw = score_raw
+                        if win_prob is not None:
+                            precomputed_win_prob = float(win_prob)
                         scores = np.array(
                             [
                                 self.model.score_move(
@@ -229,20 +246,35 @@ class MCTS:
                         )
                         # Softmax → priors
                         exp_s = np.exp(scores - scores.max())
-                        priors = exp_s / exp_s.sum()
+                        priors = exp_s / max(1e-12, exp_s.sum())
+                        if (
+                            node.parent is None
+                            and self.root_dirichlet_epsilon > 0.0
+                            and len(priors) > 1
+                        ):
+                            noise = np.random.dirichlet(
+                                [self.root_dirichlet_alpha] * len(priors)
+                            )
+                            eps = self.root_dirichlet_epsilon
+                            priors = (1.0 - eps) * priors + eps * noise
+                            priors = priors / max(1e-12, priors.sum())
                         for m, p in zip(moves, priors):
                             node.children[_move_sig(m)] = MCTSNode(
                                 parent=node, action=m, prior=float(p)
                             )
 
         # ---- Evaluation -----------------------------------------------
-        # Pass precomputed_value_raw to skip a redundant model.forward() call.
-        value = self._evaluate(sim, player_idx, precomputed_value_raw=precomputed_value_raw)
+        utility = self._evaluate_utility(
+            sim,
+            player_idx,
+            precomputed_score_raw=precomputed_score_raw,
+            precomputed_win_prob=precomputed_win_prob,
+        )
 
         # ---- Backprop -------------------------------------------------
         for n in path:
             n.N += 1
-            n.W += value
+            n.W += utility
 
     def _evaluate(
         self,
@@ -252,8 +284,8 @@ class MCTS:
     ) -> float:
         """Evaluate the leaf state: blend NN value with a fast rollout.
 
-        Returns a delta score: my_expected_score - best_opponent_expected_score.
-        This is in the same units as `value_target_score` used for training.
+        Returns the tracked player's expected absolute final score.
+        This matches value_target_score semantics used in self-play training.
 
         precomputed_value_raw: if provided, skip an extra model.forward() call by
         reusing the value_raw already obtained during expansion.
@@ -263,10 +295,9 @@ class MCTS:
         if sim.is_game_over:
             scores = {p.name: calculate_score(sim, p).total for p in sim.players}
             my_score = float(scores.get(player_name, 0))
-            opp = [s for n, s in scores.items() if n != player_name]
-            return my_score - (max(opp) if opp else 0.0)
+            return my_score
 
-        # NN value estimate (delta scale after value_to_expected_score)
+        # NN value estimate (absolute score after value_to_expected_score)
         nn_val = 0.0
         nn_available = self.model.has_value_head and self.value_blend > 0.0
         if nn_available:
@@ -288,9 +319,7 @@ class MCTS:
         if self.value_blend < 1.0 or not nn_available:
             try:
                 playout = simulate_playout(sim, rollout_policy=self.rollout_policy)
-                my = float(playout.get(player_name, 0))
-                opp = [s for n, s in playout.items() if n != player_name]
-                rollout_val = my - (max(opp) if opp else 0.0)
+                rollout_val = float(playout.get(player_name, 0))
             except Exception:
                 rollout_val = 0.0
 
@@ -299,6 +328,105 @@ class MCTS:
                 self.value_blend * nn_val + (1.0 - self.value_blend) * rollout_val
             )
         return rollout_val
+
+    def _score_to_norm(self, score: float) -> float:
+        scale = float(getattr(self.model, "value_score_scale", 120.0) or 120.0)
+        bias = float(getattr(self.model, "value_score_bias", 0.0) or 0.0)
+        return float(np.clip((float(score) - bias) / max(1e-9, scale), 0.0, 1.0))
+
+    def _win_target_from_scores(self, my_score: float, other_scores: list[float]) -> float:
+        best_other = max(other_scores) if other_scores else 0.0
+        if my_score > best_other:
+            return 1.0
+        if my_score < best_other:
+            return 0.0
+        return self.tie_value_target
+
+    def _utility_from_win_score(self, win_prob: float, score_norm: float) -> float:
+        return float(
+            self.backup_win_weight * float(win_prob)
+            + self.backup_score_weight * float(score_norm)
+        )
+
+    def _evaluate_utility(
+        self,
+        sim: GameState,
+        player_idx: int,
+        precomputed_score_raw: float | None = None,
+        precomputed_win_prob: float | None = None,
+    ) -> float:
+        """Evaluate leaf utility in [0,1] for MCTS backups.
+
+        Utility blends win probability (primary) and normalized score (auxiliary):
+        `0.8 * win_prob + 0.2 * normalized_score` by default.
+        """
+        player_name = sim.players[player_idx].name
+
+        if sim.is_game_over:
+            final_scores = {
+                p.name: float(calculate_score(sim, p).total) for p in sim.players
+            }
+            my_score = float(final_scores.get(player_name, 0.0))
+            others = [s for n, s in final_scores.items() if n != player_name]
+            win_t = self._win_target_from_scores(my_score, others)
+            return self._utility_from_win_score(win_t, self._score_to_norm(my_score))
+
+        nn_utility: float | None = None
+        if self.value_blend > 0.0:
+            try:
+                score_est: float | None = None
+                win_prob_est: float | None = None
+                if precomputed_score_raw is not None:
+                    score_est = self.model.value_to_expected_score(precomputed_score_raw)
+                if precomputed_win_prob is not None:
+                    win_prob_est = float(precomputed_win_prob)
+                if score_est is None or win_prob_est is None:
+                    state_vec = np.asarray(
+                        self.encoder.encode(sim, player_idx), dtype=np.float32
+                    )
+                    if hasattr(self.model, "forward_with_values"):
+                        _, score_raw, win_prob = self.model.forward_with_values(state_vec)
+                    else:
+                        _, score_raw = self.model.forward(state_vec)
+                        win_prob = None
+                    if score_est is None and score_raw is not None:
+                        score_est = self.model.value_to_expected_score(score_raw)
+                    if win_prob_est is None and win_prob is not None:
+                        win_prob_est = float(win_prob)
+                if score_est is not None:
+                    score_norm = self._score_to_norm(score_est)
+                    if win_prob_est is None:
+                        win_prob_est = score_norm
+                    nn_utility = self._utility_from_win_score(win_prob_est, score_norm)
+            except Exception:
+                nn_utility = None
+
+        rollout_utility: float | None = None
+        if self.value_blend < 1.0 or nn_utility is None:
+            try:
+                playout = simulate_playout(sim, rollout_policy=self.rollout_policy)
+                my_score = float(playout.get(player_name, 0.0))
+                other_scores = [
+                    float(playout.get(p.name, 0.0))
+                    for i, p in enumerate(sim.players)
+                    if i != player_idx
+                ]
+                win_t = self._win_target_from_scores(my_score, other_scores)
+                rollout_utility = self._utility_from_win_score(
+                    win_t, self._score_to_norm(my_score)
+                )
+            except Exception:
+                rollout_utility = None
+
+        if nn_utility is not None and rollout_utility is not None:
+            return float(
+                self.value_blend * nn_utility + (1.0 - self.value_blend) * rollout_utility
+            )
+        if nn_utility is not None:
+            return float(nn_utility)
+        if rollout_utility is not None:
+            return float(rollout_utility)
+        return 0.0
 
     def _advance_through_opponents(
         self, sim: GameState, player_idx: int

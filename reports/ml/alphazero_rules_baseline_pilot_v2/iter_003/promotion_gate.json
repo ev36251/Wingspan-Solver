@@ -1,0 +1,6 @@
+{
+  "promoted": false,
+  "min_promotion_win_rate": 0.5,
+  "gate_value_blend": 0.8,
+  "gate_mcts_sims": 40
+}

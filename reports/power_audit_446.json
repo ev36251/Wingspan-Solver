@@ -1,0 +1,4252 @@
+{
+  "summary": {
+    "total_birds": 446,
+    "explicit_mapping_count": 116,
+    "non_explicit_mapping_count": 330,
+    "fallback_count": 0
+  },
+  "birds": [
+    {
+      "bird": "Abbott's Booby",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 3 bonus cards, then discard 2. You may discard bonus cards you did not draw this turn."
+    },
+    {
+      "bird": "Acorn Woodpecker",
+      "color": "brown",
+      "power_class": "CacheFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird."
+    },
+    {
+      "bird": "American Avocet",
+      "color": "pink",
+      "power_class": "PinkLayEggOnTrigger",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201clay eggs\u201d action, lay 1 [egg] on another bird with a [ground] nest."
+    },
+    {
+      "bird": "American Bittern",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Player(s) with the fewest birds in their [wetland] draw 1 [card]."
+    },
+    {
+      "bird": "American Coot",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card]."
+    },
+    {
+      "bird": "American Crow",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [egg] from any of your other birds to gain 1 [wild] from the supply."
+    },
+    {
+      "bird": "American Goldfinch",
+      "color": "white",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 3 [seed] from the supply."
+    },
+    {
+      "bird": "American Kestrel",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird."
+    },
+    {
+      "bird": "American Oystercatcher",
+      "color": "white",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw [card] equal to the number of players +1. Starting with you and proceeding clockwise, each player selects 1 of those cards and places it in their hand. You keep the extra card."
+    },
+    {
+      "bird": "American Redstart",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [die] from the birdfeeder."
+    },
+    {
+      "bird": "American Robin",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card]."
+    },
+    {
+      "bird": "American White Pelican",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [fish] to tuck 2 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "American Woodcock",
+      "color": "none",
+      "power_class": "NoPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": ""
+    },
+    {
+      "bird": "Anhinga",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird."
+    },
+    {
+      "bird": "Anna's Hummingbird",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Each player gains 1 [die] from the birdfeeder, starting with the player of your choice."
+    },
+    {
+      "bird": "Ash-Throated Flycatcher",
+      "color": "white",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on each of your birds with a [cavity] nest."
+    },
+    {
+      "bird": "Asian Emerald Dove",
+      "color": "white",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 2 [egg] on each other bird in this column."
+    },
+    {
+      "bird": "Asian Koel",
+      "color": "pink",
+      "power_class": "PinkLayEggOnTrigger",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201clay eggs\u201d action, this bird lays 1 [egg] on another bird with a [platform] nest. You may go 3 over its egg limit while using this power."
+    },
+    {
+      "bird": "Atlantic Puffin",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Audouin's Gull",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 [card] from the deck. Tuck 1 behind this bird and keep the other."
+    },
+    {
+      "bird": "Australasian Pipit",
+      "color": "yellow",
+      "power_class": "EndGameTuckPerBirdInHabitat",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Tuck 1 [card] from the deck behind each bird in your [grassland], including this one."
+    },
+    {
+      "bird": "Australasian Shoveler",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1 other player. You both draw 1 [card] from the deck."
+    },
+    {
+      "bird": "Australian Ibis",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Shuffle the discard pile, then draw 2 [card] from it. Choose 1 and tuck it behind this bird or add it to your hand. Discard the other."
+    },
+    {
+      "bird": "Australian Magpie",
+      "color": "yellow",
+      "power_class": "EndGameDiscardEggsRowColumnCacheSeeds",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard 1 [egg] from each bird in this row and column that has an [egg] on it, excluding this bird. For each discarded [egg], cache 2 [seed] from the supply on this bird."
+    },
+    {
+      "bird": "Australian Owlet-Nightjar",
+      "color": "pink",
+      "power_class": "PinkGainFoodFromFeederOnGainFood",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201cgain food\u201d action, gain 1 [invertebrate] from the birdfeeder, if there is one, at the end of their turn."
+    },
+    {
+      "bird": "Australian Raven",
+      "color": "yellow",
+      "power_class": "EndGameCacheFromSupplyOnSelf",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Cache up to 5 [wild] from your supply on this bird."
+    },
+    {
+      "bird": "Australian Reed Warbler",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play another bird in your [wetland]. Pay its normal cost with a 1 [egg] discount."
+    },
+    {
+      "bird": "Australian Shelduck",
+      "color": "brown",
+      "power_class": "DrawFromTray",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 face-up [card] from the tray with a [cavity] or [star] nest. You may reset or refill the tray before doing so."
+    },
+    {
+      "bird": "Australian Zebra Finch",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If the player to your right has a [seed] in their personal supply, tuck a [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Azure Tit",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [invertebrate], [seed], or [fruit] from the supply."
+    },
+    {
+      "bird": "Baird's Sparrow",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on any bird."
+    },
+    {
+      "bird": "Bald Eagle",
+      "color": "white",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain all [fish] that are in the birdfeeder."
+    },
+    {
+      "bird": "Baltimore Oriole",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "All players gain 1 [fruit] from the supply."
+    },
+    {
+      "bird": "Barn Owl",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird."
+    },
+    {
+      "bird": "Barn Swallow",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card]."
+    },
+    {
+      "bird": "Barred Owl",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_lt_75"
+      ],
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Barrow's Goldeneye",
+      "color": "pink",
+      "power_class": "PinkLayEggOnTrigger",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201clay eggs\u201d action, lay 1 [egg] on another bird with a [cavity] nest."
+    },
+    {
+      "bird": "Baya Weaver",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck up to 3 [card] from your hand behind this bird. If you tuck at least 1 [card], lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Bearded Reedling",
+      "color": "teal",
+      "power_class": "LayEggOnSelfPerColumnEggBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "For each other bird in this column with an egg on it, lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Bell's Vireo",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Belted Kingfisher",
+      "color": "pink",
+      "power_class": "PinkGainFoodFromSupplyOnPlayInHabitat",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player plays a bird in their [wetland], gain 1 [fish] from the supply."
+    },
+    {
+      "bird": "Bewick's Wren",
+      "color": "brown",
+      "power_class": "MoveBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat."
+    },
+    {
+      "bird": "Black Drongo",
+      "color": "brown",
+      "power_class": "BlackDrongoDiscardTrayLayEgg",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard any number of [card] from the tray then refill it. If at least one of the discarded birds is a [grassland] bird, lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Black Noddy",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder and gain all [fish], if there are any. You may discard any of these [fish] to tuck that many [card] from the deck behind this bird instead."
+    },
+    {
+      "bird": "Black Redstart",
+      "color": "teal",
+      "power_class": "ChooseEgglessHabitatLayEggEachBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Choose a habitat with no [egg]. Lay 1 [egg] on each bird in that habitat."
+    },
+    {
+      "bird": "Black Skimmer",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird."
+    },
+    {
+      "bird": "Black Stork",
+      "color": "teal",
+      "power_class": "LayEggAdjacentToSelf",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Lay 1 [egg] on each of the birds immediately to the left and right of this bird."
+    },
+    {
+      "bird": "Black Swan",
+      "color": "yellow",
+      "power_class": "EndGameLayEggOnMatchingWingspan",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Lay 1 [egg] on each of your birds with a wingspan over 100cm, including this one."
+    },
+    {
+      "bird": "Black Tern",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 [card]. If you do, discard 1 [card] from your hand at the end of your turn."
+    },
+    {
+      "bird": "Black Vulture",
+      "color": "pink",
+      "power_class": "PinkPredatorSuccessGainDie",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player's [predator] succeeds, gain 1 [die] from the birdfeeder."
+    },
+    {
+      "bird": "Black Woodpecker",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain all [invertebrate] that are in the birdfeeder."
+    },
+    {
+      "bird": "Black-Bellied Whistling-Duck",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [seed] to tuck 2 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Black-Billed Magpie",
+      "color": "pink",
+      "power_class": "PinkPredatorSuccessGainDie",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player's [predator] succeeds, gain 1 [die] from the birdfeeder."
+    },
+    {
+      "bird": "Black-Chinned Hummingbird",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players gain 1 [fruit] from the supply."
+    },
+    {
+      "bird": "Black-Crowned Night-Heron",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [egg] from any of your other birds to gain 1 [wild] from the supply."
+    },
+    {
+      "bird": "Black-Headed Gull",
+      "color": "brown",
+      "power_class": "BlackHeadedGullStealWild",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Steal 1 [wild] from another player's supply and add it to your own supply. They gain 1 [die] from the birdfeeder."
+    },
+    {
+      "bird": "Black-Naped Oriole",
+      "color": "teal",
+      "power_class": "ConditionalAllActionsFoodEggCard",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "If you used all 4 actions this round, gain 1 [wild] from the supply, lay 1 [egg] on any bird, and draw 1 [card] from the deck."
+    },
+    {
+      "bird": "Black-Necked Stilt",
+      "color": "white",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 [card]."
+    },
+    {
+      "bird": "Black-Shouldered Kite",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder and gain 1 [rodent], if there is one. You may give it to another player; if you do, lay up to 3 [egg] on this bird."
+    },
+    {
+      "bird": "Black-Tailed Godwit",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 new bonus card. Then draw 3 [card] and keep 1 of them."
+    },
+    {
+      "bird": "Black-Throated Diver",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard all remaining face-up [card] and refill the tray. If you do, draw 1 of the new face-up [card]."
+    },
+    {
+      "bird": "Blue Grosbeak",
+      "color": "brown",
+      "power_class": "MoveBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat."
+    },
+    {
+      "bird": "Blue Jay",
+      "color": "brown",
+      "power_class": "CacheFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird."
+    },
+    {
+      "bird": "Blue Rock-Thrush",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If this bird has no birds to the right of it, you may move it (only the card) to the player mat of the player on your left (you choose its habitat). If you do, draw 3 [card]."
+    },
+    {
+      "bird": "Blue-Gray Gnatcatcher",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [invertebrate] from the supply."
+    },
+    {
+      "bird": "Blue-Winged Warbler",
+      "color": "none",
+      "power_class": "NoPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": ""
+    },
+    {
+      "bird": "Bluethroat",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose a food type. All players gain 1 of that food from the supply."
+    },
+    {
+      "bird": "Blyth's Hornbill",
+      "color": "white",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard all [egg] from 1 of your birds with a [cavity] nest. Tuck twice that many [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Bobolink",
+      "color": "white",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on each of your birds with a [ground] nest."
+    },
+    {
+      "bird": "Bonelli's Eagle",
+      "color": "white",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "For each [rodent] in this bird's cost, you may pay 1 [card] from your hand instead. If you do, tuck the paid [card] behind this card."
+    },
+    {
+      "bird": "Brahminy Kite",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose any 3 [die]. Roll them up to 3 times. Each time, if you roll at least 1 [fish] or [rodent], cache 1 here. If not, stop and return all food cached here this turn."
+    },
+    {
+      "bird": "Brambling",
+      "color": "teal",
+      "power_class": "DrawThenTuckFromHand",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw 2 [card] from the deck and add them to your hand. Then, tuck up to 2 [card] from your hand behind this bird."
+    },
+    {
+      "bird": "Brant",
+      "color": "white",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw the 3 face-up [card] in the bird tray."
+    },
+    {
+      "bird": "Brewer's Blackbird",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Broad-Winged Hawk",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird."
+    },
+    {
+      "bird": "Brolga",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1 other player. They lay 1 [egg]; you draw 2 [card]."
+    },
+    {
+      "bird": "Bronzed Cowbird",
+      "color": "pink",
+      "power_class": "PinkLayEggOnTrigger",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201clay eggs\u201d action, lay 1 [egg] on a bird with a [bowl] nest."
+    },
+    {
+      "bird": "Brown Falcon",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:food_cost_includes"
+      ],
+      "power_text": "Look at a [card] from the deck. If its food cost includes an [invertebrate] or a [rodent], tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Brown Pelican",
+      "color": "white",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 3 [fish] from the supply."
+    },
+    {
+      "bird": "Brown Shrike",
+      "color": "brown",
+      "power_class": "GainFoodFromSupplyOrCache",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players may cache 1 [invertebrate] from their personal supply on a bird in their [grassland]."
+    },
+    {
+      "bird": "Brown-Headed Cowbird",
+      "color": "pink",
+      "power_class": "PinkLayEggOnTrigger",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201clay eggs\u201d action, lay 1 [egg] on a bird with a [bowl] nest."
+    },
+    {
+      "bird": "Budgerigar",
+      "color": "brown",
+      "power_class": "TuckFromDeck",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck the smallest bird in the tray behind this bird."
+    },
+    {
+      "bird": "Bullfinch",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder. If you do, gain 1 [seed] or 1 [fruit] from the birdfeeder after resetting."
+    },
+    {
+      "bird": "Burrowing Owl",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird."
+    },
+    {
+      "bird": "Bushtit",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "California Condor",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "California Quail",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Canada Goose",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [seed] to tuck 2 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Canvasback",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players draw 1 [card] from the deck."
+    },
+    {
+      "bird": "Carolina Chickadee",
+      "color": "brown",
+      "power_class": "CacheFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Cache 1 [seed] from the supply on this bird."
+    },
+    {
+      "bird": "Carolina Wren",
+      "color": "white",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 [card]."
+    },
+    {
+      "bird": "Carrion Crow",
+      "color": "teal",
+      "power_class": "CacheRodentPerPredator",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Choose any 1 player (including yourself). Cache 1 [rodent] from the supply on this bird for each [predator] that player has."
+    },
+    {
+      "bird": "Cassin's Finch",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Cassin's Sparrow",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on any bird."
+    },
+    {
+      "bird": "Cedar Waxwing",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [fruit] from the supply."
+    },
+    {
+      "bird": "Cerulean Warbler",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Cetti's Warbler",
+      "color": "teal",
+      "power_class": "CountsDoubleForGoal",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "This bird counts double toward the end-of-round goal, if it qualifies for the goal."
+    },
+    {
+      "bird": "Chestnut-Collared Longspur",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Chihuahuan Raven",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [egg] from any of your other birds to gain 2 [wild] from the supply."
+    },
+    {
+      "bird": "Chimney Swift",
+      "color": "brown",
+      "power_class": "MoveBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat."
+    },
+    {
+      "bird": "Chipping Sparrow",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on any bird."
+    },
+    {
+      "bird": "Clark's Grebe",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 [card]. If you do, discard 1 [card] from your hand at the end of your turn."
+    },
+    {
+      "bird": "Clark's Nutcracker",
+      "color": "brown",
+      "power_class": "CacheFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird."
+    },
+    {
+      "bird": "Coal Tit",
+      "color": "brown",
+      "power_class": "CacheFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [seed] from the supply and cache it on this card. At any time, you may spend [seed] cached on this card."
+    },
+    {
+      "bird": "Cockatiel",
+      "color": "brown",
+      "power_class": "TuckFromDeck",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [seed] to choose a [card] from the tray and tuck it behind this bird."
+    },
+    {
+      "bird": "Common Blackbird",
+      "color": "white",
+      "power_class": "PlaceBirdSideways",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Place this bird sideways, so that it covers 2 [forest] spaces. Pay the lower egg cost."
+    },
+    {
+      "bird": "Common Buzzard",
+      "color": "white",
+      "power_class": "PlayOnTopPower",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Instead of paying any costs, you may play this bird on top of another bird on your player mat. Discard any eggs and food from that bird. It becomes a tucked card."
+    },
+    {
+      "bird": "Common Chaffinch",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1-5 birds in this habitat. Tuck 1 [card] from your hand behind each."
+    },
+    {
+      "bird": "Common Chiffchaff",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1-5 birds in this habitat. Tuck 1 [card] from your hand behind each."
+    },
+    {
+      "bird": "Common Cuckoo",
+      "color": "pink",
+      "power_class": "PinkLayEggOnTrigger",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201clay eggs\u201d action, this bird lays 1 [egg] on another bird with a [bowl] or [ground] nest."
+    },
+    {
+      "bird": "Common Goldeneye",
+      "color": "teal",
+      "power_class": "LayEggOnSelfPerOtherCavityBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Lay 1 [egg] on this bird for each other bird with a [cavity] nest that you have."
+    },
+    {
+      "bird": "Common Grackle",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Common Green Magpie",
+      "color": "brown",
+      "power_class": "CacheFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [invertebrate] or [rodent] from the birdfeeder, if there is one. You may cache it on this bird."
+    },
+    {
+      "bird": "Common Iora",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on another bird in this column."
+    },
+    {
+      "bird": "Common Kingfisher",
+      "color": "brown",
+      "power_class": "CacheFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Steal 1 [fish] from another player's supply and cache it on this bird. They gain 1 [die] from the birdfeeder."
+    },
+    {
+      "bird": "Common Little Bittern",
+      "color": "brown",
+      "power_class": "DrawFromTray",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 face-up [card] that can live in [grassland]."
+    },
+    {
+      "bird": "Common Loon",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Player(s) with the fewest birds in their [wetland] draw 1 [card]."
+    },
+    {
+      "bird": "Common Merganser",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird."
+    },
+    {
+      "bird": "Common Moorhen",
+      "color": "brown",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard 1 [wild] from your supply. If you do, play another bird in your [wetland]. Pay its normal food and egg cost."
+    },
+    {
+      "bird": "Common Myna",
+      "color": "brown",
+      "power_class": "CopyNeighborBrownPower",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Copy the \u201cWhen Activated\u201d (brown) power of a bird in the [grassland] of the player on your left."
+    },
+    {
+      "bird": "Common Nighthawk",
+      "color": "brown",
+      "power_class": "MoveBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat."
+    },
+    {
+      "bird": "Common Nightingale",
+      "color": "brown",
+      "power_class": "CommonNightingaleChooseFoodAllPlayers",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Choose a food type. All players gain 1 of that food from the supply."
+    },
+    {
+      "bird": "Common Raven",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [egg] from any of your other birds to gain 2 [wild] from the supply."
+    },
+    {
+      "bird": "Common Sandpiper",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 [card] for each bird in your [wetland] with an [egg] on it. Keep 1 and discard the rest."
+    },
+    {
+      "bird": "Common Starling",
+      "color": "teal",
+      "power_class": "DiscardFoodToTuckFromDeck",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard up to 5 [wild] from your supply. For each, tuck 1 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Common Swift",
+      "color": "teal",
+      "power_class": "DiscardFoodToTuckFromDeck",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard up to 5 [invertebrate] from your supply. For each, tuck 1 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Common Tailorbird",
+      "color": "yellow",
+      "power_class": "EndGameLayContiguousSameNest",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Find a contiguous group of birds in your preserve that all have the same nest type. Lay 1 [egg] on each of them. [star] nests count as any nest type."
+    },
+    {
+      "bird": "Common Teal",
+      "color": "teal",
+      "power_class": "PerThreeEggsInHabitatDrawThenTuck",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "For every 3 [egg] in your [wetland], draw 1 [card] from the deck. You may tuck up to 2 [card] from your hand behind this bird."
+    },
+    {
+      "bird": "Common Yellowthroat",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 [card]. If you do, discard 1 [card] from your hand at the end of your turn."
+    },
+    {
+      "bird": "Cooper's Hawk",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_lt_75"
+      ],
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Coppersmith Barbet",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [invertebrate] or [fruit] from the birdfeeder, if there is one."
+    },
+    {
+      "bird": "Corsican Nuthatch",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 new bonus card. Then gain 1 [die] from the birdfeeder."
+    },
+    {
+      "bird": "Count Raggi's Bird-of-Paradise",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1 other player. You both gain 1 [fruit] from the supply."
+    },
+    {
+      "bird": "Crested Ibis",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1. Other players may discard any 2 resources ([wild], [egg], or [card]) to do the same."
+    },
+    {
+      "bird": "Crested Lark",
+      "color": "brown",
+      "power_class": "CrestedLarkDiscardSeedLayEgg",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard 1 [seed]. If you do, lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Crested Pigeon",
+      "color": "yellow",
+      "power_class": "EndGameCacheFromSupplyOnSelf",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Cache up to 8 [seed] from your supply on this bird."
+    },
+    {
+      "bird": "Crimson Chat",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [wild] to tuck 1 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Dark-Eyed Junco",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [seed] from the supply."
+    },
+    {
+      "bird": "Desert Finch",
+      "color": "white",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on this bird for each other bird in your [grassland]."
+    },
+    {
+      "bird": "Desert Wheatear",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "For each bird in your [grassland] with an [egg] on it, roll any 1 [die]. Choose 1 type of food you rolled, and gain 1 of that food from the supply."
+    },
+    {
+      "bird": "Dickcissel",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Double-Crested Cormorant",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [fish] to tuck 2 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Downy Woodpecker",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play an additional bird in your [forest]. Pay its normal cost."
+    },
+    {
+      "bird": "Dunnock",
+      "color": "teal",
+      "power_class": "LayEggOnSelfPerOpponentGrasslandCubes",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Choose 1 other player. For each action cube on their [grassland], lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Eastern Bluebird",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play an additional bird in your [grassland]. Pay its normal cost."
+    },
+    {
+      "bird": "Eastern Imperial Eagle",
+      "color": "white",
+      "power_class": "TuckToPayCost",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "For each [rodent] in this bird's cost, you may pay 1 [card] from your hand instead. If you do, tuck the paid [card] behind this card."
+    },
+    {
+      "bird": "Eastern Kingbird",
+      "color": "pink",
+      "power_class": "PinkGainFoodFromSupplyOnPlayInHabitat",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player plays a bird in their [forest], gain 1 [invertebrate] from the supply."
+    },
+    {
+      "bird": "Eastern Phoebe",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players gain 1 [invertebrate] from the supply."
+    },
+    {
+      "bird": "Eastern Rosella",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players gain 1 [nectar] from the supply. You also gain 1 [seed] from the supply."
+    },
+    {
+      "bird": "Eastern Screech-Owl",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird."
+    },
+    {
+      "bird": "Eastern Whipbird",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1 other player. You both gain 1 [seed] from the supply."
+    },
+    {
+      "bird": "Eleonora's Falcon",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in the birdfeeder. If any are [rodent], place 1 [egg] on this card."
+    },
+    {
+      "bird": "Emu",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain all [seed] that are in the birdfeeder. Keep half (rounded up), then choose how to distribute the remainder among the other player(s)."
+    },
+    {
+      "bird": "Eurasian Collared-Dove",
+      "color": "teal",
+      "power_class": "DiscardFoodToTuckFromDeck",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard up to 5 [wild] from your supply. For each, tuck 1 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Eurasian Coot",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck up to 3 [card] from your hand behind this bird."
+    },
+    {
+      "bird": "Eurasian Eagle-Owl",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Up to 3 times, draw 1 [card] from the deck. When you stop, if the birds' total wingspan is less than 110 cm, tuck them behind this bird. If not, discard them."
+    },
+    {
+      "bird": "Eurasian Golden Oriole",
+      "color": "pink",
+      "power_class": "PinkGainFoodFromFeederOnGainFood",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201cgain food\u201d action, gain 1 [invertebrate] or [fruit] from the birdfeeder at the end of their turn."
+    },
+    {
+      "bird": "Eurasian Green Woodpecker",
+      "color": "teal",
+      "power_class": "CountsDoubleForGoal",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "This bird counts double toward the end-of-round goal, if it qualifies for the goal."
+    },
+    {
+      "bird": "Eurasian Hobby",
+      "color": "white",
+      "power_class": "PlayOnTopPower",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Instead of paying any costs, you may play this bird on top of another bird on your player mat. Discard any eggs and food from that bird. It becomes a tucked card."
+    },
+    {
+      "bird": "Eurasian Hoopoe",
+      "color": "white",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Steal 1 [invertebrate] from each of your neighbors. Each neighbor from whom a [invertebrate] was stolen may gain 1 [wild] from the supply."
+    },
+    {
+      "bird": "Eurasian Jay",
+      "color": "brown",
+      "power_class": "CacheFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Steal 1 [seed] from another player's supply and cache it on this bird. They gain 1 [die] from the birdfeeder."
+    },
+    {
+      "bird": "Eurasian Kestrel",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll any 3 [die]. If you roll at least 1 [rodent], cache 1 [rodent] on this bird."
+    },
+    {
+      "bird": "Eurasian Magpie",
+      "color": "teal",
+      "power_class": "CacheWildOnAnyBirdPerOpponentGrasslandCubes",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Choose 1 other player. For each action cube on their [grassland], cache 1 [wild] from the supply on any of your birds."
+    },
+    {
+      "bird": "Eurasian Marsh-Harrier",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Up to 3 times, draw 1 [card] from the deck. When you stop, if the birds' total wingspan is less than 110 cm, tuck them behind this bird. If not, discard them."
+    },
+    {
+      "bird": "Eurasian Nutcracker",
+      "color": "brown",
+      "power_class": "CacheFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1-5 birds in your [forest]. Cache 1 [seed] from your supply on each."
+    },
+    {
+      "bird": "Eurasian Nuthatch",
+      "color": "brown",
+      "power_class": "CacheFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [seed] from the supply and cache it on this card. At any time, you may spend [seed] cached on this card."
+    },
+    {
+      "bird": "Eurasian Sparrowhawk",
+      "color": "white",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "For each [rodent] in this bird's cost, you may pay 1 [card] from your hand instead. If you do, tuck the paid [card] behind this card."
+    },
+    {
+      "bird": "Eurasian Tree Sparrow",
+      "color": "pink",
+      "power_class": "PinkGainFoodFromFeederOnGainFood",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201cgain food\u201d action, gain 1 [seed] from the birdfeeder at the end of their turn."
+    },
+    {
+      "bird": "Eurasian Treecreeper",
+      "color": "teal",
+      "power_class": "PerThreeEggsInHabitatGainSeedOrInvertThenCache",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "For every 3 [egg] in your [forest], gain 1 [invertebrate] or [seed] from the supply. You may cache up to 2 of them on this bird."
+    },
+    {
+      "bird": "European Bee-Eater",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder. If you do, gain 1 [invertebrate] from the birdfeeder after resetting."
+    },
+    {
+      "bird": "European Goldfinch",
+      "color": "pink",
+      "power_class": "PinkTuckFromDeckOnOpponentTuck",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player tucks a [card] for any reason, tuck 1 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "European Honey Buzzard",
+      "color": "teal",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Reset the birdfeeder. If you do, gain all [invertebrate] in the birdfeeder after resetting."
+    },
+    {
+      "bird": "European Robin",
+      "color": "brown",
+      "power_class": "GainFoodMatchingPrevious",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "From the supply, gain 1 food of a type you already gained this turn."
+    },
+    {
+      "bird": "European Roller",
+      "color": "white",
+      "power_class": "PlaceBirdSideways",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Place this bird sideways, so that it covers 2 [grassland] spaces. Pay the lower egg cost."
+    },
+    {
+      "bird": "European Turtle Dove",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 new bonus card. Then gain 1 [die] from the birdfeeder, lay 1 [egg] on any bird, or draw 1 [card]."
+    },
+    {
+      "bird": "Ferruginous Hawk",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird."
+    },
+    {
+      "bird": "Fire-Fronted Serin",
+      "color": "teal",
+      "power_class": "LayEggOnSelfPerBirdToLeft",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Lay 1 [egg] on this bird for each bird to its left in this row."
+    },
+    {
+      "bird": "Fish Crow",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [egg] from any of your other birds to gain 1 [wild] from the supply."
+    },
+    {
+      "bird": "Forest Owlet",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose any 2 [die]. Roll them up to 3 times. Each time, if you roll at least 1 [invertebrate] or [rodent], cache 1 here. If not, stop and return all food cached here this turn."
+    },
+    {
+      "bird": "Forster's Tern",
+      "color": "brown",
+      "power_class": "DrawThenDiscardFromHand",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw 1 [card]. If you do, discard 1 [card] from your hand at the end of your turn."
+    },
+    {
+      "bird": "Franklin's Gull",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [egg] to draw 2 [card]."
+    },
+    {
+      "bird": "Galah",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1 other player. They reset the birdfeeder and gain a [seed], if there is one. You tuck 2 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Goldcrest",
+      "color": "brown",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard 1 [card] from your hand. If you do, play another bird in your [forest]. Pay its normal food and egg cost."
+    },
+    {
+      "bird": "Golden Eagle",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_lt_100"
+      ],
+      "power_text": "Look at a [card] from the deck. If less than 100cm, tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Golden Pheasant",
+      "color": "white",
+      "power_class": "AllPlayersLayEggsSelfBonus",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "All players lay 2 [egg]. You lay 2 additional [egg]."
+    },
+    {
+      "bird": "Golden-Headed Cisticola",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play another bird in your [grassland]. Pay its normal cost with a 1 [egg] discount."
+    },
+    {
+      "bird": "Gould's Finch",
+      "color": "yellow",
+      "power_class": "EndGamePlayBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Play a bird. Pay its normal food and egg cost. If it has a \u201cwhen played\u201d or \u201cgame end\u201d power, you may use it."
+    },
+    {
+      "bird": "Graceful Prinia",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [egg]. If you do, gain 1 [invertebrate] from the supply."
+    },
+    {
+      "bird": "Grandala",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If you laid an [egg] on this bird this turn, tuck 1 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Grasshopper Sparrow",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on any bird."
+    },
+    {
+      "bird": "Gray Catbird",
+      "color": "brown",
+      "power_class": "RepeatPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Repeat a brown power on another bird in this habitat."
+    },
+    {
+      "bird": "Gray Wagtail",
+      "color": "teal",
+      "power_class": "ConditionalAllActionsGainWild",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "If you used all 4 types of action this round, gain 2 [wild] from the supply."
+    },
+    {
+      "bird": "Great Blue Heron",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play an additional bird in your [wetland]. Pay its normal cost."
+    },
+    {
+      "bird": "Great Cormorant",
+      "color": "brown",
+      "power_class": "CacheFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "You may move 1 [fish] from this bird to your supply. Then, roll any 2 [die]. If any are [fish], cache 1 [fish] on this bird from the supply."
+    },
+    {
+      "bird": "Great Crested Flycatcher",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [invertebrate] from the birdfeeder, if available."
+    },
+    {
+      "bird": "Great Crested Grebe",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 [card] for each empty card slot in this row. At the end of your turn, keep 1 and discard the rest."
+    },
+    {
+      "bird": "Great Egret",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play an additional bird in your [wetland]. Pay its normal cost."
+    },
+    {
+      "bird": "Great Hornbill",
+      "color": "brown",
+      "power_class": "TuckThenCacheFromSupply",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "All players may tuck a [card] from their hand under a bird in their [forest] and/or cache 1 [fruit] from their supply on a bird in their [forest]."
+    },
+    {
+      "bird": "Great Horned Owl",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_lt_100"
+      ],
+      "power_text": "Look at a [card] from the deck. If less than 100cm, tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Great Indian Bustard",
+      "color": "white",
+      "power_class": "ScoreBonusCardNow",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Score 1 of your bonus cards now by caching 1 [seed] from the supply on this bird for each point. Also score it normally at game end."
+    },
+    {
+      "bird": "Great Spotted Woodpecker",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [invertebrate] or [seed] from the birdfeeder, if there is one."
+    },
+    {
+      "bird": "Great Tit",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder. If you do, gain 1 [die] from the birdfeeder after resetting."
+    },
+    {
+      "bird": "Greater Adjutant",
+      "color": "yellow",
+      "power_class": "CopyNeighborBonusCard",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Copy one bonus card of the player on your left, as if it were your own (score it based on your own birds)."
+    },
+    {
+      "bird": "Greater Flamingo",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1 other player. For each action cube on their [wetland], tuck 1 [card] from your hand behind this bird, then draw an equal number of [card]."
+    },
+    {
+      "bird": "Greater Prairie-Chicken",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Greater Roadrunner",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_lt_50"
+      ],
+      "power_text": "Look at a [card] from the deck. If less than 50cm, tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Green Bee-Eater",
+      "color": "brown",
+      "power_class": "TuckFromDeck",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If there is at least 1 bird on the tray that has [invertebrate] in its food cost, tuck 1 of them behind this bird."
+    },
+    {
+      "bird": "Green Heron",
+      "color": "brown",
+      "power_class": "TradeFoodForAny",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Trade 1 [wild] for any other type from the supply."
+    },
+    {
+      "bird": "Green Pheasant",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players lay 1 [egg]."
+    },
+    {
+      "bird": "Green Pygmy-Goose",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 [card] from the deck. Keep 1 and give the other to another player."
+    },
+    {
+      "bird": "Grey Butcherbird",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_lt_40"
+      ],
+      "power_text": "Look at a [card] from the deck. If its wingspan is less than 40cm, tuck it behind this bird and cache 1 [rodent] from the supply on this bird. If not, discard it."
+    },
+    {
+      "bird": "Grey Heron",
+      "color": "white",
+      "power_class": "PlaceBirdSideways",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Place this bird sideways, so that it covers 2 [wetland] spaces. Pay the lower egg cost."
+    },
+    {
+      "bird": "Grey Shrikethrush",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder and gain all [rodent], if there are any. You may cache any or all of them on this bird."
+    },
+    {
+      "bird": "Grey Teal",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Look at 3 [card] from the deck. Keep 1 [wetland] bird, if there is one. You may add it to your hand or tuck it behind this bird. Discard the other cards."
+    },
+    {
+      "bird": "Grey Warbler",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play another bird in your [forest]. Pay its normal cost with a 1 [egg] discount."
+    },
+    {
+      "bird": "Grey-Headed Mannikin",
+      "color": "yellow",
+      "power_class": "EndGamePlayBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Play a bird. Pay its normal food cost, but ignore 1 [egg] in its egg cost. If it has a \u201cwhen played\u201d or \u201cgame end\u201d power, you may use it."
+    },
+    {
+      "bird": "Greylag Goose",
+      "color": "teal",
+      "power_class": "CountsDoubleForGoal",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "This bird counts double toward the end-of-round goal, if it qualifies for the goal."
+    },
+    {
+      "bird": "Griffon Vulture",
+      "color": "teal",
+      "power_class": "CacheRodentPerPredator",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Choose any 1 player (including yourself). Cache 1 [rodent] from the supply on this bird for each [predator] that player has."
+    },
+    {
+      "bird": "Hawfinch",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder. If you do, gain 1 [seed] from the birdfeeder after resetting."
+    },
+    {
+      "bird": "Hermit Thrush",
+      "color": "brown",
+      "power_class": "FewestBirdsGainFood",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Player(s) with the fewest birds in their [forest] gain 1 [die] from birdfeeder."
+    },
+    {
+      "bird": "Himalayan Monal",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players gain 1 [seed] from the supply. You also lay 1 [egg]."
+    },
+    {
+      "bird": "Hooded Crow",
+      "color": "teal",
+      "power_class": "TuckHandThenDrawEqualPerOpponentGrasslandCubes",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Choose 1 other player. For each action cube on their [grassland], tuck 1 [card] from your hand behind this bird, then draw an equal number of [card]."
+    },
+    {
+      "bird": "Hooded Merganser",
+      "color": "brown",
+      "power_class": "RepeatPredatorPower",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Repeat 1 [predator] power in this habitat."
+    },
+    {
+      "bird": "Hooded Warbler",
+      "color": "none",
+      "power_class": "NoPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": ""
+    },
+    {
+      "bird": "Horned Lark",
+      "color": "pink",
+      "power_class": "PinkTuckFromHandOnPlayInHabitat",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player plays a bird in their [grassland], tuck 1 [card] from your hand behind this bird."
+    },
+    {
+      "bird": "Horsfield's Bronze-Cuckoo",
+      "color": "pink",
+      "power_class": "PinkLayEggOnTrigger",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201clay eggs\u201d action, lay 1 [egg] on a bird with a wingspan less than 30cm."
+    },
+    {
+      "bird": "Horsfield's Bushlark",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [seed]. If you do, lay up to 2 [egg] on this bird."
+    },
+    {
+      "bird": "House Crow",
+      "color": "teal",
+      "power_class": "CacheWildOnEachBirdInRow",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "You may cache 1 [wild] from your supply on each bird in this row."
+    },
+    {
+      "bird": "House Finch",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card]."
+    },
+    {
+      "bird": "House Sparrow",
+      "color": "teal",
+      "power_class": "DiscardFoodToTuckFromDeck",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard up to 5 [seed] from your supply. For each, tuck 1 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "House Wren",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play an additional bird in this bird's habitat. Pay its normal cost."
+    },
+    {
+      "bird": "Ibisbill",
+      "color": "white",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players draw 1 [card] from the deck and gain 1 [invertebrate] from the supply. You draw 1 additional [card] from the deck."
+    },
+    {
+      "bird": "Inca Dove",
+      "color": "white",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on each of your birds with a [platform] nest."
+    },
+    {
+      "bird": "Indian Peafowl",
+      "color": "white",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players draw 2 [card] from the deck. You draw 1 additional [card]."
+    },
+    {
+      "bird": "Indian Vulture",
+      "color": "yellow",
+      "power_class": "CopyNeighborBonusCard",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Copy one bonus card of the player on your right, as if it were your own (score it based on your own birds)."
+    },
+    {
+      "bird": "Indigo Bunting",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [invertebrate] or [fruit] from the birdfeeder, if available."
+    },
+    {
+      "bird": "Juniper Titmouse",
+      "color": "brown",
+      "power_class": "CacheFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Cache 1 [seed] from the supply on this bird."
+    },
+    {
+      "bird": "Kea",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 bonus card. You may discard any number of [wild] to draw that many additional bonus cards. Keep 1 of the cards you drew and discard the rest."
+    },
+    {
+      "bird": "Kelp Gull",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard any number of [wild] to draw that many [card]."
+    },
+    {
+      "bird": "Kerer\u016b",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If the player to your left has a [nectar] in their personal supply, gain 1 [nectar] from the general supply."
+    },
+    {
+      "bird": "Killdeer",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [egg] to draw 2 [card]."
+    },
+    {
+      "bird": "King Rail",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Korimako",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard any number of [rodent] to gain that many [nectar] from the supply."
+    },
+    {
+      "bird": "K\u0101k\u0101p\u014d",
+      "color": "yellow",
+      "power_class": "EndGameDrawBonusKeep",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw 4 bonus cards, keep 1, and discard the other 3."
+    },
+    {
+      "bird": "Large-Billed Crow",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Cache 1 [wild] from your supply on any bird. If you do, you may tuck 1 [card] from your hand behind this bird."
+    },
+    {
+      "bird": "Laughing Kookaburra",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder. If you do, gain 1 [invertebrate], [fish], or [rodent], if there is one."
+    },
+    {
+      "bird": "Lazuli Bunting",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players lay 1 [egg] on any 1 [bowl] bird. You may lay 1 [egg] on 1 additional [bowl] bird."
+    },
+    {
+      "bird": "Lesser Frigatebird",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players may discard 1 [egg] from a [wetland] bird. Each player that discards an [egg] gains 1 [wild] from the supply."
+    },
+    {
+      "bird": "Lesser Whitethroat",
+      "color": "teal",
+      "power_class": "ChooseEgglessHabitatLayEggEachBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Choose a habitat with no [egg]. Lay 1 [egg] on each bird in that habitat."
+    },
+    {
+      "bird": "Lewin's Honeyeater",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1 other player. You both gain 1 [nectar] from the supply."
+    },
+    {
+      "bird": "Lincoln's Sparrow",
+      "color": "brown",
+      "power_class": "MoveBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat."
+    },
+    {
+      "bird": "Little Bustard",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 new bonus card. Then gain 1 [card] or lay 1 [egg] on any bird."
+    },
+    {
+      "bird": "Little Egret",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 [card] from the deck and add it to your hand. All other players draw 1 [card] from the deck and keep it if it can live in [wetland]."
+    },
+    {
+      "bird": "Little Grebe",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "For each bird in this column with an [egg] on it, draw 1 [card]. Keep 1 and discard the rest."
+    },
+    {
+      "bird": "Little Owl",
+      "color": "brown",
+      "power_class": "CacheFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Steal 1 [rodent] from another player's supply and cache it on this bird. They gain 1 [die] from the birdfeeder."
+    },
+    {
+      "bird": "Little Penguin",
+      "color": "brown",
+      "power_class": "DrawDiscardCacheByFoodIcon",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw and discard 5 [card] from the deck. For each [fish] in their food costs, cache 1 [fish] from the supply on this bird."
+    },
+    {
+      "bird": "Little Pied Cormorant",
+      "color": "yellow",
+      "power_class": "EndGameLayEggOnMatchingNest",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Lay 1 [egg] on each of your birds with a [platform] nest, including this one."
+    },
+    {
+      "bird": "Little Ringed Plover",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [card] from your hand. If you do, lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Loggerhead Shrike",
+      "color": "pink",
+      "power_class": "PinkCacheRodentOnOpponentRodentGain",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201cgain food\u201d action, if they gain any number of [rodent], cache 1 [rodent] from the supply on this bird."
+    },
+    {
+      "bird": "Long-Tailed Tit",
+      "color": "white",
+      "power_class": "PlaceBirdSideways",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Place this bird sideways, so that it covers 2 [forest] spaces. Pay the lower egg cost."
+    },
+    {
+      "bird": "Magpie-Lark",
+      "color": "yellow",
+      "power_class": "EndGameMagpieLark",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard 2 [egg] from your [forest]. If you do, play 1 bird in your [grassland] at its normal food cost (ignore its egg cost). If it has a \u201cwhen played\u201d or \u201cgame end\u201d power, you may use it."
+    },
+    {
+      "bird": "Major Mitchell's Cockatoo",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, all players gain 1 [seed] from the supply."
+    },
+    {
+      "bird": "Mallard",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 [card]."
+    },
+    {
+      "bird": "Malleefowl",
+      "color": "yellow",
+      "power_class": "EndGameLayEggOnMatchingNest",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Lay 1 [egg] on each of your birds with a [ground] nest, including this one."
+    },
+    {
+      "bird": "Mandarin Duck",
+      "color": "teal",
+      "power_class": "EndRoundMandarinDuck",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw 5 [card] from the deck. Add 1 to your hand, tuck 1 behind this bird, give 1 to another player, and discard the rest."
+    },
+    {
+      "bird": "Maned Duck",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck up to 3 [card] from your hand behind this bird. If you tuck at least 1 [card], gain 1 [seed] from the supply."
+    },
+    {
+      "bird": "Many-Colored Fruit-Dove",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players gain 1 [fruit] from the supply. You gain 1 additional [fruit] from the supply."
+    },
+    {
+      "bird": "Masked Lapwing",
+      "color": "white",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder, then, for each type of food in the birdfeeder, gain 1 of that type."
+    },
+    {
+      "bird": "Mississippi Kite",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird."
+    },
+    {
+      "bird": "Mistletoebird",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [fruit] from the supply, or discard 1 [fruit] to gain 1 [nectar] from the supply."
+    },
+    {
+      "bird": "Moltoni's Warbler",
+      "color": "teal",
+      "power_class": "ConditionalAllActionsPlayBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "If you used all 4 types of actions this round, play another bird. Pay its normal food and egg cost."
+    },
+    {
+      "bird": "Montagu's Harrier",
+      "color": "white",
+      "power_class": "PlayOnTopPower",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Instead of paying any costs, you may play this bird on top of another bird on your player mat. Discard any eggs and food from that bird. It becomes a tucked card."
+    },
+    {
+      "bird": "Mountain Bluebird",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play an additional bird in your [grassland]. Pay its normal cost."
+    },
+    {
+      "bird": "Mountain Chickadee",
+      "color": "brown",
+      "power_class": "CacheFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Cache 1 [seed] from the supply on this bird."
+    },
+    {
+      "bird": "Mourning Dove",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Musk Duck",
+      "color": "brown",
+      "power_class": "DrawFromTray",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 face-up [card] from the tray with a [ground] or [star] nest. You may reset or refill the tray before doing so."
+    },
+    {
+      "bird": "Mute Swan",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1-3 birds in your [wetland]. Tuck 1 [card] from your hand behind each. If you tuck at least 1 card, draw 1 [card]."
+    },
+    {
+      "bird": "New Holland Honeyeater",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [nectar] from the birdfeeder, if there is one."
+    },
+    {
+      "bird": "Noisy Miner",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, lay up to 2 [egg] on this bird. All other players may lay 1 [egg]."
+    },
+    {
+      "bird": "North Island Brown Kiwi",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard a bonus card. If you do, draw 4 bonus cards, keep 2, and discard the other 2."
+    },
+    {
+      "bird": "Northern Bobwhite",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Northern Cardinal",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [fruit] from the supply."
+    },
+    {
+      "bird": "Northern Flicker",
+      "color": "white",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain all [invertebrate] that are in the birdfeeder."
+    },
+    {
+      "bird": "Northern Gannet",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are a [fish], gain that many [fish] from the supply and cache them on this bird."
+    },
+    {
+      "bird": "Northern Goshawk",
+      "color": "white",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "For each [rodent] in this bird's cost, you may pay 1 [card] from your hand instead. If you do, tuck the paid [card] behind this card."
+    },
+    {
+      "bird": "Northern Harrier",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_lt_75"
+      ],
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Northern Mockingbird",
+      "color": "brown",
+      "power_class": "RepeatPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Repeat a brown power on another bird in this habitat."
+    },
+    {
+      "bird": "Northern Shoveler",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players draw 1 [card] from the deck."
+    },
+    {
+      "bird": "Olive-Backed Sunbird",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Each player may roll any 1 [die] and gain that food from the supply."
+    },
+    {
+      "bird": "Orange-Footed Scrubfowl",
+      "color": "yellow",
+      "power_class": "EndGameLayEggOnMatchingNest",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Lay 1 [egg] on each of your birds with a [ground] nest, including this one."
+    },
+    {
+      "bird": "Oriental Bay-Owl",
+      "color": "teal",
+      "power_class": "ActivateAllPredators",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Activate the \u201cWhen Activated\u201d (brown) powers of all of your other [predator]."
+    },
+    {
+      "bird": "Oriental Magpie-Robin",
+      "color": "teal",
+      "power_class": "PerThreeEggsInHabitatGainSeedOrInvertThenCache",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "For every 3 [egg] in your [grassland], gain 1 [invertebrate] or [seed] from the supply. You may cache up to 2 of them on this bird."
+    },
+    {
+      "bird": "Osprey",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players gain 1 [fish] from the supply."
+    },
+    {
+      "bird": "Pacific Black Duck",
+      "color": "yellow",
+      "power_class": "EndGameLayEggOnSelfPerTwoEggsInHabitat",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "For every 2 [egg] in your [wetland], lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Painted Bunting",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Painted Whitestart",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [invertebrate] from the supply."
+    },
+    {
+      "bird": "Parrot Crossbill",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Remove any 1 [die] from the birdfeeder, then gain 1 [seed] from the supply."
+    },
+    {
+      "bird": "Peaceful Dove",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard any number of [seed]. Lay 1 [egg] on this bird for each discarded [seed]."
+    },
+    {
+      "bird": "Peregrine Falcon",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_lt_100"
+      ],
+      "power_text": "Look at a [card] from the deck. If less than 100cm, tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Pesquet's Parrot",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If the player to your right has a [nectar] in their personal supply, gain 1 [nectar] from the general supply."
+    },
+    {
+      "bird": "Pheasant Coucal",
+      "color": "pink",
+      "power_class": "PinkLayEggOnTrigger",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201clay eggs\u201d action, lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Philippine Eagle",
+      "color": "teal",
+      "power_class": "PhilippineEagleRodentBonus",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Roll all 5 [die]. You may reroll any number of [die], up to 2 times. If at least 3 [rodent] are showing when you stop, draw 2 bonus cards and keep 1. Reset the birdfeeder."
+    },
+    {
+      "bird": "Pied-Billed Grebe",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 [card]. If you do, discard 1 [card] from your hand at the end of your turn."
+    },
+    {
+      "bird": "Pileated Woodpecker",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players lay 1 [egg] on any 1 [cavity] bird. You may lay 1 [egg] on 1 additional [cavity] bird."
+    },
+    {
+      "bird": "Pine Siskin",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [seed] from the supply."
+    },
+    {
+      "bird": "Pink-Eared Duck",
+      "color": "brown",
+      "power_class": "PinkEaredDuckDrawKeepGive",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw 2 [card] from the deck. Keep 1 and give the other to another player."
+    },
+    {
+      "bird": "Plains-Wanderer",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 bonus card for each bird in your [grassland]. Keep 1 and discard the rest."
+    },
+    {
+      "bird": "Plumbeous Redstart",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 [card] from the deck and add it to your hand. All other players draw 1 [card] from the deck and add it to their hand if the bird has a [invertebrate] or [seed] in its food cost."
+    },
+    {
+      "bird": "Princess Stephanie's Astrapia",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1 other player. You both lay 1 [egg]."
+    },
+    {
+      "bird": "Prothonotary Warbler",
+      "color": "none",
+      "power_class": "NoPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": ""
+    },
+    {
+      "bird": "Purple Gallinule",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players draw 1 [card] from the deck."
+    },
+    {
+      "bird": "Purple Heron",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose any 2 [die]. Roll them up to 3 times. Each time, if you roll at least 1 [invertebrate] or [fish], cache 1 here. If not, stop and return all food cached here this turn."
+    },
+    {
+      "bird": "Purple Martin",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card]."
+    },
+    {
+      "bird": "Pygmy Nuthatch",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [invertebrate] or [seed] from the supply."
+    },
+    {
+      "bird": "P\u016bkeko",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on an adjacent bird."
+    },
+    {
+      "bird": "Rainbow Lorikeet",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [nectar] to the \u201cspent nectar\u201d space for your [forest]. If you do, gain 2 [die] from the birdfeeder."
+    },
+    {
+      "bird": "Red Avadavat",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Give 1 [card] from your hand to another player. If you do, draw 2 [card]."
+    },
+    {
+      "bird": "Red Crossbill",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players gain 1 [seed] from the supply."
+    },
+    {
+      "bird": "Red Junglefowl",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Count the [egg] on all of your birds. If the total is fewer than 6 [egg], lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Red Kite",
+      "color": "white",
+      "power_class": "PlayOnTopPower",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Instead of paying any costs, you may play this bird on top of another bird on your player mat. Discard any eggs and food from that bird. It becomes a tucked card."
+    },
+    {
+      "bird": "Red Knot",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 new bonus card. Then draw 3 [card] and keep 1 of them."
+    },
+    {
+      "bird": "Red Wattlebird",
+      "color": "white",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [nectar] from the supply for each bird with a wingspan less than 49cm in your [forest]."
+    },
+    {
+      "bird": "Red-Backed Fairywren",
+      "color": "yellow",
+      "power_class": "EndGameLayEggOnMatchingNest",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Lay 1 [egg] on each of your birds with a [star] nest, including this one."
+    },
+    {
+      "bird": "Red-Backed Shrike",
+      "color": "brown",
+      "power_class": "CacheFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Steal 1 [invertebrate] from another player's supply and cache it on this bird. They gain 1 [die] from the birdfeeder."
+    },
+    {
+      "bird": "Red-Bellied Woodpecker",
+      "color": "brown",
+      "power_class": "RedBelliedWoodpeckerSeedFromFeeder",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird."
+    },
+    {
+      "bird": "Red-Breasted Merganser",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 [card]. If you do, discard 1 [card] from your hand at the end of your turn."
+    },
+    {
+      "bird": "Red-Breasted Nuthatch",
+      "color": "brown",
+      "power_class": "CacheFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Cache 1 [seed] from the supply on this bird."
+    },
+    {
+      "bird": "Red-Capped Robin",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If the player to your left has an [invertebrate] in their personal supply, gain 1 [invertebrate] from the general supply."
+    },
+    {
+      "bird": "Red-Cockaded Woodpecker",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Red-Crowned Crane",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Score 1 of your bonus cards now by caching 1 [wild] from the supply on this bird for each point. Discard that bonus card and draw 1 new one."
+    },
+    {
+      "bird": "Red-Eyed Vireo",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play an additional bird in your [forest]. Pay its normal cost."
+    },
+    {
+      "bird": "Red-Headed Woodpecker",
+      "color": "brown",
+      "power_class": "CacheFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird."
+    },
+    {
+      "bird": "Red-Legged Partridge",
+      "color": "brown",
+      "power_class": "LayEggsEachBirdInRow",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on each bird in this column, including this one."
+    },
+    {
+      "bird": "Red-Necked Avocet",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If the player to your left or right has an [invertebrate] in their personal supply, gain 1 [invertebrate] from the general supply."
+    },
+    {
+      "bird": "Red-Shouldered Hawk",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_lt_75"
+      ],
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Red-Tailed Hawk",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_lt_75"
+      ],
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Red-Vented Bulbul",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If you have at least 1 [fruit] in your supply, lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Red-Wattled Lapwing",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard any number of [card] from the tray, then refill it. If at least 1 of the discarded birds is a [predator], lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Red-Winged Blackbird",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Red-Winged Parrot",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Give 1 [nectar] from your supply to another player. If you do, lay 2 [egg] on this bird or gain 2 [die] from the birdfeeder."
+    },
+    {
+      "bird": "Regent Bowerbird",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose 1 other player. You both gain 1 [invertebrate] from the supply."
+    },
+    {
+      "bird": "Rhinoceros Auklet",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll any 2 [die]. If you roll at least 1 [fish], cache 1 [fish] from the supply on this bird. All players may discard 1 [card] from their hand to gain 1 [fish] from the supply."
+    },
+    {
+      "bird": "Ring-Billed Gull",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card]."
+    },
+    {
+      "bird": "Rock Pigeon",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players lay 1 [egg]. You lay 1 additional [egg]."
+    },
+    {
+      "bird": "Rook",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Cache 1 [wild] from your supply on this bird or tuck 1 [card] from your hand behind this bird. If you do either, tuck 1 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Rose-Breasted Grosbeak",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [seed] or [fruit] from the birdfeeder, if available."
+    },
+    {
+      "bird": "Rose-Ringed Parakeet",
+      "color": "white",
+      "power_class": "CopyNeighborWhitePower",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Copy a \u201cWhen Played\u201d (white) ability on 1 of your neighbors' birds."
+    },
+    {
+      "bird": "Roseate Spoonbill",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Rosy Starling",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck up to 3 [card] from your hand behind this bird. If you tuck at least 1 [card], gain 1 [invertebrate] from the supply."
+    },
+    {
+      "bird": "Royal Spoonbill",
+      "color": "brown",
+      "power_class": "DrawFromTray",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 face-up [card] from the tray with a [platform] or [star] nest. You may reset or refill the tray before doing so."
+    },
+    {
+      "bird": "Ruby-Crowned Kinglet",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play an additional bird in your [forest]. Pay its normal cost."
+    },
+    {
+      "bird": "Ruby-Throated Hummingbird",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Each player gains 1 [die] from the birdfeeder, starting with the player of your choice."
+    },
+    {
+      "bird": "Ruddy Duck",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 [card]. If you do, discard 1 [card] from your hand at the end of your turn."
+    },
+    {
+      "bird": "Ruddy Shelduck",
+      "color": "teal",
+      "power_class": "DrawKeepTuckDiscard",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw 5 [card] from the deck. Add 1 to your hand, tuck 1 behind this bird, and discard the rest."
+    },
+    {
+      "bird": "Ruff",
+      "color": "teal",
+      "power_class": "TuckFromHandThenDrawEqual",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Tuck up to 3 [card] from your hand behind this bird. Draw 1 [card] for each card you tucked."
+    },
+    {
+      "bird": "Rufous Night-Heron",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:habitat_filter"
+      ],
+      "power_text": "Look at a [card] from the deck. If it can live in [wetland], tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Rufous Owl",
+      "color": "brown",
+      "power_class": "TuckFromDeck",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 face-up [card] from the tray with a wingspan less than 75cm and tuck it behind this bird."
+    },
+    {
+      "bird": "Rufous-Banded Honeyeater",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [invertebrate]. If you do, gain 1 [nectar] from the supply."
+    },
+    {
+      "bird": "Sacred Kingfisher",
+      "color": "pink",
+      "power_class": "PinkGainFoodFromFeederOnGainFood",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201cgain food\u201d action, gain 1 [invertebrate], [fish], or [rodent] from the birdfeeder, if there is one, at the end of their turn."
+    },
+    {
+      "bird": "Sandhill Crane",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [seed] to tuck 2 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Sarus Crane",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Each player may discard 1 [egg] to draw 1 [card] from the deck."
+    },
+    {
+      "bird": "Satyr Tragopan",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Give 1 [card] from your hand to another player. If you do, lay 2 [egg] on this bird."
+    },
+    {
+      "bird": "Savannah Sparrow",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play an additional bird in your [grassland]. Pay its normal cost."
+    },
+    {
+      "bird": "Savi's Warbler",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 [card]. All other players draw 1 [card] from the deck."
+    },
+    {
+      "bird": "Say's Phoebe",
+      "color": "white",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on each of your birds with a [bowl] nest."
+    },
+    {
+      "bird": "Scaled Quail",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Scaly-Breasted Munia",
+      "color": "brown",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [seed] from the supply or tuck 1 [card] from the deck behind this bird."
+    },
+    {
+      "bird": "Scissor-Tailed Flycatcher",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players gain 1 [invertebrate] from the supply."
+    },
+    {
+      "bird": "Short-Toed Treecreeper",
+      "color": "brown",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard 1 [egg] from any bird. If you do, play another bird in your [forest]. Pay its normal food and egg cost."
+    },
+    {
+      "bird": "Silvereye",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players gain 1 [nectar] from the supply."
+    },
+    {
+      "bird": "Small Minivet",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play 1 additional bird in your [forest]. You may ignore 1 [invertebrate] or 1 [egg] in its cost."
+    },
+    {
+      "bird": "Smew",
+      "color": "white",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 4 [card]. Tuck 2 [card] behind this bird and add the other 2 [card] to your hand."
+    },
+    {
+      "bird": "Snow Bunting",
+      "color": "pink",
+      "power_class": "PinkTuckFromHandThenDrawOnOpponentTuck",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player tucks a [card] for any reason, tuck 1 [card] from your hand behind this bird, then draw 1 [card] at the end of their turn."
+    },
+    {
+      "bird": "Snowy Egret",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird."
+    },
+    {
+      "bird": "Snowy Owl",
+      "color": "white",
+      "power_class": "SnowyOwlBonusThenChoice",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw 1 new bonus card. Then gain 1 [card] or lay 1 [egg] on any bird."
+    },
+    {
+      "bird": "Song Sparrow",
+      "color": "brown",
+      "power_class": "MoveBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat."
+    },
+    {
+      "bird": "South Island Robin",
+      "color": "brown",
+      "power_class": "ConditionalCacheFromNeighbor",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "If the player to your right has an [invertebrate] in their supply, cache 1 [invertebrate] from the general supply on this bird."
+    },
+    {
+      "bird": "Southern Cassowary",
+      "color": "white",
+      "power_class": "SouthernCassowaryPower",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard a bird from your [forest] and put this bird in its place (do not pay an egg cost). If you do, lay 4 [egg] on this bird and gain 2 [fruit] from the supply."
+    },
+    {
+      "bird": "Spangled Drongo",
+      "color": "pink",
+      "power_class": "PinkGainNectarOnOpponentNectarGain",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player gains [nectar], gain 1 [nectar] from the supply."
+    },
+    {
+      "bird": "Splendid Fairywren",
+      "color": "yellow",
+      "power_class": "EndGameLayEggOnMatchingWingspan",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Lay 1 [egg] on each of your birds with a wingspan less than 30cm, including this one."
+    },
+    {
+      "bird": "Spoon-Billed Sandpiper",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1. Other players may discard any 2 resources ([wild], [egg], or [card]) to do the same."
+    },
+    {
+      "bird": "Spotless Crake",
+      "color": "yellow",
+      "power_class": "EndGameLayEggOnEachBirdInHabitat",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Lay 1 [egg] on each bird in your [wetland], including this one."
+    },
+    {
+      "bird": "Spotted Dove",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If this bird has no birds to the right of it, you may move it (only the card) to the player mat of the player on your right (you choose its habitat). If you do, draw 3 [card]."
+    },
+    {
+      "bird": "Spotted Owl",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Spotted Sandpiper",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players draw 1 [card] from the deck."
+    },
+    {
+      "bird": "Spotted Towhee",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [seed] from the supply."
+    },
+    {
+      "bird": "Sprague's Pipit",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Squacco Heron",
+      "color": "brown",
+      "power_class": "DrawFromTray",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 face-up [card] that can live in [wetland]."
+    },
+    {
+      "bird": "Sri Lanka Blue-Magpie",
+      "color": "teal",
+      "power_class": "CacheWildOnEachOtherBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "You may cache 1 [wild] from your supply on each of your other birds."
+    },
+    {
+      "bird": "Sri Lanka Frogmouth",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll any 1 [die]. If you roll a [invertebrate], cache 1 [invertebrate] from the supply on this bird. All players may discard 1 [card] from their hand to gain 1 [invertebrate] from the supply."
+    },
+    {
+      "bird": "Steller's Jay",
+      "color": "brown",
+      "power_class": "CacheFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird."
+    },
+    {
+      "bird": "Stork-Billed Kingfisher",
+      "color": "brown",
+      "power_class": "CacheFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose any 1 [die]. Roll it one for each of your [wetland] birds. If you roll at least 1 [fish], gain 1 from the supply. You may cache it on this bird."
+    },
+    {
+      "bird": "Stubble Quail",
+      "color": "white",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard up to 6 [wild]. Lay 1 [egg] on this bird for each discarded food."
+    },
+    {
+      "bird": "Sulphur-Crested Cockatoo",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, all players gain 1 [nectar] from the supply."
+    },
+    {
+      "bird": "Superb Lyrebird",
+      "color": "brown",
+      "power_class": "CopyNeighborBrownPower",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Copy a brown power on one bird in the [forest] of the player to your right."
+    },
+    {
+      "bird": "Swainson's Hawk",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_lt_75"
+      ],
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it."
+    },
+    {
+      "bird": "Tawny Frogmouth",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder. Cache 1 [invertebrate] or [rodent] from the birdfeeder (if available) on this bird."
+    },
+    {
+      "bird": "Thekla's Lark",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard 1 [seed] from your supply. If you do, lay 2 [egg] on this bird."
+    },
+    {
+      "bird": "Tree Swallow",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card]."
+    },
+    {
+      "bird": "Trumpeter Finch",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play 1 additional bird in your [grassland]. You may ignore 1 [seed] or 1 [egg] in its cost."
+    },
+    {
+      "bird": "Trumpeter Swan",
+      "color": "none",
+      "power_class": "NoPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": ""
+    },
+    {
+      "bird": "Tufted Titmouse",
+      "color": "white",
+      "power_class": "PlayAdditionalBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Play an additional bird in your [forest]. Pay its normal cost."
+    },
+    {
+      "bird": "Turkey Vulture",
+      "color": "pink",
+      "power_class": "PinkPredatorSuccessGainDie",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player's [predator] succeeds, gain 1 [die] from the birdfeeder."
+    },
+    {
+      "bird": "Twite",
+      "color": "teal",
+      "power_class": "DrawThenTuckFromHand",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw 2 [card] from the deck and add them to your hand. Then, tuck any 2 [card] from your hand behind this bird."
+    },
+    {
+      "bird": "T\u016b\u012b",
+      "color": "brown",
+      "power_class": "CopyNeighborBrownPower",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Copy a brown power on one bird in the [forest] of the player to your left."
+    },
+    {
+      "bird": "Vaux's Swift",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [invertebrate] from the supply."
+    },
+    {
+      "bird": "Verditer Flycatcher",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If you have gained a [invertebrate] from the birdfeeder on this turn, gain 1 [fruit] from the supply."
+    },
+    {
+      "bird": "Violet Cuckoo",
+      "color": "pink",
+      "power_class": "PinkLayEggOnTrigger",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201clay eggs\u201d action, lay 1 [egg] on another bird with wingspan less than 30 cm. You may go 2 over its egg limit while using this power."
+    },
+    {
+      "bird": "Violet-Green Swallow",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card]."
+    },
+    {
+      "bird": "Wedge-Tailed Eagle",
+      "color": "brown",
+      "power_class": "PredatorLookAt",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping",
+        "predator_condition:wingspan_gt_65"
+      ],
+      "power_text": "Look at a [card] from the deck. If its wingspan is over 65cm, tuck it behind this bird and cache 1 [rodent] from the supply on this bird. If not, discard it."
+    },
+    {
+      "bird": "Welcome Swallow",
+      "color": "white",
+      "power_class": "FlockingPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from the deck behind each bird in this habitat, including this bird."
+    },
+    {
+      "bird": "Western Meadowlark",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players lay 1 [egg] on any 1 [ground] bird. You may lay 1 [egg] on 1 additional [ground] bird."
+    },
+    {
+      "bird": "Western Tanager",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [invertebrate] or [fruit] from the birdfeeder, if available."
+    },
+    {
+      "bird": "White Stork",
+      "color": "brown",
+      "power_class": "WhiteStorkResetTrayThenDraw",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Discard all remaining face-up [card] and refill the tray. If you do, draw 1 of the new face-up [card]."
+    },
+    {
+      "bird": "White Wagtail",
+      "color": "teal",
+      "power_class": "ConditionalAllActionsPlayBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "If you used all 4 types of actions this round, play another bird. Pay its normal food and egg cost."
+    },
+    {
+      "bird": "White-Backed Woodpecker",
+      "color": "brown",
+      "power_class": "GainFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [die] from the birdfeeder."
+    },
+    {
+      "bird": "White-Bellied Sea-Eagle",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder. Gain 1 [fish] or 1 [rodent] from the birdfeeder, if there is one, and cache it on this bird."
+    },
+    {
+      "bird": "White-Breasted Nuthatch",
+      "color": "brown",
+      "power_class": "CacheFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Cache 1 [seed] from the supply on this bird."
+    },
+    {
+      "bird": "White-Breasted Woodswallow",
+      "color": "white",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Lay 1 [egg] on each bird in your [grassland], including this one."
+    },
+    {
+      "bird": "White-Browed Tit-Warbler",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "For each bird in your [forest] with an egg on it, roll any 1 [die]. Choose 1 type of food you rolled and gain 1 of that food from the supply."
+    },
+    {
+      "bird": "White-Crested Laughingthrush",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [invertebrate], [seed], or [fruit] from the birdfeeder."
+    },
+    {
+      "bird": "White-Crowned Sparrow",
+      "color": "brown",
+      "power_class": "MoveBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat."
+    },
+    {
+      "bird": "White-Faced Heron",
+      "color": "brown",
+      "power_class": "ResetFeederGainFood",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Reset the birdfeeder and gain all [fish], if there are any. You may cache any or all of them on this bird."
+    },
+    {
+      "bird": "White-Faced Ibis",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird."
+    },
+    {
+      "bird": "White-Headed Duck",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 3 new bonus cards and keep 1."
+    },
+    {
+      "bird": "White-Throated Dipper",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Discard all remaining face-up [card] and refill the tray. If you do, draw 1 of the new face-up [card]."
+    },
+    {
+      "bird": "White-Throated Kingfisher",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Choose any 1 [die]. Roll it up to 3 times. Each time, if you roll a [invertebrate], [fish], or [rodent], cache 1 here. If not, stop and return all food cached here this turn."
+    },
+    {
+      "bird": "White-Throated Swift",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, lay 1 [egg] on any bird."
+    },
+    {
+      "bird": "Whooping Crane",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Wild Turkey",
+      "color": "none",
+      "power_class": "NoPower",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": ""
+    },
+    {
+      "bird": "Willet",
+      "color": "brown",
+      "power_class": "PredatorDice",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird."
+    },
+    {
+      "bird": "Willie-Wagtail",
+      "color": "brown",
+      "power_class": "WillieWagtailDrawTrayNest",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw 1 face-up [card] from the tray with a [bowl] or [star] nest. You may reset or refill the tray before doing so."
+    },
+    {
+      "bird": "Willow Tit",
+      "color": "brown",
+      "power_class": "CacheFoodFromFeeder",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Cache 1 [invertebrate], [seed], or [fruit] from the birdfeeder on this bird, if there is one."
+    },
+    {
+      "bird": "Wilson's Snipe",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players draw 1 [card] from the deck."
+    },
+    {
+      "bird": "Wilson's Storm Petrel",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 1 [card] for each empty card slot in this row. At the end of your turn, keep 1 and discard the rest."
+    },
+    {
+      "bird": "Wood Duck",
+      "color": "brown",
+      "power_class": "DrawThenDiscardFromHand",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Draw 2 [card]. If you do, discard 1 [card] from your hand at the end of your turn."
+    },
+    {
+      "bird": "Wood Stork",
+      "color": "white",
+      "power_class": "DrawBonusCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw 2 new bonus cards and keep 1."
+    },
+    {
+      "bird": "Wrybill",
+      "color": "white",
+      "power_class": "RetrieveDiscardedBonusCard",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "Look through all discarded bonus cards. Keep 1 of them."
+    },
+    {
+      "bird": "Yellow Bittern",
+      "color": "brown",
+      "power_class": "DrawCards",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Draw the [card] in the middle slot of the bird tray."
+    },
+    {
+      "bird": "Yellow-Bellied Sapsucker",
+      "color": "brown",
+      "power_class": "GainFoodFromSupply",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Gain 1 [invertebrate] from the supply."
+    },
+    {
+      "bird": "Yellow-Billed Cuckoo",
+      "color": "pink",
+      "power_class": "PinkLayEggOnTrigger",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "When another player takes the \u201clay eggs\u201d action, lay 1 [egg] on a bird with a [bowl] nest."
+    },
+    {
+      "bird": "Yellow-Breasted Chat",
+      "color": "brown",
+      "power_class": "MoveBird",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat."
+    },
+    {
+      "bird": "Yellow-Headed Blackbird",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird."
+    },
+    {
+      "bird": "Yellow-Rumped Warbler",
+      "color": "brown",
+      "power_class": "TuckFromHand",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card]."
+    },
+    {
+      "bird": "Yellowhammer",
+      "color": "teal",
+      "power_class": "ConditionalAllActionsPlayBird",
+      "explicit_mapping": true,
+      "flags": [],
+      "power_text": "If you used all 4 types of actions this round, play another bird. Pay its normal food and egg cost."
+    },
+    {
+      "bird": "Zebra Dove",
+      "color": "brown",
+      "power_class": "LayEggs",
+      "explicit_mapping": false,
+      "flags": [
+        "non_explicit_mapping"
+      ],
+      "power_text": "All players may discard 1 [seed] from their supply to lay 1 [egg]."
+    }
+  ]
+}

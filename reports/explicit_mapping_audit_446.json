@@ -1,0 +1,4342 @@
+{
+  "summary": {
+    "total_birds": 446
+  },
+  "birds": [
+    {
+      "bird": "Abbott's Booby",
+      "power_text": "Draw 3 bonus cards, then discard 2. You may discard bonus cards you did not draw this turn.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 3,
+        "keep": 1,
+        "discard_from_all_bonus": true
+      }
+    },
+    {
+      "bird": "Acorn Woodpecker",
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+      "kwargs": {
+        "food_type": "FoodType.SEED"
+      }
+    },
+    {
+      "bird": "American Avocet",
+      "power_text": "When another player takes the “lay eggs” action, lay 1 [egg] on another bird with a [ground] nest.",
+      "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+      "kwargs": {
+        "nest_types": "{<NestType.GROUND: 'ground'>}",
+        "wingspan_lt": null,
+        "on_self": false,
+        "require_another_bird": true,
+        "target_overage": 0
+      }
+    },
+    {
+      "bird": "American Bittern",
+      "power_text": "Player(s) with the fewest birds in their [wetland] draw 1 [card].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "American Coot",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 1,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "American Crow",
+      "power_text": "Discard 1 [egg] from any of your other birds to gain 1 [wild] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.WILD"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "American Goldfinch",
+      "power_text": "Gain 3 [seed] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.SEED"
+        ],
+        "count": 3,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "American Kestrel",
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.RODENT",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "American Oystercatcher",
+      "power_text": "Draw [card] equal to the number of players +1. Starting with you and proceeding clockwise, each player selects 1 of those cards and places it in their hand. You keep the extra card.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": true
+      }
+    },
+    {
+      "bird": "American Redstart",
+      "power_text": "Gain 1 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": null,
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "American Robin",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 1,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "American White Pelican",
+      "power_text": "Discard 1 [fish] to tuck 2 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+      "kwargs": {
+        "max_discard": 1,
+        "food_type": "FoodType.FISH",
+        "tuck_per_discard": 2
+      }
+    },
+    {
+      "bird": "American Woodcock",
+      "power_text": "",
+      "class": "backend.powers.base.NoPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Anhinga",
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.FISH",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Anna's Hummingbird",
+      "power_text": "Each player gains 1 [die] from the birdfeeder, starting with the player of your choice.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": null,
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "Ash-Throated Flycatcher",
+      "power_text": "Lay 1 [egg] on each of your birds with a [cavity] nest.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": "NestType.CAVITY",
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Asian Emerald Dove",
+      "power_text": "Lay 2 [egg] on each other bird in this column.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 2,
+        "target": "any",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Asian Koel",
+      "power_text": "When another player takes the “lay eggs” action, this bird lays 1 [egg] on another bird with a [platform] nest. You may go 3 over its egg limit while using this power.",
+      "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+      "kwargs": {
+        "nest_types": "{<NestType.PLATFORM: 'platform'>}",
+        "wingspan_lt": null,
+        "on_self": false,
+        "require_another_bird": true,
+        "target_overage": 3
+      }
+    },
+    {
+      "bird": "Atlantic Puffin",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Audouin's Gull",
+      "power_text": "Draw 2 [card] from the deck. Tuck 1 behind this bird and keep the other.",
+      "class": "backend.powers.templates.special.FlockingPower",
+      "kwargs": {
+        "count": 1
+      }
+    },
+    {
+      "bird": "Australasian Pipit",
+      "power_text": "Tuck 1 [card] from the deck behind each bird in your [grassland], including this one.",
+      "class": "backend.powers.templates.strict.EndGameTuckPerBirdInHabitat",
+      "kwargs": {
+        "habitat": "Habitat.GRASSLAND"
+      }
+    },
+    {
+      "bird": "Australasian Shoveler",
+      "power_text": "Choose 1 other player. You both draw 1 [card] from the deck.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Australian Ibis",
+      "power_text": "Shuffle the discard pile, then draw 2 [card] from it. Choose 1 and tuck it behind this bird or add it to your hand. Discard the other.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Australian Magpie",
+      "power_text": "Discard 1 [egg] from each bird in this row and column that has an [egg] on it, excluding this bird. For each discarded [egg], cache 2 [seed] from the supply on this bird.",
+      "class": "backend.powers.templates.strict.EndGameDiscardEggsRowColumnCacheSeeds",
+      "kwargs": {}
+    },
+    {
+      "bird": "Australian Owlet-Nightjar",
+      "power_text": "When another player takes the “gain food” action, gain 1 [invertebrate] from the birdfeeder, if there is one, at the end of their turn.",
+      "class": "backend.powers.templates.strict.PinkGainFoodFromFeederOnGainFood",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE"
+        ]
+      }
+    },
+    {
+      "bird": "Australian Raven",
+      "power_text": "Cache up to 5 [wild] from your supply on this bird.",
+      "class": "backend.powers.templates.strict.EndGameCacheFromSupplyOnSelf",
+      "kwargs": {
+        "max_count": 5
+      }
+    },
+    {
+      "bird": "Australian Reed Warbler",
+      "power_text": "Play another bird in your [wetland]. Pay its normal cost with a 1 [egg] discount.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.WETLAND",
+        "food_discount": 0,
+        "egg_discount": 1,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Australian Shelduck",
+      "power_text": "Draw 1 face-up [card] from the tray with a [cavity] or [star] nest. You may reset or refill the tray before doing so.",
+      "class": "backend.powers.templates.strict.WillieWagtailDrawTrayNest",
+      "kwargs": {
+        "allowed_nests": "{<NestType.WILD: 'wild'>, <NestType.CAVITY: 'cavity'>}",
+        "allow_reset": true,
+        "allow_refill": true
+      }
+    },
+    {
+      "bird": "Australian Zebra Finch",
+      "power_text": "If the player to your right has a [seed] in their personal supply, tuck a [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.special.FlockingPower",
+      "kwargs": {
+        "count": 1
+      }
+    },
+    {
+      "bird": "Azure Tit",
+      "power_text": "Gain 1 [invertebrate], [seed], or [fruit] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE",
+          "FoodType.SEED",
+          "FoodType.FRUIT"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Baird's Sparrow",
+      "power_text": "Lay 1 [egg] on any bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Bald Eagle",
+      "power_text": "Gain all [fish] that are in the birdfeeder.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.FISH",
+        "cache": false
+      }
+    },
+    {
+      "bird": "Baltimore Oriole",
+      "power_text": "All players gain 1 [fruit] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.FRUIT"
+        ],
+        "count": 1,
+        "all_players": true,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Barn Owl",
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.RODENT",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Barn Swallow",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 1,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Barred Owl",
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 75,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Barrow's Goldeneye",
+      "power_text": "When another player takes the “lay eggs” action, lay 1 [egg] on another bird with a [cavity] nest.",
+      "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+      "kwargs": {
+        "nest_types": "{<NestType.CAVITY: 'cavity'>}",
+        "wingspan_lt": null,
+        "on_self": false,
+        "require_another_bird": true,
+        "target_overage": 0
+      }
+    },
+    {
+      "bird": "Baya Weaver",
+      "power_text": "Tuck up to 3 [card] from your hand behind this bird. If you tuck at least 1 [card], lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 3,
+        "draw_count": 0,
+        "lay_count": 1,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Bearded Reedling",
+      "power_text": "For each other bird in this column with an egg on it, lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.strict.LayEggOnSelfPerColumnEggBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Bell's Vireo",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Belted Kingfisher",
+      "power_text": "When another player plays a bird in their [wetland], gain 1 [fish] from the supply.",
+      "class": "backend.powers.templates.strict.PinkGainFoodFromSupplyOnPlayInHabitat",
+      "kwargs": {
+        "trigger_habitat": "Habitat.WETLAND",
+        "food_type": "FoodType.FISH"
+      }
+    },
+    {
+      "bird": "Bewick's Wren",
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat.",
+      "class": "backend.powers.templates.special.MoveBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Black Drongo",
+      "power_text": "Discard any number of [card] from the tray then refill it. If at least one of the discarded birds is a [grassland] bird, lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.strict.BlackDrongoDiscardTrayLayEgg",
+      "kwargs": {}
+    },
+    {
+      "bird": "Black Noddy",
+      "power_text": "Reset the birdfeeder and gain all [fish], if there are any. You may discard any of these [fish] to tuck that many [card] from the deck behind this bird instead.",
+      "class": "backend.powers.templates.special.FlockingPower",
+      "kwargs": {
+        "count": 1
+      }
+    },
+    {
+      "bird": "Black Redstart",
+      "power_text": "Choose a habitat with no [egg]. Lay 1 [egg] on each bird in that habitat.",
+      "class": "backend.powers.templates.strict.ChooseEgglessHabitatLayEggEachBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Black Skimmer",
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.FISH",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Black Stork",
+      "power_text": "Lay 1 [egg] on each of the birds immediately to the left and right of this bird.",
+      "class": "backend.powers.templates.strict.LayEggAdjacentToSelf",
+      "kwargs": {}
+    },
+    {
+      "bird": "Black Swan",
+      "power_text": "Lay 1 [egg] on each of your birds with a wingspan over 100cm, including this one.",
+      "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingWingspan",
+      "kwargs": {
+        "min_cm": 100,
+        "max_cm": null
+      }
+    },
+    {
+      "bird": "Black Tern",
+      "power_text": "Draw 1 [card]. If you do, discard 1 [card] from your hand at the end of your turn.",
+      "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+      "kwargs": {
+        "draw": 1,
+        "discard": 1
+      }
+    },
+    {
+      "bird": "Black Vulture",
+      "power_text": "When another player's [predator] succeeds, gain 1 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.strict.PinkPredatorSuccessGainDie",
+      "kwargs": {}
+    },
+    {
+      "bird": "Black Woodpecker",
+      "power_text": "Gain all [invertebrate] that are in the birdfeeder.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.INVERTEBRATE",
+        "cache": false
+      }
+    },
+    {
+      "bird": "Black-Bellied Whistling-Duck",
+      "power_text": "Discard 1 [seed] to tuck 2 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+      "kwargs": {
+        "max_discard": 1,
+        "food_type": "FoodType.SEED",
+        "tuck_per_discard": 2
+      }
+    },
+    {
+      "bird": "Black-Billed Magpie",
+      "power_text": "When another player's [predator] succeeds, gain 1 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.strict.PinkPredatorSuccessGainDie",
+      "kwargs": {}
+    },
+    {
+      "bird": "Black-Chinned Hummingbird",
+      "power_text": "All players gain 1 [fruit] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.FRUIT"
+        ],
+        "count": 1,
+        "all_players": true,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Black-Crowned Night-Heron",
+      "power_text": "Discard 1 [egg] from any of your other birds to gain 1 [wild] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.WILD"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Black-Headed Gull",
+      "power_text": "Steal 1 [wild] from another player's supply and add it to your own supply. They gain 1 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.strict.BlackHeadedGullStealWild",
+      "kwargs": {}
+    },
+    {
+      "bird": "Black-Naped Oriole",
+      "power_text": "If you used all 4 actions this round, gain 1 [wild] from the supply, lay 1 [egg] on any bird, and draw 1 [card] from the deck.",
+      "class": "backend.powers.templates.strict.ConditionalAllActionsFoodEggCard",
+      "kwargs": {}
+    },
+    {
+      "bird": "Black-Necked Stilt",
+      "power_text": "Draw 2 [card].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Black-Shouldered Kite",
+      "power_text": "Reset the birdfeeder and gain 1 [rodent], if there is one. You may give it to another player; if you do, lay up to 3 [egg] on this bird.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.RODENT",
+        "cache": false
+      }
+    },
+    {
+      "bird": "Black-Tailed Godwit",
+      "power_text": "Draw 1 new bonus card. Then draw 3 [card] and keep 1 of them.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Black-Throated Diver",
+      "power_text": "Discard all remaining face-up [card] and refill the tray. If you do, draw 1 of the new face-up [card].",
+      "class": "backend.powers.templates.strict.WhiteStorkResetTrayThenDraw",
+      "kwargs": {}
+    },
+    {
+      "bird": "Blue Grosbeak",
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat.",
+      "class": "backend.powers.templates.special.MoveBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Blue Jay",
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+      "kwargs": {
+        "food_type": "FoodType.SEED"
+      }
+    },
+    {
+      "bird": "Blue Rock-Thrush",
+      "power_text": "If this bird has no birds to the right of it, you may move it (only the card) to the player mat of the player on your left (you choose its habitat). If you do, draw 3 [card].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 3,
+        "keep": 3,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Blue-Gray Gnatcatcher",
+      "power_text": "Gain 1 [invertebrate] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Blue-Winged Warbler",
+      "power_text": "",
+      "class": "backend.powers.base.NoPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Bluethroat",
+      "power_text": "Choose a food type. All players gain 1 of that food from the supply.",
+      "class": "backend.powers.templates.strict.CommonNightingaleChooseFoodAllPlayers",
+      "kwargs": {}
+    },
+    {
+      "bird": "Blyth's Hornbill",
+      "power_text": "Discard all [egg] from 1 of your birds with a [cavity] nest. Tuck twice that many [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.special.FlockingPower",
+      "kwargs": {
+        "count": 1
+      }
+    },
+    {
+      "bird": "Bobolink",
+      "power_text": "Lay 1 [egg] on each of your birds with a [ground] nest.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": "NestType.GROUND",
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Bonelli's Eagle",
+      "power_text": "For each [rodent] in this bird's cost, you may pay 1 [card] from your hand instead. If you do, tuck the paid [card] behind this card.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Brahminy Kite",
+      "power_text": "Choose any 3 [die]. Roll them up to 3 times. Each time, if you roll at least 1 [fish] or [rodent], cache 1 here. If not, stop and return all food cached here this turn.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.FISH",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Brambling",
+      "power_text": "Draw 2 [card] from the deck and add them to your hand. Then, tuck up to 2 [card] from your hand behind this bird.",
+      "class": "backend.powers.templates.strict.DrawThenTuckFromHand",
+      "kwargs": {
+        "draw_count": 2,
+        "max_tuck": 2
+      }
+    },
+    {
+      "bird": "Brant",
+      "power_text": "Draw the 3 face-up [card] in the bird tray.",
+      "class": "backend.powers.templates.strict.DrawAllFaceUpTrayCards",
+      "kwargs": {}
+    },
+    {
+      "bird": "Brewer's Blackbird",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 1,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Broad-Winged Hawk",
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.RODENT",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Brolga",
+      "power_text": "Choose 1 other player. They lay 1 [egg]; you draw 2 [card].",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Bronzed Cowbird",
+      "power_text": "When another player takes the “lay eggs” action, lay 1 [egg] on a bird with a [bowl] nest.",
+      "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+      "kwargs": {
+        "nest_types": "{<NestType.BOWL: 'bowl'>}",
+        "wingspan_lt": null,
+        "on_self": false,
+        "require_another_bird": false,
+        "target_overage": 0
+      }
+    },
+    {
+      "bird": "Brown Falcon",
+      "power_text": "Look at a [card] from the deck. If its food cost includes an [invertebrate] or a [rodent], tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 75,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "{<FoodType.INVERTEBRATE: 'invertebrate'>, <FoodType.RODENT: 'rodent'>}",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Brown Pelican",
+      "power_text": "Gain 3 [fish] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.FISH"
+        ],
+        "count": 3,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Brown Shrike",
+      "power_text": "All players may cache 1 [invertebrate] from their personal supply on a bird in their [grassland].",
+      "class": "backend.powers.templates.strict.AllPlayersMayCacheFoodInHabitat",
+      "kwargs": {
+        "food_type": "FoodType.INVERTEBRATE",
+        "habitat": "Habitat.GRASSLAND"
+      }
+    },
+    {
+      "bird": "Brown-Headed Cowbird",
+      "power_text": "When another player takes the “lay eggs” action, lay 1 [egg] on a bird with a [bowl] nest.",
+      "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+      "kwargs": {
+        "nest_types": "{<NestType.BOWL: 'bowl'>}",
+        "wingspan_lt": null,
+        "on_self": false,
+        "require_another_bird": false,
+        "target_overage": 0
+      }
+    },
+    {
+      "bird": "Budgerigar",
+      "power_text": "Tuck the smallest bird in the tray behind this bird.",
+      "class": "backend.powers.templates.strict.TuckSmallestTrayBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Bullfinch",
+      "power_text": "Reset the birdfeeder. If you do, gain 1 [seed] or 1 [fruit] from the birdfeeder after resetting.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.SEED",
+        "cache": false
+      }
+    },
+    {
+      "bird": "Burrowing Owl",
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.RODENT",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Bushtit",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 1,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "California Condor",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "California Quail",
+      "power_text": "Lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Canada Goose",
+      "power_text": "Discard 1 [seed] to tuck 2 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+      "kwargs": {
+        "max_discard": 1,
+        "food_type": "FoodType.SEED",
+        "tuck_per_discard": 2
+      }
+    },
+    {
+      "bird": "Canvasback",
+      "power_text": "All players draw 1 [card] from the deck.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": true
+      }
+    },
+    {
+      "bird": "Carolina Chickadee",
+      "power_text": "Cache 1 [seed] from the supply on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+      "kwargs": {
+        "food_type": "FoodType.SEED",
+        "count": 1
+      }
+    },
+    {
+      "bird": "Carolina Wren",
+      "power_text": "Draw 2 [card].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Carrion Crow",
+      "power_text": "Choose any 1 player (including yourself). Cache 1 [rodent] from the supply on this bird for each [predator] that player has.",
+      "class": "backend.powers.templates.strict.CacheRodentPerPredator",
+      "kwargs": {}
+    },
+    {
+      "bird": "Cassin's Finch",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Cassin's Sparrow",
+      "power_text": "Lay 1 [egg] on any bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Cedar Waxwing",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [fruit] from the supply.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": "FoodType.FRUIT",
+        "food_count": 1
+      }
+    },
+    {
+      "bird": "Cerulean Warbler",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Cetti's Warbler",
+      "power_text": "This bird counts double toward the end-of-round goal, if it qualifies for the goal.",
+      "class": "backend.powers.templates.unique.CountsDoubleForGoal",
+      "kwargs": {}
+    },
+    {
+      "bird": "Chestnut-Collared Longspur",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Chihuahuan Raven",
+      "power_text": "Discard 1 [egg] from any of your other birds to gain 2 [wild] from the supply.",
+      "class": "backend.powers.templates.special.DiscardEggForBenefit",
+      "kwargs": {
+        "egg_cost": 1,
+        "food_gain": 2,
+        "food_type": "FoodType.WILD",
+        "card_gain": 0,
+        "require_other_bird": true
+      }
+    },
+    {
+      "bird": "Chimney Swift",
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat.",
+      "class": "backend.powers.templates.special.MoveBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Chipping Sparrow",
+      "power_text": "Lay 1 [egg] on any bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Clark's Grebe",
+      "power_text": "Draw 1 [card]. If you do, discard 1 [card] from your hand at the end of your turn.",
+      "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+      "kwargs": {
+        "draw": 1,
+        "discard": 1
+      }
+    },
+    {
+      "bird": "Clark's Nutcracker",
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+      "kwargs": {
+        "food_type": "FoodType.SEED"
+      }
+    },
+    {
+      "bird": "Coal Tit",
+      "power_text": "Gain 1 [seed] from the supply and cache it on this card. At any time, you may spend [seed] cached on this card.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+      "kwargs": {
+        "food_type": "FoodType.SEED",
+        "count": 1
+      }
+    },
+    {
+      "bird": "Cockatiel",
+      "power_text": "Discard 1 [seed] to choose a [card] from the tray and tuck it behind this bird.",
+      "class": "backend.powers.templates.strict.DiscardSeedTuckTrayCard",
+      "kwargs": {}
+    },
+    {
+      "bird": "Common Blackbird",
+      "power_text": "Place this bird sideways, so that it covers 2 [forest] spaces. Pay the lower egg cost.",
+      "class": "backend.powers.templates.play_bird.PlaceBirdSideways",
+      "kwargs": {}
+    },
+    {
+      "bird": "Common Buzzard",
+      "power_text": "Instead of paying any costs, you may play this bird on top of another bird on your player mat. Discard any eggs and food from that bird. It becomes a tucked card.",
+      "class": "backend.powers.templates.play_bird.PlayOnTopPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Common Chaffinch",
+      "power_text": "Choose 1-5 birds in this habitat. Tuck 1 [card] from your hand behind each.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Common Chiffchaff",
+      "power_text": "Choose 1-5 birds in this habitat. Tuck 1 [card] from your hand behind each.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Common Cuckoo",
+      "power_text": "When another player takes the “lay eggs” action, this bird lays 1 [egg] on another bird with a [bowl] or [ground] nest.",
+      "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+      "kwargs": {
+        "nest_types": "{<NestType.GROUND: 'ground'>, <NestType.BOWL: 'bowl'>}",
+        "wingspan_lt": null,
+        "on_self": false,
+        "require_another_bird": true,
+        "target_overage": 0
+      }
+    },
+    {
+      "bird": "Common Goldeneye",
+      "power_text": "Lay 1 [egg] on this bird for each other bird with a [cavity] nest that you have.",
+      "class": "backend.powers.templates.strict.LayEggOnSelfPerOtherCavityBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Common Grackle",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 1,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Common Green Magpie",
+      "power_text": "Gain 1 [invertebrate] or [rodent] from the birdfeeder, if there is one. You may cache it on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+      "kwargs": {
+        "food_type": "FoodType.INVERTEBRATE"
+      }
+    },
+    {
+      "bird": "Common Iora",
+      "power_text": "Lay 1 [egg] on another bird in this column.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Common Kingfisher",
+      "power_text": "Steal 1 [fish] from another player's supply and cache it on this bird. They gain 1 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+      "kwargs": {
+        "food_type": "FoodType.FISH"
+      }
+    },
+    {
+      "bird": "Common Little Bittern",
+      "power_text": "Gain 1 face-up [card] that can live in [grassland].",
+      "class": "backend.powers.templates.strict.DrawTrayCardByHabitat",
+      "kwargs": {
+        "habitat": "Habitat.GRASSLAND"
+      }
+    },
+    {
+      "bird": "Common Loon",
+      "power_text": "Player(s) with the fewest birds in their [wetland] draw 1 [card].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Common Merganser",
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.FISH",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Common Moorhen",
+      "power_text": "Discard 1 [wild] from your supply. If you do, play another bird in your [wetland]. Pay its normal food and egg cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.WETLAND",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Common Myna",
+      "power_text": "Copy the “When Activated” (brown) power of a bird in the [grassland] of the player on your left.",
+      "class": "backend.powers.templates.special.CopyNeighborBrownPower",
+      "kwargs": {
+        "direction": "left",
+        "target_habitat": "Habitat.GRASSLAND"
+      }
+    },
+    {
+      "bird": "Common Nighthawk",
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat.",
+      "class": "backend.powers.templates.special.MoveBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Common Nightingale",
+      "power_text": "Choose a food type. All players gain 1 of that food from the supply.",
+      "class": "backend.powers.templates.strict.CommonNightingaleChooseFoodAllPlayers",
+      "kwargs": {}
+    },
+    {
+      "bird": "Common Raven",
+      "power_text": "Discard 1 [egg] from any of your other birds to gain 2 [wild] from the supply.",
+      "class": "backend.powers.templates.special.DiscardEggForBenefit",
+      "kwargs": {
+        "egg_cost": 1,
+        "food_gain": 2,
+        "food_type": "FoodType.WILD",
+        "card_gain": 0,
+        "require_other_bird": true
+      }
+    },
+    {
+      "bird": "Common Sandpiper",
+      "power_text": "Draw 1 [card] for each bird in your [wetland] with an [egg] on it. Keep 1 and discard the rest.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Common Starling",
+      "power_text": "Discard up to 5 [wild] from your supply. For each, tuck 1 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+      "kwargs": {
+        "max_discard": 5,
+        "food_type": null,
+        "tuck_per_discard": 1
+      }
+    },
+    {
+      "bird": "Common Swift",
+      "power_text": "Discard up to 5 [invertebrate] from your supply. For each, tuck 1 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+      "kwargs": {
+        "max_discard": 5,
+        "food_type": "FoodType.INVERTEBRATE",
+        "tuck_per_discard": 1
+      }
+    },
+    {
+      "bird": "Common Tailorbird",
+      "power_text": "Find a contiguous group of birds in your preserve that all have the same nest type. Lay 1 [egg] on each of them. [star] nests count as any nest type.",
+      "class": "backend.powers.templates.strict.EndGameLayContiguousSameNest",
+      "kwargs": {}
+    },
+    {
+      "bird": "Common Teal",
+      "power_text": "For every 3 [egg] in your [wetland], draw 1 [card] from the deck. You may tuck up to 2 [card] from your hand behind this bird.",
+      "class": "backend.powers.templates.strict.PerThreeEggsInHabitatDrawThenTuck",
+      "kwargs": {
+        "habitat": "Habitat.WETLAND",
+        "max_tuck": 2
+      }
+    },
+    {
+      "bird": "Common Yellowthroat",
+      "power_text": "Draw 2 [card]. If you do, discard 1 [card] from your hand at the end of your turn.",
+      "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+      "kwargs": {
+        "draw": 2,
+        "discard": 1
+      }
+    },
+    {
+      "bird": "Cooper's Hawk",
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 75,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Coppersmith Barbet",
+      "power_text": "Gain 1 [invertebrate] or [fruit] from the birdfeeder, if there is one.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE",
+          "FoodType.FRUIT"
+        ],
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "Corsican Nuthatch",
+      "power_text": "Draw 1 new bonus card. Then gain 1 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Count Raggi's Bird-of-Paradise",
+      "power_text": "Choose 1 other player. You both gain 1 [fruit] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.FRUIT"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Crested Ibis",
+      "power_text": "Draw 2 new bonus cards and keep 1. Other players may discard any 2 resources ([wild], [egg], or [card]) to do the same.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Crested Lark",
+      "power_text": "Discard 1 [seed]. If you do, lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.strict.CrestedLarkDiscardSeedLayEgg",
+      "kwargs": {}
+    },
+    {
+      "bird": "Crested Pigeon",
+      "power_text": "Cache up to 8 [seed] from your supply on this bird.",
+      "class": "backend.powers.templates.strict.EndGameCacheFromSupplyOnSelf",
+      "kwargs": {
+        "max_count": 8
+      }
+    },
+    {
+      "bird": "Crimson Chat",
+      "power_text": "Discard 1 [wild] to tuck 1 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.special.FlockingPower",
+      "kwargs": {
+        "count": 1
+      }
+    },
+    {
+      "bird": "Dark-Eyed Junco",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [seed] from the supply.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": "FoodType.SEED",
+        "food_count": 1
+      }
+    },
+    {
+      "bird": "Desert Finch",
+      "power_text": "Lay 1 [egg] on this bird for each other bird in your [grassland].",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Desert Wheatear",
+      "power_text": "For each bird in your [grassland] with an [egg] on it, roll any 1 [die]. Choose 1 type of food you rolled, and gain 1 of that food from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.WILD"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Dickcissel",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 1,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Double-Crested Cormorant",
+      "power_text": "Discard 1 [fish] to tuck 2 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+      "kwargs": {
+        "max_discard": 1,
+        "food_type": "FoodType.FISH",
+        "tuck_per_discard": 2
+      }
+    },
+    {
+      "bird": "Downy Woodpecker",
+      "power_text": "Play an additional bird in your [forest]. Pay its normal cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.FOREST",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Dunnock",
+      "power_text": "Choose 1 other player. For each action cube on their [grassland], lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.strict.LayEggOnSelfPerOpponentGrasslandCubes",
+      "kwargs": {}
+    },
+    {
+      "bird": "Eastern Bluebird",
+      "power_text": "Play an additional bird in your [grassland]. Pay its normal cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.GRASSLAND",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Eastern Imperial Eagle",
+      "power_text": "For each [rodent] in this bird's cost, you may pay 1 [card] from your hand instead. If you do, tuck the paid [card] behind this card.",
+      "class": "backend.powers.templates.unique.TuckToPayCost",
+      "kwargs": {}
+    },
+    {
+      "bird": "Eastern Kingbird",
+      "power_text": "When another player plays a bird in their [forest], gain 1 [invertebrate] from the supply.",
+      "class": "backend.powers.templates.strict.PinkGainFoodFromSupplyOnPlayInHabitat",
+      "kwargs": {
+        "trigger_habitat": "Habitat.FOREST",
+        "food_type": "FoodType.INVERTEBRATE"
+      }
+    },
+    {
+      "bird": "Eastern Phoebe",
+      "power_text": "All players gain 1 [invertebrate] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE"
+        ],
+        "count": 1,
+        "all_players": true,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Eastern Rosella",
+      "power_text": "All players gain 1 [nectar] from the supply. You also gain 1 [seed] from the supply.",
+      "class": "backend.powers.templates.strict.AllPlayersGainFoodThenSelfFoodOrEggBonus",
+      "kwargs": {
+        "base_food_type": "FoodType.NECTAR",
+        "base_count": 1,
+        "self_food_type": "FoodType.SEED",
+        "self_food_count": 1,
+        "self_egg_bonus": 0
+      }
+    },
+    {
+      "bird": "Eastern Screech-Owl",
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.RODENT",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Eastern Whipbird",
+      "power_text": "Choose 1 other player. You both gain 1 [seed] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.SEED"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Eleonora's Falcon",
+      "power_text": "Roll all dice not in the birdfeeder. If any are [rodent], place 1 [egg] on this card.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.RODENT",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Emu",
+      "power_text": "Gain all [seed] that are in the birdfeeder. Keep half (rounded up), then choose how to distribute the remainder among the other player(s).",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.SEED",
+        "cache": false
+      }
+    },
+    {
+      "bird": "Eurasian Collared-Dove",
+      "power_text": "Discard up to 5 [wild] from your supply. For each, tuck 1 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+      "kwargs": {
+        "max_discard": 5,
+        "food_type": null,
+        "tuck_per_discard": 1
+      }
+    },
+    {
+      "bird": "Eurasian Coot",
+      "power_text": "Tuck up to 3 [card] from your hand behind this bird.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 3,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Eurasian Eagle-Owl",
+      "power_text": "Up to 3 times, draw 1 [card] from the deck. When you stop, if the birds' total wingspan is less than 110 cm, tuck them behind this bird. If not, discard them.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Eurasian Golden Oriole",
+      "power_text": "When another player takes the “gain food” action, gain 1 [invertebrate] or [fruit] from the birdfeeder at the end of their turn.",
+      "class": "backend.powers.templates.strict.PinkGainFoodFromFeederOnGainFood",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE",
+          "FoodType.FRUIT"
+        ]
+      }
+    },
+    {
+      "bird": "Eurasian Green Woodpecker",
+      "power_text": "This bird counts double toward the end-of-round goal, if it qualifies for the goal.",
+      "class": "backend.powers.templates.unique.CountsDoubleForGoal",
+      "kwargs": {}
+    },
+    {
+      "bird": "Eurasian Hobby",
+      "power_text": "Instead of paying any costs, you may play this bird on top of another bird on your player mat. Discard any eggs and food from that bird. It becomes a tucked card.",
+      "class": "backend.powers.templates.play_bird.PlayOnTopPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Eurasian Hoopoe",
+      "power_text": "Steal 1 [invertebrate] from each of your neighbors. Each neighbor from whom a [invertebrate] was stolen may gain 1 [wild] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE",
+          "FoodType.WILD"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Eurasian Jay",
+      "power_text": "Steal 1 [seed] from another player's supply and cache it on this bird. They gain 1 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+      "kwargs": {
+        "food_type": "FoodType.SEED"
+      }
+    },
+    {
+      "bird": "Eurasian Kestrel",
+      "power_text": "Roll any 3 [die]. If you roll at least 1 [rodent], cache 1 [rodent] on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.RODENT",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Eurasian Magpie",
+      "power_text": "Choose 1 other player. For each action cube on their [grassland], cache 1 [wild] from the supply on any of your birds.",
+      "class": "backend.powers.templates.strict.CacheWildOnAnyBirdPerOpponentGrasslandCubes",
+      "kwargs": {}
+    },
+    {
+      "bird": "Eurasian Marsh-Harrier",
+      "power_text": "Up to 3 times, draw 1 [card] from the deck. When you stop, if the birds' total wingspan is less than 110 cm, tuck them behind this bird. If not, discard them.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Eurasian Nutcracker",
+      "power_text": "Choose 1-5 birds in your [forest]. Cache 1 [seed] from your supply on each.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+      "kwargs": {
+        "food_type": "FoodType.SEED",
+        "count": 1
+      }
+    },
+    {
+      "bird": "Eurasian Nuthatch",
+      "power_text": "Gain 1 [seed] from the supply and cache it on this card. At any time, you may spend [seed] cached on this card.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+      "kwargs": {
+        "food_type": "FoodType.SEED",
+        "count": 1
+      }
+    },
+    {
+      "bird": "Eurasian Sparrowhawk",
+      "power_text": "For each [rodent] in this bird's cost, you may pay 1 [card] from your hand instead. If you do, tuck the paid [card] behind this card.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Eurasian Tree Sparrow",
+      "power_text": "When another player takes the “gain food” action, gain 1 [seed] from the birdfeeder at the end of their turn.",
+      "class": "backend.powers.templates.strict.PinkGainFoodFromFeederOnGainFood",
+      "kwargs": {
+        "food_types": [
+          "FoodType.SEED"
+        ]
+      }
+    },
+    {
+      "bird": "Eurasian Treecreeper",
+      "power_text": "For every 3 [egg] in your [forest], gain 1 [invertebrate] or [seed] from the supply. You may cache up to 2 of them on this bird.",
+      "class": "backend.powers.templates.strict.PerThreeEggsInHabitatGainSeedOrInvertThenCache",
+      "kwargs": {
+        "habitat": "Habitat.FOREST",
+        "max_cache": 2
+      }
+    },
+    {
+      "bird": "European Bee-Eater",
+      "power_text": "Reset the birdfeeder. If you do, gain 1 [invertebrate] from the birdfeeder after resetting.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.INVERTEBRATE",
+        "cache": false
+      }
+    },
+    {
+      "bird": "European Goldfinch",
+      "power_text": "When another player tucks a [card] for any reason, tuck 1 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.strict.PinkTuckFromDeckOnOpponentTuck",
+      "kwargs": {}
+    },
+    {
+      "bird": "European Honey Buzzard",
+      "power_text": "Reset the birdfeeder. If you do, gain all [invertebrate] in the birdfeeder after resetting.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.INVERTEBRATE",
+        "cache": false
+      }
+    },
+    {
+      "bird": "European Robin",
+      "power_text": "From the supply, gain 1 food of a type you already gained this turn.",
+      "class": "backend.powers.templates.unique.GainFoodMatchingPrevious",
+      "kwargs": {}
+    },
+    {
+      "bird": "European Roller",
+      "power_text": "Place this bird sideways, so that it covers 2 [grassland] spaces. Pay the lower egg cost.",
+      "class": "backend.powers.templates.play_bird.PlaceBirdSideways",
+      "kwargs": {}
+    },
+    {
+      "bird": "European Turtle Dove",
+      "power_text": "Draw 1 new bonus card. Then gain 1 [die] from the birdfeeder, lay 1 [egg] on any bird, or draw 1 [card].",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Ferruginous Hawk",
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.RODENT",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Fire-Fronted Serin",
+      "power_text": "Lay 1 [egg] on this bird for each bird to its left in this row.",
+      "class": "backend.powers.templates.strict.LayEggOnSelfPerBirdToLeft",
+      "kwargs": {}
+    },
+    {
+      "bird": "Fish Crow",
+      "power_text": "Discard 1 [egg] from any of your other birds to gain 1 [wild] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.WILD"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Forest Owlet",
+      "power_text": "Choose any 2 [die]. Roll them up to 3 times. Each time, if you roll at least 1 [invertebrate] or [rodent], cache 1 here. If not, stop and return all food cached here this turn.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.INVERTEBRATE",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Forster's Tern",
+      "power_text": "Draw 1 [card]. If you do, discard 1 [card] from your hand at the end of your turn.",
+      "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+      "kwargs": {
+        "draw": 1,
+        "discard": 1
+      }
+    },
+    {
+      "bird": "Franklin's Gull",
+      "power_text": "Discard 1 [egg] to draw 2 [card].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Galah",
+      "power_text": "Choose 1 other player. They reset the birdfeeder and gain a [seed], if there is one. You tuck 2 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.special.FlockingPower",
+      "kwargs": {
+        "count": 1
+      }
+    },
+    {
+      "bird": "Goldcrest",
+      "power_text": "Discard 1 [card] from your hand. If you do, play another bird in your [forest]. Pay its normal food and egg cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.FOREST",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Golden Eagle",
+      "power_text": "Look at a [card] from the deck. If less than 100cm, tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 100,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Golden Pheasant",
+      "power_text": "All players lay 2 [egg]. You lay 2 additional [egg].",
+      "class": "backend.powers.templates.strict.AllPlayersLayEggsSelfBonus",
+      "kwargs": {
+        "all_players_count": 2,
+        "self_bonus_count": 2,
+        "nest_filter": null
+      }
+    },
+    {
+      "bird": "Golden-Headed Cisticola",
+      "power_text": "Play another bird in your [grassland]. Pay its normal cost with a 1 [egg] discount.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.GRASSLAND",
+        "food_discount": 0,
+        "egg_discount": 1,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Gould's Finch",
+      "power_text": "Play a bird. Pay its normal food and egg cost. If it has a “when played” or “game end” power, you may use it.",
+      "class": "backend.powers.templates.strict.EndGamePlayBird",
+      "kwargs": {
+        "habitat_filter": null,
+        "egg_discount": 0
+      }
+    },
+    {
+      "bird": "Graceful Prinia",
+      "power_text": "Discard 1 [egg]. If you do, gain 1 [invertebrate] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Grandala",
+      "power_text": "If you laid an [egg] on this bird this turn, tuck 1 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.special.FlockingPower",
+      "kwargs": {
+        "count": 1
+      }
+    },
+    {
+      "bird": "Grasshopper Sparrow",
+      "power_text": "Lay 1 [egg] on any bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Gray Catbird",
+      "power_text": "Repeat a brown power on another bird in this habitat.",
+      "class": "backend.powers.templates.special.RepeatPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Gray Wagtail",
+      "power_text": "If you used all 4 types of action this round, gain 2 [wild] from the supply.",
+      "class": "backend.powers.templates.strict.ConditionalAllActionsGainWild",
+      "kwargs": {
+        "count": 2
+      }
+    },
+    {
+      "bird": "Great Blue Heron",
+      "power_text": "Play an additional bird in your [wetland]. Pay its normal cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.WETLAND",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Great Cormorant",
+      "power_text": "You may move 1 [fish] from this bird to your supply. Then, roll any 2 [die]. If any are [fish], cache 1 [fish] on this bird from the supply.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+      "kwargs": {
+        "food_type": "FoodType.FISH",
+        "count": 1
+      }
+    },
+    {
+      "bird": "Great Crested Flycatcher",
+      "power_text": "Gain 1 [invertebrate] from the birdfeeder, if available.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE"
+        ],
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "Great Crested Grebe",
+      "power_text": "Draw 1 [card] for each empty card slot in this row. At the end of your turn, keep 1 and discard the rest.",
+      "class": "backend.powers.templates.strict.DrawPerEmptySlotThenKeepOneAtEndTurn",
+      "kwargs": {
+        "keep": 1
+      }
+    },
+    {
+      "bird": "Great Egret",
+      "power_text": "Play an additional bird in your [wetland]. Pay its normal cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.WETLAND",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Great Hornbill",
+      "power_text": "All players may tuck a [card] from their hand under a bird in their [forest] and/or cache 1 [fruit] from their supply on a bird in their [forest].",
+      "class": "backend.powers.templates.strict.AllPlayersMayTuckAndOrCacheInHabitat",
+      "kwargs": {
+        "cache_food_type": "FoodType.FRUIT",
+        "habitat": "Habitat.FOREST"
+      }
+    },
+    {
+      "bird": "Great Horned Owl",
+      "power_text": "Look at a [card] from the deck. If less than 100cm, tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 100,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Great Indian Bustard",
+      "power_text": "Score 1 of your bonus cards now by caching 1 [seed] from the supply on this bird for each point. Also score it normally at game end.",
+      "class": "backend.powers.templates.unique.ScoreBonusCardNow",
+      "kwargs": {}
+    },
+    {
+      "bird": "Great Spotted Woodpecker",
+      "power_text": "Gain 1 [invertebrate] or [seed] from the birdfeeder, if there is one.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE",
+          "FoodType.SEED"
+        ],
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "Great Tit",
+      "power_text": "Reset the birdfeeder. If you do, gain 1 [die] from the birdfeeder after resetting.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": null,
+        "cache": false
+      }
+    },
+    {
+      "bird": "Greater Adjutant",
+      "power_text": "Copy one bonus card of the player on your left, as if it were your own (score it based on your own birds).",
+      "class": "backend.powers.templates.unique.CopyNeighborBonusCard",
+      "kwargs": {
+        "direction": "left"
+      }
+    },
+    {
+      "bird": "Greater Flamingo",
+      "power_text": "Choose 1 other player. For each action cube on their [wetland], tuck 1 [card] from your hand behind this bird, then draw an equal number of [card].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 1,
+        "lay_count": 1,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Greater Prairie-Chicken",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Greater Roadrunner",
+      "power_text": "Look at a [card] from the deck. If less than 50cm, tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 50,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Green Bee-Eater",
+      "power_text": "If there is at least 1 bird on the tray that has [invertebrate] in its food cost, tuck 1 of them behind this bird.",
+      "class": "backend.powers.templates.strict.TuckTrayCardIfFoodCostIncludes",
+      "kwargs": {
+        "food_type": "FoodType.INVERTEBRATE"
+      }
+    },
+    {
+      "bird": "Green Heron",
+      "power_text": "Trade 1 [wild] for any other type from the supply.",
+      "class": "backend.powers.templates.unique.TradeFoodForAny",
+      "kwargs": {}
+    },
+    {
+      "bird": "Green Pheasant",
+      "power_text": "All players lay 1 [egg].",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": true
+      }
+    },
+    {
+      "bird": "Green Pygmy-Goose",
+      "power_text": "Draw 2 [card] from the deck. Keep 1 and give the other to another player.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Grey Butcherbird",
+      "power_text": "Look at a [card] from the deck. If its wingspan is less than 40cm, tuck it behind this bird and cache 1 [rodent] from the supply on this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 40,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": "FoodType.RODENT",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Grey Heron",
+      "power_text": "Place this bird sideways, so that it covers 2 [wetland] spaces. Pay the lower egg cost.",
+      "class": "backend.powers.templates.play_bird.PlaceBirdSideways",
+      "kwargs": {}
+    },
+    {
+      "bird": "Grey Shrikethrush",
+      "power_text": "Reset the birdfeeder and gain all [rodent], if there are any. You may cache any or all of them on this bird.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.RODENT",
+        "cache": true
+      }
+    },
+    {
+      "bird": "Grey Teal",
+      "power_text": "Look at 3 [card] from the deck. Keep 1 [wetland] bird, if there is one. You may add it to your hand or tuck it behind this bird. Discard the other cards.",
+      "class": "backend.powers.templates.special.FlockingPower",
+      "kwargs": {
+        "count": 1
+      }
+    },
+    {
+      "bird": "Grey Warbler",
+      "power_text": "Play another bird in your [forest]. Pay its normal cost with a 1 [egg] discount.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.FOREST",
+        "food_discount": 0,
+        "egg_discount": 1,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Grey-Headed Mannikin",
+      "power_text": "Play a bird. Pay its normal food cost, but ignore 1 [egg] in its egg cost. If it has a “when played” or “game end” power, you may use it.",
+      "class": "backend.powers.templates.strict.EndGamePlayBird",
+      "kwargs": {
+        "habitat_filter": null,
+        "egg_discount": 1
+      }
+    },
+    {
+      "bird": "Greylag Goose",
+      "power_text": "This bird counts double toward the end-of-round goal, if it qualifies for the goal.",
+      "class": "backend.powers.templates.unique.CountsDoubleForGoal",
+      "kwargs": {}
+    },
+    {
+      "bird": "Griffon Vulture",
+      "power_text": "Choose any 1 player (including yourself). Cache 1 [rodent] from the supply on this bird for each [predator] that player has.",
+      "class": "backend.powers.templates.strict.CacheRodentPerPredator",
+      "kwargs": {}
+    },
+    {
+      "bird": "Hawfinch",
+      "power_text": "Reset the birdfeeder. If you do, gain 1 [seed] from the birdfeeder after resetting.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.SEED",
+        "cache": false
+      }
+    },
+    {
+      "bird": "Hermit Thrush",
+      "power_text": "Player(s) with the fewest birds in their [forest] gain 1 [die] from birdfeeder.",
+      "class": "backend.powers.templates.unique.FewestBirdsGainFood",
+      "kwargs": {
+        "habitat": "Habitat.FOREST"
+      }
+    },
+    {
+      "bird": "Himalayan Monal",
+      "power_text": "All players gain 1 [seed] from the supply. You also lay 1 [egg].",
+      "class": "backend.powers.templates.strict.AllPlayersGainFoodThenSelfFoodOrEggBonus",
+      "kwargs": {
+        "base_food_type": "FoodType.SEED",
+        "base_count": 1,
+        "self_food_type": null,
+        "self_food_count": 0,
+        "self_egg_bonus": 1
+      }
+    },
+    {
+      "bird": "Hooded Crow",
+      "power_text": "Choose 1 other player. For each action cube on their [grassland], tuck 1 [card] from your hand behind this bird, then draw an equal number of [card].",
+      "class": "backend.powers.templates.strict.TuckHandThenDrawEqualPerOpponentGrasslandCubes",
+      "kwargs": {}
+    },
+    {
+      "bird": "Hooded Merganser",
+      "power_text": "Repeat 1 [predator] power in this habitat.",
+      "class": "backend.powers.templates.unique.RepeatPredatorPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Hooded Warbler",
+      "power_text": "",
+      "class": "backend.powers.base.NoPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Horned Lark",
+      "power_text": "When another player plays a bird in their [grassland], tuck 1 [card] from your hand behind this bird.",
+      "class": "backend.powers.templates.strict.PinkTuckFromHandOnPlayInHabitat",
+      "kwargs": {
+        "trigger_habitat": "Habitat.GRASSLAND"
+      }
+    },
+    {
+      "bird": "Horsfield's Bronze-Cuckoo",
+      "power_text": "When another player takes the “lay eggs” action, lay 1 [egg] on a bird with a wingspan less than 30cm.",
+      "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+      "kwargs": {
+        "nest_types": null,
+        "wingspan_lt": 30,
+        "on_self": false,
+        "require_another_bird": false,
+        "target_overage": 0
+      }
+    },
+    {
+      "bird": "Horsfield's Bushlark",
+      "power_text": "Discard 1 [seed]. If you do, lay up to 2 [egg] on this bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 2,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "House Crow",
+      "power_text": "You may cache 1 [wild] from your supply on each bird in this row.",
+      "class": "backend.powers.templates.strict.CacheWildOnEachBirdInRow",
+      "kwargs": {
+        "include_self": true
+      }
+    },
+    {
+      "bird": "House Finch",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 1,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "House Sparrow",
+      "power_text": "Discard up to 5 [seed] from your supply. For each, tuck 1 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+      "kwargs": {
+        "max_discard": 5,
+        "food_type": "FoodType.SEED",
+        "tuck_per_discard": 1
+      }
+    },
+    {
+      "bird": "House Wren",
+      "power_text": "Play an additional bird in this bird's habitat. Pay its normal cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": null,
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Ibisbill",
+      "power_text": "All players draw 1 [card] from the deck and gain 1 [invertebrate] from the supply. You draw 1 additional [card] from the deck.",
+      "class": "backend.powers.templates.strict.AllPlayersDrawCardsWithSelfBonus",
+      "kwargs": {
+        "all_players_draw": 1,
+        "self_extra_draw": 1,
+        "all_players_food_type": "FoodType.INVERTEBRATE",
+        "all_players_food_count": 1
+      }
+    },
+    {
+      "bird": "Inca Dove",
+      "power_text": "Lay 1 [egg] on each of your birds with a [platform] nest.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": "NestType.PLATFORM",
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Indian Peafowl",
+      "power_text": "All players draw 2 [card] from the deck. You draw 1 additional [card].",
+      "class": "backend.powers.templates.strict.AllPlayersDrawCardsWithSelfBonus",
+      "kwargs": {
+        "all_players_draw": 2,
+        "self_extra_draw": 1,
+        "all_players_food_type": null,
+        "all_players_food_count": 0
+      }
+    },
+    {
+      "bird": "Indian Vulture",
+      "power_text": "Copy one bonus card of the player on your right, as if it were your own (score it based on your own birds).",
+      "class": "backend.powers.templates.unique.CopyNeighborBonusCard",
+      "kwargs": {
+        "direction": "right"
+      }
+    },
+    {
+      "bird": "Indigo Bunting",
+      "power_text": "Gain 1 [invertebrate] or [fruit] from the birdfeeder, if available.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE",
+          "FoodType.FRUIT"
+        ],
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "Juniper Titmouse",
+      "power_text": "Cache 1 [seed] from the supply on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+      "kwargs": {
+        "food_type": "FoodType.SEED",
+        "count": 1
+      }
+    },
+    {
+      "bird": "Kea",
+      "power_text": "Draw 1 bonus card. You may discard any number of [wild] to draw that many additional bonus cards. Keep 1 of the cards you drew and discard the rest.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Kelp Gull",
+      "power_text": "Discard any number of [wild] to draw that many [card].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Kererū",
+      "power_text": "If the player to your left has a [nectar] in their personal supply, gain 1 [nectar] from the general supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.NECTAR"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Killdeer",
+      "power_text": "Discard 1 [egg] to draw 2 [card].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "King Rail",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Korimako",
+      "power_text": "Discard any number of [rodent] to gain that many [nectar] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.RODENT",
+          "FoodType.NECTAR"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Kākāpō",
+      "power_text": "Draw 4 bonus cards, keep 1, and discard the other 3.",
+      "class": "backend.powers.templates.strict.EndGameDrawBonusKeep",
+      "kwargs": {
+        "draw": 4,
+        "keep": 1
+      }
+    },
+    {
+      "bird": "Large-Billed Crow",
+      "power_text": "Cache 1 [wild] from your supply on any bird. If you do, you may tuck 1 [card] from your hand behind this bird.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Laughing Kookaburra",
+      "power_text": "Reset the birdfeeder. If you do, gain 1 [invertebrate], [fish], or [rodent], if there is one.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.INVERTEBRATE",
+        "cache": false
+      }
+    },
+    {
+      "bird": "Lazuli Bunting",
+      "power_text": "All players lay 1 [egg] on any 1 [bowl] bird. You may lay 1 [egg] on 1 additional [bowl] bird.",
+      "class": "backend.powers.templates.strict.AllPlayersLayEggsSelfBonus",
+      "kwargs": {
+        "all_players_count": 1,
+        "self_bonus_count": 1,
+        "nest_filter": "NestType.BOWL"
+      }
+    },
+    {
+      "bird": "Lesser Frigatebird",
+      "power_text": "All players may discard 1 [egg] from a [wetland] bird. Each player that discards an [egg] gains 1 [wild] from the supply.",
+      "class": "backend.powers.templates.strict.AllPlayersMayDiscardEggFromHabitatForWild",
+      "kwargs": {
+        "habitat": "Habitat.WETLAND"
+      }
+    },
+    {
+      "bird": "Lesser Whitethroat",
+      "power_text": "Choose a habitat with no [egg]. Lay 1 [egg] on each bird in that habitat.",
+      "class": "backend.powers.templates.strict.ChooseEgglessHabitatLayEggEachBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Lewin's Honeyeater",
+      "power_text": "Choose 1 other player. You both gain 1 [nectar] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.NECTAR"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Lincoln's Sparrow",
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat.",
+      "class": "backend.powers.templates.special.MoveBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Little Bustard",
+      "power_text": "Draw 1 new bonus card. Then gain 1 [card] or lay 1 [egg] on any bird.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Little Egret",
+      "power_text": "Draw 1 [card] from the deck and add it to your hand. All other players draw 1 [card] from the deck and keep it if it can live in [wetland].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Little Grebe",
+      "power_text": "For each bird in this column with an [egg] on it, draw 1 [card]. Keep 1 and discard the rest.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Little Owl",
+      "power_text": "Steal 1 [rodent] from another player's supply and cache it on this bird. They gain 1 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+      "kwargs": {
+        "food_type": "FoodType.RODENT"
+      }
+    },
+    {
+      "bird": "Little Penguin",
+      "power_text": "Draw and discard 5 [card] from the deck. For each [fish] in their food costs, cache 1 [fish] from the supply on this bird.",
+      "class": "backend.powers.templates.tuck_cards.DrawDiscardCacheByFoodIcon",
+      "kwargs": {
+        "draw_count": 5,
+        "target_food": "FoodType.FISH",
+        "cache_food_type": "FoodType.FISH"
+      }
+    },
+    {
+      "bird": "Little Pied Cormorant",
+      "power_text": "Lay 1 [egg] on each of your birds with a [platform] nest, including this one.",
+      "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+      "kwargs": {
+        "nest_types": "{<NestType.PLATFORM: 'platform'>}"
+      }
+    },
+    {
+      "bird": "Little Ringed Plover",
+      "power_text": "Discard 1 [card] from your hand. If you do, lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Loggerhead Shrike",
+      "power_text": "When another player takes the “gain food” action, if they gain any number of [rodent], cache 1 [rodent] from the supply on this bird.",
+      "class": "backend.powers.templates.strict.PinkCacheRodentOnOpponentRodentGain",
+      "kwargs": {}
+    },
+    {
+      "bird": "Long-Tailed Tit",
+      "power_text": "Place this bird sideways, so that it covers 2 [forest] spaces. Pay the lower egg cost.",
+      "class": "backend.powers.templates.play_bird.PlaceBirdSideways",
+      "kwargs": {}
+    },
+    {
+      "bird": "Magpie-Lark",
+      "power_text": "Discard 2 [egg] from your [forest]. If you do, play 1 bird in your [grassland] at its normal food cost (ignore its egg cost). If it has a “when played” or “game end” power, you may use it.",
+      "class": "backend.powers.templates.strict.EndGameMagpieLark",
+      "kwargs": {}
+    },
+    {
+      "bird": "Major Mitchell's Cockatoo",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, all players gain 1 [seed] from the supply.",
+      "class": "backend.powers.templates.strict.TuckFromHandThenAllPlayersGainFood",
+      "kwargs": {
+        "food_type": "FoodType.SEED"
+      }
+    },
+    {
+      "bird": "Mallard",
+      "power_text": "Draw 1 [card].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Malleefowl",
+      "power_text": "Lay 1 [egg] on each of your birds with a [ground] nest, including this one.",
+      "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+      "kwargs": {
+        "nest_types": "{<NestType.GROUND: 'ground'>}"
+      }
+    },
+    {
+      "bird": "Mandarin Duck",
+      "power_text": "Draw 5 [card] from the deck. Add 1 to your hand, tuck 1 behind this bird, give 1 to another player, and discard the rest.",
+      "class": "backend.powers.templates.strict.EndRoundMandarinDuck",
+      "kwargs": {}
+    },
+    {
+      "bird": "Maned Duck",
+      "power_text": "Tuck up to 3 [card] from your hand behind this bird. If you tuck at least 1 [card], gain 1 [seed] from the supply.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 3,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": "FoodType.SEED",
+        "food_count": 1
+      }
+    },
+    {
+      "bird": "Many-Colored Fruit-Dove",
+      "power_text": "All players gain 1 [fruit] from the supply. You gain 1 additional [fruit] from the supply.",
+      "class": "backend.powers.templates.strict.AllPlayersGainFoodThenSelfFoodOrEggBonus",
+      "kwargs": {
+        "base_food_type": "FoodType.FRUIT",
+        "base_count": 1,
+        "self_food_type": "FoodType.FRUIT",
+        "self_food_count": 1,
+        "self_egg_bonus": 0
+      }
+    },
+    {
+      "bird": "Masked Lapwing",
+      "power_text": "Reset the birdfeeder, then, for each type of food in the birdfeeder, gain 1 of that type.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": null,
+        "cache": false
+      }
+    },
+    {
+      "bird": "Mississippi Kite",
+      "power_text": "Roll all dice not in birdfeeder. If any are [rodent], cache 1 [rodent] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.RODENT",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Mistletoebird",
+      "power_text": "Gain 1 [fruit] from the supply, or discard 1 [fruit] to gain 1 [nectar] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.FRUIT",
+          "FoodType.NECTAR"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Moltoni's Warbler",
+      "power_text": "If you used all 4 types of actions this round, play another bird. Pay its normal food and egg cost.",
+      "class": "backend.powers.templates.strict.ConditionalAllActionsPlayBird",
+      "kwargs": {
+        "habitat_filter": null
+      }
+    },
+    {
+      "bird": "Montagu's Harrier",
+      "power_text": "Instead of paying any costs, you may play this bird on top of another bird on your player mat. Discard any eggs and food from that bird. It becomes a tucked card.",
+      "class": "backend.powers.templates.play_bird.PlayOnTopPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Mountain Bluebird",
+      "power_text": "Play an additional bird in your [grassland]. Pay its normal cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.GRASSLAND",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Mountain Chickadee",
+      "power_text": "Cache 1 [seed] from the supply on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+      "kwargs": {
+        "food_type": "FoodType.SEED",
+        "count": 1
+      }
+    },
+    {
+      "bird": "Mourning Dove",
+      "power_text": "Lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Musk Duck",
+      "power_text": "Draw 1 face-up [card] from the tray with a [ground] or [star] nest. You may reset or refill the tray before doing so.",
+      "class": "backend.powers.templates.strict.WillieWagtailDrawTrayNest",
+      "kwargs": {
+        "allowed_nests": "{<NestType.GROUND: 'ground'>, <NestType.WILD: 'wild'>}",
+        "allow_reset": true,
+        "allow_refill": true
+      }
+    },
+    {
+      "bird": "Mute Swan",
+      "power_text": "Choose 1-3 birds in your [wetland]. Tuck 1 [card] from your hand behind each. If you tuck at least 1 card, draw 1 [card].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 1,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "New Holland Honeyeater",
+      "power_text": "Gain 1 [nectar] from the birdfeeder, if there is one.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": [
+          "FoodType.NECTAR"
+        ],
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "Noisy Miner",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, lay up to 2 [egg] on this bird. All other players may lay 1 [egg].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 2,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "North Island Brown Kiwi",
+      "power_text": "Discard a bonus card. If you do, draw 4 bonus cards, keep 2, and discard the other 2.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 4,
+        "keep": 4,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Northern Bobwhite",
+      "power_text": "Lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Northern Cardinal",
+      "power_text": "Gain 1 [fruit] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.FRUIT"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Northern Flicker",
+      "power_text": "Gain all [invertebrate] that are in the birdfeeder.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.INVERTEBRATE",
+        "cache": false
+      }
+    },
+    {
+      "bird": "Northern Gannet",
+      "power_text": "Roll all dice not in birdfeeder. If any are a [fish], gain that many [fish] from the supply and cache them on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.FISH",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Northern Goshawk",
+      "power_text": "For each [rodent] in this bird's cost, you may pay 1 [card] from your hand instead. If you do, tuck the paid [card] behind this card.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Northern Harrier",
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 75,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Northern Mockingbird",
+      "power_text": "Repeat a brown power on another bird in this habitat.",
+      "class": "backend.powers.templates.special.RepeatPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Northern Shoveler",
+      "power_text": "All players draw 1 [card] from the deck.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": true
+      }
+    },
+    {
+      "bird": "Olive-Backed Sunbird",
+      "power_text": "Each player may roll any 1 [die] and gain that food from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.WILD"
+        ],
+        "count": 1,
+        "all_players": true,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Orange-Footed Scrubfowl",
+      "power_text": "Lay 1 [egg] on each of your birds with a [ground] nest, including this one.",
+      "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+      "kwargs": {
+        "nest_types": "{<NestType.GROUND: 'ground'>}"
+      }
+    },
+    {
+      "bird": "Oriental Bay-Owl",
+      "power_text": "Activate the “When Activated” (brown) powers of all of your other [predator].",
+      "class": "backend.powers.templates.unique.ActivateAllPredators",
+      "kwargs": {}
+    },
+    {
+      "bird": "Oriental Magpie-Robin",
+      "power_text": "For every 3 [egg] in your [grassland], gain 1 [invertebrate] or [seed] from the supply. You may cache up to 2 of them on this bird.",
+      "class": "backend.powers.templates.strict.PerThreeEggsInHabitatGainSeedOrInvertThenCache",
+      "kwargs": {
+        "habitat": "Habitat.GRASSLAND",
+        "max_cache": 2
+      }
+    },
+    {
+      "bird": "Osprey",
+      "power_text": "All players gain 1 [fish] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.FISH"
+        ],
+        "count": 1,
+        "all_players": true,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Pacific Black Duck",
+      "power_text": "For every 2 [egg] in your [wetland], lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.strict.EndGameLayEggOnSelfPerTwoEggsInHabitat",
+      "kwargs": {
+        "habitat": "Habitat.WETLAND"
+      }
+    },
+    {
+      "bird": "Painted Bunting",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Painted Whitestart",
+      "power_text": "Gain 1 [invertebrate] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Parrot Crossbill",
+      "power_text": "Remove any 1 [die] from the birdfeeder, then gain 1 [seed] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": [
+          "FoodType.SEED"
+        ],
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "Peaceful Dove",
+      "power_text": "Discard any number of [seed]. Lay 1 [egg] on this bird for each discarded [seed].",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Peregrine Falcon",
+      "power_text": "Look at a [card] from the deck. If less than 100cm, tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 100,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Pesquet's Parrot",
+      "power_text": "If the player to your right has a [nectar] in their personal supply, gain 1 [nectar] from the general supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.NECTAR"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Pheasant Coucal",
+      "power_text": "When another player takes the “lay eggs” action, lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+      "kwargs": {
+        "nest_types": null,
+        "wingspan_lt": null,
+        "on_self": true,
+        "require_another_bird": false,
+        "target_overage": 0
+      }
+    },
+    {
+      "bird": "Philippine Eagle",
+      "power_text": "Roll all 5 [die]. You may reroll any number of [die], up to 2 times. If at least 3 [rodent] are showing when you stop, draw 2 bonus cards and keep 1. Reset the birdfeeder.",
+      "class": "backend.powers.templates.strict.PhilippineEagleRodentBonus",
+      "kwargs": {}
+    },
+    {
+      "bird": "Pied-Billed Grebe",
+      "power_text": "Draw 2 [card]. If you do, discard 1 [card] from your hand at the end of your turn.",
+      "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+      "kwargs": {
+        "draw": 2,
+        "discard": 1
+      }
+    },
+    {
+      "bird": "Pileated Woodpecker",
+      "power_text": "All players lay 1 [egg] on any 1 [cavity] bird. You may lay 1 [egg] on 1 additional [cavity] bird.",
+      "class": "backend.powers.templates.strict.AllPlayersLayEggsSelfBonus",
+      "kwargs": {
+        "all_players_count": 1,
+        "self_bonus_count": 1,
+        "nest_filter": "NestType.CAVITY"
+      }
+    },
+    {
+      "bird": "Pine Siskin",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [seed] from the supply.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": "FoodType.SEED",
+        "food_count": 1
+      }
+    },
+    {
+      "bird": "Pink-Eared Duck",
+      "power_text": "Draw 2 [card] from the deck. Keep 1 and give the other to another player.",
+      "class": "backend.powers.templates.strict.PinkEaredDuckDrawKeepGive",
+      "kwargs": {}
+    },
+    {
+      "bird": "Plains-Wanderer",
+      "power_text": "Draw 1 bonus card for each bird in your [grassland]. Keep 1 and discard the rest.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Plumbeous Redstart",
+      "power_text": "Draw 1 [card] from the deck and add it to your hand. All other players draw 1 [card] from the deck and add it to their hand if the bird has a [invertebrate] or [seed] in its food cost.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Princess Stephanie's Astrapia",
+      "power_text": "Choose 1 other player. You both lay 1 [egg].",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Prothonotary Warbler",
+      "power_text": "",
+      "class": "backend.powers.base.NoPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Purple Gallinule",
+      "power_text": "All players draw 1 [card] from the deck.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": true
+      }
+    },
+    {
+      "bird": "Purple Heron",
+      "power_text": "Choose any 2 [die]. Roll them up to 3 times. Each time, if you roll at least 1 [invertebrate] or [fish], cache 1 here. If not, stop and return all food cached here this turn.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.INVERTEBRATE",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Purple Martin",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 1,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Pygmy Nuthatch",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [invertebrate] or [seed] from the supply.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": "FoodType.INVERTEBRATE",
+        "food_count": 1
+      }
+    },
+    {
+      "bird": "Pūkeko",
+      "power_text": "Lay 1 [egg] on an adjacent bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Rainbow Lorikeet",
+      "power_text": "Discard 1 [nectar] to the “spent nectar” space for your [forest]. If you do, gain 2 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": [
+          "FoodType.NECTAR"
+        ],
+        "count": 2,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "Red Avadavat",
+      "power_text": "Give 1 [card] from your hand to another player. If you do, draw 2 [card].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Red Crossbill",
+      "power_text": "All players gain 1 [seed] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.SEED"
+        ],
+        "count": 1,
+        "all_players": true,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Red Junglefowl",
+      "power_text": "Count the [egg] on all of your birds. If the total is fewer than 6 [egg], lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Red Kite",
+      "power_text": "Instead of paying any costs, you may play this bird on top of another bird on your player mat. Discard any eggs and food from that bird. It becomes a tucked card.",
+      "class": "backend.powers.templates.play_bird.PlayOnTopPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Red Knot",
+      "power_text": "Draw 1 new bonus card. Then draw 3 [card] and keep 1 of them.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Red Wattlebird",
+      "power_text": "Gain 1 [nectar] from the supply for each bird with a wingspan less than 49cm in your [forest].",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.NECTAR"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Red-Backed Fairywren",
+      "power_text": "Lay 1 [egg] on each of your birds with a [star] nest, including this one.",
+      "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+      "kwargs": {
+        "nest_types": "{<NestType.WILD: 'wild'>}"
+      }
+    },
+    {
+      "bird": "Red-Backed Shrike",
+      "power_text": "Steal 1 [invertebrate] from another player's supply and cache it on this bird. They gain 1 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+      "kwargs": {
+        "food_type": "FoodType.INVERTEBRATE"
+      }
+    },
+    {
+      "bird": "Red-Bellied Woodpecker",
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird.",
+      "class": "backend.powers.templates.strict.RedBelliedWoodpeckerSeedFromFeeder",
+      "kwargs": {}
+    },
+    {
+      "bird": "Red-Breasted Merganser",
+      "power_text": "Draw 2 [card]. If you do, discard 1 [card] from your hand at the end of your turn.",
+      "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+      "kwargs": {
+        "draw": 2,
+        "discard": 1
+      }
+    },
+    {
+      "bird": "Red-Breasted Nuthatch",
+      "power_text": "Cache 1 [seed] from the supply on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+      "kwargs": {
+        "food_type": "FoodType.SEED",
+        "count": 1
+      }
+    },
+    {
+      "bird": "Red-Capped Robin",
+      "power_text": "If the player to your left has an [invertebrate] in their personal supply, gain 1 [invertebrate] from the general supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Red-Cockaded Woodpecker",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Red-Crowned Crane",
+      "power_text": "Score 1 of your bonus cards now by caching 1 [wild] from the supply on this bird for each point. Discard that bonus card and draw 1 new one.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Red-Eyed Vireo",
+      "power_text": "Play an additional bird in your [forest]. Pay its normal cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.FOREST",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Red-Headed Woodpecker",
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+      "kwargs": {
+        "food_type": "FoodType.SEED"
+      }
+    },
+    {
+      "bird": "Red-Legged Partridge",
+      "power_text": "Lay 1 [egg] on each bird in this column, including this one.",
+      "class": "backend.powers.templates.lay_eggs.LayEggsEachBirdInRow",
+      "kwargs": {
+        "include_column": true
+      }
+    },
+    {
+      "bird": "Red-Necked Avocet",
+      "power_text": "If the player to your left or right has an [invertebrate] in their personal supply, gain 1 [invertebrate] from the general supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Red-Shouldered Hawk",
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 75,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Red-Tailed Hawk",
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 75,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Red-Vented Bulbul",
+      "power_text": "If you have at least 1 [fruit] in your supply, lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Red-Wattled Lapwing",
+      "power_text": "Discard any number of [card] from the tray, then refill it. If at least 1 of the discarded birds is a [predator], lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.strict.RedWattledLapwingDiscardTrayLayEgg",
+      "kwargs": {}
+    },
+    {
+      "bird": "Red-Winged Blackbird",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 1,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Red-Winged Parrot",
+      "power_text": "Give 1 [nectar] from your supply to another player. If you do, lay 2 [egg] on this bird or gain 2 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 2,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Regent Bowerbird",
+      "power_text": "Choose 1 other player. You both gain 1 [invertebrate] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Rhinoceros Auklet",
+      "power_text": "Roll any 2 [die]. If you roll at least 1 [fish], cache 1 [fish] from the supply on this bird. All players may discard 1 [card] from their hand to gain 1 [fish] from the supply.",
+      "class": "backend.powers.templates.strict.RollDiceCacheThenAllPlayersMayDiscardCardGainFood",
+      "kwargs": {
+        "dice_count": 2,
+        "target_food": "FoodType.FISH"
+      }
+    },
+    {
+      "bird": "Ring-Billed Gull",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 1,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Rock Pigeon",
+      "power_text": "All players lay 1 [egg]. You lay 1 additional [egg].",
+      "class": "backend.powers.templates.strict.AllPlayersLayEggsSelfBonus",
+      "kwargs": {
+        "all_players_count": 1,
+        "self_bonus_count": 1,
+        "nest_filter": null
+      }
+    },
+    {
+      "bird": "Rook",
+      "power_text": "Cache 1 [wild] from your supply on this bird or tuck 1 [card] from your hand behind this bird. If you do either, tuck 1 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.special.FlockingPower",
+      "kwargs": {
+        "count": 1
+      }
+    },
+    {
+      "bird": "Rose-Breasted Grosbeak",
+      "power_text": "Gain 1 [seed] or [fruit] from the birdfeeder, if available.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": [
+          "FoodType.SEED",
+          "FoodType.FRUIT"
+        ],
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "Rose-Ringed Parakeet",
+      "power_text": "Copy a “When Played” (white) ability on 1 of your neighbors' birds.",
+      "class": "backend.powers.templates.unique.CopyNeighborWhitePower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Roseate Spoonbill",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Rosy Starling",
+      "power_text": "Tuck up to 3 [card] from your hand behind this bird. If you tuck at least 1 [card], gain 1 [invertebrate] from the supply.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 3,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": "FoodType.INVERTEBRATE",
+        "food_count": 1
+      }
+    },
+    {
+      "bird": "Royal Spoonbill",
+      "power_text": "Draw 1 face-up [card] from the tray with a [platform] or [star] nest. You may reset or refill the tray before doing so.",
+      "class": "backend.powers.templates.strict.WillieWagtailDrawTrayNest",
+      "kwargs": {
+        "allowed_nests": "{<NestType.PLATFORM: 'platform'>, <NestType.WILD: 'wild'>}",
+        "allow_reset": true,
+        "allow_refill": true
+      }
+    },
+    {
+      "bird": "Ruby-Crowned Kinglet",
+      "power_text": "Play an additional bird in your [forest]. Pay its normal cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.FOREST",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Ruby-Throated Hummingbird",
+      "power_text": "Each player gains 1 [die] from the birdfeeder, starting with the player of your choice.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": null,
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "Ruddy Duck",
+      "power_text": "Draw 2 [card]. If you do, discard 1 [card] from your hand at the end of your turn.",
+      "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+      "kwargs": {
+        "draw": 2,
+        "discard": 1
+      }
+    },
+    {
+      "bird": "Ruddy Shelduck",
+      "power_text": "Draw 5 [card] from the deck. Add 1 to your hand, tuck 1 behind this bird, and discard the rest.",
+      "class": "backend.powers.templates.strict.DrawKeepTuckDiscard",
+      "kwargs": {
+        "draw_count": 5,
+        "keep_count": 1,
+        "tuck_count": 1
+      }
+    },
+    {
+      "bird": "Ruff",
+      "power_text": "Tuck up to 3 [card] from your hand behind this bird. Draw 1 [card] for each card you tucked.",
+      "class": "backend.powers.templates.strict.TuckFromHandThenDrawEqual",
+      "kwargs": {
+        "max_tuck": 3
+      }
+    },
+    {
+      "bird": "Rufous Night-Heron",
+      "power_text": "Look at a [card] from the deck. If it can live in [wetland], tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 75,
+        "wingspan_cmp": "lt",
+        "habitat_filter": "Habitat.WETLAND",
+        "food_cost_includes": "set()",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Rufous Owl",
+      "power_text": "Draw 1 face-up [card] from the tray with a wingspan less than 75cm and tuck it behind this bird.",
+      "class": "backend.powers.templates.strict.TuckTrayCardByMaxWingspan",
+      "kwargs": {
+        "max_wingspan_cm": 75
+      }
+    },
+    {
+      "bird": "Rufous-Banded Honeyeater",
+      "power_text": "Discard 1 [invertebrate]. If you do, gain 1 [nectar] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE",
+          "FoodType.NECTAR"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Sacred Kingfisher",
+      "power_text": "When another player takes the “gain food” action, gain 1 [invertebrate], [fish], or [rodent] from the birdfeeder, if there is one, at the end of their turn.",
+      "class": "backend.powers.templates.strict.PinkGainFoodFromFeederOnGainFood",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE",
+          "FoodType.FISH",
+          "FoodType.RODENT"
+        ]
+      }
+    },
+    {
+      "bird": "Sandhill Crane",
+      "power_text": "Discard 1 [seed] to tuck 2 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+      "kwargs": {
+        "max_discard": 1,
+        "food_type": "FoodType.SEED",
+        "tuck_per_discard": 2
+      }
+    },
+    {
+      "bird": "Sarus Crane",
+      "power_text": "Each player may discard 1 [egg] to draw 1 [card] from the deck.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": true
+      }
+    },
+    {
+      "bird": "Satyr Tragopan",
+      "power_text": "Give 1 [card] from your hand to another player. If you do, lay 2 [egg] on this bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 2,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Savannah Sparrow",
+      "power_text": "Play an additional bird in your [grassland]. Pay its normal cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.GRASSLAND",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Savi's Warbler",
+      "power_text": "Draw 2 [card]. All other players draw 1 [card] from the deck.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Say's Phoebe",
+      "power_text": "Lay 1 [egg] on each of your birds with a [bowl] nest.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": "NestType.BOWL",
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Scaled Quail",
+      "power_text": "Lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Scaly-Breasted Munia",
+      "power_text": "Gain 1 [seed] from the supply or tuck 1 [card] from the deck behind this bird.",
+      "class": "backend.powers.templates.special.FlockingPower",
+      "kwargs": {
+        "count": 1
+      }
+    },
+    {
+      "bird": "Scissor-Tailed Flycatcher",
+      "power_text": "All players gain 1 [invertebrate] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE"
+        ],
+        "count": 1,
+        "all_players": true,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Short-Toed Treecreeper",
+      "power_text": "Discard 1 [egg] from any bird. If you do, play another bird in your [forest]. Pay its normal food and egg cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.FOREST",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Silvereye",
+      "power_text": "All players gain 1 [nectar] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.NECTAR"
+        ],
+        "count": 1,
+        "all_players": true,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Small Minivet",
+      "power_text": "Play 1 additional bird in your [forest]. You may ignore 1 [invertebrate] or 1 [egg] in its cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.FOREST",
+        "food_discount": 1,
+        "egg_discount": 1,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Smew",
+      "power_text": "Draw 4 [card]. Tuck 2 [card] behind this bird and add the other 2 [card] to your hand.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 4,
+        "keep": 4,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Snow Bunting",
+      "power_text": "When another player tucks a [card] for any reason, tuck 1 [card] from your hand behind this bird, then draw 1 [card] at the end of their turn.",
+      "class": "backend.powers.templates.strict.PinkTuckFromHandThenDrawOnOpponentTuck",
+      "kwargs": {}
+    },
+    {
+      "bird": "Snowy Egret",
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.FISH",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Snowy Owl",
+      "power_text": "Draw 1 new bonus card. Then gain 1 [card] or lay 1 [egg] on any bird.",
+      "class": "backend.powers.templates.strict.SnowyOwlBonusThenChoice",
+      "kwargs": {}
+    },
+    {
+      "bird": "Song Sparrow",
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat.",
+      "class": "backend.powers.templates.special.MoveBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "South Island Robin",
+      "power_text": "If the player to your right has an [invertebrate] in their supply, cache 1 [invertebrate] from the general supply on this bird.",
+      "class": "backend.powers.templates.unique.ConditionalCacheFromNeighbor",
+      "kwargs": {
+        "direction": "right",
+        "food_type": "FoodType.INVERTEBRATE"
+      }
+    },
+    {
+      "bird": "Southern Cassowary",
+      "power_text": "Discard a bird from your [forest] and put this bird in its place (do not pay an egg cost). If you do, lay 4 [egg] on this bird and gain 2 [fruit] from the supply.",
+      "class": "backend.powers.templates.unique.SouthernCassowaryPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Spangled Drongo",
+      "power_text": "When another player gains [nectar], gain 1 [nectar] from the supply.",
+      "class": "backend.powers.templates.strict.PinkGainNectarOnOpponentNectarGain",
+      "kwargs": {}
+    },
+    {
+      "bird": "Splendid Fairywren",
+      "power_text": "Lay 1 [egg] on each of your birds with a wingspan less than 30cm, including this one.",
+      "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingWingspan",
+      "kwargs": {
+        "min_cm": null,
+        "max_cm": 30
+      }
+    },
+    {
+      "bird": "Spoon-Billed Sandpiper",
+      "power_text": "Draw 2 new bonus cards and keep 1. Other players may discard any 2 resources ([wild], [egg], or [card]) to do the same.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Spotless Crake",
+      "power_text": "Lay 1 [egg] on each bird in your [wetland], including this one.",
+      "class": "backend.powers.templates.strict.EndGameLayEggOnEachBirdInHabitat",
+      "kwargs": {
+        "habitat": "Habitat.WETLAND"
+      }
+    },
+    {
+      "bird": "Spotted Dove",
+      "power_text": "If this bird has no birds to the right of it, you may move it (only the card) to the player mat of the player on your right (you choose its habitat). If you do, draw 3 [card].",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 3,
+        "keep": 3,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Spotted Owl",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Spotted Sandpiper",
+      "power_text": "All players draw 1 [card] from the deck.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": true
+      }
+    },
+    {
+      "bird": "Spotted Towhee",
+      "power_text": "Gain 1 [seed] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.SEED"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Sprague's Pipit",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Squacco Heron",
+      "power_text": "Gain 1 face-up [card] that can live in [wetland].",
+      "class": "backend.powers.templates.strict.DrawTrayCardByHabitat",
+      "kwargs": {
+        "habitat": "Habitat.WETLAND"
+      }
+    },
+    {
+      "bird": "Sri Lanka Blue-Magpie",
+      "power_text": "You may cache 1 [wild] from your supply on each of your other birds.",
+      "class": "backend.powers.templates.strict.CacheWildOnEachOtherBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Sri Lanka Frogmouth",
+      "power_text": "Roll any 1 [die]. If you roll a [invertebrate], cache 1 [invertebrate] from the supply on this bird. All players may discard 1 [card] from their hand to gain 1 [invertebrate] from the supply.",
+      "class": "backend.powers.templates.strict.RollDiceCacheThenAllPlayersMayDiscardCardGainFood",
+      "kwargs": {
+        "dice_count": 1,
+        "target_food": "FoodType.INVERTEBRATE"
+      }
+    },
+    {
+      "bird": "Steller's Jay",
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+      "kwargs": {
+        "food_type": "FoodType.SEED"
+      }
+    },
+    {
+      "bird": "Stork-Billed Kingfisher",
+      "power_text": "Choose any 1 [die]. Roll it one for each of your [wetland] birds. If you roll at least 1 [fish], gain 1 from the supply. You may cache it on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+      "kwargs": {
+        "food_type": "FoodType.FISH",
+        "count": 1
+      }
+    },
+    {
+      "bird": "Stubble Quail",
+      "power_text": "Discard up to 6 [wild]. Lay 1 [egg] on this bird for each discarded food.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Sulphur-Crested Cockatoo",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, all players gain 1 [nectar] from the supply.",
+      "class": "backend.powers.templates.strict.TuckFromHandThenAllPlayersGainFood",
+      "kwargs": {
+        "food_type": "FoodType.NECTAR"
+      }
+    },
+    {
+      "bird": "Superb Lyrebird",
+      "power_text": "Copy a brown power on one bird in the [forest] of the player to your right.",
+      "class": "backend.powers.templates.special.CopyNeighborBrownPower",
+      "kwargs": {
+        "direction": "right",
+        "target_habitat": "Habitat.FOREST"
+      }
+    },
+    {
+      "bird": "Swainson's Hawk",
+      "power_text": "Look at a [card] from the deck. If less than 75cm, tuck it behind this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 75,
+        "wingspan_cmp": "lt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": null,
+        "cache_count": 0
+      }
+    },
+    {
+      "bird": "Tawny Frogmouth",
+      "power_text": "Reset the birdfeeder. Cache 1 [invertebrate] or [rodent] from the birdfeeder (if available) on this bird.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.INVERTEBRATE",
+        "cache": true
+      }
+    },
+    {
+      "bird": "Thekla's Lark",
+      "power_text": "Discard 1 [seed] from your supply. If you do, lay 2 [egg] on this bird.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 2,
+        "target": "self",
+        "nest_filter": null,
+        "habitat_filter": null,
+        "all_players": false
+      }
+    },
+    {
+      "bird": "Tree Swallow",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 1,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Trumpeter Finch",
+      "power_text": "Play 1 additional bird in your [grassland]. You may ignore 1 [seed] or 1 [egg] in its cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.GRASSLAND",
+        "food_discount": 1,
+        "egg_discount": 1,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Trumpeter Swan",
+      "power_text": "",
+      "class": "backend.powers.base.NoPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Tufted Titmouse",
+      "power_text": "Play an additional bird in your [forest]. Pay its normal cost.",
+      "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+      "kwargs": {
+        "habitat_filter": "Habitat.FOREST",
+        "food_discount": 0,
+        "egg_discount": 0,
+        "ignore_habitat": false
+      }
+    },
+    {
+      "bird": "Turkey Vulture",
+      "power_text": "When another player's [predator] succeeds, gain 1 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.strict.PinkPredatorSuccessGainDie",
+      "kwargs": {}
+    },
+    {
+      "bird": "Twite",
+      "power_text": "Draw 2 [card] from the deck and add them to your hand. Then, tuck any 2 [card] from your hand behind this bird.",
+      "class": "backend.powers.templates.strict.DrawThenTuckFromHand",
+      "kwargs": {
+        "draw_count": 2,
+        "max_tuck": 2
+      }
+    },
+    {
+      "bird": "Tūī",
+      "power_text": "Copy a brown power on one bird in the [forest] of the player to your left.",
+      "class": "backend.powers.templates.special.CopyNeighborBrownPower",
+      "kwargs": {
+        "direction": "left",
+        "target_habitat": "Habitat.FOREST"
+      }
+    },
+    {
+      "bird": "Vaux's Swift",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [invertebrate] from the supply.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": "FoodType.INVERTEBRATE",
+        "food_count": 1
+      }
+    },
+    {
+      "bird": "Verditer Flycatcher",
+      "power_text": "If you have gained a [invertebrate] from the birdfeeder on this turn, gain 1 [fruit] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE",
+          "FoodType.FRUIT"
+        ],
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "Violet Cuckoo",
+      "power_text": "When another player takes the “lay eggs” action, lay 1 [egg] on another bird with wingspan less than 30 cm. You may go 2 over its egg limit while using this power.",
+      "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+      "kwargs": {
+        "nest_types": null,
+        "wingspan_lt": 30,
+        "on_self": false,
+        "require_another_bird": true,
+        "target_overage": 2
+      }
+    },
+    {
+      "bird": "Violet-Green Swallow",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 1,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Wedge-Tailed Eagle",
+      "power_text": "Look at a [card] from the deck. If its wingspan is over 65cm, tuck it behind this bird and cache 1 [rodent] from the supply on this bird. If not, discard it.",
+      "class": "backend.powers.templates.predator.PredatorLookAt",
+      "kwargs": {
+        "wingspan_threshold": 65,
+        "wingspan_cmp": "gt",
+        "habitat_filter": null,
+        "food_cost_includes": "set()",
+        "cache_food_type": "FoodType.RODENT",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Welcome Swallow",
+      "power_text": "Tuck 1 [card] from the deck behind each bird in this habitat, including this bird.",
+      "class": "backend.powers.templates.special.FlockingPower",
+      "kwargs": {
+        "count": 1
+      }
+    },
+    {
+      "bird": "Western Meadowlark",
+      "power_text": "All players lay 1 [egg] on any 1 [ground] bird. You may lay 1 [egg] on 1 additional [ground] bird.",
+      "class": "backend.powers.templates.strict.AllPlayersLayEggsSelfBonus",
+      "kwargs": {
+        "all_players_count": 1,
+        "self_bonus_count": 1,
+        "nest_filter": "NestType.GROUND"
+      }
+    },
+    {
+      "bird": "Western Tanager",
+      "power_text": "Gain 1 [invertebrate] or [fruit] from the birdfeeder, if available.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE",
+          "FoodType.FRUIT"
+        ],
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "White Stork",
+      "power_text": "Discard all remaining face-up [card] and refill the tray. If you do, draw 1 of the new face-up [card].",
+      "class": "backend.powers.templates.strict.WhiteStorkResetTrayThenDraw",
+      "kwargs": {}
+    },
+    {
+      "bird": "White Wagtail",
+      "power_text": "If you used all 4 types of actions this round, play another bird. Pay its normal food and egg cost.",
+      "class": "backend.powers.templates.strict.ConditionalAllActionsPlayBird",
+      "kwargs": {
+        "habitat_filter": null
+      }
+    },
+    {
+      "bird": "White-Backed Woodpecker",
+      "power_text": "Gain 1 [die] from the birdfeeder.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+      "kwargs": {
+        "food_types": null,
+        "count": 1,
+        "may_cache": false
+      }
+    },
+    {
+      "bird": "White-Bellied Sea-Eagle",
+      "power_text": "Reset the birdfeeder. Gain 1 [fish] or 1 [rodent] from the birdfeeder, if there is one, and cache it on this bird.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.FISH",
+        "cache": true
+      }
+    },
+    {
+      "bird": "White-Breasted Nuthatch",
+      "power_text": "Cache 1 [seed] from the supply on this bird.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+      "kwargs": {
+        "food_type": "FoodType.SEED",
+        "count": 1
+      }
+    },
+    {
+      "bird": "White-Breasted Woodswallow",
+      "power_text": "Lay 1 [egg] on each bird in your [grassland], including this one.",
+      "class": "backend.powers.templates.lay_eggs.LayEggs",
+      "kwargs": {
+        "count": 1,
+        "target": "any",
+        "nest_filter": null,
+        "habitat_filter": "Habitat.GRASSLAND",
+        "all_players": false
+      }
+    },
+    {
+      "bird": "White-Browed Tit-Warbler",
+      "power_text": "For each bird in your [forest] with an egg on it, roll any 1 [die]. Choose 1 type of food you rolled and gain 1 of that food from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.WILD"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "White-Crested Laughingthrush",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, gain 1 [invertebrate], [seed], or [fruit] from the birdfeeder.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 0,
+        "food_type": "FoodType.INVERTEBRATE",
+        "food_count": 1
+      }
+    },
+    {
+      "bird": "White-Crowned Sparrow",
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat.",
+      "class": "backend.powers.templates.special.MoveBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "White-Faced Heron",
+      "power_text": "Reset the birdfeeder and gain all [fish], if there are any. You may cache any or all of them on this bird.",
+      "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+      "kwargs": {
+        "food_type": "FoodType.FISH",
+        "cache": true
+      }
+    },
+    {
+      "bird": "White-Faced Ibis",
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.FISH",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "White-Headed Duck",
+      "power_text": "Draw 3 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 3,
+        "keep": 3,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "White-Throated Dipper",
+      "power_text": "Discard all remaining face-up [card] and refill the tray. If you do, draw 1 of the new face-up [card].",
+      "class": "backend.powers.templates.strict.WhiteStorkResetTrayThenDraw",
+      "kwargs": {}
+    },
+    {
+      "bird": "White-Throated Kingfisher",
+      "power_text": "Choose any 1 [die]. Roll it up to 3 times. Each time, if you roll a [invertebrate], [fish], or [rodent], cache 1 here. If not, stop and return all food cached here this turn.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.INVERTEBRATE",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "White-Throated Swift",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, lay 1 [egg] on any bird.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 1,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Whooping Crane",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 2,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Wild Turkey",
+      "power_text": "",
+      "class": "backend.powers.base.NoPower",
+      "kwargs": {}
+    },
+    {
+      "bird": "Willet",
+      "power_text": "Roll all dice not in birdfeeder. If any are [fish], cache 1 [fish] from the supply on this bird.",
+      "class": "backend.powers.templates.predator.PredatorDice",
+      "kwargs": {
+        "target_food": "FoodType.FISH",
+        "cache_count": 1
+      }
+    },
+    {
+      "bird": "Willie-Wagtail",
+      "power_text": "Draw 1 face-up [card] from the tray with a [bowl] or [star] nest. You may reset or refill the tray before doing so.",
+      "class": "backend.powers.templates.strict.WillieWagtailDrawTrayNest",
+      "kwargs": {
+        "allowed_nests": "{<NestType.BOWL: 'bowl'>, <NestType.WILD: 'wild'>}",
+        "allow_reset": true,
+        "allow_refill": false
+      }
+    },
+    {
+      "bird": "Willow Tit",
+      "power_text": "Cache 1 [invertebrate], [seed], or [fruit] from the birdfeeder on this bird, if there is one.",
+      "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+      "kwargs": {
+        "food_type": "FoodType.INVERTEBRATE"
+      }
+    },
+    {
+      "bird": "Wilson's Snipe",
+      "power_text": "All players draw 1 [card] from the deck.",
+      "class": "backend.powers.templates.draw_cards.DrawCards",
+      "kwargs": {
+        "draw": 1,
+        "keep": 1,
+        "all_players": true
+      }
+    },
+    {
+      "bird": "Wilson's Storm Petrel",
+      "power_text": "Draw 1 [card] for each empty card slot in this row. At the end of your turn, keep 1 and discard the rest.",
+      "class": "backend.powers.templates.strict.DrawPerEmptySlotThenKeepOneAtEndTurn",
+      "kwargs": {
+        "keep": 1
+      }
+    },
+    {
+      "bird": "Wood Duck",
+      "power_text": "Draw 2 [card]. If you do, discard 1 [card] from your hand at the end of your turn.",
+      "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+      "kwargs": {
+        "draw": 2,
+        "discard": 1
+      }
+    },
+    {
+      "bird": "Wood Stork",
+      "power_text": "Draw 2 new bonus cards and keep 1.",
+      "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+      "kwargs": {
+        "draw": 2,
+        "keep": 1,
+        "discard_from_all_bonus": false
+      }
+    },
+    {
+      "bird": "Wrybill",
+      "power_text": "Look through all discarded bonus cards. Keep 1 of them.",
+      "class": "backend.powers.templates.unique.RetrieveDiscardedBonusCard",
+      "kwargs": {}
+    },
+    {
+      "bird": "Yellow Bittern",
+      "power_text": "Draw the [card] in the middle slot of the bird tray.",
+      "class": "backend.powers.templates.strict.DrawMiddleTrayCard",
+      "kwargs": {}
+    },
+    {
+      "bird": "Yellow-Bellied Sapsucker",
+      "power_text": "Gain 1 [invertebrate] from the supply.",
+      "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+      "kwargs": {
+        "food_types": [
+          "FoodType.INVERTEBRATE"
+        ],
+        "count": 1,
+        "all_players": false,
+        "you_also": false
+      }
+    },
+    {
+      "bird": "Yellow-Billed Cuckoo",
+      "power_text": "When another player takes the “lay eggs” action, lay 1 [egg] on a bird with a [bowl] nest.",
+      "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+      "kwargs": {
+        "nest_types": "{<NestType.BOWL: 'bowl'>}",
+        "wingspan_lt": null,
+        "on_self": false,
+        "require_another_bird": false,
+        "target_overage": 0
+      }
+    },
+    {
+      "bird": "Yellow-Breasted Chat",
+      "power_text": "If this bird is to the right of all other birds in its habitat, move it to another habitat.",
+      "class": "backend.powers.templates.special.MoveBird",
+      "kwargs": {}
+    },
+    {
+      "bird": "Yellow-Headed Blackbird",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, you may also lay 1 [egg] on this bird.",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 0,
+        "lay_count": 1,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Yellow-Rumped Warbler",
+      "power_text": "Tuck 1 [card] from your hand behind this bird. If you do, draw 1 [card].",
+      "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+      "kwargs": {
+        "tuck_count": 1,
+        "draw_count": 1,
+        "lay_count": 0,
+        "food_type": null,
+        "food_count": 0
+      }
+    },
+    {
+      "bird": "Yellowhammer",
+      "power_text": "If you used all 4 types of actions this round, play another bird. Pay its normal food and egg cost.",
+      "class": "backend.powers.templates.strict.ConditionalAllActionsPlayBird",
+      "kwargs": {
+        "habitat_filter": null
+      }
+    },
+    {
+      "bird": "Zebra Dove",
+      "power_text": "All players may discard 1 [seed] from their supply to lay 1 [egg].",
+      "class": "backend.powers.templates.strict.AllPlayersMayDiscardFoodToLayEgg",
+      "kwargs": {
+        "discard_food_type": "FoodType.SEED",
+        "nest_filter": null
+      }
+    }
+  ]
+}

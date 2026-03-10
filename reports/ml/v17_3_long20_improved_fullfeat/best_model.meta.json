@@ -1,0 +1,272 @@
+{
+  "promoted_at_iter": 20,
+  "eval_summary": {
+    "games": 40,
+    "nn_wins": 18,
+    "heuristic_wins": 22,
+    "ties": 0,
+    "nn_mean_score": 59.15,
+    "heuristic_mean_score": 65.425,
+    "nn_mean_margin": -6.275,
+    "nn_win_rate": 0.45,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0,
+    "eval_mode": "mcts",
+    "eval_mcts_sims": 64,
+    "eval_mcts_c_puct": 1.5,
+    "eval_mcts_value_blend": 0.85,
+    "eval_mcts_rollout_policy": "fast"
+  },
+  "gate_summary": {
+    "games": 40,
+    "nn_wins": 25,
+    "heuristic_wins": 13,
+    "ties": 2,
+    "nn_mean_score": 59.5,
+    "heuristic_mean_score": 56.275,
+    "nn_mean_margin": 3.225,
+    "nn_win_rate": 0.625,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0,
+    "nn_win_rate_ci95": [
+      0.4703,
+      0.7578
+    ],
+    "stage1": {
+      "games": 20,
+      "nn_wins": 13,
+      "heuristic_wins": 5,
+      "ties": 2,
+      "nn_mean_score": 57.5,
+      "heuristic_mean_score": 50.9,
+      "nn_mean_margin": 6.6,
+      "nn_win_rate": 0.65,
+      "nn_rate_ge_100": 0.0,
+      "nn_rate_ge_120": 0.0
+    },
+    "stage1_continue_threshold": 0.5,
+    "stage2_enabled": true,
+    "stage2": {
+      "games": 20,
+      "nn_wins": 12,
+      "heuristic_wins": 8,
+      "ties": 0,
+      "nn_mean_score": 61.5,
+      "heuristic_mean_score": 61.65,
+      "nn_mean_margin": -0.15,
+      "nn_win_rate": 0.6,
+      "nn_rate_ge_100": 0.0,
+      "nn_rate_ge_120": 0.0
+    },
+    "promoted": true,
+    "min_promotion_win_rate": 0.5,
+    "gate_value_blend": 0.85,
+    "gate_mcts_sims": 64
+  },
+  "train_result": {
+    "version": 5,
+    "format_version": 5,
+    "mode": "factorized_behavioral_cloning",
+    "model_arch": "mlp_2layer",
+    "elapsed_sec": 61.584,
+    "dataset": "reports/ml/v17_3_long20_improved_fullfeat/iter_020/az_dataset_combined.jsonl",
+    "meta": "reports/ml/v17_3_long20_improved_fullfeat/iter_020/az_dataset_combined.meta.json",
+    "feature_dim": 2315,
+    "hidden1": 768,
+    "hidden2": 384,
+    "dropout": 0.2,
+    "batch_norm_enabled": true,
+    "batch_norm_momentum": 0.1,
+    "batch_norm_eps": 1e-05,
+    "lr_init": 0.0001,
+    "lr_peak": 0.0005,
+    "lr_warmup_epochs": 3,
+    "lr_decay_every": 5,
+    "lr_decay_factor": 0.7,
+    "momentum": 0.9,
+    "early_stop_enabled": true,
+    "early_stop_patience": 5,
+    "early_stop_min_delta": 0.0001,
+    "early_stop_restore_best": true,
+    "stopped_early": true,
+    "best_val_loss_epoch": 1,
+    "best_val_loss": 1.3254195341840387,
+    "epochs_completed": 6,
+    "deprecated_args_used": [],
+    "head_dims": {
+      "action_type": 4,
+      "play_habitat": 4,
+      "gain_food_primary": 7,
+      "draw_mode": 4,
+      "lay_eggs_bin": 11,
+      "play_cost_bin": 7,
+      "play_power_color": 7
+    },
+    "state_encoder": {
+      "use_per_slot_encoding": true,
+      "use_hand_habitat_features": true,
+      "use_tray_per_slot_encoding": true,
+      "use_opponent_board_encoding": true,
+      "use_power_features": true
+    },
+    "has_value_head": true,
+    "has_win_value_head": true,
+    "value_prediction_mode": "score_norm_linear",
+    "value_score_scale": 120.0,
+    "value_score_bias": 0.0,
+    "value_loss_weight": 0.25,
+    "score_value_loss_weight": 0.25,
+    "win_value_loss_weight": 1.0,
+    "policy_target_mode": "soft_visit_distribution",
+    "policy_entropy_action_type_mean": 0.0983249843120575,
+    "policy_peak_action_type_mean": 0.958097517490387,
+    "has_move_value_head": true,
+    "move_feature_dim": 21,
+    "move_value_loss_weight": 0.2,
+    "move_value_training": {
+      "num_negatives": 4,
+      "sampling": "topk_then_random"
+    },
+    "train_samples": 119808,
+    "val_samples": 13312,
+    "warm_start": {
+      "requested": true,
+      "init_model_path": "reports/ml/v17_3_long20_improved_fullfeat/best_model.npz",
+      "applied_count": 32,
+      "skipped_count": 0,
+      "applied": [
+        {
+          "param": "W1",
+          "copied": 1777920
+        },
+        {
+          "param": "b1",
+          "copied": 768
+        },
+        {
+          "param": "W2",
+          "copied": 294912
+        },
+        {
+          "param": "b2",
+          "copied": 384
+        },
+        {
+          "param": "W_action_type",
+          "copied": 1536
+        },
+        {
+          "param": "b_action_type",
+          "copied": 4
+        },
+        {
+          "param": "W_play_habitat",
+          "copied": 1536
+        },
+        {
+          "param": "b_play_habitat",
+          "copied": 4
+        },
+        {
+          "param": "W_gain_food_primary",
+          "copied": 2688
+        },
+        {
+          "param": "b_gain_food_primary",
+          "copied": 7
+        },
+        {
+          "param": "W_draw_mode",
+          "copied": 1536
+        },
+        {
+          "param": "b_draw_mode",
+          "copied": 4
+        },
+        {
+          "param": "W_lay_eggs_bin",
+          "copied": 4224
+        },
+        {
+          "param": "b_lay_eggs_bin",
+          "copied": 11
+        },
+        {
+          "param": "W_play_cost_bin",
+          "copied": 2688
+        },
+        {
+          "param": "b_play_cost_bin",
+          "copied": 7
+        },
+        {
+          "param": "W_play_power_color",
+          "copied": 2688
+        },
+        {
+          "param": "b_play_power_color",
+          "copied": 7
+        },
+        {
+          "param": "W_value",
+          "copied": 384
+        },
+        {
+          "param": "b_value",
+          "copied": 1
+        },
+        {
+          "param": "W_value_win",
+          "copied": 384
+        },
+        {
+          "param": "b_value_win",
+          "copied": 1
+        },
+        {
+          "param": "W_move_value",
+          "copied": 2336
+        },
+        {
+          "param": "b_move_value",
+          "copied": 1
+        },
+        {
+          "param": "bn1_gamma",
+          "copied": 768
+        },
+        {
+          "param": "bn1_beta",
+          "copied": 768
+        },
+        {
+          "param": "bn1_running_mean",
+          "copied": 768
+        },
+        {
+          "param": "bn1_running_var",
+          "copied": 768
+        },
+        {
+          "param": "bn2_gamma",
+          "copied": 384
+        },
+        {
+          "param": "bn2_beta",
+          "copied": 384
+        },
+        {
+          "param": "bn2_running_mean",
+          "copied": 384
+        },
+        {
+          "param": "bn2_running_var",
+          "copied": 384
+        }
+      ],
+      "skipped": []
+    },
+    "training_backend": "pytorch",
+    "training_device": "mps"
+  }
+}

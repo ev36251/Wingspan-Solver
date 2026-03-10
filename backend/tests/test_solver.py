@@ -1,5 +1,6 @@
 """Tests for the heuristic solver: move generation, evaluation, and ranking."""
 
+import random
 import numpy as np
 import pytest
 from backend.config import EXCEL_FILE
@@ -17,6 +18,8 @@ from backend.solver.heuristics import (
     _estimate_engine_value, detect_strategic_phase, _should_concede_goal,
 )
 from backend.engine_search.is_mcts import _model_priors
+from backend.engine_search.belief import sample_hidden_state
+import backend.api.routes_solver as routes_solver
 from backend.api.routes_solver import _sanitize_plan_for_hidden_draws
 
 
@@ -66,6 +69,84 @@ def test_sanitize_plan_for_hidden_draws_masks_unknown_birds():
     assert out_seq[2] == "Play Tui in wetland"
     assert out_details[1]["conditional_unknown_draw"] is True
     assert out_details[2].get("conditional_unknown_draw") is None
+
+
+def test_solver_policy_components_use_model_metadata_encoder(monkeypatch, tmp_path):
+    """Solver should build StateEncoder from model metadata (not defaults)."""
+    model_path = tmp_path / "dummy_model.npz"
+    model_path.write_bytes(b"x")
+
+    class DummyEncoder:
+        pass
+
+    class DummyModel:
+        def __init__(self):
+            self.meta = {"state_encoder": {"use_per_slot_encoding": True}}
+
+    calls: dict[str, object] = {}
+
+    def _fake_model_ctor(path):
+        calls["path"] = str(path)
+        return DummyModel()
+
+    def _fake_resolve(_cls, meta):
+        calls["meta"] = meta
+        return DummyEncoder()
+
+    import backend.ml.factorized_inference as fi
+    import backend.ml.state_encoder as se
+
+    monkeypatch.setattr(routes_solver, "_iter_policy_model_candidates", lambda: [model_path])
+    monkeypatch.setattr(fi, "FactorizedPolicyModel", _fake_model_ctor)
+    monkeypatch.setattr(se.StateEncoder, "resolve_for_model", classmethod(_fake_resolve))
+
+    routes_solver._POLICY_MODEL = None
+    routes_solver._STATE_ENCODER = None
+    routes_solver._POLICY_MODEL_PATH = None
+    routes_solver._POLICY_MODEL_LOAD_TRIED = False
+
+    model, encoder = routes_solver._get_policy_components()
+    assert model is not None
+    assert isinstance(encoder, DummyEncoder)
+    assert calls["path"].endswith("dummy_model.npz")
+    assert calls["meta"] == model.meta
+
+    routes_solver._POLICY_MODEL = None
+    routes_solver._STATE_ENCODER = None
+    routes_solver._POLICY_MODEL_PATH = None
+    routes_solver._POLICY_MODEL_LOAD_TRIED = False
+
+
+def test_sample_hidden_state_concretizes_unknown_hand_and_bonus(game, bird_reg):
+    """Determinization should materialize unknown hidden counts into identities."""
+    p1, p2 = game.players
+    p1.hand.clear()
+    p2.hand.clear()
+    p2.bonus_cards.clear()
+    p2.unknown_hand_count = 2
+    p2.unknown_bonus_count = 1
+
+    b1 = bird_reg.get("Acorn Woodpecker")
+    b2 = bird_reg.get("Trumpeter Swan")
+    b3 = bird_reg.get("Baltimore Oriole")
+    assert b1 is not None and b2 is not None and b3 is not None
+    game._deck_cards = [b1, b2, b3]
+    game.deck_remaining = len(game._deck_cards)
+
+    sim = sample_hidden_state(game, random.Random(7))
+
+    sim_p2 = sim.players[1]
+    assert len(sim_p2.hand) == 2
+    assert sim_p2.unknown_hand_count == 0
+    assert len(sim_p2.bonus_cards) == 1
+    assert sim_p2.unknown_bonus_count == 0
+    assert sim.deck_remaining == 1
+    assert len(sim._deck_cards) == 1
+
+    # Source game is unchanged.
+    assert p2.unknown_hand_count == 2
+    assert p2.unknown_bonus_count == 1
+    assert game.deck_remaining == 3
 
 
 # --- Move generation ---

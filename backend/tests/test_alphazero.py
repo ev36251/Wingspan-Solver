@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -174,6 +175,53 @@ class TestMCTS:
         best = mcts.get_best_move(game, 0)
         assert best is not None
 
+    def test_evaluate_terminal_uses_absolute_score_units(self, monkeypatch):
+        from backend.ml.mcts import MCTS
+
+        class DummyModel:
+            has_value_head = False
+
+        class DummyEncoder:
+            def encode(self, game, player_idx):
+                return [0.0]
+
+        game = create_training_game(num_players=2, board_type=BoardType.OCEANIA)
+        game.current_round = 5  # game-over sentinel
+        p0 = game.players[0].name
+        p1 = game.players[1].name
+
+        def _fake_calc(_game, player):
+            return SimpleNamespace(total=72 if player.name == p0 else 61)
+
+        monkeypatch.setattr("backend.ml.mcts.calculate_score", _fake_calc)
+
+        mcts = MCTS(DummyModel(), DummyEncoder(), num_sims=1, value_blend=0.0, rollout_policy="fast")
+        val = mcts._evaluate(game, 0)
+        assert val == pytest.approx(72.0)
+
+    def test_evaluate_rollout_uses_absolute_score_units(self, monkeypatch):
+        from backend.ml.mcts import MCTS
+
+        class DummyModel:
+            has_value_head = False
+
+        class DummyEncoder:
+            def encode(self, game, player_idx):
+                return [0.0]
+
+        game = create_training_game(num_players=2, board_type=BoardType.OCEANIA)
+        p0 = game.players[0].name
+        p1 = game.players[1].name
+
+        monkeypatch.setattr(
+            "backend.ml.mcts.simulate_playout",
+            lambda _sim, rollout_policy="fast": {p0: 64.0, p1: 58.0},
+        )
+
+        mcts = MCTS(DummyModel(), DummyEncoder(), num_sims=1, value_blend=0.0, rollout_policy="fast")
+        val = mcts._evaluate(game, 0)
+        assert val == pytest.approx(64.0)
+
 
 # ---------------------------------------------------------------------------
 # Self-play dataset generation
@@ -338,6 +386,60 @@ class TestAlphaZeroSelfPlay:
 # Auto-improve smoke test
 # ---------------------------------------------------------------------------
 
+class TestAutoImproveShardMerge:
+    def test_merge_az_shards_uses_weighted_stats_without_expansion(self, tmp_path):
+        from backend.ml.auto_improve_alphazero import _merge_az_shards
+
+        shard1 = tmp_path / "s1.jsonl"
+        shard2 = tmp_path / "s2.jsonl"
+        shard1.write_text('{"x":1}\n\n{"x":2}\n', encoding="utf-8")
+        shard2.write_text('{"x":3}\n', encoding="utf-8")
+
+        shard_results = [
+            {
+                "jsonl": str(shard1),
+                "meta": {
+                    "games": 1,
+                    "samples": 2,
+                    "elapsed_sec": 1.5,
+                    "mean_score": 10.0,
+                    "std_score": 2.0,
+                    "mean_delta": 10.0,
+                    "std_delta": 2.0,
+                },
+            },
+            {
+                "jsonl": str(shard2),
+                "meta": {
+                    "games": 2,
+                    "samples": 6,
+                    "elapsed_sec": 2.5,
+                    "mean_score": 20.0,
+                    "std_score": 4.0,
+                    "mean_delta": 20.0,
+                    "std_delta": 4.0,
+                },
+            },
+        ]
+
+        out_jsonl = tmp_path / "merged.jsonl"
+        out_meta = tmp_path / "merged.meta.json"
+        merged = _merge_az_shards(shard_results, out_jsonl=out_jsonl, out_meta=out_meta)
+
+        assert merged["games"] == 3
+        assert merged["samples"] == 8
+        assert merged["elapsed_sec"] == pytest.approx(4.0)
+        assert merged["mean_score"] == pytest.approx(17.5, abs=1e-3)
+        assert merged["std_score"] == pytest.approx(5.635, abs=1e-3)
+        assert merged["mean_delta"] == pytest.approx(17.5, abs=1e-3)
+        assert merged["std_delta"] == pytest.approx(5.635, abs=1e-3)
+
+        lines = [ln for ln in out_jsonl.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        assert len(lines) == 3
+        meta_json = json.loads(out_meta.read_text(encoding="utf-8"))
+        assert meta_json["mean_score"] == pytest.approx(17.5, abs=1e-3)
+
+
 class TestAutoImproveAlphaZero:
     def test_smoke_run(self, tmp_path):
         """1 iter, 2 games, 3 sims — verifies end-to-end plumbing."""
@@ -365,4 +467,64 @@ class TestAutoImproveAlphaZero:
         )
         assert "history" in result
         assert len(result["history"]) == 1
+        rec = result["history"][0]
+        assert "timing_sec" in rec
+        for k in ("data_gen", "train", "eval", "gate", "iter_total"):
+            assert k in rec["timing_sec"]
+            assert isinstance(rec["timing_sec"][k], (int, float))
+            assert rec["timing_sec"][k] >= 0.0
         assert (tmp_path / "az_smoke" / "best_model.npz").exists()
+
+
+class TestAutoImprovePreflightGates:
+    def test_bird_audit_gate_raises_when_semantic_untested_nonzero(self, monkeypatch):
+        from backend.ml import auto_improve_alphazero as az
+
+        monkeypatch.setattr(
+            az,
+            "_run_bird_audit_gate",
+            lambda expected_semantic_untested=0: (_ for _ in ()).throw(
+                RuntimeError("Bird semantic audit gate failed")
+            ),
+        )
+
+        with pytest.raises(RuntimeError, match="Bird semantic audit gate failed"):
+            az.run_auto_improve_alphazero(
+                out_dir="reports/ml/az_gate_fail_test",
+                iterations=1,
+                games_per_iter=1,
+                mcts_sims=1,
+                eval_games=1,
+                promotion_games=1,
+                train_epochs=1,
+                train_batch=2,
+                train_hidden1=16,
+                train_hidden2=8,
+                dataset_workers=1,
+                require_bird_audit_gate=True,
+                clean_out_dir=True,
+            )
+
+    def test_stale_lineage_resume_is_blocked(self, tmp_path):
+        from backend.ml.auto_improve_alphazero import _assert_fresh_lineage_or_raise
+
+        out_dir = tmp_path / "az_stale"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "auto_improve_alphazero_manifest.json").write_text(
+            json.dumps(
+                {
+                    "iterations_completed": 2,
+                    "rules_baseline": {"id": "old_rules_baseline"},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        with pytest.raises(RuntimeError, match="stale"):
+            _assert_fresh_lineage_or_raise(
+                out_dir=out_dir,
+                clean_out_dir=False,
+                start_iter=2,
+                rules_baseline_id="rules_2026_03_07_semantic446",
+                allow_stale_lineage=False,
+            )

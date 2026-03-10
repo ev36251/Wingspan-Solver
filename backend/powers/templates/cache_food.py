@@ -12,16 +12,18 @@ class CacheFoodFromSupply(PowerEffect):
     - "Cache 1 [fish] from the supply on this bird."
     """
 
-    def __init__(self, food_type: FoodType, count: int = 1):
+    def __init__(self, food_type: FoodType, count: int = 1, spendable: bool = False):
         self.food_type = food_type
         self.count = count
+        self.spendable = bool(spendable)
 
     def execute(self, ctx: PowerContext) -> PowerResult:
         slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
-        slot.cache_food(self.food_type, self.count)
+        slot.cache_food(self.food_type, self.count, spendable=self.spendable)
         return PowerResult(
             food_cached={self.food_type: self.count},
-            description=f"Cached {self.count} {self.food_type.value}",
+            description=f"Cached {self.count} {self.food_type.value}"
+            + (" (spendable)" if self.spendable else ""),
         )
 
     def describe_activation(self, ctx: PowerContext) -> str:

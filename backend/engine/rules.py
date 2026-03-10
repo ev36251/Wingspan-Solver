@@ -45,10 +45,10 @@ def can_play_bird(player: Player, bird: Bird, habitat: Habitat,
 
 
 def _get_cached_food_pool(player: Player) -> dict[FoodType, int]:
-    """Aggregate all cached food across the player's bird slots."""
+    """Aggregate spendable cached food across the player's bird slots."""
     pool: dict[FoodType, int] = {}
     for _, _, slot in player.board.all_slots():
-        for ft, count in slot.cached_food.items():
+        for ft, count in slot.spendable_cached_food.items():
             if count > 0:
                 pool[ft] = pool.get(ft, 0) + count
     return pool

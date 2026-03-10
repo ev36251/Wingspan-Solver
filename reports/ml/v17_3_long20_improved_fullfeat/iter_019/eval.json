@@ -1,0 +1,17 @@
+{
+  "games": 40,
+  "nn_wins": 20,
+  "heuristic_wins": 19,
+  "ties": 1,
+  "nn_mean_score": 60.95,
+  "heuristic_mean_score": 64.925,
+  "nn_mean_margin": -3.975,
+  "nn_win_rate": 0.5,
+  "nn_rate_ge_100": 0.025,
+  "nn_rate_ge_120": 0.0,
+  "eval_mode": "mcts",
+  "eval_mcts_sims": 64,
+  "eval_mcts_c_puct": 1.5,
+  "eval_mcts_value_blend": 0.85,
+  "eval_mcts_rollout_policy": "fast"
+}

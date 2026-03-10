@@ -1,0 +1,46 @@
+{
+  "games": 40,
+  "nn_wins": 23,
+  "heuristic_wins": 15,
+  "ties": 2,
+  "nn_mean_score": 46.175,
+  "heuristic_mean_score": 38.475,
+  "nn_mean_margin": 7.7,
+  "nn_win_rate": 0.575,
+  "nn_rate_ge_100": 0.0,
+  "nn_rate_ge_120": 0.0,
+  "nn_win_rate_ci95": [
+    0.4219,
+    0.7149
+  ],
+  "stage1": {
+    "games": 20,
+    "nn_wins": 11,
+    "heuristic_wins": 7,
+    "ties": 2,
+    "nn_mean_score": 47.3,
+    "heuristic_mean_score": 39.65,
+    "nn_mean_margin": 7.65,
+    "nn_win_rate": 0.55,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0
+  },
+  "stage1_continue_threshold": 0.5,
+  "stage2_enabled": true,
+  "stage2": {
+    "games": 20,
+    "nn_wins": 12,
+    "heuristic_wins": 8,
+    "ties": 0,
+    "nn_mean_score": 45.05,
+    "heuristic_mean_score": 37.3,
+    "nn_mean_margin": 7.75,
+    "nn_win_rate": 0.6,
+    "nn_rate_ge_100": 0.0,
+    "nn_rate_ge_120": 0.0
+  },
+  "promoted": true,
+  "min_promotion_win_rate": 0.5,
+  "gate_value_blend": 0.85,
+  "gate_mcts_sims": 64
+}

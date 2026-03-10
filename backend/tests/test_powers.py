@@ -238,6 +238,62 @@ class TestPredatorDice:
         assert hits >= 1  # Very unlikely to miss 20 times with 4 dice
 
 
+class TestPredatorLookAtVariants:
+    def test_brown_falcon_food_cost_includes(self, game, bird_reg):
+        player = game.players[0]
+        bird = bird_reg.get("Brown Falcon")
+        assert bird is not None
+        player.board.forest.slots[0].bird = bird
+        # Top card has rodent icon in food cost -> should tuck.
+        target = bird_reg.get("Black-Crowned Night-Heron")
+        assert target is not None
+        assert FoodType.RODENT in target.food_cost.items
+        game._deck_cards = [target]
+        game.deck_remaining = 1
+
+        power = get_power(bird)
+        ctx = PowerContext(game, player, bird=bird, slot_index=0, habitat=Habitat.FOREST)
+        result = power.execute(ctx)
+        assert result.cards_tucked == 1
+        assert player.board.forest.slots[0].tucked_cards == 1
+
+    def test_rufous_night_heron_habitat_filter(self, game, bird_reg):
+        player = game.players[0]
+        bird = bird_reg.get("Rufous Night-Heron")
+        assert bird is not None
+        player.board.wetland.slots[0].bird = bird
+        target = bird_reg.get("Trumpeter Swan")
+        assert target is not None
+        assert target.can_live_in(Habitat.WETLAND)
+        game._deck_cards = [target]
+        game.deck_remaining = 1
+
+        power = get_power(bird)
+        ctx = PowerContext(game, player, bird=bird, slot_index=0, habitat=Habitat.WETLAND)
+        result = power.execute(ctx)
+        assert result.cards_tucked == 1
+        assert player.board.wetland.slots[0].tucked_cards == 1
+
+    def test_wedge_tailed_eagle_over_wingspan_and_cache(self, game, bird_reg):
+        player = game.players[0]
+        bird = bird_reg.get("Wedge-Tailed Eagle")
+        assert bird is not None
+        player.board.forest.slots[0].bird = bird
+        # Must be >65cm to succeed.
+        target = bird_reg.get("Mute Swan")
+        assert target is not None
+        assert (target.wingspan_cm or 0) > 65
+        game._deck_cards = [target]
+        game.deck_remaining = 1
+
+        power = get_power(bird)
+        ctx = PowerContext(game, player, bird=bird, slot_index=0, habitat=Habitat.FOREST)
+        result = power.execute(ctx)
+        assert result.cards_tucked == 1
+        assert result.food_cached.get(FoodType.RODENT, 0) == 1
+        assert player.board.forest.slots[0].cached_food.get(FoodType.RODENT, 0) == 1
+
+
 class TestCacheFoodFromSupply:
     def test_cache_seed(self, game, bird_reg):
         player = game.players[0]

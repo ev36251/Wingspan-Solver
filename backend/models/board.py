@@ -11,6 +11,8 @@ class BirdSlot:
     bird: Bird | None = None
     eggs: int = 0
     cached_food: dict[FoodType, int] = field(default_factory=dict)
+    # Subset of cached_food that may be spent as food payment.
+    spendable_cached_food: dict[FoodType, int] = field(default_factory=dict)
     tucked_cards: int = 0
     counts_double: bool = False  # Teal power: counts double for round goals
     is_sideways: bool = False         # This slot holds a sideways bird (spans 2 cols)
@@ -29,8 +31,10 @@ class BirdSlot:
     def total_cached_food(self) -> int:
         return sum(self.cached_food.values())
 
-    def cache_food(self, food_type: FoodType, count: int = 1) -> None:
+    def cache_food(self, food_type: FoodType, count: int = 1, *, spendable: bool = False) -> None:
         self.cached_food[food_type] = self.cached_food.get(food_type, 0) + count
+        if spendable:
+            self.spendable_cached_food[food_type] = self.spendable_cached_food.get(food_type, 0) + count
 
     def can_hold_more_eggs(self) -> bool:
         if self.bird is None:

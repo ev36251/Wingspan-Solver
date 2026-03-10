@@ -1,0 +1,33 @@
+{
+  "total_birds": 446,
+  "unique_power_texts": 309,
+  "inconsistent_text_groups": 1,
+  "rows": [
+    {
+      "power_text": "Gain 1 [seed] from the birdfeeder, if available. You may cache it on this bird.",
+      "group_size": 6,
+      "variants": [
+        {
+          "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+          "kwargs": {
+            "food_type": "FoodType.SEED"
+          },
+          "birds": [
+            "Acorn Woodpecker",
+            "Blue Jay",
+            "Clark's Nutcracker",
+            "Red-Headed Woodpecker",
+            "Steller's Jay"
+          ]
+        },
+        {
+          "class": "backend.powers.templates.strict.RedBelliedWoodpeckerSeedFromFeeder",
+          "kwargs": {},
+          "birds": [
+            "Red-Bellied Woodpecker"
+          ]
+        }
+      ]
+    }
+  ]
+}

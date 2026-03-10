@@ -8,6 +8,7 @@ import random
 from backend.models.enums import FoodType, Habitat, PowerColor
 from backend.models.bonus_card import BonusCard
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
+from backend.powers.choices import consume_power_choice
 from backend.engine.scoring import CUSTOM_BONUS_COUNTERS, CUSTOM_BONUS_FULL_SCORERS
 
 
@@ -184,9 +185,9 @@ class ScoreBonusCardNow(PowerEffect):
             )
             return bonus.score(qualifying)
 
-        # Pick the highest-scoring bonus card
+        # Resolve bonus card objects and scores.
         from backend.data.registries import get_bonus_registry
-        best_score = 0
+        scored: list[tuple[BonusCard, int]] = []
         for bc_entry in ctx.player.bonus_cards:
             if isinstance(bc_entry, BonusCard):
                 bc = bc_entry
@@ -194,7 +195,24 @@ class ScoreBonusCardNow(PowerEffect):
                 bc = get_bonus_registry().get(str(bc_entry))
             if bc:
                 score = _score_bonus(bc, ctx.player)
-                best_score = max(best_score, score)
+                scored.append((bc, score))
+
+        if not scored:
+            return PowerResult(executed=False, description="No resolvable bonus cards")
+
+        choice = consume_power_choice(ctx.game_state, ctx.player.name, ctx.bird.name) or {}
+        chosen_name = choice.get("bonus_name") if isinstance(choice, dict) else None
+
+        chosen: tuple[BonusCard, int] | None = None
+        if isinstance(chosen_name, str) and chosen_name.strip():
+            target = chosen_name.strip().lower()
+            chosen = next((item for item in scored if item[0].name.lower() == target), None)
+
+        # Default deterministic behavior: choose currently highest-scoring bonus.
+        if chosen is None:
+            chosen = max(scored, key=lambda item: (item[1], item[0].name))
+
+        _, best_score = chosen
 
         if best_score > 0:
             slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
@@ -217,17 +235,35 @@ class RetrieveDiscardedBonusCard(PowerEffect):
     """Look through all discarded bonus cards and keep 1.
 
     Bird: Wrybill (White)
-    Simplified: gain 1 bonus card (adds to player's bonus cards).
+    Looks through discarded bonus cards and keeps one.
     """
 
     def execute(self, ctx: PowerContext) -> PowerResult:
-        # In our model, we don't track specific discarded bonus cards.
-        # Approximate: if there are discards, player gains a generic bonus card benefit.
+        discard_pile = getattr(ctx.game_state, "_bonus_discard_cards", None)
+        if isinstance(discard_pile, list) and discard_pile:
+            from backend.engine.scoring import score_bonus_cards
+
+            base_cards = list(ctx.player.bonus_cards)
+            base_score = score_bonus_cards(ctx.player)
+            best_idx = 0
+            best_key = None
+            for i, bc in enumerate(discard_pile):
+                ctx.player.bonus_cards = base_cards + [bc]
+                delta = score_bonus_cards(ctx.player) - base_score
+                tie = float(getattr(bc, "draft_value_pct", 0.0) or 0.0)
+                key = (delta, tie, bc.name)
+                if best_key is None or key > best_key:
+                    best_key = key
+                    best_idx = i
+            ctx.player.bonus_cards = base_cards
+            chosen = discard_pile.pop(best_idx)
+            ctx.player.bonus_cards.append(chosen)
+            return PowerResult(description=f"Retrieved bonus card: {chosen.name}")
+
+        # Backward-compatible fallback for old states with only a count.
         if ctx.game_state.discard_pile_count > 0:
             ctx.game_state.discard_pile_count -= 1
-            return PowerResult(
-                description="Retrieved a bonus card from the discard pile",
-            )
+            return PowerResult(description="Retrieved a bonus card from discard count")
 
         return PowerResult(executed=False, description="No discarded bonus cards")
 

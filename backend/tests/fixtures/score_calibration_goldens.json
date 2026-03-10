@@ -1,0 +1,610 @@
+{
+  "version": 2,
+  "policy": "constructed_full_game_states",
+  "players": 2,
+  "board_type": "oceania",
+  "strict_rules_mode": true,
+  "max_turns": 240,
+  "cases": [
+    {
+      "seed": 20260310,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 51,
+          "eggs": 22,
+          "cached_food": 12,
+          "tucked_cards": 12,
+          "bonus_cards": 14,
+          "round_goals": 8,
+          "nectar": 15,
+          "total": 134
+        },
+        "Player_2": {
+          "bird_vp": 62,
+          "eggs": 23,
+          "cached_food": 12,
+          "tucked_cards": 16,
+          "bonus_cards": 16,
+          "round_goals": 20,
+          "nectar": 2,
+          "total": 151
+        }
+      }
+    },
+    {
+      "seed": 20260311,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 42,
+          "eggs": 15,
+          "cached_food": 9,
+          "tucked_cards": 7,
+          "bonus_cards": 4,
+          "round_goals": 15,
+          "nectar": 8,
+          "total": 100
+        },
+        "Player_2": {
+          "bird_vp": 58,
+          "eggs": 24,
+          "cached_food": 11,
+          "tucked_cards": 16,
+          "bonus_cards": 14,
+          "round_goals": 11,
+          "nectar": 5,
+          "total": 139
+        }
+      }
+    },
+    {
+      "seed": 20260312,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 44,
+          "eggs": 18,
+          "cached_food": 10,
+          "tucked_cards": 17,
+          "bonus_cards": 4,
+          "round_goals": 7,
+          "nectar": 9,
+          "total": 109
+        },
+        "Player_2": {
+          "bird_vp": 56,
+          "eggs": 12,
+          "cached_food": 6,
+          "tucked_cards": 11,
+          "bonus_cards": 11,
+          "round_goals": 12,
+          "nectar": 12,
+          "total": 120
+        }
+      }
+    },
+    {
+      "seed": 20260313,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 56,
+          "eggs": 27,
+          "cached_food": 16,
+          "tucked_cards": 15,
+          "bonus_cards": 11,
+          "round_goals": 13,
+          "nectar": 0,
+          "total": 138
+        },
+        "Player_2": {
+          "bird_vp": 74,
+          "eggs": 26,
+          "cached_food": 13,
+          "tucked_cards": 14,
+          "bonus_cards": 17,
+          "round_goals": 18,
+          "nectar": 15,
+          "total": 177
+        }
+      }
+    },
+    {
+      "seed": 20260314,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 69,
+          "eggs": 29,
+          "cached_food": 13,
+          "tucked_cards": 21,
+          "bonus_cards": 17,
+          "round_goals": 20,
+          "nectar": 2,
+          "total": 171
+        },
+        "Player_2": {
+          "bird_vp": 66,
+          "eggs": 17,
+          "cached_food": 10,
+          "tucked_cards": 21,
+          "bonus_cards": 8,
+          "round_goals": 14,
+          "nectar": 10,
+          "total": 146
+        }
+      }
+    },
+    {
+      "seed": 20260315,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 47,
+          "eggs": 23,
+          "cached_food": 5,
+          "tucked_cards": 10,
+          "bonus_cards": 6,
+          "round_goals": 11,
+          "nectar": 4,
+          "total": 106
+        },
+        "Player_2": {
+          "bird_vp": 66,
+          "eggs": 24,
+          "cached_food": 11,
+          "tucked_cards": 16,
+          "bonus_cards": 3,
+          "round_goals": 20,
+          "nectar": 15,
+          "total": 155
+        }
+      }
+    },
+    {
+      "seed": 20260316,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 44,
+          "eggs": 17,
+          "cached_food": 11,
+          "tucked_cards": 8,
+          "bonus_cards": 8,
+          "round_goals": 5,
+          "nectar": 5,
+          "total": 98
+        },
+        "Player_2": {
+          "bird_vp": 51,
+          "eggs": 25,
+          "cached_food": 9,
+          "tucked_cards": 13,
+          "bonus_cards": 5,
+          "round_goals": 19,
+          "nectar": 13,
+          "total": 135
+        }
+      }
+    },
+    {
+      "seed": 20260317,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 44,
+          "eggs": 11,
+          "cached_food": 5,
+          "tucked_cards": 16,
+          "bonus_cards": 8,
+          "round_goals": 15,
+          "nectar": 13,
+          "total": 112
+        },
+        "Player_2": {
+          "bird_vp": 56,
+          "eggs": 25,
+          "cached_food": 14,
+          "tucked_cards": 16,
+          "bonus_cards": 16,
+          "round_goals": 14,
+          "nectar": 5,
+          "total": 146
+        }
+      }
+    },
+    {
+      "seed": 20260318,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 69,
+          "eggs": 24,
+          "cached_food": 10,
+          "tucked_cards": 23,
+          "bonus_cards": 3,
+          "round_goals": 7,
+          "nectar": 5,
+          "total": 141
+        },
+        "Player_2": {
+          "bird_vp": 44,
+          "eggs": 10,
+          "cached_food": 7,
+          "tucked_cards": 14,
+          "bonus_cards": 3,
+          "round_goals": 15,
+          "nectar": 13,
+          "total": 106
+        }
+      }
+    },
+    {
+      "seed": 20260319,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 56,
+          "eggs": 23,
+          "cached_food": 14,
+          "tucked_cards": 21,
+          "bonus_cards": 8,
+          "round_goals": 9,
+          "nectar": 11,
+          "total": 142
+        },
+        "Player_2": {
+          "bird_vp": 57,
+          "eggs": 18,
+          "cached_food": 8,
+          "tucked_cards": 15,
+          "bonus_cards": 5,
+          "round_goals": 25,
+          "nectar": 6,
+          "total": 134
+        }
+      }
+    },
+    {
+      "seed": 20260320,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 69,
+          "eggs": 26,
+          "cached_food": 10,
+          "tucked_cards": 17,
+          "bonus_cards": 17,
+          "round_goals": 15,
+          "nectar": 8,
+          "total": 162
+        },
+        "Player_2": {
+          "bird_vp": 52,
+          "eggs": 12,
+          "cached_food": 11,
+          "tucked_cards": 9,
+          "bonus_cards": 14,
+          "round_goals": 12,
+          "nectar": 11,
+          "total": 121
+        }
+      }
+    },
+    {
+      "seed": 20260321,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 51,
+          "eggs": 21,
+          "cached_food": 11,
+          "tucked_cards": 14,
+          "bonus_cards": 14,
+          "round_goals": 14,
+          "nectar": 15,
+          "total": 140
+        },
+        "Player_2": {
+          "bird_vp": 70,
+          "eggs": 33,
+          "cached_food": 11,
+          "tucked_cards": 13,
+          "bonus_cards": 17,
+          "round_goals": 21,
+          "nectar": 6,
+          "total": 171
+        }
+      }
+    },
+    {
+      "seed": 20260322,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 56,
+          "eggs": 17,
+          "cached_food": 6,
+          "tucked_cards": 17,
+          "bonus_cards": 14,
+          "round_goals": 13,
+          "nectar": 8,
+          "total": 131
+        },
+        "Player_2": {
+          "bird_vp": 74,
+          "eggs": 28,
+          "cached_food": 10,
+          "tucked_cards": 15,
+          "bonus_cards": 6,
+          "round_goals": 7,
+          "nectar": 10,
+          "total": 150
+        }
+      }
+    },
+    {
+      "seed": 20260323,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 69,
+          "eggs": 30,
+          "cached_food": 15,
+          "tucked_cards": 19,
+          "bonus_cards": 17,
+          "round_goals": 17,
+          "nectar": 13,
+          "total": 180
+        },
+        "Player_2": {
+          "bird_vp": 70,
+          "eggs": 19,
+          "cached_food": 18,
+          "tucked_cards": 19,
+          "bonus_cards": 18,
+          "round_goals": 17,
+          "nectar": 5,
+          "total": 166
+        }
+      }
+    },
+    {
+      "seed": 20260324,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 47,
+          "eggs": 19,
+          "cached_food": 9,
+          "tucked_cards": 12,
+          "bonus_cards": 6,
+          "round_goals": 13,
+          "nectar": 10,
+          "total": 116
+        },
+        "Player_2": {
+          "bird_vp": 53,
+          "eggs": 18,
+          "cached_food": 9,
+          "tucked_cards": 15,
+          "bonus_cards": 14,
+          "round_goals": 14,
+          "nectar": 2,
+          "total": 125
+        }
+      }
+    },
+    {
+      "seed": 20260325,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 86,
+          "eggs": 28,
+          "cached_food": 21,
+          "tucked_cards": 22,
+          "bonus_cards": 20,
+          "round_goals": 7,
+          "nectar": 12,
+          "total": 196
+        },
+        "Player_2": {
+          "bird_vp": 58,
+          "eggs": 31,
+          "cached_food": 14,
+          "tucked_cards": 17,
+          "bonus_cards": 9,
+          "round_goals": 16,
+          "nectar": 9,
+          "total": 154
+        }
+      }
+    },
+    {
+      "seed": 20260326,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 56,
+          "eggs": 19,
+          "cached_food": 9,
+          "tucked_cards": 12,
+          "bonus_cards": 9,
+          "round_goals": 20,
+          "nectar": 7,
+          "total": 132
+        },
+        "Player_2": {
+          "bird_vp": 50,
+          "eggs": 16,
+          "cached_food": 8,
+          "tucked_cards": 15,
+          "bonus_cards": 3,
+          "round_goals": 13,
+          "nectar": 12,
+          "total": 117
+        }
+      }
+    },
+    {
+      "seed": 20260327,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 47,
+          "eggs": 16,
+          "cached_food": 10,
+          "tucked_cards": 14,
+          "bonus_cards": 10,
+          "round_goals": 13,
+          "nectar": 10,
+          "total": 120
+        },
+        "Player_2": {
+          "bird_vp": 66,
+          "eggs": 27,
+          "cached_food": 10,
+          "tucked_cards": 11,
+          "bonus_cards": 17,
+          "round_goals": 14,
+          "nectar": 8,
+          "total": 153
+        }
+      }
+    },
+    {
+      "seed": 20260328,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 33,
+          "eggs": 11,
+          "cached_food": 5,
+          "tucked_cards": 8,
+          "bonus_cards": 7,
+          "round_goals": 15,
+          "nectar": 8,
+          "total": 87
+        },
+        "Player_2": {
+          "bird_vp": 53,
+          "eggs": 18,
+          "cached_food": 14,
+          "tucked_cards": 12,
+          "bonus_cards": 3,
+          "round_goals": 24,
+          "nectar": 10,
+          "total": 134
+        }
+      }
+    },
+    {
+      "seed": 20260329,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 56,
+          "eggs": 27,
+          "cached_food": 15,
+          "tucked_cards": 21,
+          "bonus_cards": 8,
+          "round_goals": 5,
+          "nectar": 10,
+          "total": 142
+        },
+        "Player_2": {
+          "bird_vp": 39,
+          "eggs": 17,
+          "cached_food": 6,
+          "tucked_cards": 16,
+          "bonus_cards": 4,
+          "round_goals": 5,
+          "nectar": 9,
+          "total": 96
+        }
+      }
+    },
+    {
+      "seed": 20260330,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 44,
+          "eggs": 16,
+          "cached_food": 8,
+          "tucked_cards": 11,
+          "bonus_cards": 4,
+          "round_goals": 13,
+          "nectar": 9,
+          "total": 105
+        },
+        "Player_2": {
+          "bird_vp": 51,
+          "eggs": 7,
+          "cached_food": 10,
+          "tucked_cards": 13,
+          "bonus_cards": 11,
+          "round_goals": 16,
+          "nectar": 12,
+          "total": 120
+        }
+      }
+    },
+    {
+      "seed": 20260331,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 51,
+          "eggs": 21,
+          "cached_food": 9,
+          "tucked_cards": 13,
+          "bonus_cards": 6,
+          "round_goals": 14,
+          "nectar": 11,
+          "total": 125
+        },
+        "Player_2": {
+          "bird_vp": 62,
+          "eggs": 21,
+          "cached_food": 12,
+          "tucked_cards": 15,
+          "bonus_cards": 8,
+          "round_goals": 18,
+          "nectar": 6,
+          "total": 142
+        }
+      }
+    },
+    {
+      "seed": 20260332,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 56,
+          "eggs": 25,
+          "cached_food": 17,
+          "tucked_cards": 22,
+          "bonus_cards": 5,
+          "round_goals": 11,
+          "nectar": 15,
+          "total": 151
+        },
+        "Player_2": {
+          "bird_vp": 44,
+          "eggs": 12,
+          "cached_food": 8,
+          "tucked_cards": 17,
+          "bonus_cards": 6,
+          "round_goals": 11,
+          "nectar": 4,
+          "total": 102
+        }
+      }
+    },
+    {
+      "seed": 20260333,
+      "scores": {
+        "Player_1": {
+          "bird_vp": 42,
+          "eggs": 18,
+          "cached_food": 4,
+          "tucked_cards": 11,
+          "bonus_cards": 3,
+          "round_goals": 13,
+          "nectar": 4,
+          "total": 95
+        },
+        "Player_2": {
+          "bird_vp": 44,
+          "eggs": 14,
+          "cached_food": 3,
+          "tucked_cards": 16,
+          "bonus_cards": 13,
+          "round_goals": 15,
+          "nectar": 15,
+          "total": 120
+        }
+      }
+    }
+  ]
+}

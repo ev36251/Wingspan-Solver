@@ -1,12 +1,15 @@
 """Predator power templates — covers ~43 birds."""
 
 import random
-from backend.models.enums import FoodType
+from backend.models.enums import FoodType, Habitat
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
 
 
 def _draw_one_bird(ctx: PowerContext):
     """Draw one concrete bird card from deck identity model if available."""
+    if ctx.game_state.deck_remaining <= 0:
+        return None
+
     deck_cards = getattr(ctx.game_state, "_deck_cards", None)
     if isinstance(deck_cards, list) and deck_cards:
         card = deck_cards.pop()
@@ -14,9 +17,6 @@ def _draw_one_bird(ctx: PowerContext):
         if ctx.game_state.deck_tracker is not None:
             ctx.game_state.deck_tracker.mark_drawn(card.name)
         return card
-
-    if ctx.game_state.deck_remaining <= 0:
-        return None
 
     from backend.data.registries import get_bird_registry
 
@@ -93,14 +93,39 @@ class PredatorDice(PowerEffect):
 
 
 class PredatorLookAt(PowerEffect):
-    """Look at top card of deck; tuck if wingspan < threshold.
+    """Look at top card of deck; tuck if card matches configured predicate.
 
     Example: "Look at a [card] from the deck. If its wingspan is
     less than 75cm, tuck it behind this bird. If not, discard it."
     """
 
-    def __init__(self, wingspan_threshold: int = 75):
+    def __init__(
+        self,
+        wingspan_threshold: int = 75,
+        *,
+        wingspan_cmp: str = "lt",
+        habitat_filter: Habitat | None = None,
+        food_cost_includes: set[FoodType] | None = None,
+        cache_food_type: FoodType | None = None,
+        cache_count: int = 0,
+    ):
         self.wingspan_threshold = wingspan_threshold
+        self.wingspan_cmp = wingspan_cmp
+        self.habitat_filter = habitat_filter
+        self.food_cost_includes = set(food_cost_includes or [])
+        self.cache_food_type = cache_food_type
+        self.cache_count = int(max(0, cache_count))
+
+    def _matches(self, card) -> bool:
+        if self.food_cost_includes:
+            return any(ft in self.food_cost_includes for ft in card.food_cost.items)
+        if self.habitat_filter is not None:
+            return card.can_live_in(self.habitat_filter)
+        if card.wingspan_cm is None:
+            return False
+        if self.wingspan_cmp == "gt":
+            return card.wingspan_cm > self.wingspan_threshold
+        return card.wingspan_cm < self.wingspan_threshold
 
     def execute(self, ctx: PowerContext) -> PowerResult:
         card = _draw_one_bird(ctx)
@@ -108,17 +133,32 @@ class PredatorLookAt(PowerEffect):
             return PowerResult(executed=False, description="Deck empty")
 
         tucked = 0
-        if card.wingspan_cm is not None and card.wingspan_cm < self.wingspan_threshold:
+        food_cached: dict[FoodType, int] = {}
+        if self._matches(card):
             slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
             slot.tucked_cards += 1
             tucked = 1
+            if self.cache_food_type and self.cache_count > 0:
+                slot.cache_food(self.cache_food_type, self.cache_count)
+                food_cached[self.cache_food_type] = self.cache_count
 
-        return PowerResult(cards_tucked=tucked,
+        return PowerResult(cards_tucked=tucked, food_cached=food_cached,
                            description=f"Predator look: {'tucked' if tucked else 'discarded'}")
 
     def describe_activation(self, ctx: PowerContext) -> str:
         prob_pct = int(self._success_prob(ctx) * 100)
-        return f"look at top card; tuck behind {ctx.bird.name} if wingspan < {self.wingspan_threshold}cm (~{prob_pct}%)"
+        if self.food_cost_includes:
+            foods = "/".join(sorted(ft.value for ft in self.food_cost_includes))
+            cond = f"food cost includes {foods}"
+        elif self.habitat_filter is not None:
+            cond = f"can live in {self.habitat_filter.value}"
+        else:
+            op = "<" if self.wingspan_cmp != "gt" else ">"
+            cond = f"wingspan {op} {self.wingspan_threshold}cm"
+        extra = ""
+        if self.cache_food_type and self.cache_count > 0:
+            extra = f"; if tucked cache {self.cache_count} {self.cache_food_type.value}"
+        return f"look at top card; tuck behind {ctx.bird.name} if {cond} (~{prob_pct}%){extra}"
 
     def skip_reason(self, ctx: PowerContext) -> str | None:
         if ctx.game_state.deck_remaining <= 0:
@@ -126,11 +166,18 @@ class PredatorLookAt(PowerEffect):
         return None
 
     def _success_prob(self, ctx: PowerContext) -> float:
+        if self.food_cost_includes:
+            # Roughly ~20% per target icon in mixed deck, capped.
+            return max(0.05, min(0.95, 0.2 * max(1, len(self.food_cost_includes))))
+        if self.habitat_filter is not None:
+            # Typical habitat occupancy in mixed deck.
+            return 0.35
         if ctx.game_state.deck_tracker is not None and ctx.game_state.deck_tracker.remaining_count > 0:
-            return max(
+            base = max(
                 0.05,
                 min(0.95, ctx.game_state.deck_tracker.predator_success_rate(self.wingspan_threshold)),
             )
+            return base if self.wingspan_cmp != "gt" else max(0.05, min(0.95, 1.0 - base))
 
         remaining = ctx.deck_remaining or ctx.game_state.deck_remaining
         # As the deck thins, predator hits become less reliable on average.
@@ -141,7 +188,9 @@ class PredatorLookAt(PowerEffect):
             base = 0.3
         else:
             base = 0.5
+        if self.wingspan_cmp == "gt":
+            base = 1.0 - base
         return max(0.05, min(0.95, base * deck_factor))
 
     def estimate_value(self, ctx: PowerContext) -> float:
-        return self._success_prob(ctx) * 0.9
+        return self._success_prob(ctx) * (0.9 + (0.5 * self.cache_count if self.cache_food_type else 0.0))

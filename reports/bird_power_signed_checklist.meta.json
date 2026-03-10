@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-03-10T14:18:08.129661+00:00",
+  "reviewer": "Codex (GPT-5)",
+  "git_revision": "036bb00002b7",
+  "total_birds": 446,
+  "pass_count": 446,
+  "review_required_count": 0,
+  "strict_mapped_count": 446,
+  "semantic_tested_count": 446,
+  "checklist_signature_sha256": "3373cdccee6e9842b261dc9e5334c26232186a4e916156f537c4d22836b46506",
+  "csv_path": "reports/bird_power_signed_checklist.csv",
+  "markdown_path": "reports/bird_power_signed_checklist.md"
+}

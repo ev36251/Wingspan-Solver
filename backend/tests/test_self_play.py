@@ -162,6 +162,19 @@ class TestGameCreation:
                     saw_less_than_five = True
         assert saw_less_than_five
 
+    def test_create_training_game_real5_softmax_uses_true_opening_draw_counts(self):
+        game = create_training_game(2, BoardType.OCEANIA, setup_mode="real5_softmax")
+        total_birds = len(get_bird_registry().all_birds)
+        expected_deck_remaining = total_birds - (2 * 5) - 3
+
+        assert expected_deck_remaining > 0
+        assert game.deck_remaining == expected_deck_remaining
+        assert len(getattr(game, "_deck_cards", [])) == expected_deck_remaining
+
+        kept_total = sum(len(p.hand) for p in game.players)
+        expected_opening_discards = (2 * 5) - kept_total
+        assert game.discard_pile_count == expected_opening_discards
+
     def test_create_training_game_legacy_mode_keeps_five(self):
         game = create_training_game(2, BoardType.BASE, setup_mode="legacy_fixed5")
         for p in game.players:

@@ -15,7 +15,13 @@ from backend.engine.scoring import calculate_score
 from backend.models.enums import ActionType, BoardType
 from backend.solver.move_generator import generate_all_moves, Move
 from backend.solver.self_play import create_training_game
-from backend.solver.simulation import _refill_tray, deep_copy_game, execute_move_on_sim, pick_weighted_random_move
+from backend.solver.simulation import (
+    _refill_tray,
+    deep_copy_game,
+    execute_move_on_sim,
+    pick_weighted_random_move,
+    pick_best_heuristic_move,
+)
 from backend.ml.factorized_inference import FactorizedPolicyModel, load_policy_model
 from backend.ml.mcts import MCTS
 from backend.ml.state_encoder import StateEncoder
@@ -55,6 +61,12 @@ def evaluate_factorized_vs_heuristic(
     max_turns: int = 240,
     seed: int = 0,
     proposal_top_k: int = 5,
+    nn_use_mcts: bool = False,
+    nn_mcts_sims: int = 40,
+    nn_c_puct: float = 1.5,
+    nn_value_blend: float = 0.5,
+    nn_rollout_policy: str = "fast",
+    heuristic_policy: str = "greedy",
 ) -> EvalResult:
     load_all(EXCEL_FILE)
 
@@ -66,6 +78,16 @@ def evaluate_factorized_vs_heuristic(
 
     model = FactorizedPolicyModel(model_path)
     enc = StateEncoder.resolve_for_model(model.meta)
+    nn_mcts: MCTS | None = None
+    if nn_use_mcts:
+        nn_mcts = MCTS(
+            model=model,
+            encoder=enc,
+            num_sims=max(1, int(nn_mcts_sims)),
+            c_puct=float(nn_c_puct),
+            value_blend=float(nn_value_blend),
+            rollout_policy=nn_rollout_policy,
+        )
 
     nn_wins = 0
     h_wins = 0
@@ -83,6 +105,12 @@ def evaluate_factorized_vs_heuristic(
         if high is None:
             return round(sum(1 for s in scores if s >= low) / n, 4)
         return round(sum(1 for s in scores if low <= s < high) / n, 4)
+
+    heuristic_policy_norm = str(heuristic_policy).strip().lower()
+    if heuristic_policy_norm not in {"greedy", "weighted_random"}:
+        raise ValueError(
+            f"Unsupported heuristic_policy={heuristic_policy!r}; expected 'greedy' or 'weighted_random'"
+        )
 
     for g in range(1, games + 1):
         game = create_training_game(num_players=2, board_type=board_type)
@@ -110,34 +138,42 @@ def evaluate_factorized_vs_heuristic(
                 continue
 
             if pi == nn_idx:
-                state = np.asarray(enc.encode(game, pi), dtype=np.float32)
-                logits, _ = model.forward(state)
-                scored = sorted(
-                    ((m, model.score_move(state, m, p, logits=logits)) for m in moves),
-                    key=lambda x: x[1],
-                    reverse=True,
-                )
-                candidates = [m for m, _ in scored[: max(1, min(proposal_top_k, len(scored)))]]
-                if len(candidates) == 1:
-                    move = candidates[0]
+                if nn_use_mcts and nn_mcts is not None:
+                    move = nn_mcts.get_best_move(game, pi, temperature=0.0)
+                    if move is None:
+                        move = moves[0]
                 else:
-                    reranked: list[tuple[Move, float]] = []
-                    for cand in candidates:
-                        sim = deep_copy_game(game)
-                        sp = sim.players[pi]
-                        if not execute_move_on_sim(sim, sp, cand):
-                            reranked.append((cand, -1e9))
-                            continue
-                        sim.advance_turn()
-                        _refill_tray(sim)
-                        s2 = np.asarray(enc.encode(sim, pi), dtype=np.float32)
-                        _, v2 = model.forward(s2)
-                        score_est = model.value_to_expected_score(v2)
-                        immediate = float(calculate_score(sim, sp).total)
-                        reranked.append((cand, 0.85 * score_est + 0.15 * immediate))
-                    move = max(reranked, key=lambda x: x[1])[0]
+                    state = np.asarray(enc.encode(game, pi), dtype=np.float32)
+                    logits, _ = model.forward(state)
+                    scored = sorted(
+                        ((m, model.score_move(state, m, p, logits=logits)) for m in moves),
+                        key=lambda x: x[1],
+                        reverse=True,
+                    )
+                    candidates = [m for m, _ in scored[: max(1, min(proposal_top_k, len(scored)))]]
+                    if len(candidates) == 1:
+                        move = candidates[0]
+                    else:
+                        reranked: list[tuple[Move, float]] = []
+                        for cand in candidates:
+                            sim = deep_copy_game(game)
+                            sp = sim.players[pi]
+                            if not execute_move_on_sim(sim, sp, cand):
+                                reranked.append((cand, -1e9))
+                                continue
+                            sim.advance_turn()
+                            _refill_tray(sim)
+                            s2 = np.asarray(enc.encode(sim, pi), dtype=np.float32)
+                            _, v2 = model.forward(s2)
+                            score_est = model.value_to_expected_score(v2)
+                            immediate = float(calculate_score(sim, sp).total)
+                            reranked.append((cand, 0.85 * score_est + 0.15 * immediate))
+                        move = max(reranked, key=lambda x: x[1])[0]
             else:
-                move = pick_weighted_random_move(moves, game, p)
+                if heuristic_policy_norm == "greedy":
+                    move = pick_best_heuristic_move(moves, game, p)
+                else:
+                    move = pick_weighted_random_move(moves, game, p)
 
             success = execute_move_on_sim(game, p, move)
             if success:
@@ -353,6 +389,17 @@ def main() -> None:
     parser.add_argument("--board-type", default="oceania", choices=["base", "oceania"])
     parser.add_argument("--max-turns", type=int, default=240)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--nn-use-mcts", action="store_true", default=False)
+    parser.add_argument("--nn-mcts-sims", type=int, default=40)
+    parser.add_argument("--nn-c-puct", type=float, default=1.5)
+    parser.add_argument("--nn-value-blend", type=float, default=0.5)
+    parser.add_argument("--nn-rollout-policy", default="fast")
+    parser.add_argument(
+        "--heuristic-policy",
+        default="greedy",
+        choices=["greedy", "weighted_random"],
+        help="Opponent policy in eval: deterministic greedy heuristic (default) or legacy weighted_random.",
+    )
     parser.add_argument("--out", default="reports/ml/factorized_bc_eval.json")
     args = parser.parse_args()
 
@@ -362,6 +409,12 @@ def main() -> None:
         board_type=BoardType(args.board_type),
         max_turns=args.max_turns,
         seed=args.seed,
+        nn_use_mcts=args.nn_use_mcts,
+        nn_mcts_sims=args.nn_mcts_sims,
+        nn_c_puct=args.nn_c_puct,
+        nn_value_blend=args.nn_value_blend,
+        nn_rollout_policy=args.nn_rollout_policy,
+        heuristic_policy=args.heuristic_policy,
     )
 
     p = Path(args.out)

@@ -166,6 +166,84 @@ def test_yellowhammer_only_plays_bonus_bird_if_all_four_action_types_used() -> N
     assert len(alice.hand) == 0
 
 
+def test_carrion_crow_round_end_can_choose_self_or_any_player_predator_count() -> None:
+    birds, _, _ = load_all(EXCEL_FILE)
+    crow = birds.get("Carrion Crow")
+    assert crow is not None
+
+    game = create_new_game(["Alice", "Bob"], board_type=BoardType.OCEANIA)
+    alice, bob = game.players
+    habitat = sorted(list(crow.habitats), key=lambda h: h.value)[0]
+    slot = alice.board.get_row(habitat).slots[0]
+    slot.bird = crow
+
+    # Alice has 1 predator, Bob has 2 predators.
+    alice.board.forest.slots[1].bird = _make_test_bird(
+        name="Alice Predator", color=PowerColor.NONE, power_text="", is_predator=True
+    )
+    bob.board.forest.slots[0].bird = _make_test_bird(
+        name="Bob Predator A", color=PowerColor.NONE, power_text="", is_predator=True
+    )
+    bob.board.grassland.slots[0].bird = _make_test_bird(
+        name="Bob Predator B", color=PowerColor.NONE, power_text="", is_predator=True
+    )
+
+    # Explicitly choose self; should cache based on Alice's predator count (1), not Bob's (2).
+    queue_power_choice(game, "Alice", "Carrion Crow", {"target_player": "Alice"})
+    before_cached = slot.cached_food.get(FoodType.RODENT, 0)
+    n = trigger_end_of_round_powers(game, 1)
+    assert n >= 1
+    assert slot.cached_food.get(FoodType.RODENT, 0) == before_cached + 1
+
+
+def test_round_end_play_bird_can_use_nectar_in_oceania() -> None:
+    birds, _, _ = load_all(EXCEL_FILE)
+    yellowhammer = birds.get("Yellowhammer")
+    assert yellowhammer is not None
+
+    game = create_new_game(["Alice", "Bob"], board_type=BoardType.OCEANIA)
+    alice = game.players[0]
+    hab = sorted(list(yellowhammer.habitats), key=lambda h: h.value)[0]
+    alice.board.get_row(hab).slots[0].bird = yellowhammer
+    alice.hand = [_make_test_bird(name="Round End Nectar Candidate", color=PowerColor.NONE, power_text="")]
+    # No non-nectar food available: round-end play power must be allowed to spend nectar.
+    alice.food_supply.seed = 0
+    alice.food_supply.nectar = 1
+    alice.action_types_used_this_round = {
+        ActionType.PLAY_BIRD,
+        ActionType.GAIN_FOOD,
+        ActionType.LAY_EGGS,
+        ActionType.DRAW_CARDS,
+    }
+
+    before = alice.total_birds
+    trigger_end_of_round_powers(game, 1)
+    assert alice.total_birds == before + 1
+    assert len(alice.hand) == 0
+
+
+def test_end_game_play_bird_does_not_allow_nectar_payment_even_if_present() -> None:
+    birds, _, _ = load_all(EXCEL_FILE)
+    goulds = birds.get("Gould's Finch")
+    assert goulds is not None
+
+    game = create_new_game(["Alice", "Bob"], board_type=BoardType.OCEANIA)
+    alice = game.players[0]
+    hab = sorted(list(goulds.habitats), key=lambda h: h.value)[0]
+    alice.board.get_row(hab).slots[0].bird = goulds
+    alice.hand = [_make_test_bird(name="End Game Nectar Candidate", color=PowerColor.NONE, power_text="")]
+
+    # Direct trigger with lingering nectar should still refuse nectar payment for end-game play powers.
+    alice.food_supply.seed = 0
+    alice.food_supply.nectar = 1
+
+    before = alice.total_birds
+    n = trigger_end_of_game_powers(game)
+    # No execution because only nectar was available for the candidate's food cost.
+    assert n == 0
+    assert alice.total_birds == before
+    assert len(alice.hand) == 1
+
 def test_pacific_black_duck_game_end_eggs_scale_with_wetland_eggs() -> None:
     birds, _, _ = load_all(EXCEL_FILE)
     duck = birds.get("Pacific Black Duck")
@@ -239,17 +317,36 @@ def test_black_swan_only_lays_on_large_wingspan_birds() -> None:
 
 
 def test_kakapo_draws_bonus_cards_keep_one() -> None:
-    birds, _, _ = load_all(EXCEL_FILE)
+    birds, bonus_reg, _ = load_all(EXCEL_FILE)
     kakapo = birds.get("Kākāpō")
     assert kakapo is not None
 
     game = create_new_game(["Alice", "Bob"], board_type=BoardType.OCEANIA)
     alice = game.players[0]
     alice.board.forest.slots[0].bird = kakapo
+    # Make Winter Feeder clearly best for this board state.
+    alice.food_supply.add(FoodType.SEED, 8)
+    alice.food_supply.add(FoodType.FISH, 5)
+    winter = bonus_reg.get("Winter Feeder")
+    assert winter is not None
+    drawn_pool = [
+        bonus_reg.get("Anatomist"),
+        bonus_reg.get("Bird Counter"),
+        bonus_reg.get("Fishery Manager"),
+        winter,
+    ]
+    assert all(card is not None for card in drawn_pool)
+    # DrawBonusCards pops from the end; this makes these exact 4 drawn.
+    game._bonus_cards = [bonus_reg.get("Backyard Birder")] + drawn_pool  # type: ignore[attr-defined]
+    game._bonus_discard_cards = []  # type: ignore[attr-defined]
+
     before = len(alice.bonus_cards)
     n = trigger_end_of_game_powers(game)
     assert n >= 1
     assert len(alice.bonus_cards) == before + 1
+    assert any(bc.name == "Winter Feeder" for bc in alice.bonus_cards)
+    assert len(game._bonus_cards) == 1  # type: ignore[attr-defined]
+    assert len(game._bonus_discard_cards) == 3  # type: ignore[attr-defined]
 
 
 def test_magpie_lark_game_end_discards_forest_eggs_and_plays_grassland_bird_ignore_egg_cost() -> None:

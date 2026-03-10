@@ -201,6 +201,160 @@ class TestActions:
         # Egg should have been removed
         assert player.board.forest.slots[0].eggs == 0
 
+    def test_play_on_top_discards_eggs_food_and_keeps_prior_tucked_plus_one(self, bird_reg, game):
+        player = game.players[0]
+        red_kite = bird_reg.get("Red Kite")
+        covered = bird_reg.get("American Crow")
+        assert red_kite is not None and covered is not None
+        habitat = next(iter(red_kite.habitats))
+
+        slot = player.board.get_row(habitat).slots[0]
+        slot.bird = covered
+        slot.eggs = 2
+        slot.cached_food = {FoodType.FISH: 2}
+        slot.tucked_cards = 3
+
+        player.hand.append(red_kite)
+        fish_before = player.food_supply.get(FoodType.FISH)
+
+        result = execute_play_bird(
+            game,
+            player,
+            red_kite,
+            habitat,
+            food_payment={},
+            target_slot=0,
+            play_on_top=True,
+        )
+        assert result.success, result.message
+        assert slot.bird.name == "Red Kite"
+        assert slot.eggs == 0
+        assert slot.cached_food == {}
+        assert slot.tucked_cards == 4  # prior tucked cards remain; covered bird becomes tucked
+        assert player.food_supply.get(FoodType.FISH) == fish_before
+        assert any(
+            act.bird_name == "Red Kite" and act.result.cards_tucked >= 1
+            for act in result.power_activations
+        )
+
+    def test_play_on_top_predator_counts_as_tuck_and_predator_success_for_pink(self, bird_reg):
+        game = create_new_game(["Alice", "Bob"])
+        actor = game.players[0]
+        opponent = game.players[1]
+
+        red_kite = bird_reg.get("Red Kite")
+        covered = bird_reg.get("American Crow")
+        pink_on_tuck = bird_reg.get("European Goldfinch")
+        pink_on_predator = bird_reg.get("Black Vulture")
+        deck_card = bird_reg.get("Spotted Dove")
+        assert all(x is not None for x in (red_kite, covered, pink_on_tuck, pink_on_predator, deck_card))
+
+        # Actor setup for play-on-top.
+        habitat = next(iter(red_kite.habitats))
+        actor_slot = actor.board.get_row(habitat).slots[0]
+        actor_slot.bird = covered
+        actor.hand.append(red_kite)
+
+        # Opponent setup: one pink bird that reacts to "another player tucks",
+        # and one that reacts to "another player's predator succeeds".
+        def _place_any(p: Player, b: Bird) -> tuple[Habitat, int]:
+            for h in b.habitats:
+                row = p.board.get_row(h)
+                for idx, s in enumerate(row.slots):
+                    if s.bird is None:
+                        s.bird = b
+                        return h, idx
+            raise AssertionError(f"No open slot for {b.name}")
+
+        tuck_hab, tuck_idx = _place_any(opponent, pink_on_tuck)
+        _place_any(opponent, pink_on_predator)
+
+        # Ensure tuck-trigger pink can draw from deck and predator-success pink can take a die.
+        game._deck_cards = [deck_card]  # type: ignore[attr-defined]
+        game.deck_remaining = 1
+        game.birdfeeder.set_dice([FoodType.FISH, FoodType.SEED, FoodType.FRUIT])
+
+        opponent_tucked_before = opponent.board.get_row(tuck_hab).slots[tuck_idx].tucked_cards
+        opponent_food_before = opponent.food_supply.total()
+
+        result = execute_play_bird(
+            game,
+            actor,
+            red_kite,
+            habitat,
+            food_payment={},
+            target_slot=0,
+            play_on_top=True,
+        )
+
+        assert result.success, result.message
+        # European Goldfinch (pink on opponent tuck) should tuck 1 from deck.
+        assert opponent.board.get_row(tuck_hab).slots[tuck_idx].tucked_cards == opponent_tucked_before + 1
+        # Black Vulture (pink on predator success) should gain one feeder die.
+        assert opponent.food_supply.total() == opponent_food_before + 1
+        assert game.birdfeeder.count == 2
+
+    def test_eastern_imperial_eagle_tuck_payment_triggers_pink_tuck_and_predator_success(self, bird_reg):
+        game = create_new_game(["Alice", "Bob"])
+        actor = game.players[0]
+        opponent = game.players[1]
+
+        eagle = bird_reg.get("Eastern Imperial Eagle")
+        tuck_a = bird_reg.get("Spotted Dove")
+        tuck_b = bird_reg.get("American Crow")
+        pink_on_tuck = bird_reg.get("European Goldfinch")
+        pink_on_predator = bird_reg.get("Black Vulture")
+        deck_card = bird_reg.get("Trumpeter Swan")
+        assert all(x is not None for x in (eagle, tuck_a, tuck_b, pink_on_tuck, pink_on_predator, deck_card))
+
+        # Actor setup: pay part of rodent cost with rodent, rest with hand tucks.
+        habitat = next(iter(eagle.habitats))
+        actor.hand = [eagle, tuck_a, tuck_b]
+        actor.food_supply.add(FoodType.RODENT, 3)
+
+        def _place_any(p: Player, b: Bird) -> tuple[Habitat, int]:
+            for h in b.habitats:
+                row = p.board.get_row(h)
+                for idx, s in enumerate(row.slots):
+                    if s.bird is None:
+                        s.bird = b
+                        return h, idx
+            raise AssertionError(f"No open slot for {b.name}")
+
+        tuck_hab, tuck_idx = _place_any(opponent, pink_on_tuck)
+        _place_any(opponent, pink_on_predator)
+
+        # Ensure pink powers have resources to resolve.
+        game._deck_cards = [deck_card]  # type: ignore[attr-defined]
+        game.deck_remaining = 1
+        game.birdfeeder.set_dice([FoodType.FISH, FoodType.SEED, FoodType.FRUIT])
+
+        opponent_tucked_before = opponent.board.get_row(tuck_hab).slots[tuck_idx].tucked_cards
+        opponent_food_before = opponent.food_supply.total()
+
+        result = execute_play_bird(
+            game,
+            actor,
+            eagle,
+            habitat,
+            food_payment={FoodType.RODENT: 1},
+            hand_tuck_payment=2,
+        )
+
+        assert result.success, result.message
+        assert actor.board.get_row(habitat).slots[0].bird is not None
+        assert actor.board.get_row(habitat).slots[0].bird.name == "Eastern Imperial Eagle"
+        assert actor.board.get_row(habitat).slots[0].tucked_cards == 2
+        assert any(
+            act.bird_name == "Eastern Imperial Eagle" and act.result.cards_tucked == 2
+            for act in result.power_activations
+        )
+        # European Goldfinch (pink on opponent tuck) should tuck 1 from deck.
+        assert opponent.board.get_row(tuck_hab).slots[tuck_idx].tucked_cards == opponent_tucked_before + 1
+        # Black Vulture (pink on predator success) should gain one feeder die.
+        assert opponent.food_supply.total() == opponent_food_before + 1
+        assert game.birdfeeder.count == 2
+
     def test_gain_food(self, game):
         player = game.players[0]
         game.birdfeeder.set_dice([

@@ -3,11 +3,14 @@
 import pytest
 from backend.config import EXCEL_FILE
 from backend.data.registries import load_all
-from backend.models.enums import FoodType, Habitat, PowerColor
+from backend.models.enums import FoodType, Habitat, PowerColor, GameSet
+from backend.models.bonus_card import BonusCard, BonusScoringTier
 from backend.models.game_state import create_new_game
 from backend.models.bird import Bird, FoodCost
 from backend.powers.base import PowerContext, FallbackPower
+from backend.powers.choices import queue_power_choice
 from backend.powers.registry import get_power, clear_cache
+from backend.engine.scoring import score_bonus_cards
 
 
 @pytest.fixture(scope="module")
@@ -38,6 +41,19 @@ def _make_ctx(game, bird, habitat=Habitat.FOREST, slot_index=0):
         bird=bird,
         slot_index=slot_index,
         habitat=habitat,
+    )
+
+
+def _bonus_fixture(name: str, points: int) -> BonusCard:
+    return BonusCard(
+        name=name,
+        game_sets=frozenset({GameSet.CORE}),
+        condition_text=f"{name} fixture",
+        explanation_text=None,
+        scoring_tiers=(BonusScoringTier(min_count=0, max_count=None, points=int(points)),),
+        is_per_bird=False,
+        is_automa=False,
+        draft_value_pct=0.0,
     )
 
 
@@ -205,6 +221,43 @@ class TestScoreBonusCardNow:
         power = get_power(bird)
         result = power.execute(ctx)
         assert not result.executed
+
+    def test_caches_points_for_selected_bonus_and_keeps_cards_for_endgame(self, game, bird_reg):
+        bird = bird_reg.get("Great Indian Bustard")
+        player = game.current_player
+        player.board.grassland.slots[0].bird = bird
+        player.bonus_cards = [
+            _bonus_fixture("Low Bonus", 2),
+            _bonus_fixture("High Bonus", 5),
+        ]
+
+        # Explicitly choose the lower-scoring card; it should still remain in hand afterward.
+        queue_power_choice(game, player.name, bird.name, {"bonus_name": "Low Bonus"})
+
+        power = get_power(bird)
+        ctx = _make_ctx(game, bird, habitat=Habitat.GRASSLAND)
+        result = power.execute(ctx)
+        assert result.executed
+        assert player.board.grassland.slots[0].cached_food.get(FoodType.SEED, 0) == 2
+        assert {bc.name for bc in player.bonus_cards} == {"Low Bonus", "High Bonus"}
+        # Both bonus cards are still scored normally at game end.
+        assert score_bonus_cards(player) == 7
+
+    def test_defaults_to_highest_scoring_bonus_when_no_choice_is_provided(self, game, bird_reg):
+        bird = bird_reg.get("Great Indian Bustard")
+        player = game.current_player
+        player.board.grassland.slots[0].bird = bird
+        player.bonus_cards = [
+            _bonus_fixture("Low Bonus", 2),
+            _bonus_fixture("High Bonus", 5),
+        ]
+
+        power = get_power(bird)
+        ctx = _make_ctx(game, bird, habitat=Habitat.GRASSLAND)
+        result = power.execute(ctx)
+        assert result.executed
+        assert player.board.grassland.slots[0].cached_food.get(FoodType.SEED, 0) == 5
+        assert {bc.name for bc in player.bonus_cards} == {"Low Bonus", "High Bonus"}
 
 
 # --- TradeFoodForAny ---

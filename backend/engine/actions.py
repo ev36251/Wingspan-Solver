@@ -53,6 +53,44 @@ def _record_power_event(game_state: GameState, *, timing: str, player: Player, b
         )
 
 
+def _resolve_end_turn_hand_discards(game_state: GameState, player: Player) -> int:
+    """Resolve deferred end-of-turn hand discards for the active player."""
+    pending = getattr(game_state, "pending_end_turn_hand_discards", None)
+    if not isinstance(pending, dict):
+        return 0
+    to_discard = int(max(0, pending.pop(player.name, 0)))
+    if to_discard <= 0:
+        return 0
+
+    preferred_map = getattr(game_state, "pending_end_turn_discard_names", None)
+    preferred: list[str] = []
+    if isinstance(preferred_map, dict):
+        raw = preferred_map.pop(player.name, [])
+        if isinstance(raw, list):
+            preferred = [str(n) for n in raw if isinstance(n, str) and n]
+
+    discarded = 0
+    for name in preferred:
+        if discarded >= to_discard:
+            break
+        idx = next((i for i, c in enumerate(player.hand) if c.name == name), None)
+        if idx is None:
+            continue
+        player.hand.pop(idx)
+        discarded += 1
+
+    while discarded < to_discard and player.hand:
+        worst_idx = min(
+            range(len(player.hand)),
+            key=lambda i: (player.hand[i].victory_points, player.hand[i].name),
+        )
+        player.hand.pop(worst_idx)
+        discarded += 1
+
+    game_state.discard_pile_count += discarded
+    return discarded
+
+
 def activate_row(game_state: GameState, player: Player,
                  habitat: Habitat, simulate: bool = True) -> list[PowerActivation]:
     """Activate brown powers in a habitat row, right to left.
@@ -154,6 +192,9 @@ def _pay_bonus_cost(player: Player, cost_options: tuple[str, ...]) -> bool:
 
 def _draw_bird_from_deck(game_state: GameState):
     """Draw one bird identity from the game's deck model if available."""
+    if game_state.deck_remaining <= 0:
+        return None
+
     deck_cards = getattr(game_state, "_deck_cards", None)
     if isinstance(deck_cards, list) and deck_cards:
         card = deck_cards.pop()
@@ -163,8 +204,6 @@ def _draw_bird_from_deck(game_state: GameState):
         return card
 
     # Fallback for games without initialized deck identities.
-    if game_state.deck_remaining <= 0:
-        return None
     from backend.data.registries import get_bird_registry
     pool = list(get_bird_registry().all_birds)
     if not pool:
@@ -203,6 +242,8 @@ def execute_play_bird(
         play_on_top_discard: True for Cassowary (discard covered bird vs tuck it)
         hand_tuck_payment: For Imperial Eagle: number of hand cards tucked instead of rodents
     """
+    setattr(game_state, "_eggs_laid_this_action", set())
+
     # --- Play-on-top path (free replacement of an occupied slot) ---
     if play_on_top and target_slot is not None:
         if not player.has_bird_in_hand(bird.name):
@@ -219,6 +260,7 @@ def execute_play_bird(
         covered_slot = row.slots[target_slot]
         if covered_slot.bird is None:
             return ActionResult(False, ActionType.PLAY_BIRD, "Target slot is empty for play-on-top")
+        covered_bird_name = covered_slot.bird.name
 
         # Transfer tucked cards from covered bird; discard or tuck covered bird
         covered_tucked = covered_slot.tucked_cards
@@ -232,6 +274,7 @@ def execute_play_bird(
         # Discard covered bird's eggs and food
         covered_slot.eggs = 0
         covered_slot.cached_food = {}
+        covered_slot.spendable_cached_food = {}
         covered_slot.tucked_cards = 0
         covered_slot.counts_double = False
         covered_slot.is_sideways = False
@@ -245,6 +288,21 @@ def execute_play_bird(
         slot_idx = target_slot
 
         power_acts: list[PowerActivation] = []
+        # Playing on top tucks the covered bird (except Cassowary discard-on-top),
+        # which should count for "when another player tucks" pink triggers and
+        # for predator-success pink triggers on predator birds.
+        if not play_on_top_discard:
+            power_acts.append(
+                PowerActivation(
+                    bird_name=bird.name,
+                    slot_index=slot_idx,
+                    result=PowerResult(
+                        cards_tucked=1,
+                        description="Covered bird tucked by play-on-top",
+                    ),
+                )
+            )
+
         if bird.color == PowerColor.WHITE:
             assert_power_allowed_for_strict_mode(game_state, bird)
             power = get_power(bird)
@@ -262,11 +320,11 @@ def execute_play_bird(
                                                           slot_index=slot_idx, result=result))
 
         action_desc = (
-            f"Played {bird.name} replacing {covered_slot.bird.name if covered_slot.bird else '?'} "
+            f"Played {bird.name} replacing {covered_bird_name} "
             f"in {habitat.value} slot {slot_idx + 1}"
         ) if play_on_top_discard else (
             f"Played {bird.name} on top in {habitat.value} slot {slot_idx + 1} "
-            f"(tucked {covered_slot.bird.name if covered_slot.bird else 'covered bird'})"
+            f"(tucked {covered_bird_name})"
         )
         result = ActionResult(
             True, ActionType.PLAY_BIRD,
@@ -276,6 +334,7 @@ def execute_play_bird(
         )
         player.play_bird_actions_this_round += 1
         player.action_types_used_this_round.add(ActionType.PLAY_BIRD)
+        _resolve_end_turn_hand_discards(game_state, player)
         from backend.engine.timed_powers import trigger_between_turn_powers
         trigger_between_turn_powers(game_state, trigger_player=player,
                                     trigger_action=ActionType.PLAY_BIRD, trigger_result=result)
@@ -359,6 +418,7 @@ def execute_play_bird(
         )
         player.play_bird_actions_this_round += 1
         player.action_types_used_this_round.add(ActionType.PLAY_BIRD)
+        _resolve_end_turn_hand_discards(game_state, player)
         from backend.engine.timed_powers import trigger_between_turn_powers
         trigger_between_turn_powers(game_state, trigger_player=player,
                                     trigger_action=ActionType.PLAY_BIRD, trigger_result=result)
@@ -409,14 +469,24 @@ def execute_play_bird(
     player.remove_from_hand(bird.name)
     row.slots[slot_idx].bird = bird
 
-    # Imperial Eagle: tuck hand cards as food substitute
+    power_acts: list[PowerActivation] = []
+
+    # Imperial Eagle-style payment substitution: tuck hand cards as food substitute.
     if hand_tuck_payment > 0:
         cards_to_tuck = sorted(player.hand, key=lambda b: b.victory_points)[:hand_tuck_payment]
         for card in cards_to_tuck:
             player.remove_from_hand(card.name)
         row.slots[slot_idx].tucked_cards += hand_tuck_payment
-
-    power_acts: list[PowerActivation] = []
+        power_acts.append(
+            PowerActivation(
+                bird_name=bird.name,
+                slot_index=slot_idx,
+                result=PowerResult(
+                    cards_tucked=hand_tuck_payment,
+                    description="Tucked hand cards for rodent-cost substitution",
+                ),
+            )
+        )
 
     # Execute "when played" (white) powers immediately
     if bird.color == PowerColor.WHITE:
@@ -452,6 +522,7 @@ def execute_play_bird(
     # Track cubes spent on the "play a bird" action for round-goal scoring.
     player.play_bird_actions_this_round += 1
     player.action_types_used_this_round.add(ActionType.PLAY_BIRD)
+    _resolve_end_turn_hand_discards(game_state, player)
     from backend.engine.timed_powers import trigger_between_turn_powers
     trigger_between_turn_powers(
         game_state,
@@ -472,6 +543,7 @@ def execute_play_bird_discounted(
     egg_payment_slots: list[tuple[Habitat, int]] | None = None,
 ) -> ActionResult:
     """Play a bird with an egg cost discount (used for bonus plays)."""
+    setattr(game_state, "_eggs_laid_this_action", set())
     # Custom legality: same as can_play_bird, but egg cost is discounted
     if not player.has_bird_in_hand(bird.name):
         return ActionResult(False, ActionType.PLAY_BIRD, "Bird not in hand")
@@ -563,6 +635,7 @@ def execute_play_bird_discounted(
         bird_played=bird.name, habitat=habitat,
         power_activations=power_acts,
     )
+    _resolve_end_turn_hand_discards(game_state, player)
     from backend.engine.timed_powers import trigger_between_turn_powers
     trigger_between_turn_powers(
         game_state,
@@ -577,32 +650,45 @@ def _smart_spend_food(player: Player, food_type: FoodType, count: int) -> bool:
     """Spend food, drawing from cached food on bird slots if supply is short.
 
     First spends from the player's food supply; if the supply is short, deducts
-    the remainder from cached food stored on bird slots (greedy: leftmost slot
-    with that food type first).  Returns True if the full amount was spent.
+    the remainder from spendable cached food stored on bird slots (greedy:
+    leftmost slot with that food type first). Returns True if the full amount
+    was spent.
     """
     supply_have = player.food_supply.get(food_type)
     from_supply = min(supply_have, count)
     need_cached = count - from_supply
 
     if need_cached > 0:
-        # Verify enough cached food exists before committing to any deduction
+        # Verify enough spendable cached food exists before committing.
         cached_have = sum(
-            slot.cached_food.get(food_type, 0)
+            min(
+                slot.cached_food.get(food_type, 0),
+                slot.spendable_cached_food.get(food_type, 0),
+            )
             for _, _, slot in player.board.all_slots()
         )
         if cached_have < need_cached:
             return False
 
-        # Deduct from cached food (leftmost slot first)
+        # Deduct from spendable cached food (leftmost slot first)
         remaining = need_cached
         for _, _, slot in player.board.all_slots():
-            available = slot.cached_food.get(food_type, 0)
+            current_cached = slot.cached_food.get(food_type, 0)
+            available = min(
+                current_cached,
+                slot.spendable_cached_food.get(food_type, 0),
+            )
             if available <= 0:
                 continue
             use = min(available, remaining)
-            slot.cached_food[food_type] = available - use
+            slot.cached_food[food_type] = current_cached - use
             if slot.cached_food[food_type] == 0:
                 del slot.cached_food[food_type]
+            spendable_left = slot.spendable_cached_food.get(food_type, 0) - use
+            if spendable_left > 0:
+                slot.spendable_cached_food[food_type] = spendable_left
+            else:
+                slot.spendable_cached_food.pop(food_type, None)
             remaining -= use
             if remaining == 0:
                 break
@@ -651,6 +737,7 @@ def execute_gain_food(
         bonus_count: How many "extra" bonus trades to activate (0, 1, or 2).
         reset_bonus: Whether to activate the reset_feeder bonus (if available).
     """
+    setattr(game_state, "_eggs_laid_this_action", set())
     legal, reason = can_gain_food(player, game_state)
     if not legal:
         return ActionResult(False, ActionType.GAIN_FOOD, reason)
@@ -709,6 +796,7 @@ def execute_gain_food(
     )
     player.gain_food_actions_this_round += 1
     player.action_types_used_this_round.add(ActionType.GAIN_FOOD)
+    _resolve_end_turn_hand_discards(game_state, player)
     from backend.engine.timed_powers import trigger_between_turn_powers
     trigger_between_turn_powers(
         game_state,
@@ -731,6 +819,7 @@ def execute_lay_eggs(
         egg_distribution: Where to place eggs {(habitat, slot_idx): count}
         bonus_count: How many bonus trades to activate (0, 1, or 2).
     """
+    setattr(game_state, "_eggs_laid_this_action", set())
     legal, reason = can_lay_eggs(player)
     if not legal:
         return ActionResult(False, ActionType.LAY_EGGS, reason)
@@ -759,6 +848,7 @@ def execute_lay_eggs(
                 break
             if slot.can_hold_more_eggs():
                 slot.eggs += 1
+                game_state._eggs_laid_this_action.add((player.name, hab.value, slot_idx))
                 total_laid += 1
 
     # Activate brown powers in the grassland row (right to left)
@@ -773,6 +863,7 @@ def execute_lay_eggs(
     )
     player.lay_eggs_actions_this_round += 1
     player.action_types_used_this_round.add(ActionType.LAY_EGGS)
+    _resolve_end_turn_hand_discards(game_state, player)
     from backend.engine.timed_powers import trigger_between_turn_powers
     trigger_between_turn_powers(
         game_state,
@@ -799,6 +890,7 @@ def execute_draw_cards(
         bonus_count: How many "extra" bonus trades to activate (0, 1, or 2).
         reset_bonus: Whether to activate the reset_tray bonus (if available).
     """
+    setattr(game_state, "_eggs_laid_this_action", set())
     legal, reason = can_draw_cards(player)
     if not legal:
         return ActionResult(False, ActionType.DRAW_CARDS, reason)
@@ -859,6 +951,7 @@ def execute_draw_cards(
     )
     player.draw_cards_actions_this_round += 1
     player.action_types_used_this_round.add(ActionType.DRAW_CARDS)
+    _resolve_end_turn_hand_discards(game_state, player)
     from backend.engine.timed_powers import trigger_between_turn_powers
     trigger_between_turn_powers(
         game_state,

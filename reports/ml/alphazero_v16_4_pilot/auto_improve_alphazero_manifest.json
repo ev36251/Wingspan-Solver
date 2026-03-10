@@ -1,0 +1,174 @@
+{
+  "pipeline": "auto_improve_alphazero",
+  "out_dir": "reports/ml/alphazero_v16_4_pilot",
+  "iterations_completed": 2,
+  "iterations_total": 5,
+  "mcts_sims": 75,
+  "selfplay_value_blend": 0.85,
+  "gate_value_blend": 1.0,
+  "gate_mode": "champion",
+  "gate_mcts_sims": 60,
+  "pilot_early_stop_iter": 3,
+  "pilot_min_gate_win_rate": 0.2,
+  "total_elapsed_sec": 16818.8,
+  "history": [
+    {
+      "iter": 1,
+      "samples": 10400,
+      "mean_delta": 47.085,
+      "mean_score": 47.085,
+      "train_val_loss": 1.048547687292321,
+      "train_val_action_acc": 0.877885,
+      "eval_summary": {
+        "games": 80,
+        "nn_wins": 26,
+        "heuristic_wins": 54,
+        "ties": 0,
+        "nn_mean_score": 61.45,
+        "heuristic_mean_score": 69.213,
+        "nn_mean_margin": -7.763,
+        "nn_win_rate": 0.325,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0
+      },
+      "gate_summary": {
+        "games": 40,
+        "nn_wins": 19,
+        "heuristic_wins": 19,
+        "ties": 2,
+        "nn_mean_score": 35.875,
+        "heuristic_mean_score": 36.275,
+        "nn_mean_margin": -0.4,
+        "nn_win_rate": 0.475,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "nn_win_rate_ci95": [
+          0.3294,
+          0.625
+        ],
+        "stage1": {
+          "games": 40,
+          "nn_wins": 19,
+          "heuristic_wins": 19,
+          "ties": 2,
+          "nn_mean_score": 35.875,
+          "heuristic_mean_score": 36.275,
+          "nn_mean_margin": -0.4,
+          "nn_win_rate": 0.475,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        },
+        "stage1_continue_threshold": 0.5,
+        "stage2_enabled": false,
+        "promoted": false,
+        "min_promotion_win_rate": 0.55,
+        "gate_value_blend": 1.0,
+        "gate_mcts_sims": 60
+      },
+      "diagnostics": {
+        "policy_entropy_action_type_mean": 0.200348,
+        "policy_peak_action_type_mean": 0.911429,
+        "val_win_value_brier": 0.023447,
+        "val_win_value_log_loss": 0.106317,
+        "gate_win_rate_ci95": [
+          0.3294,
+          0.625
+        ]
+      },
+      "promoted": false,
+      "timing_sec": {
+        "data_gen": 4218.36,
+        "train": 37.64,
+        "eval": 71.53,
+        "gate": 905.99,
+        "iter_total": 5233.52
+      },
+      "elapsed_sec": 5233.5
+    },
+    {
+      "iter": 2,
+      "samples": 10400,
+      "mean_delta": 46.352,
+      "mean_score": 46.352,
+      "train_val_loss": 0.9753518382056903,
+      "train_val_action_acc": 0.879327,
+      "eval_summary": {
+        "games": 80,
+        "nn_wins": 30,
+        "heuristic_wins": 50,
+        "ties": 0,
+        "nn_mean_score": 61.337,
+        "heuristic_mean_score": 69.65,
+        "nn_mean_margin": -8.312,
+        "nn_win_rate": 0.375,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0
+      },
+      "gate_summary": {
+        "games": 80,
+        "nn_wins": 40,
+        "heuristic_wins": 37,
+        "ties": 3,
+        "nn_mean_score": 35.462,
+        "heuristic_mean_score": 34.975,
+        "nn_mean_margin": 0.487,
+        "nn_win_rate": 0.5,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "nn_win_rate_ci95": [
+          0.393,
+          0.607
+        ],
+        "stage1": {
+          "games": 40,
+          "nn_wins": 21,
+          "heuristic_wins": 17,
+          "ties": 2,
+          "nn_mean_score": 35.525,
+          "heuristic_mean_score": 33.675,
+          "nn_mean_margin": 1.85,
+          "nn_win_rate": 0.525,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        },
+        "stage1_continue_threshold": 0.5,
+        "stage2_enabled": true,
+        "stage2": {
+          "games": 40,
+          "nn_wins": 19,
+          "heuristic_wins": 20,
+          "ties": 1,
+          "nn_mean_score": 35.4,
+          "heuristic_mean_score": 36.275,
+          "nn_mean_margin": -0.875,
+          "nn_win_rate": 0.475,
+          "nn_rate_ge_100": 0.0,
+          "nn_rate_ge_120": 0.0
+        },
+        "promoted": false,
+        "min_promotion_win_rate": 0.55,
+        "gate_value_blend": 1.0,
+        "gate_mcts_sims": 60
+      },
+      "diagnostics": {
+        "policy_entropy_action_type_mean": 0.193238,
+        "policy_peak_action_type_mean": 0.915416,
+        "val_win_value_brier": 0.02723,
+        "val_win_value_log_loss": 0.111266,
+        "gate_win_rate_ci95": [
+          0.393,
+          0.607
+        ]
+      },
+      "promoted": false,
+      "timing_sec": {
+        "data_gen": 9012.38,
+        "train": 83.42,
+        "eval": 83.42,
+        "gate": 2406.08,
+        "iter_total": 11585.3
+      },
+      "elapsed_sec": 16818.8
+    }
+  ]
+}

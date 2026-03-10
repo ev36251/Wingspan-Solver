@@ -3,10 +3,14 @@
 import random
 from backend.models.enums import FoodType
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
+from backend.powers.choices import consume_power_choice
 
 
 def _draw_one_bird(ctx: PowerContext):
     """Draw one concrete bird card from deck identity model if available."""
+    if ctx.game_state.deck_remaining <= 0:
+        return None
+
     deck_cards = getattr(ctx.game_state, "_deck_cards", None)
     if isinstance(deck_cards, list) and deck_cards:
         card = deck_cards.pop()
@@ -15,8 +19,6 @@ def _draw_one_bird(ctx: PowerContext):
             ctx.game_state.deck_tracker.mark_drawn(card.name)
         return card
 
-    if ctx.game_state.deck_remaining <= 0:
-        return None
     from backend.data.registries import get_bird_registry
     pool = list(get_bird_registry().all_birds)
     if not pool:
@@ -51,21 +53,50 @@ class TuckFromHand(PowerEffect):
     def execute(self, ctx: PowerContext) -> PowerResult:
         slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
 
-        # Need cards in hand to tuck
-        tucked = min(self.tuck_count, len(ctx.player.hand))
+        choice = consume_power_choice(ctx.game_state, ctx.player.name, ctx.bird.name) or {}
+        requested_tuck = choice.get("tuck_count") if isinstance(choice, dict) else None
+        tuck_names = choice.get("tuck_names") if isinstance(choice, dict) else None
+
+        if requested_tuck is None and isinstance(tuck_names, list):
+            requested_tuck = len(tuck_names)
+
+        try:
+            requested_tuck_int = int(requested_tuck) if requested_tuck is not None else None
+        except (TypeError, ValueError):
+            requested_tuck_int = None
+
+        tuck_cap = self.tuck_count
+        if requested_tuck_int is not None:
+            tuck_cap = max(0, min(self.tuck_count, requested_tuck_int))
+
+        # Need cards in hand to tuck (up to configured cap / requested count).
+        tucked = min(tuck_cap, len(ctx.player.hand))
         if tucked == 0:
             return PowerResult(executed=False, description="No cards in hand to tuck")
 
         # Remove cards from hand and tuck
-        for _ in range(tucked):
-            if ctx.player.hand:
-                ctx.player.hand.pop()  # Remove last card (choice in UI)
+        removed = 0
+        names = [str(n) for n in tuck_names] if isinstance(tuck_names, list) else []
+        if names:
+            for name in names:
+                if removed >= tucked:
+                    break
+                idx = next((i for i, c in enumerate(ctx.player.hand) if c.name == name), None)
+                if idx is None:
+                    continue
+                ctx.player.hand.pop(idx)
                 slot.tucked_cards += 1
+                removed += 1
 
-        result = PowerResult(cards_tucked=tucked)
+        while removed < tucked and ctx.player.hand:
+            ctx.player.hand.pop()  # Remove last card (deterministic fallback)
+            slot.tucked_cards += 1
+            removed += 1
+
+        result = PowerResult(cards_tucked=removed)
 
         # Bonus effects
-        if self.draw_count > 0 and tucked > 0:
+        if self.draw_count > 0 and removed > 0:
             drawn = 0
             for _ in range(self.draw_count):
                 card = _draw_one_bird(ctx)
@@ -75,17 +106,17 @@ class TuckFromHand(PowerEffect):
                 drawn += 1
             result.cards_drawn = drawn
 
-        if self.lay_count > 0 and tucked > 0:
+        if self.lay_count > 0 and removed > 0:
             if slot.can_hold_more_eggs():
                 laid = min(self.lay_count, slot.eggs_space())
                 slot.eggs += laid
                 result.eggs_laid = laid
 
-        if self.food_count > 0 and self.food_type and tucked > 0:
+        if self.food_count > 0 and self.food_type and removed > 0:
             ctx.player.food_supply.add(self.food_type, self.food_count)
             result.food_gained = {self.food_type: self.food_count}
 
-        result.description = f"Tucked {tucked} cards"
+        result.description = f"Tucked {removed} cards"
         return result
 
     def describe_activation(self, ctx: PowerContext) -> str:
@@ -99,7 +130,7 @@ class TuckFromHand(PowerEffect):
         return ", then ".join(parts)
 
     def skip_reason(self, ctx: PowerContext) -> str | None:
-        if len(ctx.player.hand) < self.tuck_count:
+        if len(ctx.player.hand) <= 0:
             return "no cards in hand to tuck"
         return None
 
@@ -203,3 +234,69 @@ class DiscardToTuck(PowerEffect):
         base = expected_tucks * 0.9
         base += expected_tucks * self.food_on_success * 0.5
         return base
+
+
+class DrawDiscardCacheByFoodIcon(PowerEffect):
+    """Draw/discard cards and cache food per matching food icon in their costs.
+
+    Example: "Draw and discard 5 cards from deck. For each fish in their food
+    costs, cache 1 fish from the supply on this bird."
+    """
+
+    def __init__(
+        self,
+        draw_count: int,
+        target_food: FoodType,
+        cache_food_type: FoodType,
+    ):
+        self.draw_count = int(max(0, draw_count))
+        self.target_food = target_food
+        self.cache_food_type = cache_food_type
+
+    def execute(self, ctx: PowerContext) -> PowerResult:
+        slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
+        drawn_cards = []
+
+        for _ in range(self.draw_count):
+            card = _draw_one_bird(ctx)
+            if card is None:
+                break
+            drawn_cards.append(card)
+
+        if not drawn_cards:
+            return PowerResult(executed=False, description="Deck is empty")
+
+        matching_icons = 0
+        for card in drawn_cards:
+            matching_icons += sum(1 for ft in card.food_cost.items if ft == self.target_food)
+
+        if matching_icons > 0:
+            slot.cache_food(self.cache_food_type, matching_icons)
+
+        ctx.game_state.discard_pile_count += len(drawn_cards)
+        return PowerResult(
+            food_cached={self.cache_food_type: matching_icons} if matching_icons > 0 else {},
+            description=(
+                f"Drew/discarded {len(drawn_cards)}; cached {matching_icons} "
+                f"{self.cache_food_type.value}"
+            ),
+        )
+
+    def can_execute(self, ctx: PowerContext) -> bool:
+        return ctx.game_state.deck_remaining > 0
+
+    def skip_reason(self, ctx: PowerContext) -> str | None:
+        if ctx.game_state.deck_remaining <= 0:
+            return "deck is empty"
+        return None
+
+    def describe_activation(self, ctx: PowerContext) -> str:
+        return (
+            f"draw/discard {self.draw_count} from deck, cache 1 {self.cache_food_type.value} "
+            f"for each {self.target_food.value} icon in those cards' costs"
+        )
+
+    def estimate_value(self, ctx: PowerContext) -> float:
+        # Rough expectation: about 0.3 matching icons per drawn card.
+        expected_cached = self.draw_count * 0.3
+        return expected_cached * 0.9

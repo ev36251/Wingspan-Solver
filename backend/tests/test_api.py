@@ -211,6 +211,35 @@ class TestGameCreation:
         assert resp.status_code == 404
 
 
+class TestGameStateUpdates:
+    def test_update_state_deck_remaining_blocks_extra_draws(self, client):
+        create_resp = client.post("/api/games", json={
+            "player_names": ["Alice", "Bob"]
+        })
+        game_id = create_resp.json()["game_id"]
+
+        state_resp = client.get(f"/api/games/{game_id}")
+        state = state_resp.json()
+        state["deck_remaining"] = 0
+        state["card_tray"]["face_up"] = []
+
+        put_resp = client.put(f"/api/games/{game_id}/state", json=state)
+        assert put_resp.status_code == 200
+        assert put_resp.json()["deck_remaining"] == 0
+
+        draw_resp = client.post(
+            f"/api/games/{game_id}/draw-cards",
+            json={"from_tray_indices": [], "from_deck_count": 1, "bonus_count": 0, "reset_bonus": False},
+        )
+        assert draw_resp.status_code == 200
+        draw_data = draw_resp.json()
+        assert draw_data["success"] is True
+        assert draw_data["cards_drawn"] == 0
+
+        after = client.get(f"/api/games/{game_id}").json()
+        assert after["deck_remaining"] == 0
+
+
 class TestLegalMoves:
     def test_legal_moves_new_game(self, client):
         create_resp = client.post("/api/games", json={

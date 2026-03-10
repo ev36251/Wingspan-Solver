@@ -107,6 +107,14 @@ def _iter_policy_model_candidates() -> list[Path]:
 
     ml_reports = Path("reports/ml")
     if ml_reports.exists():
+        # AlphaZero pipelines write best_model.npz under reports/ml/alphazero_*/.
+        az_best = sorted(
+            ml_reports.glob("alphazero*/best_model.npz"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        candidates.extend(az_best[:8])
+
         manifests = sorted(
             ml_reports.glob("auto_improve*/auto_improve_factorized_manifest.json"),
             key=lambda p: p.stat().st_mtime,
@@ -124,9 +132,26 @@ def _iter_policy_model_candidates() -> list[Path]:
                     candidates.append(Path(p))
             iterations = data.get("iterations") if isinstance(data, dict) else None
             if isinstance(iterations, list) and iterations:
-                model_path = iterations[-1].get("model_path")
-                if model_path:
-                    candidates.append(Path(model_path))
+                    model_path = iterations[-1].get("model_path")
+                    if model_path:
+                        candidates.append(Path(model_path))
+
+        az_manifests = sorted(
+            ml_reports.glob("alphazero*/auto_improve_alphazero_manifest.json"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        for manifest in az_manifests[:8]:
+            run_dir = manifest.parent
+            candidates.append(run_dir / "best_model.npz")
+            try:
+                data = json.loads(manifest.read_text())
+            except Exception:
+                continue
+            if isinstance(data, dict):
+                completed = int(data.get("iterations_completed", 0) or 0)
+                if completed > 0:
+                    candidates.append(run_dir / f"iter_{completed:03d}" / "model.npz")
 
     seen: set[str] = set()
     out: list[Path] = []
@@ -158,7 +183,7 @@ def _get_policy_components():
             continue
         try:
             _POLICY_MODEL = FactorizedPolicyModel(path)
-            _STATE_ENCODER = StateEncoder()
+            _STATE_ENCODER = StateEncoder.resolve_for_model(_POLICY_MODEL.meta)
             _POLICY_MODEL_PATH = str(path)
             return _POLICY_MODEL, _STATE_ENCODER
         except Exception:

@@ -750,6 +750,10 @@ def _build_draft_rollout_game(
     # Keep finite deck identities for more stable playout draw behavior.
     game._deck_cards = list(all_birds[deck_idx:])  # type: ignore[attr-defined]
     game.deck_remaining = len(game._deck_cards)  # type: ignore[attr-defined]
+    # Keep finite bonus deck identities for powers that draw bonus cards.
+    used_bonus = {bc.name for p in game.players for bc in p.bonus_cards}
+    game._bonus_cards = [bc for bc in all_bonus if bc.name not in used_bonus]  # type: ignore[attr-defined]
+    game._bonus_discard_cards = []  # type: ignore[attr-defined]
     game.birdfeeder.reroll()
     return game
 

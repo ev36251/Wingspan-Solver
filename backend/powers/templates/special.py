@@ -4,10 +4,14 @@ import random
 
 from backend.models.enums import FoodType, Habitat
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
+from backend.powers.choices import consume_power_choice
 
 
 def _draw_one_bird(ctx: PowerContext):
     """Draw one concrete bird card from deck identity model if available."""
+    if ctx.game_state.deck_remaining <= 0:
+        return None
+
     deck_cards = getattr(ctx.game_state, "_deck_cards", None)
     if isinstance(deck_cards, list) and deck_cards:
         card = deck_cards.pop()
@@ -16,8 +20,6 @@ def _draw_one_bird(ctx: PowerContext):
             ctx.game_state.deck_tracker.mark_drawn(card.name)
         return card
 
-    if ctx.game_state.deck_remaining <= 0:
-        return None
     from backend.data.registries import get_bird_registry
 
     pool = list(get_bird_registry().all_birds)
@@ -354,6 +356,7 @@ class MoveBird(PowerEffect):
         dst_slot.bird = src_slot.bird
         dst_slot.eggs = src_slot.eggs
         dst_slot.cached_food = dict(src_slot.cached_food)
+        dst_slot.spendable_cached_food = dict(src_slot.spendable_cached_food)
         dst_slot.tucked_cards = src_slot.tucked_cards
         dst_slot.counts_double = src_slot.counts_double
 
@@ -361,6 +364,7 @@ class MoveBird(PowerEffect):
         src_slot.bird = None
         src_slot.eggs = 0
         src_slot.cached_food = {}
+        src_slot.spendable_cached_food = {}
         src_slot.tucked_cards = 0
         src_slot.counts_double = False
         if src_slot.is_sideways:
@@ -410,54 +414,172 @@ class DiscardEggForBenefit(PowerEffect):
     Example: "Discard 1 [egg] from any of your birds to gain 2 [food]."
     """
 
-    def __init__(self, egg_cost: int = 1,
-                 food_gain: int = 0, food_type: FoodType | None = None,
-                 card_gain: int = 0):
+    def __init__(
+        self,
+        egg_cost: int = 1,
+        food_gain: int = 0,
+        food_type: FoodType | None = None,
+        card_gain: int = 0,
+        require_other_bird: bool = False,
+    ):
         self.egg_cost = egg_cost
         self.food_gain = food_gain
         self.food_type = food_type
         self.card_gain = card_gain
+        self.require_other_bird = require_other_bird
+
+    @staticmethod
+    def _parse_food_choice(raw: str | None) -> FoodType | None:
+        if not raw:
+            return None
+        norm = str(raw).strip().lower()
+        for ft in (
+            FoodType.INVERTEBRATE,
+            FoodType.SEED,
+            FoodType.FISH,
+            FoodType.FRUIT,
+            FoodType.RODENT,
+            FoodType.NECTAR,
+        ):
+            if norm in {ft.value, ft.name.lower()}:
+                return ft
+        return None
+
+    @staticmethod
+    def _food_options_for_board(ctx: PowerContext) -> list[FoodType]:
+        options = [
+            FoodType.INVERTEBRATE,
+            FoodType.SEED,
+            FoodType.FISH,
+            FoodType.FRUIT,
+            FoodType.RODENT,
+        ]
+        if ctx.game_state.board_type.value == "oceania":
+            options.append(FoodType.NECTAR)
+        return options
+
+    def _resolve_any_food_choices(self, ctx: PowerContext, choice: dict | None) -> list[FoodType]:
+        options = self._food_options_for_board(ctx)
+        resolved: list[FoodType] = []
+        if isinstance(choice, dict):
+            raw_list = choice.get("food_types")
+            if isinstance(raw_list, list):
+                for raw in raw_list:
+                    ft = self._parse_food_choice(str(raw))
+                    if ft in options:
+                        resolved.append(ft)
+
+            raw_single = choice.get("food_type")
+            ft_single = self._parse_food_choice(raw_single if isinstance(raw_single, str) else None)
+            if ft_single in options:
+                while len(resolved) < self.food_gain:
+                    resolved.append(ft_single)
+
+        while len(resolved) < self.food_gain:
+            # Deterministic fallback: choose currently scarcest token in player supply.
+            pick = min(options, key=lambda ft: (ctx.player.food_supply.get(ft), ft.value))
+            resolved.append(pick)
+        return resolved[: self.food_gain]
+
+    def _candidate_egg_slots(self, ctx: PowerContext) -> list[tuple[Habitat, int, object]]:
+        candidates: list[tuple[Habitat, int, object]] = []
+        for hab in (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND):
+            row = ctx.player.board.get_row(hab)
+            for idx, slot in enumerate(row.slots):
+                if not slot.bird or slot.eggs < self.egg_cost:
+                    continue
+                if self.require_other_bird and hab == ctx.habitat and idx == ctx.slot_index:
+                    continue
+                candidates.append((hab, idx, slot))
+        return candidates
+
+    @staticmethod
+    def _match_slot_choice(
+        candidates: list[tuple[Habitat, int, object]],
+        choice: dict | None,
+    ) -> tuple[Habitat, int, object] | None:
+        if not isinstance(choice, dict):
+            return None
+
+        source_bird = choice.get("egg_source_bird")
+        if isinstance(source_bird, str):
+            for cand in candidates:
+                if cand[2].bird and cand[2].bird.name == source_bird:
+                    return cand
+
+        raw_hab = choice.get("egg_source_habitat")
+        raw_slot = choice.get("egg_source_slot")
+        if isinstance(raw_hab, str) and raw_hab.strip() and raw_slot is not None:
+            norm = raw_hab.strip().lower()
+            try:
+                slot_idx = int(raw_slot)
+            except (TypeError, ValueError):
+                slot_idx = -1
+            for cand in candidates:
+                if cand[0].value == norm and cand[1] == slot_idx:
+                    return cand
+        return None
 
     def execute(self, ctx: PowerContext) -> PowerResult:
-        # Find a bird with eggs to discard from
-        for row in ctx.player.board.all_rows():
-            for slot in row.slots:
-                if slot.bird and slot.eggs >= self.egg_cost:
-                    slot.eggs -= self.egg_cost
+        choice = consume_power_choice(ctx.game_state, ctx.player.name, ctx.bird.name) if ctx.bird else None
+        candidates = self._candidate_egg_slots(ctx)
+        if not candidates:
+            msg = "No eggs on any other bird to discard" if self.require_other_bird else "No eggs to discard"
+            return PowerResult(executed=False, description=msg)
 
-                    result = PowerResult()
-                    if self.food_gain and self.food_type:
-                        ctx.player.food_supply.add(self.food_type, self.food_gain)
-                        result.food_gained = {self.food_type: self.food_gain}
-                    if self.card_gain:
-                        drawn = 0
-                        for _ in range(self.card_gain):
-                            card = _draw_one_bird(ctx)
-                            if card is None:
-                                break
-                            ctx.player.hand.append(card)
-                            drawn += 1
-                        result.cards_drawn = drawn
-                    result.description = f"Discarded {self.egg_cost} egg for benefit"
-                    return result
+        chosen = self._match_slot_choice(candidates, choice)
+        if chosen is None:
+            # Prefer discarding from the bird with the most eggs (least likely to block future plays).
+            chosen = max(
+                candidates,
+                key=lambda c: (
+                    c[2].eggs,
+                    c[2].bird.egg_limit if c[2].bird else 0,
+                    c[0].value,
+                    c[1],
+                ),
+            )
+        chosen[2].eggs -= self.egg_cost
 
-        return PowerResult(executed=False, description="No eggs to discard")
+        result = PowerResult()
+        if self.food_gain:
+            gained: dict[FoodType, int] = {}
+            if self.food_type in (None, FoodType.WILD):
+                for ft in self._resolve_any_food_choices(ctx, choice):
+                    ctx.player.food_supply.add(ft, 1)
+                    gained[ft] = gained.get(ft, 0) + 1
+            else:
+                ctx.player.food_supply.add(self.food_type, self.food_gain)
+                gained[self.food_type] = gained.get(self.food_type, 0) + self.food_gain
+            result.food_gained = gained
+
+        if self.card_gain:
+            drawn = 0
+            for _ in range(self.card_gain):
+                card = _draw_one_bird(ctx)
+                if card is None:
+                    break
+                ctx.player.hand.append(card)
+                drawn += 1
+            result.cards_drawn = drawn
+        result.description = f"Discarded {self.egg_cost} egg for benefit"
+        return result
 
     def describe_activation(self, ctx: PowerContext) -> str:
-        parts = [f"discard {self.egg_cost} egg from any bird"]
-        if self.food_gain and self.food_type:
-            parts.append(f"gain {self.food_gain} {self.food_type.value}")
+        where = "any other bird" if self.require_other_bird else "any bird"
+        parts = [f"discard {self.egg_cost} egg from {where}"]
+        if self.food_gain:
+            if self.food_type in (None, FoodType.WILD):
+                parts.append(f"gain {self.food_gain} food")
+            else:
+                parts.append(f"gain {self.food_gain} {self.food_type.value}")
         if self.card_gain:
             parts.append(f"draw {self.card_gain} card{'s' if self.card_gain > 1 else ''}")
         return ", then ".join(parts)
 
     def skip_reason(self, ctx: PowerContext) -> str | None:
-        total_eggs = sum(
-            s.eggs for row in ctx.player.board.all_rows()
-            for s in row.slots if s.bird
-        )
-        if total_eggs < self.egg_cost:
-            return "no eggs on any bird to discard"
+        if not self._candidate_egg_slots(ctx):
+            return "no eggs on any other bird to discard" if self.require_other_bird else "no eggs on any bird to discard"
         return None
 
     def estimate_value(self, ctx: PowerContext) -> float:

@@ -1,0 +1,89 @@
+{
+  "pipeline": "auto_improve_alphazero",
+  "out_dir": "reports/ml/alphazero_rules_v17_explicit446_modal_pilot",
+  "iterations_completed": 1,
+  "iterations_total": 1,
+  "rules_baseline": {
+    "id": "rules_2026_03_08_explicit446"
+  },
+  "preflight": {
+    "bird_audit_gate_enabled": true,
+    "expected_semantic_untested": 0,
+    "bird_audit_summary": {
+      "total_birds": 446,
+      "strict_mapped_count": 446,
+      "semantic_tested_count": 446,
+      "semantic_untested_count": 0
+    }
+  },
+  "mcts_sims": 8,
+  "selfplay_value_blend": 0.95,
+  "selfplay_fail_on_exception": true,
+  "gate_value_blend": 0.85,
+  "gate_mode": "heuristic",
+  "gate_mcts_sims": 8,
+  "pilot_early_stop_iter": 3,
+  "pilot_min_gate_win_rate": 0.2,
+  "total_elapsed_sec": 35.6,
+  "history": [
+    {
+      "iter": 1,
+      "samples": 104,
+      "mean_delta": 40.75,
+      "mean_score": 40.75,
+      "train_val_loss": 526.7977550309151,
+      "train_val_action_acc": 0.9,
+      "eval_summary": {
+        "games": 2,
+        "nn_wins": 0,
+        "heuristic_wins": 2,
+        "ties": 0,
+        "nn_mean_score": 52.0,
+        "heuristic_mean_score": 78.0,
+        "nn_mean_margin": -26.0,
+        "nn_win_rate": 0.0,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0
+      },
+      "gate_summary": {
+        "games": 4,
+        "nn_wins": 0,
+        "heuristic_wins": 4,
+        "ties": 0,
+        "nn_mean_score": 45.5,
+        "heuristic_mean_score": 77.75,
+        "nn_mean_margin": -32.25,
+        "nn_win_rate": 0.0,
+        "nn_rate_ge_100": 0.0,
+        "nn_rate_ge_120": 0.0,
+        "nn_win_rate_ci95": [
+          0.0,
+          0.4899
+        ],
+        "promoted": true,
+        "min_promotion_win_rate": 0.5,
+        "gate_value_blend": 0.85,
+        "gate_mcts_sims": 8
+      },
+      "diagnostics": {
+        "policy_entropy_action_type_mean": 0.01051,
+        "policy_peak_action_type_mean": 0.994505,
+        "val_win_value_brier": 0.290448,
+        "val_win_value_log_loss": 0.77549,
+        "gate_win_rate_ci95": [
+          0.0,
+          0.4899
+        ]
+      },
+      "promoted": true,
+      "timing_sec": {
+        "data_gen": 25.23,
+        "train": 2.56,
+        "eval": 2.81,
+        "gate": 4.95,
+        "iter_total": 35.56
+      },
+      "elapsed_sec": 35.6
+    }
+  ]
+}

@@ -1,0 +1,7932 @@
+{
+  "Abbott's Booby": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          3
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          true
+        ]
+      ]
+    }
+  },
+  "Acorn Woodpecker": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ]
+      ]
+    }
+  },
+  "American Avocet": {
+    "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:GROUND"
+              }
+            ]
+          }
+        ],
+        [
+          "wingspan_lt",
+          null
+        ],
+        [
+          "on_self",
+          false
+        ],
+        [
+          "require_another_bird",
+          true
+        ],
+        [
+          "target_overage",
+          0
+        ]
+      ]
+    }
+  },
+  "American Bittern": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "American Coot": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          1
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "American Crow": {
+    "class": "backend.powers.templates.special.DiscardEggForBenefit",
+    "kwargs": {
+      "__dict__": [
+        [
+          "egg_cost",
+          1
+        ],
+        [
+          "food_gain",
+          1
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:WILD"
+          }
+        ],
+        [
+          "card_gain",
+          0
+        ],
+        [
+          "require_other_bird",
+          true
+        ]
+      ]
+    }
+  },
+  "American Goldfinch": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:SEED"
+            }
+          ]
+        ],
+        [
+          "count",
+          3
+        ],
+        [
+          "all_players",
+          false
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "American Kestrel": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "American Oystercatcher": {
+    "class": "backend.powers.templates.strict.AmericanOystercatcherDraftPlayersPlusOneClockwise",
+    "kwargs": {}
+  },
+  "American Redstart": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          null
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "American Robin": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          1
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "American White Pelican": {
+    "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_discard",
+          1
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "tuck_per_discard",
+          2
+        ]
+      ]
+    }
+  },
+  "American Woodcock": {
+    "class": "backend.powers.base.NoPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Anhinga": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Anna's Hummingbird": {
+    "class": "backend.powers.templates.strict.EachPlayerGainDieFromFeederStartingChoice",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Ash-Throated Flycatcher": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:CAVITY"
+              }
+            ]
+          }
+        ]
+      ]
+    }
+  },
+  "Asian Emerald Dove": {
+    "class": "backend.powers.templates.strict.LayEggsOnEachOtherBirdInColumn",
+    "kwargs": {
+      "__dict__": [
+        [
+          "eggs_per_bird",
+          2
+        ]
+      ]
+    }
+  },
+  "Asian Koel": {
+    "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:PLATFORM"
+              }
+            ]
+          }
+        ],
+        [
+          "wingspan_lt",
+          null
+        ],
+        [
+          "on_self",
+          false
+        ],
+        [
+          "require_another_bird",
+          true
+        ],
+        [
+          "target_overage",
+          3
+        ]
+      ]
+    }
+  },
+  "Atlantic Puffin": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Audouin's Gull": {
+    "class": "backend.powers.templates.strict.DrawKeepTuckDiscard",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw_count",
+          2
+        ],
+        [
+          "keep_count",
+          1
+        ],
+        [
+          "tuck_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Australasian Pipit": {
+    "class": "backend.powers.templates.strict.EndGameTuckPerBirdInHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Australasian Shoveler": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Australian Ibis": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          2
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Australian Magpie": {
+    "class": "backend.powers.templates.strict.EndGameDiscardEggsRowColumnCacheSeeds",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Australian Owlet-Nightjar": {
+    "class": "backend.powers.templates.strict.PinkGainFoodFromFeederOnGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            }
+          ]
+        ]
+      ]
+    }
+  },
+  "Australian Raven": {
+    "class": "backend.powers.templates.strict.EndGameCacheFromSupplyOnSelf",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_count",
+          5
+        ]
+      ]
+    }
+  },
+  "Australian Reed Warbler": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          1
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Australian Shelduck": {
+    "class": "backend.powers.templates.strict.WillieWagtailDrawTrayNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "allowed_nests",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:CAVITY"
+              },
+              {
+                "__enum__": "backend.models.enums:NestType:WILD"
+              }
+            ]
+          }
+        ],
+        [
+          "allow_reset",
+          true
+        ],
+        [
+          "allow_refill",
+          true
+        ]
+      ]
+    }
+  },
+  "Australian Zebra Finch": {
+    "class": "backend.powers.templates.strict_more.ConditionalNeighborHasFoodTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "direction",
+          "right"
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "tuck_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Azure Tit": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:SEED"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:FRUIT"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Baird's Sparrow": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "any"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Bald Eagle": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Baltimore Oriole": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:FRUIT"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Barn Owl": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Barn Swallow": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          1
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Barred Owl": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          75
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Barrow's Goldeneye": {
+    "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:CAVITY"
+              }
+            ]
+          }
+        ],
+        [
+          "wingspan_lt",
+          null
+        ],
+        [
+          "on_self",
+          false
+        ],
+        [
+          "require_another_bird",
+          true
+        ],
+        [
+          "target_overage",
+          0
+        ]
+      ]
+    }
+  },
+  "Baya Weaver": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          3
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          1
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Bearded Reedling": {
+    "class": "backend.powers.templates.strict.LayEggOnSelfPerColumnEggBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Bell's Vireo": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Belted Kingfisher": {
+    "class": "backend.powers.templates.strict.PinkGainFoodFromSupplyOnPlayInHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "trigger_habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ]
+      ]
+    }
+  },
+  "Bewick's Wren": {
+    "class": "backend.powers.templates.special.MoveBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Black Drongo": {
+    "class": "backend.powers.templates.strict.BlackDrongoDiscardTrayLayEgg",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Black Noddy": {
+    "class": "backend.powers.templates.strict.BlackNoddyResetFeederGainFishOptionalDiscardToTuck",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Black Redstart": {
+    "class": "backend.powers.templates.strict.ChooseEgglessHabitatLayEggEachBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Black Skimmer": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Black Stork": {
+    "class": "backend.powers.templates.strict.LayEggAdjacentToSelf",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Black Swan": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingWingspan",
+    "kwargs": {
+      "__dict__": [
+        [
+          "min_cm",
+          100
+        ],
+        [
+          "max_cm",
+          null
+        ]
+      ]
+    }
+  },
+  "Black Tern": {
+    "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Black Vulture": {
+    "class": "backend.powers.templates.strict.PinkPredatorSuccessGainDie",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Black Woodpecker": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Black-Bellied Whistling-Duck": {
+    "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_discard",
+          1
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "tuck_per_discard",
+          2
+        ]
+      ]
+    }
+  },
+  "Black-Billed Magpie": {
+    "class": "backend.powers.templates.strict.PinkPredatorSuccessGainDie",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Black-Chinned Hummingbird": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:FRUIT"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Black-Crowned Night-Heron": {
+    "class": "backend.powers.templates.special.DiscardEggForBenefit",
+    "kwargs": {
+      "__dict__": [
+        [
+          "egg_cost",
+          1
+        ],
+        [
+          "food_gain",
+          1
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:WILD"
+          }
+        ],
+        [
+          "card_gain",
+          0
+        ],
+        [
+          "require_other_bird",
+          true
+        ]
+      ]
+    }
+  },
+  "Black-Headed Gull": {
+    "class": "backend.powers.templates.strict.BlackHeadedGullStealWild",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Black-Naped Oriole": {
+    "class": "backend.powers.templates.strict.ConditionalAllActionsFoodEggCard",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Black-Necked Stilt": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          2
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Black-Shouldered Kite": {
+    "class": "backend.powers.templates.strict.ResetFeederGainRodentMayGiveLayUpToThree",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Black-Tailed Godwit": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Black-Throated Diver": {
+    "class": "backend.powers.templates.strict.WhiteStorkResetTrayThenDraw",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Blue Grosbeak": {
+    "class": "backend.powers.templates.special.MoveBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Blue Jay": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ]
+      ]
+    }
+  },
+  "Blue Rock-Thrush": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          3
+        ],
+        [
+          "keep",
+          3
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Blue-Gray Gnatcatcher": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Blue-Winged Warbler": {
+    "class": "backend.powers.base.NoPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Bluethroat": {
+    "class": "backend.powers.templates.strict.CommonNightingaleChooseFoodAllPlayers",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Blyth's Hornbill": {
+    "class": "backend.powers.templates.strict.DiscardAllEggsFromOneNestThenTuckDouble",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:CAVITY"
+              }
+            ]
+          }
+        ],
+        [
+          "include_wild",
+          true
+        ]
+      ]
+    }
+  },
+  "Bobolink": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:GROUND"
+              }
+            ]
+          }
+        ]
+      ]
+    }
+  },
+  "Bonelli's Eagle": {
+    "class": "backend.powers.templates.unique.TuckToPayCost",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Brahminy Kite": {
+    "class": "backend.powers.templates.strict.PushYourLuckPredatorDiceCache",
+    "kwargs": {
+      "__dict__": [
+        [
+          "dice_count",
+          3
+        ],
+        [
+          "target_foods",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:FoodType:FISH"
+              },
+              {
+                "__enum__": "backend.models.enums:FoodType:RODENT"
+              }
+            ]
+          }
+        ],
+        [
+          "cache_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "max_rolls",
+          3
+        ],
+        [
+          "cache_per_hit",
+          1
+        ]
+      ]
+    }
+  },
+  "Brambling": {
+    "class": "backend.powers.templates.strict.DrawThenTuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw_count",
+          2
+        ],
+        [
+          "max_tuck",
+          2
+        ]
+      ]
+    }
+  },
+  "Brant": {
+    "class": "backend.powers.templates.strict.DrawAllFaceUpTrayCards",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Brewer's Blackbird": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          1
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Broad-Winged Hawk": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Brolga": {
+    "class": "backend.powers.templates.strict_more.ChooseOtherPlayerLayEggThenDraw",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw_count",
+          2
+        ]
+      ]
+    }
+  },
+  "Bronzed Cowbird": {
+    "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:BOWL"
+              }
+            ]
+          }
+        ],
+        [
+          "wingspan_lt",
+          null
+        ],
+        [
+          "on_self",
+          false
+        ],
+        [
+          "require_another_bird",
+          false
+        ],
+        [
+          "target_overage",
+          0
+        ]
+      ]
+    }
+  },
+  "Brown Falcon": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          75
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+              },
+              {
+                "__enum__": "backend.models.enums:FoodType:RODENT"
+              }
+            ]
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Brown Pelican": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:FISH"
+            }
+          ]
+        ],
+        [
+          "count",
+          3
+        ],
+        [
+          "all_players",
+          false
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Brown Shrike": {
+    "class": "backend.powers.templates.strict.AllPlayersMayCacheFoodInHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Brown-Headed Cowbird": {
+    "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:BOWL"
+              }
+            ]
+          }
+        ],
+        [
+          "wingspan_lt",
+          null
+        ],
+        [
+          "on_self",
+          false
+        ],
+        [
+          "require_another_bird",
+          false
+        ],
+        [
+          "target_overage",
+          0
+        ]
+      ]
+    }
+  },
+  "Budgerigar": {
+    "class": "backend.powers.templates.strict.TuckSmallestTrayBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Bullfinch": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Burrowing Owl": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Bushtit": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          1
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "California Condor": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "California Quail": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "self"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Canada Goose": {
+    "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_discard",
+          1
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "tuck_per_discard",
+          2
+        ]
+      ]
+    }
+  },
+  "Canvasback": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ]
+      ]
+    }
+  },
+  "Carolina Chickadee": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
+  "Carolina Wren": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          2
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Carrion Crow": {
+    "class": "backend.powers.templates.strict.CacheRodentPerPredator",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Cassin's Finch": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Cassin's Sparrow": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "any"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Cedar Waxwing": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FRUIT"
+          }
+        ],
+        [
+          "food_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Cerulean Warbler": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Cetti's Warbler": {
+    "class": "backend.powers.templates.unique.CountsDoubleForGoal",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Chestnut-Collared Longspur": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Chihuahuan Raven": {
+    "class": "backend.powers.templates.special.DiscardEggForBenefit",
+    "kwargs": {
+      "__dict__": [
+        [
+          "egg_cost",
+          1
+        ],
+        [
+          "food_gain",
+          2
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:WILD"
+          }
+        ],
+        [
+          "card_gain",
+          0
+        ],
+        [
+          "require_other_bird",
+          true
+        ]
+      ]
+    }
+  },
+  "Chimney Swift": {
+    "class": "backend.powers.templates.special.MoveBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Chipping Sparrow": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "any"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Clark's Grebe": {
+    "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Clark's Nutcracker": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ]
+      ]
+    }
+  },
+  "Coal Tit": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "spendable",
+          true
+        ]
+      ]
+    }
+  },
+  "Cockatiel": {
+    "class": "backend.powers.templates.strict.DiscardSeedTuckTrayCard",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Common Blackbird": {
+    "class": "backend.powers.templates.play_bird.PlaceBirdSideways",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Common Buzzard": {
+    "class": "backend.powers.templates.play_bird.PlayOnTopPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Common Chaffinch": {
+    "class": "backend.powers.templates.strict.ChooseBirdsInHabitatTuckFromHandEach",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_targets",
+          5
+        ]
+      ]
+    }
+  },
+  "Common Chiffchaff": {
+    "class": "backend.powers.templates.strict.ChooseBirdsInHabitatTuckFromHandEach",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_targets",
+          5
+        ]
+      ]
+    }
+  },
+  "Common Cuckoo": {
+    "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:BOWL"
+              },
+              {
+                "__enum__": "backend.models.enums:NestType:GROUND"
+              }
+            ]
+          }
+        ],
+        [
+          "wingspan_lt",
+          null
+        ],
+        [
+          "on_self",
+          false
+        ],
+        [
+          "require_another_bird",
+          true
+        ],
+        [
+          "target_overage",
+          0
+        ]
+      ]
+    }
+  },
+  "Common Goldeneye": {
+    "class": "backend.powers.templates.strict.LayEggOnSelfPerOtherCavityBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Common Grackle": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          1
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Common Green Magpie": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ]
+      ]
+    }
+  },
+  "Common Iora": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "any"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Common Kingfisher": {
+    "class": "backend.powers.templates.strict.StealSpecificFoodCacheThenTargetGainDieFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ]
+      ]
+    }
+  },
+  "Common Little Bittern": {
+    "class": "backend.powers.templates.strict.DrawTrayCardByHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Common Loon": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Common Merganser": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Common Moorhen": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Common Myna": {
+    "class": "backend.powers.templates.special.CopyNeighborBrownPower",
+    "kwargs": {
+      "__dict__": [
+        [
+          "direction",
+          "left"
+        ],
+        [
+          "target_habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Common Nighthawk": {
+    "class": "backend.powers.templates.special.MoveBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Common Nightingale": {
+    "class": "backend.powers.templates.strict.CommonNightingaleChooseFoodAllPlayers",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Common Raven": {
+    "class": "backend.powers.templates.special.DiscardEggForBenefit",
+    "kwargs": {
+      "__dict__": [
+        [
+          "egg_cost",
+          1
+        ],
+        [
+          "food_gain",
+          2
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:WILD"
+          }
+        ],
+        [
+          "card_gain",
+          0
+        ],
+        [
+          "require_other_bird",
+          true
+        ]
+      ]
+    }
+  },
+  "Common Sandpiper": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Common Starling": {
+    "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_discard",
+          5
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "tuck_per_discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Common Swift": {
+    "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_discard",
+          5
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "tuck_per_discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Common Tailorbird": {
+    "class": "backend.powers.templates.strict.EndGameLayContiguousSameNest",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Common Teal": {
+    "class": "backend.powers.templates.strict.PerThreeEggsInHabitatDrawThenTuck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ],
+        [
+          "max_tuck",
+          2
+        ]
+      ]
+    }
+  },
+  "Common Yellowthroat": {
+    "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Cooper's Hawk": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          75
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Coppersmith Barbet": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:FRUIT"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Corsican Nuthatch": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Count Raggi's Bird-of-Paradise": {
+    "class": "backend.powers.templates.strict_more.ChooseOtherPlayerBothGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FRUIT"
+          }
+        ],
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
+  "Crested Ibis": {
+    "class": "backend.powers.templates.strict.SpoonBilledSandpiperDrawBonusOthersMayDiscardTwo",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Crested Lark": {
+    "class": "backend.powers.templates.strict.CrestedLarkDiscardSeedLayEgg",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Crested Pigeon": {
+    "class": "backend.powers.templates.strict.EndGameCacheFromSupplyOnSelf",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_count",
+          8
+        ]
+      ]
+    }
+  },
+  "Crimson Chat": {
+    "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:WILD"
+          }
+        ],
+        [
+          "max_discard",
+          1
+        ],
+        [
+          "tuck_per_discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Dark-Eyed Junco": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "food_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Desert Finch": {
+    "class": "backend.powers.templates.strict_more.LayEggOnSelfPerOtherBirdInHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Desert Wheatear": {
+    "class": "backend.powers.templates.strict_more.PerEggedBirdInHabitatRollDieGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Dickcissel": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          1
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Double-Crested Cormorant": {
+    "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_discard",
+          1
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "tuck_per_discard",
+          2
+        ]
+      ]
+    }
+  },
+  "Downy Woodpecker": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Dunnock": {
+    "class": "backend.powers.templates.strict.LayEggOnSelfPerOpponentGrasslandCubes",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Eastern Bluebird": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Eastern Imperial Eagle": {
+    "class": "backend.powers.templates.unique.TuckToPayCost",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Eastern Kingbird": {
+    "class": "backend.powers.templates.strict.PinkGainFoodFromSupplyOnPlayInHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "trigger_habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ]
+      ]
+    }
+  },
+  "Eastern Phoebe": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Eastern Rosella": {
+    "class": "backend.powers.templates.strict.AllPlayersGainFoodThenSelfFoodOrEggBonus",
+    "kwargs": {
+      "__dict__": [
+        [
+          "base_food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:NECTAR"
+          }
+        ],
+        [
+          "base_count",
+          1
+        ],
+        [
+          "self_food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "self_food_count",
+          1
+        ],
+        [
+          "self_egg_bonus",
+          0
+        ]
+      ]
+    }
+  },
+  "Eastern Screech-Owl": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Eastern Whipbird": {
+    "class": "backend.powers.templates.strict_more.ChooseOtherPlayerBothGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
+  "Eleonora's Falcon": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Emu": {
+    "class": "backend.powers.templates.strict_more.EmuGainAllSeedKeepHalfDistributeRemainder",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Eurasian Collared-Dove": {
+    "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_discard",
+          5
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "tuck_per_discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Eurasian Coot": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          3
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Eurasian Eagle-Owl": {
+    "class": "backend.powers.templates.strict.PushYourLuckDrawByWingspanTotalThenTuck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_draws",
+          3
+        ],
+        [
+          "wingspan_threshold",
+          110
+        ]
+      ]
+    }
+  },
+  "Eurasian Golden Oriole": {
+    "class": "backend.powers.templates.strict.PinkGainFoodFromFeederOnGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:FRUIT"
+            }
+          ]
+        ]
+      ]
+    }
+  },
+  "Eurasian Green Woodpecker": {
+    "class": "backend.powers.templates.unique.CountsDoubleForGoal",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Eurasian Hobby": {
+    "class": "backend.powers.templates.play_bird.PlayOnTopPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Eurasian Hoopoe": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:WILD"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Eurasian Jay": {
+    "class": "backend.powers.templates.strict.StealSpecificFoodCacheThenTargetGainDieFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ]
+      ]
+    }
+  },
+  "Eurasian Kestrel": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Eurasian Magpie": {
+    "class": "backend.powers.templates.strict.CacheWildOnAnyBirdPerOpponentGrasslandCubes",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Eurasian Marsh-Harrier": {
+    "class": "backend.powers.templates.strict.PushYourLuckDrawByWingspanTotalThenTuck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_draws",
+          3
+        ],
+        [
+          "wingspan_threshold",
+          110
+        ]
+      ]
+    }
+  },
+  "Eurasian Nutcracker": {
+    "class": "backend.powers.templates.strict.ChooseBirdsInHabitatCacheFoodEach",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "max_targets",
+          5
+        ]
+      ]
+    }
+  },
+  "Eurasian Nuthatch": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "spendable",
+          true
+        ]
+      ]
+    }
+  },
+  "Eurasian Sparrowhawk": {
+    "class": "backend.powers.templates.unique.TuckToPayCost",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Eurasian Tree Sparrow": {
+    "class": "backend.powers.templates.strict.PinkGainFoodFromFeederOnGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:SEED"
+            }
+          ]
+        ]
+      ]
+    }
+  },
+  "Eurasian Treecreeper": {
+    "class": "backend.powers.templates.strict.PerThreeEggsInHabitatGainSeedOrInvertThenCache",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ],
+        [
+          "max_cache",
+          2
+        ]
+      ]
+    }
+  },
+  "European Bee-Eater": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "cache",
+          false
+        ]
+      ]
+    }
+  },
+  "European Goldfinch": {
+    "class": "backend.powers.templates.strict.PinkTuckFromDeckOnOpponentTuck",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "European Honey Buzzard": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "cache",
+          false
+        ]
+      ]
+    }
+  },
+  "European Robin": {
+    "class": "backend.powers.templates.unique.GainFoodMatchingPrevious",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "European Roller": {
+    "class": "backend.powers.templates.play_bird.PlaceBirdSideways",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "European Turtle Dove": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Ferruginous Hawk": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Fire-Fronted Serin": {
+    "class": "backend.powers.templates.strict.LayEggOnSelfPerBirdToLeft",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Fish Crow": {
+    "class": "backend.powers.templates.special.DiscardEggForBenefit",
+    "kwargs": {
+      "__dict__": [
+        [
+          "egg_cost",
+          1
+        ],
+        [
+          "food_gain",
+          1
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:WILD"
+          }
+        ],
+        [
+          "card_gain",
+          0
+        ],
+        [
+          "require_other_bird",
+          true
+        ]
+      ]
+    }
+  },
+  "Forest Owlet": {
+    "class": "backend.powers.templates.strict.PushYourLuckPredatorDiceCache",
+    "kwargs": {
+      "__dict__": [
+        [
+          "dice_count",
+          2
+        ],
+        [
+          "target_foods",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+              },
+              {
+                "__enum__": "backend.models.enums:FoodType:RODENT"
+              }
+            ]
+          }
+        ],
+        [
+          "cache_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "max_rolls",
+          3
+        ],
+        [
+          "cache_per_hit",
+          1
+        ]
+      ]
+    }
+  },
+  "Forster's Tern": {
+    "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Franklin's Gull": {
+    "class": "backend.powers.templates.special.DiscardEggForBenefit",
+    "kwargs": {
+      "__dict__": [
+        [
+          "egg_cost",
+          1
+        ],
+        [
+          "food_gain",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "card_gain",
+          2
+        ],
+        [
+          "require_other_bird",
+          false
+        ]
+      ]
+    }
+  },
+  "Galah": {
+    "class": "backend.powers.templates.strict_more.ChooseOtherPlayerResetFeederGainFoodThenSelfTuck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "tuck_count",
+          2
+        ]
+      ]
+    }
+  },
+  "Goldcrest": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Golden Eagle": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          100
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Golden Pheasant": {
+    "class": "backend.powers.templates.strict.AllPlayersLayEggsSelfBonus",
+    "kwargs": {
+      "__dict__": [
+        [
+          "all_players_count",
+          2
+        ],
+        [
+          "self_bonus_count",
+          2
+        ],
+        [
+          "nest_filter",
+          null
+        ]
+      ]
+    }
+  },
+  "Golden-Headed Cisticola": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          1
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Gould's Finch": {
+    "class": "backend.powers.templates.strict.EndGamePlayBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "egg_discount",
+          0
+        ]
+      ]
+    }
+  },
+  "Graceful Prinia": {
+    "class": "backend.powers.templates.special.DiscardEggForBenefit",
+    "kwargs": {
+      "__dict__": [
+        [
+          "egg_cost",
+          1
+        ],
+        [
+          "food_gain",
+          1
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "card_gain",
+          0
+        ],
+        [
+          "require_other_bird",
+          false
+        ]
+      ]
+    }
+  },
+  "Grandala": {
+    "class": "backend.powers.templates.strict_more.IfEggLaidOnThisBirdThisTurnTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
+  "Grasshopper Sparrow": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "any"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Gray Catbird": {
+    "class": "backend.powers.templates.special.RepeatPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Gray Wagtail": {
+    "class": "backend.powers.templates.strict.ConditionalAllActionsGainWild",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          2
+        ]
+      ]
+    }
+  },
+  "Great Blue Heron": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Great Cormorant": {
+    "class": "backend.powers.templates.strict.GreatCormorantMoveFishThenOptionalRoll",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Great Crested Flycatcher": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Great Crested Grebe": {
+    "class": "backend.powers.templates.strict.DrawPerEmptySlotThenKeepOneAtEndTurn",
+    "kwargs": {
+      "__dict__": [
+        [
+          "keep",
+          1
+        ]
+      ]
+    }
+  },
+  "Great Egret": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Great Hornbill": {
+    "class": "backend.powers.templates.strict.AllPlayersMayTuckAndOrCacheInHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "cache_food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FRUIT"
+          }
+        ],
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ]
+      ]
+    }
+  },
+  "Great Horned Owl": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          100
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Great Indian Bustard": {
+    "class": "backend.powers.templates.unique.ScoreBonusCardNow",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Great Spotted Woodpecker": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:SEED"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Great Tit": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          null
+        ],
+        [
+          "cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Greater Adjutant": {
+    "class": "backend.powers.templates.unique.CopyNeighborBonusCard",
+    "kwargs": {
+      "__dict__": [
+        [
+          "direction",
+          "left"
+        ]
+      ]
+    }
+  },
+  "Greater Flamingo": {
+    "class": "backend.powers.templates.strict.TuckHandThenDrawEqualPerOpponentWetlandCubes",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Greater Prairie-Chicken": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Greater Roadrunner": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          50
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Green Bee-Eater": {
+    "class": "backend.powers.templates.strict.TuckTrayCardIfFoodCostIncludes",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ]
+      ]
+    }
+  },
+  "Green Heron": {
+    "class": "backend.powers.templates.unique.TradeFoodForAny",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Green Pheasant": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "any"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          true
+        ]
+      ]
+    }
+  },
+  "Green Pygmy-Goose": {
+    "class": "backend.powers.templates.strict.PinkEaredDuckDrawKeepGive",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Grey Butcherbird": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          40
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Grey Heron": {
+    "class": "backend.powers.templates.play_bird.PlaceBirdSideways",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Grey Shrikethrush": {
+    "class": "backend.powers.templates.strict.ResetFeederGainAllMayCacheAny",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ]
+      ]
+    }
+  },
+  "Grey Teal": {
+    "class": "backend.powers.templates.strict_more.LookAtDeckKeepHabitatBirdHandOrTuckDiscardRest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "look_count",
+          3
+        ],
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Grey Warbler": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          1
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Grey-Headed Mannikin": {
+    "class": "backend.powers.templates.strict.EndGamePlayBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "egg_discount",
+          1
+        ]
+      ]
+    }
+  },
+  "Greylag Goose": {
+    "class": "backend.powers.templates.unique.CountsDoubleForGoal",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Griffon Vulture": {
+    "class": "backend.powers.templates.strict.CacheRodentPerPredator",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Hawfinch": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Hermit Thrush": {
+    "class": "backend.powers.templates.unique.FewestBirdsGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ]
+      ]
+    }
+  },
+  "Himalayan Monal": {
+    "class": "backend.powers.templates.strict.AllPlayersGainFoodThenSelfFoodOrEggBonus",
+    "kwargs": {
+      "__dict__": [
+        [
+          "base_food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "base_count",
+          1
+        ],
+        [
+          "self_food_type",
+          null
+        ],
+        [
+          "self_food_count",
+          0
+        ],
+        [
+          "self_egg_bonus",
+          1
+        ]
+      ]
+    }
+  },
+  "Hooded Crow": {
+    "class": "backend.powers.templates.strict.TuckHandThenDrawEqualPerOpponentGrasslandCubes",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Hooded Merganser": {
+    "class": "backend.powers.templates.unique.RepeatPredatorPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Hooded Warbler": {
+    "class": "backend.powers.base.NoPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Horned Lark": {
+    "class": "backend.powers.templates.strict.PinkTuckFromHandOnPlayInHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "trigger_habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Horsfield's Bronze-Cuckoo": {
+    "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          null
+        ],
+        [
+          "wingspan_lt",
+          30
+        ],
+        [
+          "on_self",
+          false
+        ],
+        [
+          "require_another_bird",
+          false
+        ],
+        [
+          "target_overage",
+          0
+        ]
+      ]
+    }
+  },
+  "Horsfield's Bushlark": {
+    "class": "backend.powers.templates.strict_more.DiscardSpecificFoodThenLayEggOnSelfUpTo",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "max_eggs",
+          2
+        ]
+      ]
+    }
+  },
+  "House Crow": {
+    "class": "backend.powers.templates.strict.CacheWildOnEachBirdInRow",
+    "kwargs": {
+      "__dict__": [
+        [
+          "include_self",
+          true
+        ]
+      ]
+    }
+  },
+  "House Finch": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          1
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "House Sparrow": {
+    "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_discard",
+          5
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "tuck_per_discard",
+          1
+        ]
+      ]
+    }
+  },
+  "House Wren": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Ibisbill": {
+    "class": "backend.powers.templates.strict.AllPlayersDrawCardsWithSelfBonus",
+    "kwargs": {
+      "__dict__": [
+        [
+          "all_players_draw",
+          1
+        ],
+        [
+          "self_extra_draw",
+          1
+        ],
+        [
+          "all_players_food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "all_players_food_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Inca Dove": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:PLATFORM"
+              }
+            ]
+          }
+        ]
+      ]
+    }
+  },
+  "Indian Peafowl": {
+    "class": "backend.powers.templates.strict.AllPlayersDrawCardsWithSelfBonus",
+    "kwargs": {
+      "__dict__": [
+        [
+          "all_players_draw",
+          2
+        ],
+        [
+          "self_extra_draw",
+          1
+        ],
+        [
+          "all_players_food_type",
+          null
+        ],
+        [
+          "all_players_food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Indian Vulture": {
+    "class": "backend.powers.templates.unique.CopyNeighborBonusCard",
+    "kwargs": {
+      "__dict__": [
+        [
+          "direction",
+          "right"
+        ]
+      ]
+    }
+  },
+  "Indigo Bunting": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:FRUIT"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Juniper Titmouse": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
+  "Kea": {
+    "class": "backend.powers.templates.strict.KeaDrawBonusDiscardFoodForMoreKeepOne",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Kelp Gull": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Kererū": {
+    "class": "backend.powers.templates.strict_more.ConditionalNeighborHasFoodGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "direction",
+          "left"
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:NECTAR"
+          }
+        ],
+        [
+          "gain_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Killdeer": {
+    "class": "backend.powers.templates.special.DiscardEggForBenefit",
+    "kwargs": {
+      "__dict__": [
+        [
+          "egg_cost",
+          1
+        ],
+        [
+          "food_gain",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "card_gain",
+          2
+        ],
+        [
+          "require_other_bird",
+          false
+        ]
+      ]
+    }
+  },
+  "King Rail": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Korimako": {
+    "class": "backend.powers.templates.strict_more.DiscardFoodToGainOtherFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "discard_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "gain_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:NECTAR"
+          }
+        ],
+        [
+          "max_discard",
+          null
+        ]
+      ]
+    }
+  },
+  "Kākāpō": {
+    "class": "backend.powers.templates.strict.EndGameDrawBonusKeep",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          4
+        ],
+        [
+          "keep",
+          1
+        ]
+      ]
+    }
+  },
+  "Large-Billed Crow": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Laughing Kookaburra": {
+    "class": "backend.powers.templates.strict.ResetFeederGainOneFromOptions",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:FISH"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:RODENT"
+            }
+          ]
+        ],
+        [
+          "cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Lazuli Bunting": {
+    "class": "backend.powers.templates.strict.AllPlayersLayEggsSelfBonus",
+    "kwargs": {
+      "__dict__": [
+        [
+          "all_players_count",
+          1
+        ],
+        [
+          "self_bonus_count",
+          1
+        ],
+        [
+          "nest_filter",
+          {
+            "__enum__": "backend.models.enums:NestType:BOWL"
+          }
+        ],
+        [
+          "self_bonus_must_be_distinct_bird",
+          true
+        ]
+      ]
+    }
+  },
+  "Lesser Frigatebird": {
+    "class": "backend.powers.templates.strict.AllPlayersMayDiscardEggFromHabitatForWild",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Lesser Whitethroat": {
+    "class": "backend.powers.templates.strict.ChooseEgglessHabitatLayEggEachBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Lewin's Honeyeater": {
+    "class": "backend.powers.templates.strict_more.ChooseOtherPlayerBothGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:NECTAR"
+          }
+        ],
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
+  "Lincoln's Sparrow": {
+    "class": "backend.powers.templates.special.MoveBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Little Bustard": {
+    "class": "backend.powers.templates.strict.SnowyOwlBonusThenChoice",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Little Egret": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Little Grebe": {
+    "class": "backend.powers.templates.strict.DrawPerColumnBirdWithEggKeepOne",
+    "kwargs": {
+      "__dict__": [
+        [
+          "keep",
+          1
+        ]
+      ]
+    }
+  },
+  "Little Owl": {
+    "class": "backend.powers.templates.strict.StealSpecificFoodCacheThenTargetGainDieFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ]
+      ]
+    }
+  },
+  "Little Penguin": {
+    "class": "backend.powers.templates.tuck_cards.DrawDiscardCacheByFoodIcon",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw_count",
+          5
+        ],
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "cache_food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ]
+      ]
+    }
+  },
+  "Little Pied Cormorant": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:PLATFORM"
+              }
+            ]
+          }
+        ]
+      ]
+    }
+  },
+  "Little Ringed Plover": {
+    "class": "backend.powers.templates.strict_more.DiscardCardThenLayEggOnSelf",
+    "kwargs": {
+      "__dict__": [
+        [
+          "card_cost",
+          1
+        ],
+        [
+          "egg_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Loggerhead Shrike": {
+    "class": "backend.powers.templates.strict.PinkCacheRodentOnOpponentRodentGain",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Long-Tailed Tit": {
+    "class": "backend.powers.templates.play_bird.PlaceBirdSideways",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Magpie-Lark": {
+    "class": "backend.powers.templates.strict.EndGameMagpieLark",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Major Mitchell's Cockatoo": {
+    "class": "backend.powers.templates.strict.TuckFromHandThenAllPlayersGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ]
+      ]
+    }
+  },
+  "Mallard": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Malleefowl": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:GROUND"
+              }
+            ]
+          }
+        ]
+      ]
+    }
+  },
+  "Mandarin Duck": {
+    "class": "backend.powers.templates.strict.EndRoundMandarinDuck",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Maned Duck": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          3
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "food_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Many-Colored Fruit-Dove": {
+    "class": "backend.powers.templates.strict.AllPlayersGainFoodThenSelfFoodOrEggBonus",
+    "kwargs": {
+      "__dict__": [
+        [
+          "base_food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FRUIT"
+          }
+        ],
+        [
+          "base_count",
+          1
+        ],
+        [
+          "self_food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FRUIT"
+          }
+        ],
+        [
+          "self_food_count",
+          1
+        ],
+        [
+          "self_egg_bonus",
+          0
+        ]
+      ]
+    }
+  },
+  "Masked Lapwing": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          null
+        ],
+        [
+          "cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Mississippi Kite": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Mistletoebird": {
+    "class": "backend.powers.templates.strict_more.GainFoodOrDiscardSameGainOther",
+    "kwargs": {
+      "__dict__": [
+        [
+          "base_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FRUIT"
+          }
+        ],
+        [
+          "alternate_gain",
+          {
+            "__enum__": "backend.models.enums:FoodType:NECTAR"
+          }
+        ]
+      ]
+    }
+  },
+  "Moltoni's Warbler": {
+    "class": "backend.powers.templates.strict.ConditionalAllActionsPlayBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          null
+        ]
+      ]
+    }
+  },
+  "Montagu's Harrier": {
+    "class": "backend.powers.templates.play_bird.PlayOnTopPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Mountain Bluebird": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Mountain Chickadee": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
+  "Mourning Dove": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "self"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Musk Duck": {
+    "class": "backend.powers.templates.strict.WillieWagtailDrawTrayNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "allowed_nests",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:GROUND"
+              },
+              {
+                "__enum__": "backend.models.enums:NestType:WILD"
+              }
+            ]
+          }
+        ],
+        [
+          "allow_reset",
+          true
+        ],
+        [
+          "allow_refill",
+          true
+        ]
+      ]
+    }
+  },
+  "Mute Swan": {
+    "class": "backend.powers.templates.strict.ChooseBirdsInHabitatTuckFromHandEach",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_targets",
+          3
+        ],
+        [
+          "draw_if_tucked",
+          1
+        ]
+      ]
+    }
+  },
+  "New Holland Honeyeater": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:NECTAR"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Noisy Miner": {
+    "class": "backend.powers.templates.strict.NoisyMinerTuckLayOthersLayEgg",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "North Island Brown Kiwi": {
+    "class": "backend.powers.templates.strict.NorthIslandBrownKiwiDiscardBonusDrawKeep",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          4
+        ],
+        [
+          "keep",
+          2
+        ]
+      ]
+    }
+  },
+  "Northern Bobwhite": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "self"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Northern Cardinal": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:FRUIT"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Northern Flicker": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Northern Gannet": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Northern Goshawk": {
+    "class": "backend.powers.templates.unique.TuckToPayCost",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Northern Harrier": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          75
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Northern Mockingbird": {
+    "class": "backend.powers.templates.special.RepeatPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Northern Shoveler": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ]
+      ]
+    }
+  },
+  "Olive-Backed Sunbird": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:WILD"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Orange-Footed Scrubfowl": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:GROUND"
+              }
+            ]
+          }
+        ]
+      ]
+    }
+  },
+  "Oriental Bay-Owl": {
+    "class": "backend.powers.templates.unique.ActivateAllPredators",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Oriental Magpie-Robin": {
+    "class": "backend.powers.templates.strict.PerThreeEggsInHabitatGainSeedOrInvertThenCache",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ],
+        [
+          "max_cache",
+          2
+        ]
+      ]
+    }
+  },
+  "Osprey": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:FISH"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Pacific Black Duck": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnSelfPerTwoEggsInHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Painted Bunting": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Painted Whitestart": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Parrot Crossbill": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:SEED"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Peaceful Dove": {
+    "class": "backend.powers.templates.strict_more.DiscardFoodToLayEggOnSelf",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "max_discard",
+          null
+        ]
+      ]
+    }
+  },
+  "Peregrine Falcon": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          100
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Pesquet's Parrot": {
+    "class": "backend.powers.templates.strict_more.ConditionalNeighborHasFoodGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "direction",
+          "right"
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:NECTAR"
+          }
+        ],
+        [
+          "gain_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Pheasant Coucal": {
+    "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          null
+        ],
+        [
+          "wingspan_lt",
+          null
+        ],
+        [
+          "on_self",
+          true
+        ],
+        [
+          "require_another_bird",
+          false
+        ],
+        [
+          "target_overage",
+          0
+        ]
+      ]
+    }
+  },
+  "Philippine Eagle": {
+    "class": "backend.powers.templates.strict.PhilippineEagleRodentBonus",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Pied-Billed Grebe": {
+    "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Pileated Woodpecker": {
+    "class": "backend.powers.templates.strict.AllPlayersLayEggsSelfBonus",
+    "kwargs": {
+      "__dict__": [
+        [
+          "all_players_count",
+          1
+        ],
+        [
+          "self_bonus_count",
+          1
+        ],
+        [
+          "nest_filter",
+          {
+            "__enum__": "backend.models.enums:NestType:CAVITY"
+          }
+        ],
+        [
+          "self_bonus_must_be_distinct_bird",
+          true
+        ]
+      ]
+    }
+  },
+  "Pine Siskin": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "food_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Pink-Eared Duck": {
+    "class": "backend.powers.templates.strict.PinkEaredDuckDrawKeepGive",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Plains-Wanderer": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Plumbeous Redstart": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Princess Stephanie's Astrapia": {
+    "class": "backend.powers.templates.strict_more.ChooseOtherPlayerBothLayEgg",
+    "kwargs": {
+      "__dict__": [
+        [
+          "eggs_each",
+          1
+        ]
+      ]
+    }
+  },
+  "Prothonotary Warbler": {
+    "class": "backend.powers.base.NoPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Purple Gallinule": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ]
+      ]
+    }
+  },
+  "Purple Heron": {
+    "class": "backend.powers.templates.strict.PushYourLuckPredatorDiceCache",
+    "kwargs": {
+      "__dict__": [
+        [
+          "dice_count",
+          2
+        ],
+        [
+          "target_foods",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:FoodType:FISH"
+              },
+              {
+                "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+              }
+            ]
+          }
+        ],
+        [
+          "cache_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "max_rolls",
+          3
+        ],
+        [
+          "cache_per_hit",
+          1
+        ]
+      ]
+    }
+  },
+  "Purple Martin": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          1
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Pygmy Nuthatch": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "food_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Pūkeko": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "any"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Rainbow Lorikeet": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:NECTAR"
+            }
+          ]
+        ],
+        [
+          "count",
+          2
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Red Avadavat": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          2
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Red Crossbill": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:SEED"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Red Junglefowl": {
+    "class": "backend.powers.templates.strict.LayEggOnSelfIfTotalEggsBelow",
+    "kwargs": {
+      "__dict__": [
+        [
+          "threshold",
+          6
+        ],
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
+  "Red Kite": {
+    "class": "backend.powers.templates.play_bird.PlayOnTopPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Red Knot": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Red Wattlebird": {
+    "class": "backend.powers.templates.strict_more.GainFoodPerBirdWingspanInHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:NECTAR"
+          }
+        ],
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ],
+        [
+          "max_wingspan_exclusive",
+          49
+        ]
+      ]
+    }
+  },
+  "Red-Backed Fairywren": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:WILD"
+              }
+            ]
+          }
+        ]
+      ]
+    }
+  },
+  "Red-Backed Shrike": {
+    "class": "backend.powers.templates.strict.StealSpecificFoodCacheThenTargetGainDieFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ]
+      ]
+    }
+  },
+  "Red-Bellied Woodpecker": {
+    "class": "backend.powers.templates.strict.RedBelliedWoodpeckerSeedFromFeeder",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Red-Breasted Merganser": {
+    "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Red-Breasted Nuthatch": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
+  "Red-Capped Robin": {
+    "class": "backend.powers.templates.strict_more.ConditionalNeighborHasFoodGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "direction",
+          "left"
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "gain_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Red-Cockaded Woodpecker": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Red-Crowned Crane": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Red-Eyed Vireo": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Red-Headed Woodpecker": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ]
+      ]
+    }
+  },
+  "Red-Legged Partridge": {
+    "class": "backend.powers.templates.lay_eggs.LayEggsEachBirdInRow",
+    "kwargs": {
+      "__dict__": [
+        [
+          "include_column",
+          true
+        ]
+      ]
+    }
+  },
+  "Red-Necked Avocet": {
+    "class": "backend.powers.templates.strict_more.ConditionalNeighborHasFoodGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "direction",
+          "left_or_right"
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "gain_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Red-Shouldered Hawk": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          75
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Red-Tailed Hawk": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          75
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Red-Vented Bulbul": {
+    "class": "backend.powers.templates.strict_more.IfHasFoodLayEggOnSelf",
+    "kwargs": {
+      "__dict__": [
+        [
+          "required_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FRUIT"
+          }
+        ],
+        [
+          "egg_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Red-Wattled Lapwing": {
+    "class": "backend.powers.templates.strict.RedWattledLapwingDiscardTrayLayEgg",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Red-Winged Blackbird": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          1
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Red-Winged Parrot": {
+    "class": "backend.powers.templates.strict_more.GiveFoodToOtherThenEggsOrDie",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:NECTAR"
+          }
+        ],
+        [
+          "give_count",
+          1
+        ],
+        [
+          "reward_count",
+          2
+        ]
+      ]
+    }
+  },
+  "Regent Bowerbird": {
+    "class": "backend.powers.templates.strict_more.ChooseOtherPlayerBothGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
+  "Rhinoceros Auklet": {
+    "class": "backend.powers.templates.strict.RollDiceCacheThenAllPlayersMayDiscardCardGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "dice_count",
+          2
+        ],
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ]
+      ]
+    }
+  },
+  "Ring-Billed Gull": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          1
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Rock Pigeon": {
+    "class": "backend.powers.templates.strict.AllPlayersLayEggsSelfBonus",
+    "kwargs": {
+      "__dict__": [
+        [
+          "all_players_count",
+          1
+        ],
+        [
+          "self_bonus_count",
+          1
+        ],
+        [
+          "nest_filter",
+          null
+        ]
+      ]
+    }
+  },
+  "Rook": {
+    "class": "backend.powers.templates.strict_more.CacheAnyFoodOrTuckFromHandThenTuckDeck",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Rose-Breasted Grosbeak": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:SEED"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:FRUIT"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Rose-Ringed Parakeet": {
+    "class": "backend.powers.templates.unique.CopyNeighborWhitePower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Roseate Spoonbill": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Rosy Starling": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          3
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "food_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Royal Spoonbill": {
+    "class": "backend.powers.templates.strict.WillieWagtailDrawTrayNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "allowed_nests",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:PLATFORM"
+              },
+              {
+                "__enum__": "backend.models.enums:NestType:WILD"
+              }
+            ]
+          }
+        ],
+        [
+          "allow_reset",
+          true
+        ],
+        [
+          "allow_refill",
+          true
+        ]
+      ]
+    }
+  },
+  "Ruby-Crowned Kinglet": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Ruby-Throated Hummingbird": {
+    "class": "backend.powers.templates.strict.EachPlayerGainDieFromFeederStartingChoice",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Ruddy Duck": {
+    "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Ruddy Shelduck": {
+    "class": "backend.powers.templates.strict.DrawKeepTuckDiscard",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw_count",
+          5
+        ],
+        [
+          "keep_count",
+          1
+        ],
+        [
+          "tuck_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Ruff": {
+    "class": "backend.powers.templates.strict.TuckFromHandThenDrawEqual",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_tuck",
+          3
+        ]
+      ]
+    }
+  },
+  "Rufous Night-Heron": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          75
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Rufous Owl": {
+    "class": "backend.powers.templates.strict.TuckTrayCardByMaxWingspan",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_wingspan_cm",
+          75
+        ]
+      ]
+    }
+  },
+  "Rufous-Banded Honeyeater": {
+    "class": "backend.powers.templates.strict_more.DiscardFoodToGainOtherFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "discard_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "gain_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:NECTAR"
+          }
+        ],
+        [
+          "max_discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Sacred Kingfisher": {
+    "class": "backend.powers.templates.strict.PinkGainFoodFromFeederOnGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:FISH"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:RODENT"
+            }
+          ]
+        ]
+      ]
+    }
+  },
+  "Sandhill Crane": {
+    "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "max_discard",
+          1
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "tuck_per_discard",
+          2
+        ]
+      ]
+    }
+  },
+  "Sarus Crane": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ]
+      ]
+    }
+  },
+  "Satyr Tragopan": {
+    "class": "backend.powers.templates.strict_more.GiveCardToOtherThenLayEggOnSelf",
+    "kwargs": {
+      "__dict__": [
+        [
+          "give_count",
+          1
+        ],
+        [
+          "egg_count",
+          2
+        ]
+      ]
+    }
+  },
+  "Savannah Sparrow": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Savi's Warbler": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          2
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Say's Phoebe": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:BOWL"
+              }
+            ]
+          }
+        ]
+      ]
+    }
+  },
+  "Scaled Quail": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "self"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Scaly-Breasted Munia": {
+    "class": "backend.powers.templates.strict.GainSeedFromSupplyOrTuckFromDeck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ]
+      ]
+    }
+  },
+  "Scissor-Tailed Flycatcher": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Short-Toed Treecreeper": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Silvereye": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:NECTAR"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Small Minivet": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ],
+        [
+          "food_discount",
+          1
+        ],
+        [
+          "egg_discount",
+          1
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Smew": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          4
+        ],
+        [
+          "keep",
+          4
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Snow Bunting": {
+    "class": "backend.powers.templates.strict.PinkTuckFromHandThenDrawOnOpponentTuck",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Snowy Egret": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Snowy Owl": {
+    "class": "backend.powers.templates.strict.SnowyOwlBonusThenChoice",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Song Sparrow": {
+    "class": "backend.powers.templates.special.MoveBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "South Island Robin": {
+    "class": "backend.powers.templates.unique.ConditionalCacheFromNeighbor",
+    "kwargs": {
+      "__dict__": [
+        [
+          "direction",
+          "right"
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ]
+      ]
+    }
+  },
+  "Southern Cassowary": {
+    "class": "backend.powers.templates.unique.SouthernCassowaryPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Spangled Drongo": {
+    "class": "backend.powers.templates.strict.PinkGainNectarOnOpponentNectarGain",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Splendid Fairywren": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnMatchingWingspan",
+    "kwargs": {
+      "__dict__": [
+        [
+          "min_cm",
+          null
+        ],
+        [
+          "max_cm",
+          30
+        ]
+      ]
+    }
+  },
+  "Spoon-Billed Sandpiper": {
+    "class": "backend.powers.templates.strict.SpoonBilledSandpiperDrawBonusOthersMayDiscardTwo",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Spotless Crake": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnEachBirdInHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Spotted Dove": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          3
+        ],
+        [
+          "keep",
+          3
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Spotted Owl": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Spotted Sandpiper": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ]
+      ]
+    }
+  },
+  "Spotted Towhee": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:SEED"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Sprague's Pipit": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Squacco Heron": {
+    "class": "backend.powers.templates.strict.DrawTrayCardByHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "Sri Lanka Blue-Magpie": {
+    "class": "backend.powers.templates.strict.CacheWildOnEachOtherBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Sri Lanka Frogmouth": {
+    "class": "backend.powers.templates.strict.RollDiceCacheThenAllPlayersMayDiscardCardGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "dice_count",
+          1
+        ],
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ]
+      ]
+    }
+  },
+  "Steller's Jay": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ]
+      ]
+    }
+  },
+  "Stork-Billed Kingfisher": {
+    "class": "backend.powers.templates.strict_more.RollOneDiePerBirdInHabitatIfAnyTargetGainMayCache",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:WETLAND"
+          }
+        ],
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "gain_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ]
+      ]
+    }
+  },
+  "Stubble Quail": {
+    "class": "backend.powers.templates.strict_more.DiscardFoodToLayEggOnSelf",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:WILD"
+          }
+        ],
+        [
+          "max_discard",
+          6
+        ]
+      ]
+    }
+  },
+  "Sulphur-Crested Cockatoo": {
+    "class": "backend.powers.templates.strict.TuckFromHandThenAllPlayersGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:NECTAR"
+          }
+        ]
+      ]
+    }
+  },
+  "Superb Lyrebird": {
+    "class": "backend.powers.templates.special.CopyNeighborBrownPower",
+    "kwargs": {
+      "__dict__": [
+        [
+          "direction",
+          "right"
+        ],
+        [
+          "target_habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ]
+      ]
+    }
+  },
+  "Swainson's Hawk": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          75
+        ],
+        [
+          "wingspan_cmp",
+          "lt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          null
+        ],
+        [
+          "cache_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Tawny Frogmouth": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "cache",
+          true
+        ]
+      ]
+    }
+  },
+  "Thekla's Lark": {
+    "class": "backend.powers.templates.strict_more.DiscardSpecificFoodThenLayEggOnSelfUpTo",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "max_eggs",
+          2
+        ]
+      ]
+    }
+  },
+  "Tree Swallow": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          1
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Trumpeter Finch": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ],
+        [
+          "food_discount",
+          1
+        ],
+        [
+          "egg_discount",
+          1
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Trumpeter Swan": {
+    "class": "backend.powers.base.NoPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Tufted Titmouse": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
+  "Turkey Vulture": {
+    "class": "backend.powers.templates.strict.PinkPredatorSuccessGainDie",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Twite": {
+    "class": "backend.powers.templates.strict.DrawThenTuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw_count",
+          2
+        ],
+        [
+          "max_tuck",
+          2
+        ]
+      ]
+    }
+  },
+  "Tūī": {
+    "class": "backend.powers.templates.special.CopyNeighborBrownPower",
+    "kwargs": {
+      "__dict__": [
+        [
+          "direction",
+          "left"
+        ],
+        [
+          "target_habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ]
+      ]
+    }
+  },
+  "Vaux's Swift": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "food_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Verditer Flycatcher": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:FRUIT"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "Violet Cuckoo": {
+    "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          null
+        ],
+        [
+          "wingspan_lt",
+          30
+        ],
+        [
+          "on_self",
+          false
+        ],
+        [
+          "require_another_bird",
+          true
+        ],
+        [
+          "target_overage",
+          2
+        ]
+      ]
+    }
+  },
+  "Violet-Green Swallow": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          1
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Wedge-Tailed Eagle": {
+    "class": "backend.powers.templates.predator.PredatorLookAt",
+    "kwargs": {
+      "__dict__": [
+        [
+          "wingspan_threshold",
+          65
+        ],
+        [
+          "wingspan_cmp",
+          "gt"
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_cost_includes",
+          {
+            "__set__": []
+          }
+        ],
+        [
+          "cache_food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Welcome Swallow": {
+    "class": "backend.powers.templates.strict_more.TuckFromDeckBehindEachBirdInHabitat",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Western Meadowlark": {
+    "class": "backend.powers.templates.strict.AllPlayersLayEggsSelfBonus",
+    "kwargs": {
+      "__dict__": [
+        [
+          "all_players_count",
+          1
+        ],
+        [
+          "self_bonus_count",
+          1
+        ],
+        [
+          "nest_filter",
+          {
+            "__enum__": "backend.models.enums:NestType:GROUND"
+          }
+        ],
+        [
+          "self_bonus_must_be_distinct_bird",
+          true
+        ]
+      ]
+    }
+  },
+  "Western Tanager": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            },
+            {
+              "__enum__": "backend.models.enums:FoodType:FRUIT"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "White Stork": {
+    "class": "backend.powers.templates.strict.WhiteStorkResetTrayThenDraw",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "White Wagtail": {
+    "class": "backend.powers.templates.strict.ConditionalAllActionsPlayBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          null
+        ]
+      ]
+    }
+  },
+  "White-Backed Woodpecker": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          null
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "may_cache",
+          false
+        ]
+      ]
+    }
+  },
+  "White-Bellied Sea-Eagle": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "cache",
+          true
+        ]
+      ]
+    }
+  },
+  "White-Breasted Nuthatch": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
+  "White-Breasted Woodswallow": {
+    "class": "backend.powers.templates.strict.EndGameLayEggOnEachBirdInHabitat",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:GRASSLAND"
+          }
+        ]
+      ]
+    }
+  },
+  "White-Browed Tit-Warbler": {
+    "class": "backend.powers.templates.strict_more.PerEggedBirdInHabitatRollDieGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat",
+          {
+            "__enum__": "backend.models.enums:Habitat:FOREST"
+          }
+        ]
+      ]
+    }
+  },
+  "White-Crested Laughingthrush": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "food_count",
+          1
+        ]
+      ]
+    }
+  },
+  "White-Crowned Sparrow": {
+    "class": "backend.powers.templates.special.MoveBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "White-Faced Heron": {
+    "class": "backend.powers.templates.strict.ResetFeederGainAllMayCacheAny",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ]
+      ]
+    }
+  },
+  "White-Faced Ibis": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "White-Headed Duck": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          3
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "White-Throated Dipper": {
+    "class": "backend.powers.templates.strict.WhiteStorkResetTrayThenDraw",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "White-Throated Kingfisher": {
+    "class": "backend.powers.templates.strict.PushYourLuckPredatorDiceCache",
+    "kwargs": {
+      "__dict__": [
+        [
+          "dice_count",
+          1
+        ],
+        [
+          "target_foods",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:FoodType:FISH"
+              },
+              {
+                "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+              },
+              {
+                "__enum__": "backend.models.enums:FoodType:RODENT"
+              }
+            ]
+          }
+        ],
+        [
+          "cache_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "max_rolls",
+          3
+        ],
+        [
+          "cache_per_hit",
+          1
+        ]
+      ]
+    }
+  },
+  "White-Throated Swift": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          1
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Whooping Crane": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Wild Turkey": {
+    "class": "backend.powers.base.NoPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Willet": {
+    "class": "backend.powers.templates.predator.PredatorDice",
+    "kwargs": {
+      "__dict__": [
+        [
+          "target_food",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "cache_count",
+          1
+        ]
+      ]
+    }
+  },
+  "Willie-Wagtail": {
+    "class": "backend.powers.templates.strict.WillieWagtailDrawTrayNest",
+    "kwargs": {
+      "__dict__": [
+        [
+          "allowed_nests",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:BOWL"
+              },
+              {
+                "__enum__": "backend.models.enums:NestType:WILD"
+              }
+            ]
+          }
+        ],
+        [
+          "allow_reset",
+          true
+        ],
+        [
+          "allow_refill",
+          true
+        ]
+      ]
+    }
+  },
+  "Willow Tit": {
+    "class": "backend.powers.templates.strict.WillowTitCacheOneFromFeederOptionalResetOnAllSame",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Wilson's Snipe": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          true
+        ]
+      ]
+    }
+  },
+  "Wilson's Storm Petrel": {
+    "class": "backend.powers.templates.strict.DrawPerEmptySlotThenKeepOneAtEndTurn",
+    "kwargs": {
+      "__dict__": [
+        [
+          "keep",
+          1
+        ]
+      ]
+    }
+  },
+  "Wood Duck": {
+    "class": "backend.powers.templates.strict.DrawThenEndTurnDiscardFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "discard",
+          1
+        ]
+      ]
+    }
+  },
+  "Wood Stork": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Wrybill": {
+    "class": "backend.powers.templates.unique.RetrieveDiscardedBonusCard",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Yellow Bittern": {
+    "class": "backend.powers.templates.strict.DrawMiddleTrayCard",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Yellow-Bellied Sapsucker": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
+  "Yellow-Billed Cuckoo": {
+    "class": "backend.powers.templates.strict.PinkLayEggOnTrigger",
+    "kwargs": {
+      "__dict__": [
+        [
+          "nest_types",
+          {
+            "__set__": [
+              {
+                "__enum__": "backend.models.enums:NestType:BOWL"
+              }
+            ]
+          }
+        ],
+        [
+          "wingspan_lt",
+          null
+        ],
+        [
+          "on_self",
+          false
+        ],
+        [
+          "require_another_bird",
+          false
+        ],
+        [
+          "target_overage",
+          0
+        ]
+      ]
+    }
+  },
+  "Yellow-Breasted Chat": {
+    "class": "backend.powers.templates.special.MoveBird",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
+  "Yellow-Headed Blackbird": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          1
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Yellow-Rumped Warbler": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          1
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
+  "Yellowhammer": {
+    "class": "backend.powers.templates.strict.ConditionalAllActionsPlayBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          null
+        ]
+      ]
+    }
+  },
+  "Zebra Dove": {
+    "class": "backend.powers.templates.strict.AllPlayersMayDiscardFoodToLayEgg",
+    "kwargs": {
+      "__dict__": [
+        [
+          "discard_food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "nest_filter",
+          null
+        ]
+      ]
+    }
+  }
+}

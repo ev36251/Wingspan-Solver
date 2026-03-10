@@ -69,6 +69,18 @@ def _init_deck_cards(game: GameState, bird_reg) -> None:
     game.deck_tracker.reset_from_cards(deck)
 
 
+def _init_bonus_cards(game: GameState, bonus_reg) -> None:
+    """Build a concrete bonus deck list from unseen/unowned bonus cards."""
+    used_names = set()
+    for p in game.players:
+        used_names.update(bc.name for bc in p.bonus_cards)
+
+    deck = [bc for bc in bonus_reg.all_cards if bc.name not in used_names]
+    random.shuffle(deck)
+    setattr(game, "_bonus_cards", deck)
+    setattr(game, "_bonus_discard_cards", [])
+
+
 def _draw_from_game_deck(game: GameState):
     deck = getattr(game, "_deck_cards", None)
     if not isinstance(deck, list):
@@ -154,6 +166,7 @@ def _move_matches(solver_desc: str, action_desc: str) -> bool:
 @router.post("", status_code=201)
 async def create_game(req: CreateGameRequest) -> dict:
     bird_reg = get_bird_registry()
+    bonus_reg = get_bonus_registry()
     goal_reg = get_goal_registry()
 
     round_goals = None
@@ -181,6 +194,7 @@ async def create_game(req: CreateGameRequest) -> dict:
         strict_rules_mode=req.strict_rules_mode,
     )
     _init_deck_cards(game, bird_reg)
+    _init_bonus_cards(game, bonus_reg)
     _refill_tray(game)
 
     game_id = uuid.uuid4().hex[:8]
@@ -309,12 +323,35 @@ async def update_game_state(game_id: str, state: GameStateSchema) -> dict:
     game.round_goal_scores = state.round_goal_scores
     game.strict_rules_mode = state.strict_rules_mode
     _init_deck_cards(game, bird_reg)
-    # Preserve externally provided deck_remaining when no deck model is needed.
+    _init_bonus_cards(game, bonus_reg)
+    # Preserve externally provided deck_remaining and keep it consistent with
+    # the internal concrete deck model when possible.
     if state.deck_remaining >= 0:
-        game.deck_remaining = min(game.deck_remaining, state.deck_remaining)
-        modeled_len = len(getattr(game, "_deck_cards", []))
-        if state.deck_remaining != modeled_len:
-            # External state edited deck count without concrete identities.
+        requested_remaining = int(state.deck_remaining)
+        deck_cards = getattr(game, "_deck_cards", None)
+        modeled_len = len(deck_cards) if isinstance(deck_cards, list) else 0
+
+        if isinstance(deck_cards, list):
+            if requested_remaining < modeled_len:
+                # Keep only the number of identities the edited state says remain.
+                del deck_cards[requested_remaining:]
+                modeled_len = len(deck_cards)
+            elif requested_remaining > modeled_len:
+                # Cannot invent concrete identities for extra hidden cards.
+                # Switch to count-only deck mode for future draws.
+                setattr(game, "_deck_cards", None)
+                deck_cards = None
+                modeled_len = 0
+
+        if isinstance(deck_cards, list):
+            game.deck_remaining = modeled_len
+            if game.deck_tracker is not None:
+                game.deck_tracker.reset_from_cards(deck_cards)
+        else:
+            game.deck_remaining = max(0, requested_remaining)
+
+        if requested_remaining != modeled_len:
+            # External state edited deck count without matching identities.
             # Disable composition-aware estimates rather than using stale stats.
             game.deck_tracker = None
 

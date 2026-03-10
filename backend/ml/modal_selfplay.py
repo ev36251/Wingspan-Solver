@@ -30,12 +30,14 @@ Notes:
       value-blend 1.0) ≈ $0.0001 per game.  200 games ≈ $0.02 / iteration.
     - The model weights (~9 MB) are serialised into each task dict; no Volume
       is required for inference weights.
-    - Output JSONL files are returned as strings and written to local disk by
-      the coordinator; only the local machine needs persistent storage.
+    - Output JSONL files are returned as gzip-compressed bytes and written to
+      local disk by the coordinator; only the local machine needs persistent
+      storage.
 """
 
 from __future__ import annotations
 
+import gzip
 import json
 from pathlib import Path
 
@@ -92,10 +94,9 @@ if _MODAL_AVAILABLE:
             task["model_bytes"]: bytes  — raw content of the .npz model file.
 
         Returns:
-            {"jsonl_content": str, "meta": dict}
+            {"jsonl_gz": bytes, "meta": dict}
         """
         import os
-        import sys
         import tempfile
 
         # Single-threaded BLAS to avoid overhead on tiny GEMV ops
@@ -132,6 +133,8 @@ if _MODAL_AVAILABLE:
                     mcts_sims=task["mcts_sims"],
                     c_puct=task["c_puct"],
                     value_blend=task["value_blend"],
+                    root_dirichlet_epsilon=task.get("root_dirichlet_epsilon", 0.25),
+                    root_dirichlet_alpha=task.get("root_dirichlet_alpha", 0.3),
                     rollout_policy=task["rollout_policy"],
                     temperature_cutoff=task["temperature_cutoff"],
                     seed=task["seed"],
@@ -139,6 +142,7 @@ if _MODAL_AVAILABLE:
                     strict_rules_mode=task["strict_rules_mode"],
                     value_target_score_scale=task["value_target_score_scale"],
                     value_target_score_bias=task["value_target_score_bias"],
+                    tie_value_target=task.get("tie_value_target", 0.5),
                     enable_identity_features=task.get("enable_identity_features"),
                     identity_hash_dim=task.get("identity_hash_dim"),
                     use_per_slot_encoding=task.get("use_per_slot_encoding"),
@@ -146,15 +150,17 @@ if _MODAL_AVAILABLE:
                     use_tray_per_slot_encoding=task.get("use_tray_per_slot_encoding"),
                     use_opponent_board_encoding=task.get("use_opponent_board_encoding"),
                     use_power_features=task.get("use_power_features"),
+                    fail_on_game_exception=bool(task.get("fail_on_game_exception", False)),
                 )
 
-                with open(out_jsonl, "r", encoding="utf-8") as f:
-                    jsonl_content = f.read()
+                with open(out_jsonl, "rb") as f:
+                    # Compress JSONL payload to reduce Modal result transfer overhead.
+                    jsonl_gz = gzip.compress(f.read(), compresslevel=6)
 
         finally:
             os.unlink(model_tmp.name)
 
-        return {"jsonl_content": jsonl_content, "meta": meta}
+        return {"jsonl_gz": jsonl_gz, "meta": meta}
 
 
 # ---------------------------------------------------------------------------
@@ -202,8 +208,16 @@ def dispatch_shards_modal(
     # Run all shards in parallel on Modal; .map() returns results in order.
     # app.run() registers the ephemeral app with Modal's servers so the
     # function can be hydrated and called from this local Python process.
+    remote_fn = run_az_shard_remote
+    requested_cpu = max(1, int(cpu_per_worker))
+    if requested_cpu != 2:
+        remote_fn = remote_fn.with_options(cpu=requested_cpu)
+
+    results: list[dict] | None = None
     with modal.enable_output(), app.run():
-        results = list(run_az_shard_remote.map(remote_tasks))
+        results = list(remote_fn.map(remote_tasks))
+    if results is None:
+        raise RuntimeError("Modal shard dispatch returned no results (run may have been interrupted).")
 
     # Write JSONL content to the local paths that _merge_az_shards expects
     out = []
@@ -211,7 +225,12 @@ def dispatch_shards_modal(
         jsonl_path = task["out_jsonl"]
         meta_path = task["out_meta"]
         Path(jsonl_path).parent.mkdir(parents=True, exist_ok=True)
-        Path(jsonl_path).write_text(result["jsonl_content"], encoding="utf-8")
+        payload = result.get("jsonl_gz")
+        if isinstance(payload, (bytes, bytearray)):
+            Path(jsonl_path).write_bytes(gzip.decompress(bytes(payload)))
+        else:
+            # Backward-compat fallback for older remote response schema.
+            Path(jsonl_path).write_text(str(result.get("jsonl_content", "")), encoding="utf-8")
         Path(meta_path).write_text(
             json.dumps(result["meta"], indent=2), encoding="utf-8"
         )

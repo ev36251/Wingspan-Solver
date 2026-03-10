@@ -2,6 +2,7 @@
 
 from backend.models.enums import FoodType
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
+from backend.powers.choices import consume_power_choice
 
 
 def _food_pressure_factor(ctx: PowerContext) -> float:
@@ -43,21 +44,80 @@ class GainFoodFromSupply(PowerEffect):
         self.all_players = all_players
         self.you_also = you_also  # If all_players, active player gains extra
 
+    @staticmethod
+    def _parse_food_choice(raw: str | None) -> FoodType | None:
+        if not raw:
+            return None
+        norm = str(raw).strip().lower()
+        for ft in (
+            FoodType.INVERTEBRATE,
+            FoodType.SEED,
+            FoodType.FISH,
+            FoodType.FRUIT,
+            FoodType.RODENT,
+            FoodType.NECTAR,
+        ):
+            if norm in {ft.value, ft.name.lower()}:
+                return ft
+        return None
+
+    @staticmethod
+    def _choose_wild_food(ctx: PowerContext, player, preferred: FoodType | None = None) -> FoodType:
+        options = [
+            FoodType.INVERTEBRATE,
+            FoodType.SEED,
+            FoodType.FISH,
+            FoodType.FRUIT,
+            FoodType.RODENT,
+        ]
+        if ctx.game_state.board_type.value == "oceania":
+            options.append(FoodType.NECTAR)
+
+        if preferred in options:
+            return preferred
+        # Deterministic fallback: choose currently scarcest food in this supply.
+        return min(options, key=lambda ft: (player.food_supply.get(ft), ft.value))
+
+    def _resolve_food_type(
+        self,
+        ctx: PowerContext,
+        player,
+        food_type: FoodType,
+        preferred_wild: FoodType | None = None,
+    ) -> FoodType:
+        if food_type != FoodType.WILD:
+            return food_type
+        return self._choose_wild_food(ctx, player, preferred=preferred_wild)
+
     def execute(self, ctx: PowerContext) -> PowerResult:
         gained = {}
+        choice = consume_power_choice(ctx.game_state, ctx.player.name, ctx.bird.name) if ctx.bird else None
+        preferred_wild = None
+        if isinstance(choice, dict):
+            preferred_wild = self._parse_food_choice(choice.get("food_type"))
+
         if self.all_players:
             for p in ctx.game_state.players:
                 for ft in self.food_types:
-                    p.food_supply.add(ft, self.count)
+                    resolved = self._resolve_food_type(
+                        ctx,
+                        p,
+                        ft,
+                        preferred_wild=preferred_wild if p.name == ctx.player.name else None,
+                    )
+                    p.food_supply.add(resolved, self.count)
+                    if p.name == ctx.player.name:
+                        gained[resolved] = gained.get(resolved, 0) + self.count
             if self.you_also:
                 for ft in self.food_types:
-                    ctx.player.food_supply.add(ft, 1)
-            for ft in self.food_types:
-                gained[ft] = self.count
+                    resolved = self._resolve_food_type(ctx, ctx.player, ft, preferred_wild=preferred_wild)
+                    ctx.player.food_supply.add(resolved, 1)
+                    gained[resolved] = gained.get(resolved, 0) + 1
         else:
             for ft in self.food_types:
-                ctx.player.food_supply.add(ft, self.count)
-                gained[ft] = self.count
+                resolved = self._resolve_food_type(ctx, ctx.player, ft, preferred_wild=preferred_wild)
+                ctx.player.food_supply.add(resolved, self.count)
+                gained[resolved] = gained.get(resolved, 0) + self.count
 
         return PowerResult(food_gained=gained,
                            description=f"Gained {gained} from supply")

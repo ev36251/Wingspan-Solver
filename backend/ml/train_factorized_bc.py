@@ -113,11 +113,55 @@ def _load_as_arrays(
     if n_rows == 0:
         raise ValueError(f"Empty dataset: {path}")
 
+    def _parse_sparse_soft_target(
+        payload: object,
+        dim: int,
+        fallback_idx: int,
+    ) -> np.ndarray:
+        arr = np.zeros(dim, dtype=np.float32)
+        parsed_any = False
+        if isinstance(payload, dict):
+            for k, v in payload.items():
+                try:
+                    idx = int(k)
+                    prob = float(v)
+                except Exception:
+                    continue
+                if 0 <= idx < dim and prob > 0.0:
+                    arr[idx] += prob
+                    parsed_any = True
+        elif isinstance(payload, list):
+            for item in payload:
+                if not isinstance(item, (list, tuple)) or len(item) != 2:
+                    continue
+                try:
+                    idx = int(item[0])
+                    prob = float(item[1])
+                except Exception:
+                    continue
+                if 0 <= idx < dim and prob > 0.0:
+                    arr[idx] += prob
+                    parsed_any = True
+        if parsed_any:
+            s = float(arr.sum())
+            if s > 1e-9:
+                arr /= s
+                return arr
+        arr[:] = 0.0
+        arr[int(np.clip(fallback_idx, 0, dim - 1))] = 1.0
+        return arr
+
     # Pre-allocate compact arrays
     states = np.empty((n_rows, feature_dim), dtype=np.float32)
     targets = {hn: np.zeros(n_rows, dtype=np.int64) for hn in head_names}
+    policy_targets = {
+        hn: np.zeros((n_rows, int(meta["target_heads"][hn])), dtype=np.float32)
+        for hn in head_names
+    }
     value_targets = np.zeros(n_rows, dtype=np.float32)
     has_value = np.zeros(n_rows, dtype=np.bool_)
+    win_value_targets = np.zeros(n_rows, dtype=np.float32)
+    has_win_value = np.zeros(n_rows, dtype=np.bool_)
     is_rl = np.zeros(n_rows, dtype=np.bool_)
     rl_advantage = np.ones(n_rows, dtype=np.float32)
     has_move = np.zeros(n_rows, dtype=np.bool_)
@@ -143,6 +187,23 @@ def _load_as_arrays(
             elif "value_target" in r:
                 value_targets[i] = float(r["value_target"])
                 has_value[i] = True
+            if "value_target_win" in r:
+                win_value_targets[i] = float(r["value_target_win"])
+                has_win_value[i] = True
+
+            pvt = r.get("policy_visit_targets")
+            if isinstance(pvt, dict):
+                for hn in head_names:
+                    policy_targets[hn][i] = _parse_sparse_soft_target(
+                        pvt.get(hn),
+                        int(meta["target_heads"][hn]),
+                        int(targets[hn][i]),
+                    )
+            else:
+                for hn in head_names:
+                    dim = int(meta["target_heads"][hn])
+                    idx = int(np.clip(int(targets[hn][i]), 0, dim - 1))
+                    policy_targets[hn][i, idx] = 1.0
             if r.get("is_rl"):
                 is_rl[i] = True
                 rl_advantage[i] = float(r.get("rl_advantage", 1.0))
@@ -160,8 +221,11 @@ def _load_as_arrays(
     return {
         "states": states[:i],
         "targets": {hn: arr[:i] for hn, arr in targets.items()},
+        "policy_targets": {hn: arr[:i] for hn, arr in policy_targets.items()},
         "value_targets": value_targets[:i],
         "has_value": has_value[:i],
+        "win_value_targets": win_value_targets[:i],
+        "has_win_value": has_win_value[:i],
         "is_rl": is_rl[:i],
         "rl_advantage": rl_advantage[:i],
         "has_move": has_move[:i],
@@ -170,7 +234,22 @@ def _load_as_arrays(
         "num_move_negs": num_move_negs[:i],
         "n_rows": i,
         "has_value_target_any": bool(has_value[:i].any()),
+        "has_win_value_target_any": bool(has_win_value[:i].any()),
         "has_move_data_any": bool(has_move[:i].any()),
+        "policy_entropy_action_type_mean": float(
+            (
+                -np.sum(
+                    policy_targets["action_type"][:i]
+                    * np.log(np.clip(policy_targets["action_type"][:i], 1e-12, 1.0)),
+                    axis=1,
+                )
+            ).mean()
+            if i > 0
+            else 0.0
+        ),
+        "policy_peak_action_type_mean": float(
+            policy_targets["action_type"][:i].max(axis=1).mean() if i > 0 else 0.0
+        ),
     }
 
 
@@ -182,6 +261,7 @@ class BCModel(nn.Module):
         hidden2: int,
         head_dims: dict[str, int],
         has_value_head: bool,
+        has_win_value_head: bool,
         has_move_value_head: bool,
         dropout: float,
         batch_norm_enabled: bool,
@@ -210,13 +290,14 @@ class BCModel(nn.Module):
         self.drop2 = nn.Dropout(p=dropout)
         self.heads = nn.ModuleDict({hn: nn.Linear(hidden2, dim) for hn, dim in head_dims.items()})
         self.value_head = nn.Linear(hidden2, 1) if has_value_head else None
+        self.win_value_head = nn.Linear(hidden2, 1) if has_win_value_head else None
         self.move_value_head = (
             nn.Linear(feature_dim + MOVE_FEATURE_DIM, 1) if has_move_value_head else None
         )
 
     def forward(
         self, x: torch.Tensor
-    ) -> tuple[dict[str, torch.Tensor], torch.Tensor | None]:
+    ) -> tuple[dict[str, torch.Tensor], torch.Tensor | None, torch.Tensor | None]:
         h = self.layer1(x)
         if self.bn1 is not None:
             h = self.bn1(h)
@@ -229,7 +310,12 @@ class BCModel(nn.Module):
         h = self.drop2(h)
         logits = {hn: head(h) for hn, head in self.heads.items()}
         value = self.value_head(h).squeeze(-1) if self.value_head is not None else None
-        return logits, value
+        win_value = (
+            torch.sigmoid(self.win_value_head(h).squeeze(-1))
+            if self.win_value_head is not None
+            else None
+        )
+        return logits, value, win_value
 
 
 def _warm_start_from_npz(
@@ -287,6 +373,22 @@ def _warm_start_from_npz(
             applied.append({"param": "b_value", "copied": 1})
         else:
             skipped.append({"param": "b_value", "reason": "src_missing"})
+
+    if model.win_value_head is not None:
+        if "W_value_win" in z:
+            src = torch.from_numpy(z["W_value_win"].astype(np.float32)).to(device)
+            n = min(len(src), model.win_value_head.weight.data.shape[1])
+            with torch.no_grad():
+                model.win_value_head.weight.data[0, :n] = src[:n]
+            applied.append({"param": "W_value_win", "copied": n})
+        else:
+            skipped.append({"param": "W_value_win", "reason": "src_missing"})
+        if "b_value_win" in z:
+            with torch.no_grad():
+                model.win_value_head.bias.data[0] = float(z["b_value_win"][0])
+            applied.append({"param": "b_value_win", "copied": 1})
+        else:
+            skipped.append({"param": "b_value_win", "reason": "src_missing"})
 
     if model.move_value_head is not None:
         if "W_move_value" in z:
@@ -363,6 +465,11 @@ def _save_to_npz(model: BCModel, out_path: str | Path, meta_dict: dict) -> None:
     if model.value_head is not None:
         d["W_value"] = _np(model.value_head.weight[0])
         d["b_value"] = np.array([float(_np(model.value_head.bias)[0])], dtype=np.float32)
+    if model.win_value_head is not None:
+        d["W_value_win"] = _np(model.win_value_head.weight[0])
+        d["b_value_win"] = np.array(
+            [float(_np(model.win_value_head.bias)[0])], dtype=np.float32
+        )
 
     if model.move_value_head is not None:
         d["W_move_value"] = _np(model.move_value_head.weight[0])
@@ -378,14 +485,18 @@ def _eval_pass(
     model: BCModel,
     device: torch.device,
     states: torch.Tensor,
-    targets: dict[str, torch.Tensor],
-    value_targets: torch.Tensor,
-    has_value: torch.Tensor,
+    hard_targets: dict[str, torch.Tensor],
+    policy_targets: dict[str, torch.Tensor],
+    score_value_targets: torch.Tensor,
+    has_score_value: torch.Tensor,
+    win_value_targets: torch.Tensor,
+    has_win_value: torch.Tensor,
     has_move: torch.Tensor,
     move_pos: torch.Tensor,
     move_negs: torch.Tensor,
     num_move_negs: torch.Tensor,
-    value_loss_weight: float,
+    score_value_loss_weight: float,
+    win_value_loss_weight: float,
     move_value_loss_weight: float,
     batch_size: int,
 ) -> dict:
@@ -393,8 +504,11 @@ def _eval_pass(
     total_loss = 0.0
     action_correct = 0
     total = 0
-    value_mse = 0.0
-    value_n = 0
+    score_value_mse = 0.0
+    score_value_n = 0
+    win_brier = 0.0
+    win_log_loss = 0.0
+    win_n = 0
     move_rank_loss = 0.0
     move_rank_n = 0
     move_margin_sum = 0.0
@@ -407,31 +521,49 @@ def _eval_pass(
         for start in range(0, n, batch_size):
             end = min(start + batch_size, n)
             xs = states[start:end].to(device)
-            action_ids = targets["action_type"][start:end].to(device)
-            logits, value = model(xs)
+            action_ids = hard_targets["action_type"][start:end].to(device)
+            logits, score_value, win_value = model(xs)
             B = xs.shape[0]
 
-            ce = F.cross_entropy(logits["action_type"], action_ids, reduction="none")
+            action_soft = policy_targets["action_type"][start:end].to(device)
+            ce = -torch.sum(
+                action_soft * F.log_softmax(logits["action_type"], dim=1), dim=1
+            )
             total_loss += ce.sum().item()
             action_correct += (logits["action_type"].argmax(dim=1) == action_ids).sum().item()
             total += B
 
             for hn, rel_aids in _HEAD_RELEVANT_ACTIONS.items():
-                mask = torch.zeros(B, device=device)
-                for aid in rel_aids:
-                    mask = mask + (action_ids == aid).float()
+                mask = action_soft[:, rel_aids].sum(dim=1)
                 if mask.sum() < 0.5:
                     continue
-                tgt = targets[hn][start:end].to(device)
-                head_ce = F.cross_entropy(logits[hn], tgt, reduction="none")
+                tgt_soft = policy_targets[hn][start:end].to(device)
+                head_ce = -torch.sum(
+                    tgt_soft * F.log_softmax(logits[hn], dim=1), dim=1
+                )
                 total_loss += (head_ce * mask).sum().item()
 
-            if model.value_head is not None and value is not None:
-                hv = has_value[start:end].to(device)
+            if model.value_head is not None and score_value is not None:
+                hv = has_score_value[start:end].to(device)
                 if hv.any():
-                    vt = value_targets[start:end].to(device)
-                    value_mse += ((value - vt) ** 2 * hv.float()).sum().item()
-                    value_n += int(hv.sum().item())
+                    vt = score_value_targets[start:end].to(device)
+                    score_value_mse += ((score_value - vt) ** 2 * hv.float()).sum().item()
+                    score_value_n += int(hv.sum().item())
+
+            if model.win_value_head is not None and win_value is not None:
+                hw = has_win_value[start:end].to(device)
+                if hw.any():
+                    wt = win_value_targets[start:end].to(device)
+                    win_pred = win_value.clamp(1e-6, 1.0 - 1e-6)
+                    hw_f = hw.float()
+                    win_brier += ((win_pred - wt) ** 2 * hw_f).sum().item()
+                    win_log_loss += (
+                        (
+                            -(wt * torch.log(win_pred) + (1.0 - wt) * torch.log(1.0 - win_pred))
+                        )
+                        * hw_f
+                    ).sum().item()
+                    win_n += int(hw.sum().item())
 
             if model.move_value_head is not None:
                 hm = has_move[start:end]
@@ -470,12 +602,21 @@ def _eval_pass(
                     move_pair_total += neg_mask.sum().item()
 
     cls_loss = total_loss / max(1, total)
-    v_mse = value_mse / max(1, value_n) if value_n > 0 else 0.0
+    v_mse = score_value_mse / max(1, score_value_n) if score_value_n > 0 else 0.0
+    w_brier = win_brier / max(1, win_n) if win_n > 0 else 0.0
+    w_log = win_log_loss / max(1, win_n) if win_n > 0 else 0.0
     mv_loss = move_rank_loss / max(1, move_rank_n) if move_rank_n > 0 else 0.0
     return {
-        "loss": cls_loss + value_loss_weight * v_mse + move_value_loss_weight * mv_loss,
+        "loss": (
+            cls_loss
+            + score_value_loss_weight * v_mse
+            + win_value_loss_weight * w_log
+            + move_value_loss_weight * mv_loss
+        ),
         "action_acc": action_correct / max(1, total),
-        "value_mse": v_mse,
+        "score_value_mse": v_mse,
+        "win_value_brier": w_brier,
+        "win_value_log_loss": w_log,
         "move_rank_loss": mv_loss,
         "move_rank_margin_mean": move_margin_sum / max(1, move_margin_rows),
         "move_pair_acc": (
@@ -502,7 +643,9 @@ def train_bc(
     weight_decay: float = 0.0,
     val_split: float = 0.1,
     seed: int = 0,
-    value_loss_weight: float = 0.5,
+    value_loss_weight: float | None = None,
+    score_value_loss_weight: float = 0.25,
+    win_value_loss_weight: float = 1.0,
     move_value_enabled: bool = True,
     move_value_loss_weight: float = 0.2,
     move_value_num_negatives: int = 4,
@@ -529,6 +672,9 @@ def train_bc(
     if lr is not None:
         lr_peak = float(lr)
         deprecated_args_used.append("lr")
+    if value_loss_weight is not None:
+        score_value_loss_weight = float(value_loss_weight)
+        deprecated_args_used.append("value_loss_weight")
     if deprecated_args_used:
         print(f"warning: deprecated args used: {', '.join(deprecated_args_used)}")
 
@@ -544,6 +690,7 @@ def train_bc(
     print(f"Loaded {n_rows} samples | feature_dim={feature_dim}")
 
     has_value_target = bool(data["has_value_target_any"])
+    has_win_value_target = bool(data["has_win_value_target_any"])
     has_move_value_data = bool(data["has_move_data_any"])
     effective_move_value = bool(move_value_enabled and has_move_value_data)
 
@@ -556,8 +703,13 @@ def train_bc(
     # Build val tensors (CPU; moved to device in eval pass)
     val_states = torch.from_numpy(data["states"][val_idx])
     val_targets = {hn: torch.from_numpy(data["targets"][hn][val_idx]) for hn in head_dims}
+    val_policy_targets = {
+        hn: torch.from_numpy(data["policy_targets"][hn][val_idx]) for hn in head_dims
+    }
     val_value_targets = torch.from_numpy(data["value_targets"][val_idx])
     val_has_value = torch.from_numpy(data["has_value"][val_idx])
+    val_win_targets = torch.from_numpy(data["win_value_targets"][val_idx])
+    val_has_win = torch.from_numpy(data["has_win_value"][val_idx])
     val_has_move = torch.from_numpy(data["has_move"][val_idx])
     val_move_pos = torch.from_numpy(data["move_pos"][val_idx])
     val_move_negs = torch.from_numpy(data["move_negs"][val_idx])
@@ -566,8 +718,13 @@ def train_bc(
     # Build train tensors
     train_states = torch.from_numpy(data["states"][train_idx])
     train_targets = {hn: torch.from_numpy(data["targets"][hn][train_idx]) for hn in head_dims}
+    train_policy_targets = {
+        hn: torch.from_numpy(data["policy_targets"][hn][train_idx]) for hn in head_dims
+    }
     train_value_targets = torch.from_numpy(data["value_targets"][train_idx])
     train_has_value = torch.from_numpy(data["has_value"][train_idx])
+    train_win_targets = torch.from_numpy(data["win_value_targets"][train_idx])
+    train_has_win = torch.from_numpy(data["has_win_value"][train_idx])
     train_rl_adv = torch.from_numpy(data["rl_advantage"][train_idx])
     train_has_move = torch.from_numpy(data["has_move"][train_idx])
     train_move_pos = torch.from_numpy(data["move_pos"][train_idx])
@@ -592,6 +749,7 @@ def train_bc(
         hidden2,
         head_dims,
         has_value_target,
+        has_win_value_target,
         effective_move_value,
         dropout,
         batch_norm_enabled,
@@ -613,7 +771,10 @@ def train_bc(
         if reinit_value_head and model.value_head is not None:
             nn.init.kaiming_normal_(model.value_head.weight)
             nn.init.zeros_(model.value_head.bias)
-            print("reinit_value_head: value head reinitialized to kaiming-normal (bias=0)")
+            if model.win_value_head is not None:
+                nn.init.kaiming_normal_(model.win_value_head.weight)
+                nn.init.zeros_(model.win_value_head.bias)
+            print("reinit_value_head: value heads reinitialized to kaiming-normal (bias=0)")
 
     optimizer = torch.optim.SGD(
         model.parameters(), lr=lr_peak, momentum=max(0.0, min(0.999, float(momentum))),
@@ -646,8 +807,11 @@ def train_bc(
         model.train()
         loss_sum = 0.0
         action_correct = 0
-        value_mse_sum = 0.0
-        value_seen = 0
+        score_value_mse_sum = 0.0
+        score_value_seen = 0
+        win_brier_sum = 0.0
+        win_log_loss_sum = 0.0
+        win_seen = 0
         move_rank_loss_sum = 0.0
         move_rank_n = 0
         move_margin_sum = 0.0
@@ -663,38 +827,55 @@ def train_bc(
             rl_adv = train_rl_adv[bidx].to(device)
             B = xs.shape[0]
 
-            logits, value = model(xs)
+            logits, score_value, win_value = model(xs)
+            action_soft = train_policy_targets["action_type"][bidx].to(device)
 
             # Action type CE (always active, scaled by RL advantage)
-            ce_action = F.cross_entropy(logits["action_type"], action_ids, reduction="none")
+            ce_action = -torch.sum(
+                action_soft * F.log_softmax(logits["action_type"], dim=1), dim=1
+            )
             loss = (ce_action * rl_adv).mean()
             loss_sum += ce_action.sum().item()
             action_correct += (logits["action_type"].argmax(dim=1) == action_ids).sum().item()
 
             # Sub-head CE (only active for their relevant action types)
             for hn, rel_aids in _HEAD_RELEVANT_ACTIONS.items():
-                mask = torch.zeros(B, device=device)
-                for aid in rel_aids:
-                    mask = mask + (action_ids == aid).float()
+                mask = action_soft[:, rel_aids].sum(dim=1)
                 mask_sum = mask.sum()
                 if mask_sum < 0.5:
                     continue
-                tgt = train_targets[hn][bidx].to(device)
-                head_ce = F.cross_entropy(logits[hn], tgt, reduction="none")
+                tgt_soft = train_policy_targets[hn][bidx].to(device)
+                head_ce = -torch.sum(
+                    tgt_soft * F.log_softmax(logits[hn], dim=1), dim=1
+                )
                 loss = loss + (head_ce * mask * rl_adv).sum() / mask_sum.clamp(min=1)
                 loss_sum += (head_ce * mask).sum().item()
 
-            # Value head (MSE regression)
-            if model.value_head is not None and value is not None:
+            # Score-value head (MSE regression)
+            if model.value_head is not None and score_value is not None:
                 hv = train_has_value[bidx].to(device)
                 if hv.any():
                     vt = train_value_targets[bidx].to(device)
-                    dv2 = (value - vt) ** 2
+                    dv2 = (score_value - vt) ** 2
                     hv_f = hv.float()
                     v_loss = (dv2 * hv_f).sum() / hv_f.sum().clamp(min=1)
-                    loss = loss + value_loss_weight * v_loss
-                    value_mse_sum += (dv2 * hv_f).sum().item()
-                    value_seen += int(hv.sum().item())
+                    loss = loss + score_value_loss_weight * v_loss
+                    score_value_mse_sum += (dv2 * hv_f).sum().item()
+                    score_value_seen += int(hv.sum().item())
+
+            # Win-value head (BCE)
+            if model.win_value_head is not None and win_value is not None:
+                hw = train_has_win[bidx].to(device)
+                if hw.any():
+                    wt = train_win_targets[bidx].to(device)
+                    hw_f = hw.float()
+                    win_pred = win_value.clamp(1e-6, 1.0 - 1e-6)
+                    bce = -(wt * torch.log(win_pred) + (1.0 - wt) * torch.log(1.0 - win_pred))
+                    w_loss = (bce * hw_f).sum() / hw_f.sum().clamp(min=1)
+                    loss = loss + win_value_loss_weight * w_loss
+                    win_brier_sum += ((win_pred - wt) ** 2 * hw_f).sum().item()
+                    win_log_loss_sum += (bce * hw_f).sum().item()
+                    win_seen += int(hw.sum().item())
 
             # Move-value ranking head (pairwise softplus loss)
             if model.move_value_head is not None:
@@ -741,12 +922,23 @@ def train_bc(
             seen += B
 
         train_cls_loss = loss_sum / max(1, seen)
-        train_v_mse = value_mse_sum / max(1, value_seen) if value_seen > 0 else 0.0
+        train_v_mse = (
+            score_value_mse_sum / max(1, score_value_seen) if score_value_seen > 0 else 0.0
+        )
+        train_w_brier = win_brier_sum / max(1, win_seen) if win_seen > 0 else 0.0
+        train_w_log = win_log_loss_sum / max(1, win_seen) if win_seen > 0 else 0.0
         train_mv_loss = move_rank_loss_sum / max(1, move_rank_n) if move_rank_n > 0 else 0.0
         train_metrics = {
-            "loss": train_cls_loss + value_loss_weight * train_v_mse + move_value_loss_weight * train_mv_loss,
+            "loss": (
+                train_cls_loss
+                + score_value_loss_weight * train_v_mse
+                + win_value_loss_weight * train_w_log
+                + move_value_loss_weight * train_mv_loss
+            ),
             "action_acc": action_correct / max(1, seen),
-            "value_mse": train_v_mse,
+            "score_value_mse": train_v_mse,
+            "win_value_brier": train_w_brier,
+            "win_value_log_loss": train_w_log,
             "move_rank_loss": train_mv_loss,
             "move_rank_margin_mean": move_margin_sum / max(1, move_margin_rows),
             "move_pair_acc": (
@@ -756,9 +948,11 @@ def train_bc(
 
         val_metrics = _eval_pass(
             model, device,
-            val_states, val_targets, val_value_targets, val_has_value,
+            val_states, val_targets, val_policy_targets,
+            val_value_targets, val_has_value,
+            val_win_targets, val_has_win,
             val_has_move, val_move_pos, val_move_negs, val_num_negs,
-            value_loss_weight, move_value_loss_weight, batch_size,
+            score_value_loss_weight, win_value_loss_weight, move_value_loss_weight, batch_size,
         )
         model.train()
 
@@ -767,13 +961,19 @@ def train_bc(
             "lr_epoch": round(lr_epoch, 8),
             "train_loss": round(train_metrics["loss"], 6),
             "train_action_acc": round(train_metrics["action_acc"], 6),
-            "train_value_mse": round(train_metrics["value_mse"], 6),
+            "train_score_value_mse": round(train_metrics["score_value_mse"], 6),
+            "train_value_mse": round(train_metrics["score_value_mse"], 6),
+            "train_win_value_brier": round(train_metrics["win_value_brier"], 6),
+            "train_win_value_log_loss": round(train_metrics["win_value_log_loss"], 6),
             "train_move_rank_loss": round(train_metrics["move_rank_loss"], 6),
             "train_move_rank_margin_mean": round(train_metrics["move_rank_margin_mean"], 6),
             "train_move_pair_acc": round(train_metrics["move_pair_acc"], 6),
             "val_loss": round(val_metrics["loss"], 6),
             "val_action_acc": round(val_metrics["action_acc"], 6),
-            "val_value_mse": round(val_metrics["value_mse"], 6),
+            "val_score_value_mse": round(val_metrics["score_value_mse"], 6),
+            "val_value_mse": round(val_metrics["score_value_mse"], 6),
+            "val_win_value_brier": round(val_metrics["win_value_brier"], 6),
+            "val_win_value_log_loss": round(val_metrics["win_value_log_loss"], 6),
             "val_move_rank_loss": round(val_metrics["move_rank_loss"], 6),
             "val_move_rank_margin_mean": round(val_metrics["move_rank_margin_mean"], 6),
             "val_move_pair_acc": round(val_metrics["move_pair_acc"], 6),
@@ -795,9 +995,11 @@ def train_bc(
         print(
             f"epoch {ep}/{epochs} | lr={row['lr_epoch']:.6f} | "
             f"train_loss={row['train_loss']:.4f} train_acc={row['train_action_acc']:.3f} "
-            f"train_v={row['train_value_mse']:.4f} train_mv={row['train_move_rank_loss']:.4f} | "
+            f"train_sv={row['train_score_value_mse']:.4f} train_wb={row['train_win_value_brier']:.4f} "
+            f"train_mv={row['train_move_rank_loss']:.4f} | "
             f"val_loss={row['val_loss']:.4f} val_acc={row['val_action_acc']:.3f} "
-            f"val_v={row['val_value_mse']:.4f} val_mv={row['val_move_rank_loss']:.4f}"
+            f"val_sv={row['val_score_value_mse']:.4f} val_wb={row['val_win_value_brier']:.4f} "
+            f"val_mv={row['val_move_rank_loss']:.4f}"
         )
         if early_stop_enabled and no_improve_epochs >= early_stop_patience:
             stopped_early = True
@@ -844,9 +1046,16 @@ def train_bc(
             {"enable_identity_features": False, "identity_hash_dim": 128},
         ),
         "has_value_head": has_value_target,
+        "has_win_value_head": has_win_value_target,
         "value_prediction_mode": "score_norm_linear" if has_value_target else "none",
         "value_score_scale": value_target_scale,
         "value_score_bias": value_target_bias,
+        "value_loss_weight": float(score_value_loss_weight),
+        "score_value_loss_weight": float(score_value_loss_weight),
+        "win_value_loss_weight": float(win_value_loss_weight),
+        "policy_target_mode": "soft_visit_distribution",
+        "policy_entropy_action_type_mean": float(data.get("policy_entropy_action_type_mean", 0.0)),
+        "policy_peak_action_type_mean": float(data.get("policy_peak_action_type_mean", 0.0)),
         "has_move_value_head": bool(model.move_value_head is not None),
         "move_feature_dim": MOVE_FEATURE_DIM,
         "move_value_loss_weight": float(move_value_loss_weight),
@@ -909,7 +1118,14 @@ def main() -> None:
     parser.add_argument("--hidden", type=int, default=None, help="Deprecated: sets hidden1=hidden2")
     parser.add_argument("--lr", type=float, default=None, help="Deprecated: sets lr_peak")
     parser.add_argument("--val-split", type=float, default=0.1)
-    parser.add_argument("--value-weight", type=float, default=0.5)
+    parser.add_argument(
+        "--value-weight",
+        type=float,
+        default=None,
+        help="Deprecated alias for --score-value-weight",
+    )
+    parser.add_argument("--score-value-weight", type=float, default=0.25)
+    parser.add_argument("--win-value-weight", type=float, default=1.0)
     parser.set_defaults(move_value_enabled=True)
     parser.add_argument("--move-value-enabled", dest="move_value_enabled", action="store_true")
     parser.add_argument("--disable-move-value", dest="move_value_enabled", action="store_false")
@@ -936,6 +1152,8 @@ def main() -> None:
         weight_decay=args.weight_decay,
         val_split=args.val_split,
         value_loss_weight=args.value_weight,
+        score_value_loss_weight=args.score_value_weight,
+        win_value_loss_weight=args.win_value_weight,
         move_value_enabled=args.move_value_enabled,
         move_value_loss_weight=args.move_value_loss_weight,
         move_value_num_negatives=args.move_value_num_negatives,

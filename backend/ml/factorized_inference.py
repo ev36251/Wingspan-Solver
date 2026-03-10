@@ -61,6 +61,9 @@ class FactorizedPolicyModel:
         self.has_value_head = "W_value" in z and "b_value" in z
         self.W_value = z["W_value"] if self.has_value_head else None
         self.b_value = float(z["b_value"][0]) if self.has_value_head else 0.0
+        self.has_win_value_head = "W_value_win" in z and "b_value_win" in z
+        self.W_value_win = z["W_value_win"] if self.has_win_value_head else None
+        self.b_value_win = float(z["b_value_win"][0]) if self.has_win_value_head else 0.0
         self.value_prediction_mode = str(self.meta.get("value_prediction_mode", "sigmoid_norm"))
         self.value_score_scale = float(self.meta.get("value_score_scale", 150.0))
         self.value_score_bias = float(self.meta.get("value_score_bias", 0.0))
@@ -107,7 +110,7 @@ class FactorizedPolicyModel:
         x_hat = (x - running_mean) * inv_std
         return x_hat * gamma + beta
 
-    def forward(self, state: np.ndarray) -> tuple[dict[str, np.ndarray], float | None]:
+    def _forward_hidden(self, state: np.ndarray) -> tuple[np.ndarray, dict[str, np.ndarray]]:
         state_arr = np.asarray(state, dtype=np.float32)
         if state_arr.ndim != 1:
             raise ValueError(f"FactorizedPolicyModel.forward expects 1D state; got shape {state_arr.shape}")
@@ -152,6 +155,13 @@ class FactorizedPolicyModel:
         else:
             h = h1
         logits = {hn: h @ self.head_W[hn] + self.head_b[hn] for hn in self.head_W}
+        return h, logits
+
+    def forward_with_values(
+        self,
+        state: np.ndarray,
+    ) -> tuple[dict[str, np.ndarray], float | None, float | None]:
+        h, logits = self._forward_hidden(state)
         value = None
         if self.has_value_head:
             vr = float(h @ self.W_value + self.b_value)
@@ -159,7 +169,15 @@ class FactorizedPolicyModel:
                 value = vr
             else:
                 value = 1.0 / (1.0 + np.exp(-vr))
-        return logits, value
+        win_value = None
+        if self.has_win_value_head and self.W_value_win is not None:
+            wr = float(h @ self.W_value_win + self.b_value_win)
+            win_value = 1.0 / (1.0 + np.exp(-wr))
+        return logits, value, win_value
+
+    def forward(self, state: np.ndarray) -> tuple[dict[str, np.ndarray], float | None]:
+        logits, score_value, _ = self.forward_with_values(state)
+        return logits, score_value
 
     def value_to_expected_score(self, value: float | None) -> float:
         if value is None:
@@ -219,6 +237,7 @@ if _TORCH_AVAILABLE:
             hidden2: int,
             head_dims: dict[str, int],
             has_value: bool,
+            has_win_value: bool,
             has_bn1: bool,
             has_bn2: bool,
             batch_norm_eps: float = 1e-5,
@@ -232,6 +251,7 @@ if _TORCH_AVAILABLE:
                 {k: _nn.Linear(hidden2, d) for k, d in head_dims.items()}
             )
             self.value_head = _nn.Linear(hidden2, 1) if has_value else None
+            self.win_value_head = _nn.Linear(hidden2, 1) if has_win_value else None
 
         def forward(self, x: "_torch.Tensor"):
             h = self.fc1(x)
@@ -244,7 +264,10 @@ if _TORCH_AVAILABLE:
             h = _Func.relu(h)
             logits = {k: head(h) for k, head in self.heads.items()}
             value = self.value_head(h).squeeze(-1) if self.value_head is not None else None
-            return logits, value
+            win_value = (
+                self.win_value_head(h).squeeze(-1) if self.win_value_head is not None else None
+            )
+            return logits, value, win_value
 
     class FactorizedPolicyModelTorch(FactorizedPolicyModel):
         """Drop-in replacement using PyTorch MPS (Apple Silicon GPU) for fast inference.
@@ -274,6 +297,7 @@ if _TORCH_AVAILABLE:
                 hidden2=hidden2,
                 head_dims=dict(self.head_dims),
                 has_value=self.has_value_head,
+                has_win_value=self.has_win_value_head,
                 has_bn1=self.has_bn1,
                 has_bn2=self.has_bn2,
                 batch_norm_eps=self.batch_norm_eps,
@@ -310,6 +334,13 @@ if _TORCH_AVAILABLE:
                     net.value_head.bias.data = _torch.tensor(
                         [self.b_value], dtype=_torch.float32
                     )
+                if self.has_win_value_head and self.W_value_win is not None:
+                    net.win_value_head.weight.data = _torch.from_numpy(
+                        np.asarray(self.W_value_win, dtype=np.float32)
+                    ).unsqueeze(0)
+                    net.win_value_head.bias.data = _torch.tensor(
+                        [self.b_value_win], dtype=_torch.float32
+                    )
 
             if device == "auto":
                 if _torch.backends.mps.is_available():
@@ -324,23 +355,33 @@ if _TORCH_AVAILABLE:
             self._net = net.to(self._device)
             self._net.eval()
 
-        def forward(
+        def forward_with_values(
             self, state: np.ndarray
-        ) -> tuple[dict[str, np.ndarray], float | None]:
+        ) -> tuple[dict[str, np.ndarray], float | None, float | None]:
             """Single-sample forward pass on MPS/GPU (or CPU fallback)."""
             state_arr = np.asarray(state, dtype=np.float32)
             with _torch.no_grad():
                 x = _torch.from_numpy(state_arr).to(self._device).unsqueeze(0)
-                logits_t, value_t = self._net(x)
+                logits_t, value_t, win_value_t = self._net(x)
                 logits = {k: v[0].cpu().numpy() for k, v in logits_t.items()}
-                value: float | None = None
+                score_value: float | None = None
                 if value_t is not None:
                     vr = float(value_t[0].cpu().item())
                     if self.value_prediction_mode in {"score_linear", "score_norm_linear"}:
-                        value = vr
+                        score_value = vr
                     else:
-                        value = float(1.0 / (1.0 + _math.exp(-vr)))
-            return logits, value
+                        score_value = float(1.0 / (1.0 + _math.exp(-vr)))
+                win_value: float | None = None
+                if win_value_t is not None:
+                    wr = float(win_value_t[0].cpu().item())
+                    win_value = float(1.0 / (1.0 + _math.exp(-wr)))
+            return logits, score_value, win_value
+
+        def forward(
+            self, state: np.ndarray
+        ) -> tuple[dict[str, np.ndarray], float | None]:
+            logits, score_value, _ = self.forward_with_values(state)
+            return logits, score_value
 
         def forward_batch(
             self, states: np.ndarray
@@ -354,7 +395,7 @@ if _TORCH_AVAILABLE:
             states_arr = np.asarray(states, dtype=np.float32)
             with _torch.no_grad():
                 x = _torch.from_numpy(states_arr).to(self._device)
-                logits_t, value_t = self._net(x)
+                logits_t, value_t, _ = self._net(x)
                 logits = {k: v.cpu().numpy() for k, v in logits_t.items()}
                 values: np.ndarray | None = None
                 if value_t is not None:

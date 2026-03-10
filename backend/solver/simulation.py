@@ -34,15 +34,16 @@ def _get_sim_bird_pool():
 
 def _draw_sim_deck_card(game: GameState):
     """Draw one card from finite deck identities if present, else fallback random."""
+    if game.deck_remaining <= 0:
+        return None
+
     deck_cards = getattr(game, "_deck_cards", None)
     if isinstance(deck_cards, list) and deck_cards:
         card = deck_cards.pop()
-        game.deck_remaining = max(0, len(deck_cards))
+        game.deck_remaining = max(0, game.deck_remaining - 1)
         if game.deck_tracker is not None:
             game.deck_tracker.mark_drawn(card.name)
         return card
-    if game.deck_remaining <= 0:
-        return None
     pool = _get_sim_bird_pool()
     if not pool:
         return None
@@ -127,13 +128,7 @@ def pick_weighted_random_move(moves: list[Move], game: GameState,
     if len(moves) == 1:
         return moves[0]
 
-    from backend.solver.heuristics import _estimate_move_value, dynamic_weights
-
-    weights = dynamic_weights(game, base_weights)
-
-    # Score all moves with the full heuristic
-    scored = [(m, _estimate_move_value(game, player, m, weights)) for m in moves]
-    scored.sort(key=lambda x: -x[1])
+    scored = _score_moves_with_heuristic(moves, game, player, base_weights)
 
     # Epsilon-greedy: 80% best move, 20% weighted random from top candidates
     if random.random() < 0.8:
@@ -144,6 +139,71 @@ def pick_weighted_random_move(moves: list[Move], game: GameState,
     min_score = min(s for _, s in top_n)
     selection_weights = [max(s - min_score + 0.5, 0.1) for _, s in top_n]
     return random.choices([m for m, _ in top_n], weights=selection_weights, k=1)[0]
+
+
+def pick_best_heuristic_move(
+    moves: list[Move],
+    game: GameState,
+    player: Player,
+    base_weights=None,
+) -> Move:
+    """Pick the single best move according to the full heuristic evaluator."""
+    if not moves:
+        raise ValueError("No moves to pick from")
+    if len(moves) == 1:
+        return moves[0]
+    scored = _score_moves_with_heuristic(moves, game, player, base_weights)
+    return scored[0][0]
+
+
+def _score_moves_with_heuristic(
+    moves: list[Move],
+    game: GameState,
+    player: Player,
+    base_weights=None,
+) -> list[tuple[Move, float]]:
+    """Return moves scored by the heuristic, sorted best-first."""
+    from backend.solver.heuristics import _estimate_move_value, dynamic_weights
+
+    weights = dynamic_weights(game, base_weights)
+    scored = [(m, _estimate_move_value(game, player, m, weights)) for m in moves]
+    # Stable tie-breaker keeps deterministic ordering when scores are equal.
+    scored.sort(key=lambda x: (-x[1], move_sort_key(x[0])))
+    return scored
+
+
+def move_sort_key(move: Move) -> tuple:
+    """Canonical ordering key for move tie-breaks."""
+    food_payment = tuple(
+        sorted((ft.value, int(c)) for ft, c in (move.food_payment or {}).items())
+    )
+    egg_distribution = tuple(
+        sorted(
+            (
+                hab.value,
+                int(slot_idx),
+                int(eggs),
+            )
+            for (hab, slot_idx), eggs in (move.egg_distribution or {}).items()
+        )
+    )
+    return (
+        move.action_type.value,
+        move.bird_name or "",
+        move.habitat.value if move.habitat else "",
+        food_payment,
+        tuple(sorted(ft.value for ft in (move.food_choices or []))),
+        egg_distribution,
+        tuple(sorted(int(i) for i in (move.tray_indices or []))),
+        int(move.deck_draws or 0),
+        int(move.bonus_count or 0),
+        bool(move.reset_bonus),
+        int(move.target_slot) if move.target_slot is not None else -1,
+        bool(move.play_on_top),
+        bool(move.play_on_top_discard),
+        int(move.hand_tuck_payment or 0),
+        move.description,
+    )
 
 
 def _fast_rollout_score(move: Move, game: GameState, player: Player) -> float:

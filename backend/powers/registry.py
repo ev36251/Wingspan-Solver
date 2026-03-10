@@ -5,6 +5,9 @@ manual overrides for edge cases. Unmatched birds get FallbackPower.
 """
 
 import re
+import json
+from pathlib import Path
+from importlib import import_module
 from backend.models.bird import Bird
 from backend.models.enums import FoodType, Habitat, NestType, PowerColor
 from backend.powers.base import PowerEffect, NoPower, FallbackPower
@@ -14,7 +17,12 @@ from backend.powers.templates.gain_food import (
 )
 from backend.powers.templates.lay_eggs import LayEggs, LayEggsEachBirdInRow
 from backend.powers.templates.draw_cards import DrawCards, DrawFromTray, DrawBonusCards
-from backend.powers.templates.tuck_cards import TuckFromHand, TuckFromDeck, DiscardToTuck
+from backend.powers.templates.tuck_cards import (
+    TuckFromHand,
+    TuckFromDeck,
+    DiscardToTuck,
+    DrawDiscardCacheByFoodIcon,
+)
 from backend.powers.templates.predator import PredatorDice, PredatorLookAt
 from backend.powers.templates.cache_food import CacheFoodFromSupply, CacheFoodFromFeeder, TradeFood
 from backend.powers.templates.play_bird import PlayAdditionalBird, PlayOnTopPower
@@ -31,7 +39,17 @@ from backend.powers.templates.unique import (
 )
 from backend.powers.templates.strict import (
     DrawThenDiscardFromHand,
+    DrawThenEndTurnDiscardFromHand,
+    DrawPerEmptySlotThenKeepOneAtEndTurn,
     AllPlayersLayEggsSelfBonus,
+    AllPlayersGainFoodThenSelfFoodOrEggBonus,
+    AllPlayersDrawCardsWithSelfBonus,
+    TuckFromHandThenAllPlayersGainFood,
+    AllPlayersMayDiscardEggFromHabitatForWild,
+    RollDiceCacheThenAllPlayersMayDiscardCardGainFood,
+    AllPlayersMayDiscardFoodToLayEgg,
+    AllPlayersMayCacheFoodInHabitat,
+    AllPlayersMayTuckAndOrCacheInHabitat,
     TuckThenCacheFromSupply,
     EndRoundMandarinDuck,
     SnowyOwlBonusThenChoice,
@@ -179,8 +197,8 @@ _MANUAL_OVERRIDES: dict[str, PowerEffect] = {
 # Explicit per-card powers for high-impact competitive lines.
 # These definitions are treated as strict source of truth for listed birds.
 _STRICT_CARD_POWERS: dict[str, callable] = {
-    "Forster's Tern": lambda: DrawThenDiscardFromHand(draw=1, discard=1),
-    "Wood Duck": lambda: DrawThenDiscardFromHand(draw=2, discard=1),
+    "Forster's Tern": lambda: DrawThenEndTurnDiscardFromHand(draw=1, discard=1),
+    "Wood Duck": lambda: DrawThenEndTurnDiscardFromHand(draw=2, discard=1),
     "Violet-Green Swallow": lambda: TuckFromHand(tuck_count=1, draw_count=1),
     "Golden Pheasant": lambda: AllPlayersLayEggsSelfBonus(all_players_count=2, self_bonus_count=2),
     # --- Teal powers (explicit strict mappings for all teal birds) ---
@@ -311,18 +329,98 @@ _STRICT_CARD_POWERS: dict[str, callable] = {
         require_another_bird=False,
     ),
     # --- Existing strict non-teal lines ---
-    "Great Hornbill": lambda: TuckThenCacheFromSupply(cache_food_type=FoodType.FRUIT),
+    "Great Hornbill": lambda: AllPlayersMayTuckAndOrCacheInHabitat(
+        cache_food_type=FoodType.FRUIT, habitat=Habitat.FOREST
+    ),
+    "Brown Shrike": lambda: AllPlayersMayCacheFoodInHabitat(
+        food_type=FoodType.INVERTEBRATE, habitat=Habitat.GRASSLAND
+    ),
     "Roseate Spoonbill": lambda: DrawBonusCards(draw=2, keep=1),
     "Baltimore Oriole": lambda: GainFoodFromSupply(food_types=[FoodType.FRUIT], count=1, all_players=True),
+    "Bluethroat": lambda: CommonNightingaleChooseFoodAllPlayers(),
     "Snowy Owl": lambda: SnowyOwlBonusThenChoice(),
     "Common Nightingale": lambda: CommonNightingaleChooseFoodAllPlayers(),
+    "Eastern Rosella": lambda: AllPlayersGainFoodThenSelfFoodOrEggBonus(
+        base_food_type=FoodType.NECTAR, base_count=1, self_food_type=FoodType.SEED, self_food_count=1
+    ),
+    "Himalayan Monal": lambda: AllPlayersGainFoodThenSelfFoodOrEggBonus(
+        base_food_type=FoodType.SEED, base_count=1, self_egg_bonus=1
+    ),
+    "Many-Colored Fruit-Dove": lambda: AllPlayersGainFoodThenSelfFoodOrEggBonus(
+        base_food_type=FoodType.FRUIT, base_count=1, self_food_type=FoodType.FRUIT, self_food_count=1
+    ),
+    "Ibisbill": lambda: AllPlayersDrawCardsWithSelfBonus(
+        all_players_draw=1, self_extra_draw=1, all_players_food_type=FoodType.INVERTEBRATE, all_players_food_count=1
+    ),
+    "Indian Peafowl": lambda: AllPlayersDrawCardsWithSelfBonus(
+        all_players_draw=2, self_extra_draw=1
+    ),
+    "Lazuli Bunting": lambda: AllPlayersLayEggsSelfBonus(
+        all_players_count=1,
+        self_bonus_count=1,
+        nest_filter=NestType.BOWL,
+        self_bonus_must_be_distinct_bird=True,
+    ),
+    "Pileated Woodpecker": lambda: AllPlayersLayEggsSelfBonus(
+        all_players_count=1,
+        self_bonus_count=1,
+        nest_filter=NestType.CAVITY,
+        self_bonus_must_be_distinct_bird=True,
+    ),
+    "Western Meadowlark": lambda: AllPlayersLayEggsSelfBonus(
+        all_players_count=1,
+        self_bonus_count=1,
+        nest_filter=NestType.GROUND,
+        self_bonus_must_be_distinct_bird=True,
+    ),
+    "Rock Pigeon": lambda: AllPlayersLayEggsSelfBonus(
+        all_players_count=1, self_bonus_count=1
+    ),
     "Red-Bellied Woodpecker": lambda: RedBelliedWoodpeckerSeedFromFeeder(),
-    "Willie-Wagtail": lambda: WillieWagtailDrawTrayNest(),
+    "Major Mitchell's Cockatoo": lambda: TuckFromHandThenAllPlayersGainFood(
+        food_type=FoodType.SEED
+    ),
+    "Sulphur-Crested Cockatoo": lambda: TuckFromHandThenAllPlayersGainFood(
+        food_type=FoodType.NECTAR
+    ),
+    "Lesser Frigatebird": lambda: AllPlayersMayDiscardEggFromHabitatForWild(
+        habitat=Habitat.WETLAND
+    ),
+    "Rhinoceros Auklet": lambda: RollDiceCacheThenAllPlayersMayDiscardCardGainFood(
+        dice_count=2, target_food=FoodType.FISH
+    ),
+    "Sri Lanka Frogmouth": lambda: RollDiceCacheThenAllPlayersMayDiscardCardGainFood(
+        dice_count=1, target_food=FoodType.INVERTEBRATE
+    ),
+    "Zebra Dove": lambda: AllPlayersMayDiscardFoodToLayEgg(
+        discard_food_type=FoodType.SEED
+    ),
+    "Willie-Wagtail": lambda: WillieWagtailDrawTrayNest(allow_reset=True, allow_refill=True),
     "White Stork": lambda: WhiteStorkResetTrayThenDraw(),
     "Pink-Eared Duck": lambda: PinkEaredDuckDrawKeepGive(),
     "Crested Lark": lambda: CrestedLarkDiscardSeedLayEgg(),
     "Black-Headed Gull": lambda: BlackHeadedGullStealWild(),
     "Black Drongo": lambda: BlackDrongoDiscardTrayLayEgg(),
+    "American White Pelican": lambda: DiscardFoodToTuckFromDeck(
+        max_discard=1, food_type=FoodType.FISH, tuck_per_discard=2
+    ),
+    "Black-Bellied Whistling-Duck": lambda: DiscardFoodToTuckFromDeck(
+        max_discard=1, food_type=FoodType.SEED, tuck_per_discard=2
+    ),
+    "Canada Goose": lambda: DiscardFoodToTuckFromDeck(
+        max_discard=1, food_type=FoodType.SEED, tuck_per_discard=2
+    ),
+    "Double-Crested Cormorant": lambda: DiscardFoodToTuckFromDeck(
+        max_discard=1, food_type=FoodType.FISH, tuck_per_discard=2
+    ),
+    "Sandhill Crane": lambda: DiscardFoodToTuckFromDeck(
+        max_discard=1, food_type=FoodType.SEED, tuck_per_discard=2
+    ),
+    "Little Penguin": lambda: DrawDiscardCacheByFoodIcon(
+        draw_count=5,
+        target_food=FoodType.FISH,
+        cache_food_type=FoodType.FISH,
+    ),
 }
 
 
@@ -345,7 +443,10 @@ def _extract_all_food_types(text: str) -> list[FoodType]:
 
 def _extract_count(text: str, keyword: str = "Gain") -> int:
     """Extract a number near a keyword."""
-    m = re.search(rf"{keyword}\s+(\d+)", text, re.IGNORECASE)
+    m = re.search(rf"{keyword}\b[^0-9]{{0,24}}(\d+)", text, re.IGNORECASE)
+    if m:
+        return int(m.group(1))
+    m = re.search(rf"(\d+)[^a-zA-Z]{{0,8}}{keyword}\b", text, re.IGNORECASE)
     return int(m.group(1)) if m else 1
 
 
@@ -375,6 +476,9 @@ def parse_power(bird: Bird) -> PowerEffect:
     strict = _STRICT_CARD_POWERS.get(bird.name)
     if strict is not None:
         return strict()
+    auto = _load_auto_explicit_card_powers().get(bird.name)
+    if auto is not None:
+        return auto()
 
     # Check manual overrides first (14 unique birds)
     if bird.name in _MANUAL_OVERRIDES:
@@ -414,9 +518,23 @@ def parse_power(bird: Bird) -> PowerEffect:
             return PredatorDice(target_food=ft)
 
     if "look at" in t and ("wingspan" in t or "less than" in t):
-        m = re.search(r"less than (\d+)", text)
-        threshold = int(m.group(1)) if m else 75
-        return PredatorLookAt(wingspan_threshold=threshold)
+        m_less = re.search(r"(?:less than|under)\s+(\d+)", text, re.IGNORECASE)
+        m_gt = re.search(r"(?:over|greater than)\s+(\d+)", text, re.IGNORECASE)
+        cmp = "lt"
+        threshold = 75
+        if m_less:
+            threshold = int(m_less.group(1))
+        elif m_gt:
+            cmp = "gt"
+            threshold = int(m_gt.group(1))
+        cache_ft = _extract_food_type(text) if "cache" in t else None
+        cache_count = _extract_count(text, "cache") if cache_ft else 0
+        return PredatorLookAt(
+            wingspan_threshold=threshold,
+            wingspan_cmp=cmp,
+            cache_food_type=cache_ft,
+            cache_count=cache_count,
+        )
 
     # --- Reset feeder ---
     if "reset the birdfeeder" in t:
@@ -544,6 +662,16 @@ def parse_power(bird: Bird) -> PowerEffect:
             return GainFoodFromSupply(food_types=foods, count=count)
 
     # --- Draw cards from deck ---
+    if ("draw" in t and "card" in t and "end of your turn" in t
+            and "discard" in t and "for each empty card slot in this row" not in t):
+        draw_count = _extract_count(text, "draw")
+        discard_count = _extract_count(text, "discard")
+        return DrawThenEndTurnDiscardFromHand(draw=draw_count, discard=discard_count)
+
+    if ("for each empty card slot in this row" in t
+            and "end of your turn" in t and "keep 1" in t and "discard the rest" in t):
+        return DrawPerEmptySlotThenKeepOneAtEndTurn(keep=1)
+
     if "draw" in t and "card" in t and ("deck" in t or "from the" not in t):
         draw_count = _extract_count(text, "draw")
         m = re.search(r"discard (\d+)", text)
@@ -635,11 +763,19 @@ def parse_power(bird: Bird) -> PowerEffect:
 
     # --- "Look at a card from the deck. If it can live in" (habitat predator) ---
     if "look at" in t and "can live in" in t:
-        return PredatorLookAt(wingspan_threshold=75)  # Use as probability proxy
+        hab = _extract_habitat(text)
+        return PredatorLookAt(habitat_filter=hab)
 
     # --- "Look at a card from the deck. If its food cost includes" ---
     if "look at" in t and "food cost includes" in t:
-        return PredatorLookAt(wingspan_threshold=75)
+        foods = set(_extract_all_food_types(text))
+        cache_ft = _extract_food_type(text) if "cache" in t else None
+        cache_count = _extract_count(text, "cache") if cache_ft else 0
+        return PredatorLookAt(
+            food_cost_includes=foods,
+            cache_food_type=cache_ft,
+            cache_count=cache_count,
+        )
 
     # --- Neighbor supply powers ("if player to your left/right has") ---
     if ("player to your left" in t or "player to your right" in t) and "gain" in t:
@@ -686,6 +822,53 @@ def parse_power(bird: Bird) -> PowerEffect:
 # --- Registry ---
 
 _power_cache: dict[str, PowerEffect] = {}
+_auto_explicit_card_powers: dict[str, callable] | None = None
+_explicit_map_path = Path(__file__).with_name("explicit_mappings.json")
+
+
+def _decode_explicit_value(value):
+    if isinstance(value, list):
+        return [_decode_explicit_value(v) for v in value]
+    if not isinstance(value, dict):
+        return value
+    if "__enum__" in value:
+        mod_name, enum_name, member_name = value["__enum__"].split(":")
+        enum_cls = getattr(import_module(mod_name), enum_name)
+        return getattr(enum_cls, member_name)
+    if "__set__" in value:
+        return set(_decode_explicit_value(v) for v in value["__set__"])
+    if "__tuple__" in value:
+        return tuple(_decode_explicit_value(v) for v in value["__tuple__"])
+    if "__dict__" in value:
+        out = {}
+        for k, v in value["__dict__"]:
+            out[_decode_explicit_value(k)] = _decode_explicit_value(v)
+        return out
+    return {k: _decode_explicit_value(v) for k, v in value.items()}
+
+
+def _load_auto_explicit_card_powers() -> dict[str, callable]:
+    global _auto_explicit_card_powers
+    if _auto_explicit_card_powers is not None:
+        return _auto_explicit_card_powers
+    if not _explicit_map_path.exists():
+        _auto_explicit_card_powers = {}
+        return _auto_explicit_card_powers
+
+    raw = json.loads(_explicit_map_path.read_text(encoding="utf-8"))
+    loaded: dict[str, callable] = {}
+    for bird_name, spec in raw.items():
+        class_path = spec["class"]
+        mod_name, class_name = class_path.rsplit(".", 1)
+        cls = getattr(import_module(mod_name), class_name)
+        kwargs = _decode_explicit_value(spec.get("kwargs", {}))
+
+        def _factory(_cls=cls, _kwargs=kwargs):
+            return _cls(**dict(_kwargs))
+
+        loaded[bird_name] = _factory
+    _auto_explicit_card_powers = loaded
+    return _auto_explicit_card_powers
 
 
 def get_power(bird: Bird) -> PowerEffect:
@@ -701,6 +884,8 @@ def get_power_source(bird: Bird) -> str:
     One of: strict, manual, no_power, fallback, parsed
     """
     if bird.name in _STRICT_CARD_POWERS:
+        return "strict"
+    if bird.name in _load_auto_explicit_card_powers():
         return "strict"
     if bird.color in {PowerColor.BROWN, PowerColor.WHITE} and bird.name in _MANUAL_OVERRIDES:
         return "strict"
@@ -735,7 +920,18 @@ def assert_power_allowed_for_strict_mode(game_state, bird: Bird) -> None:
 
 def clear_cache() -> None:
     """Clear the power cache (for testing)."""
+    global _auto_explicit_card_powers
     _power_cache.clear()
+    _auto_explicit_card_powers = None
+
+
+def get_all_explicit_power_names() -> set[str]:
+    """Return all bird names that resolve via explicit per-card mappings."""
+    return (
+        set(_STRICT_CARD_POWERS)
+        | set(_MANUAL_OVERRIDES)
+        | set(_load_auto_explicit_card_powers())
+    )
 
 
 def get_registry_stats(birds: list[Bird]) -> dict[str, int]:

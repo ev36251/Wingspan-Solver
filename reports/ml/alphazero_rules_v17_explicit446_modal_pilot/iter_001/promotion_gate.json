@@ -1,0 +1,20 @@
+{
+  "games": 4,
+  "nn_wins": 0,
+  "heuristic_wins": 4,
+  "ties": 0,
+  "nn_mean_score": 45.5,
+  "heuristic_mean_score": 77.75,
+  "nn_mean_margin": -32.25,
+  "nn_win_rate": 0.0,
+  "nn_rate_ge_100": 0.0,
+  "nn_rate_ge_120": 0.0,
+  "nn_win_rate_ci95": [
+    0.0,
+    0.4899
+  ],
+  "promoted": true,
+  "min_promotion_win_rate": 0.5,
+  "gate_value_blend": 0.85,
+  "gate_mcts_sims": 8
+}

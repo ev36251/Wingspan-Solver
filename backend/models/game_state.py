@@ -47,6 +47,12 @@ class GameState:
     # Optional deterministic choices for power resolution.
     # Key: "<player_name>::<bird_name>" -> FIFO list of choice payload dicts.
     power_choice_queues: dict[str, list[dict]] = field(default_factory=dict)
+    # Deferred hand discards to resolve at end of active player's turn.
+    # Keyed by player name; value is total cards to discard.
+    pending_end_turn_hand_discards: dict[str, int] = field(default_factory=dict)
+    # Optional preferred discard names consumed at end-of-turn resolution.
+    # Keyed by player name; value is FIFO preferred card names.
+    pending_end_turn_discard_names: dict[str, list[str]] = field(default_factory=dict)
     # Debug/event stream for bird-power execution visibility in tests.
     power_events: list[dict] = field(default_factory=list)
     _end_game_powers_resolved: bool = False
@@ -146,6 +152,8 @@ class GameState:
         self.discard_pile_count += len(discarded)
 
         def _draw_card_for_tray():
+            if self.deck_remaining <= 0:
+                return None
             deck_cards = getattr(self, "_deck_cards", None)
             if isinstance(deck_cards, list) and deck_cards:
                 card = deck_cards.pop()
@@ -153,8 +161,6 @@ class GameState:
                 if self.deck_tracker is not None:
                     self.deck_tracker.mark_drawn(card.name)
                 return card
-            if self.deck_remaining <= 0:
-                return None
             from backend.data.registries import get_bird_registry
             import random
 

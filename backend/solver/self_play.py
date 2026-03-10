@@ -264,11 +264,17 @@ def create_training_game(
     mode = setup_mode.strip().lower()
 
     if mode == "legacy_fixed5":
+        bonus_idx = 0
+        bonus_discard_cards = []
         for player in game.players:
             hand_size = min(5, len(all_birds) - idx)
             player.hand = all_birds[idx:idx + hand_size]
             idx += hand_size
-            player.bonus_cards = [random.choice(all_bonus)]
+            if bonus_idx < len(all_bonus):
+                player.bonus_cards = [all_bonus[bonus_idx]]
+                bonus_idx += 1
+            else:
+                player.bonus_cards = []
 
             # Starting food: 1 of each non-nectar type
             for ft in non_nectar_foods:
@@ -304,6 +310,7 @@ def create_training_game(
 
         draft_discard_total = 0
         draft_fallbacks = 0
+        bonus_discard_cards = []
         bonus_idx = 0
         for pi, player in enumerate(game.players):
             candidate = candidate_hands[pi]
@@ -333,6 +340,8 @@ def create_training_game(
                 draft_fallbacks += 1
                 player.hand = list(candidate)
                 player.bonus_cards = [bonus_options[0]]
+                if len(bonus_options) > 1:
+                    bonus_discard_cards.extend(bonus_options[1:])
                 for ft in non_nectar_foods:
                     player.food_supply.add(ft, 1)
                 continue
@@ -365,7 +374,11 @@ def create_training_game(
                     player.food_supply.add(ft, int(count))
 
             chosen_bonus = next((b for b in bonus_options if b.name == selected.bonus_card), None)
-            player.bonus_cards = [chosen_bonus if chosen_bonus is not None else bonus_options[0]]
+            final_bonus = chosen_bonus if chosen_bonus is not None else bonus_options[0]
+            player.bonus_cards = [final_bonus]
+            for bc in bonus_options:
+                if bc.name != final_bonus.name:
+                    bonus_discard_cards.append(bc)
 
         for b in tray_candidates:
             game.card_tray.add_card(b)
@@ -391,6 +404,9 @@ def create_training_game(
 
     # Keep finite deck identities for higher-fidelity simulation.
     game._deck_cards = list(all_birds[idx:])  # type: ignore[attr-defined]
+    # Keep finite bonus deck identities and explicit bonus discard pile.
+    game._bonus_cards = list(all_bonus[bonus_idx:])  # type: ignore[attr-defined]
+    game._bonus_discard_cards = list(bonus_discard_cards)  # type: ignore[attr-defined]
     idx = len(all_birds)
 
     # Set up birdfeeder with initial roll
