@@ -54,9 +54,25 @@ from backend.solver.simulation import (
 # train_factorized_bc.py reads this from meta["value_target_config"]["score_scale"].
 SCORE_SCALE = 120.0
 SCORE_BIAS = 0.0
+# Differential mode: value target = my_score - best_opponent_score, scaled so
+# a ±60 pt blowout maps to ±1.0.
+DIFF_SCALE = 60.0
 # Backward-compatible aliases (older code imports DELTA_* names).
 DELTA_SCALE = SCORE_SCALE
 DELTA_BIAS = SCORE_BIAS
+
+# Score breakdown components recorded as auxiliary value targets, in canonical
+# order. Must match ScoreBreakdown field names; train_factorized_bc.py reads
+# the order from meta["value_target_config"]["breakdown_components"].
+BREAKDOWN_COMPONENTS = (
+    "bird_vp", "eggs", "cached_food", "tucked_cards",
+    "bonus_cards", "round_goals", "nectar",
+)
+BREAKDOWN_SCALE = 40.0
+
+
+def default_score_scale(value_target_mode: str) -> float:
+    return DIFF_SCALE if value_target_mode == "differential" else SCORE_SCALE
 
 
 def _normalize_distribution(values: dict[int, float]) -> dict[int, float]:
@@ -122,6 +138,9 @@ def generate_alphazero_game(
     strict_rules_mode: bool = False,
     training_encoder: StateEncoder | None = None,
     tie_value_target: float = 0.5,
+    value_target_mode: str = "differential",
+    playout_cap_prob: float = 0.0,
+    playout_cap_frac: float = 0.25,
 ) -> list[dict]:
     """Play one self-play game using MCTS; return per-decision training records.
 
@@ -175,8 +194,20 @@ def generate_alphazero_game(
         # Temperature: high early (exploration), zero late (exploitation)
         tau = 1.0 if player_turns[player.name] < temperature_cutoff else 0.0
 
+        # Playout cap randomization (KataGo): most moves use a cheap search
+        # (value targets only); a random subset uses the full search budget and
+        # contributes policy targets. record_policy gates the policy loss in
+        # train_factorized_bc.py.
+        record_policy = True
+        sims_override: int | None = None
+        if playout_cap_prob > 0.0 and random.random() >= playout_cap_prob:
+            record_policy = False
+            sims_override = max(8, int(mcts.num_sims * playout_cap_frac))
+
         # Run MCTS to get policy and sample a move
-        mcts_moves, mcts_probs = mcts.get_policy(game, player_idx, temperature=tau)
+        mcts_moves, mcts_probs = mcts.get_policy(
+            game, player_idx, temperature=tau, num_sims=sims_override
+        )
 
         if mcts_moves:
             chosen = random.choices(mcts_moves, weights=mcts_probs, k=1)[0]
@@ -210,8 +241,10 @@ def generate_alphazero_game(
                 "targets": targets,
                 "policy_visit_targets": visit_targets,
                 "player_name": player.name,
-                "value_target_score": None,   # filled after game ends
-                "value_target_win": None,     # filled after game ends
+                "value_target_score": None,      # filled after game ends
+                "value_target_win": None,        # filled after game ends
+                "value_target_breakdown": None,  # filled after game ends
+                "record_policy": record_policy,
                 "has_value_target": True,
                 "policy_entropy_action_type": action_entropy,
                 "policy_peak_action_type": action_peak,
@@ -232,9 +265,13 @@ def generate_alphazero_game(
         player_turns[player.name] = player_turns.get(player.name, 0) + 1
         turns_total += 1
 
-    # Fill absolute score value targets: my_score (not delta).
-    # Normalized by score_scale (120) during training; maps 60pts→0.5, 90pts→0.75.
-    final_scores = {p.name: calculate_score(game, p).total for p in game.players}
+    # Fill value targets from final scores.
+    #   differential mode: my_score - best_opponent_score (normalized /60)
+    #   absolute mode:     my_score (normalized /120)
+    # Breakdown targets are the player's own score components (normalized /40
+    # at training time) and act as auxiliary supervision for the value head.
+    final_breakdowns = {p.name: calculate_score(game, p) for p in game.players}
+    final_scores = {n: float(b.total) for n, b in final_breakdowns.items()}
     for rec in records:
         my_name = rec["player_name"]
         my_score = float(final_scores.get(my_name, 0))
@@ -248,8 +285,18 @@ def generate_alphazero_game(
             win_t = 0.0
         else:
             win_t = float(tie_value_target)
-        rec["value_target_score"] = my_score
+        if value_target_mode == "differential":
+            rec["value_target_score"] = my_score - best_other
+        else:
+            rec["value_target_score"] = my_score
+        rec["final_score"] = my_score  # raw score kept for reporting
         rec["value_target_win"] = win_t
+        bd = final_breakdowns.get(my_name)
+        if bd is not None:
+            bd_dict = bd.as_dict()
+            rec["value_target_breakdown"] = [
+                float(bd_dict[c]) for c in BREAKDOWN_COMPONENTS
+            ]
 
     return records
 
@@ -272,9 +319,12 @@ def generate_self_play_dataset(
     seed: int = 0,
     max_turns: int = 240,
     strict_rules_mode: bool = False,
-    value_target_score_scale: float = SCORE_SCALE,
+    value_target_mode: str = "differential",
+    value_target_score_scale: float | None = None,
     value_target_score_bias: float = SCORE_BIAS,
     tie_value_target: float = 0.5,
+    playout_cap_prob: float = 0.0,
+    playout_cap_frac: float = 0.25,
     # Optional training-encoder overrides. When set, states stored in the JSONL
     # use these settings (allowing identity features to be added even when the
     # current inference model was trained without them). MCTS inference always
@@ -296,6 +346,11 @@ def generate_self_play_dataset(
     random.seed(seed)
     np.random.seed(seed)
     load_all(EXCEL_FILE)
+
+    if value_target_mode not in ("absolute", "differential"):
+        raise ValueError(f"unknown value_target_mode: {value_target_mode!r}")
+    if value_target_score_scale is None:
+        value_target_score_scale = default_score_scale(value_target_mode)
 
     # Limit BLAS to 1 thread — OpenBLAS thread management overhead inflates
     # numpy GEMV time from 0.1ms to ~150ms on machines with multi-threaded BLAS.
@@ -388,6 +443,9 @@ def generate_self_play_dataset(
                     strict_rules_mode=strict_rules_mode,
                     training_encoder=training_enc,
                     tie_value_target=tie_value_target,
+                    value_target_mode=value_target_mode,
+                    playout_cap_prob=playout_cap_prob,
+                    playout_cap_frac=playout_cap_frac,
                 )
             except Exception as exc:
                 game_exceptions += 1
@@ -401,7 +459,11 @@ def generate_self_play_dataset(
                 continue
 
             for rec in game_records:
-                score = float(rec.get("value_target_score") or 0.0)
+                score = float(
+                    rec.get("final_score")
+                    if rec.get("final_score") is not None
+                    else (rec.get("value_target_score") or 0.0)
+                )
                 win_t = float(rec.get("value_target_win") or 0.0)
                 score_values.append(score)
                 win_values.append(win_t)
@@ -459,12 +521,16 @@ def generate_self_play_dataset(
         "policy_target_mode": "mcts_visit_distribution",
         # This is read by _load_as_arrays to normalise value_target_score
         "value_target_config": {
-            "mode": "absolute",
+            "mode": value_target_mode,
             "score_scale": value_target_score_scale,
             "score_bias": value_target_score_bias,
             "win_target_mode": "outcome",
             "tie_value_target": float(tie_value_target),
+            "breakdown_components": list(BREAKDOWN_COMPONENTS),
+            "breakdown_scale": BREAKDOWN_SCALE,
         },
+        "playout_cap_prob": float(playout_cap_prob),
+        "playout_cap_frac": float(playout_cap_frac),
         "state_encoder": state_encoder_cfg,
     }
     Path(out_meta).write_text(json.dumps(meta, indent=2), encoding="utf-8")
@@ -499,6 +565,14 @@ def main() -> None:
     parser.add_argument("--root-dirichlet-epsilon", type=float, default=0.25)
     parser.add_argument("--root-dirichlet-alpha", type=float, default=0.3)
     parser.add_argument("--tie-value-target", type=float, default=0.5)
+    parser.add_argument(
+        "--value-target-mode", choices=["absolute", "differential"],
+        default="differential",
+    )
+    parser.add_argument("--playout-cap-prob", type=float, default=0.0,
+                        help="Probability a move gets the full search budget and a policy target; 0 disables playout cap randomization")
+    parser.add_argument("--playout-cap-frac", type=float, default=0.25,
+                        help="Fraction of mcts-sims used for cheap (value-only) searches")
     parser.add_argument("--rollout-policy", default="fast")
     parser.add_argument("--temperature-cutoff", type=int, default=8)
     parser.add_argument("--max-turns", type=int, default=240)
@@ -532,6 +606,9 @@ def main() -> None:
         root_dirichlet_epsilon=args.root_dirichlet_epsilon,
         root_dirichlet_alpha=args.root_dirichlet_alpha,
         tie_value_target=args.tie_value_target,
+        value_target_mode=args.value_target_mode,
+        playout_cap_prob=args.playout_cap_prob,
+        playout_cap_frac=args.playout_cap_frac,
         rollout_policy=args.rollout_policy,
         temperature_cutoff=args.temperature_cutoff,
         seed=args.seed,

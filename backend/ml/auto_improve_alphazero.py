@@ -226,9 +226,12 @@ def _run_az_shard(task: dict) -> dict:
         seed=task["seed"],
         max_turns=task["max_turns"],
         strict_rules_mode=task["strict_rules_mode"],
+        value_target_mode=task.get("value_target_mode", "absolute"),
         value_target_score_scale=task["value_target_score_scale"],
         value_target_score_bias=task["value_target_score_bias"],
         tie_value_target=task.get("tie_value_target", 0.5),
+        playout_cap_prob=task.get("playout_cap_prob", 0.0),
+        playout_cap_frac=task.get("playout_cap_frac", 0.25),
         enable_identity_features=task.get("enable_identity_features"),
         identity_hash_dim=task.get("identity_hash_dim"),
         use_per_slot_encoding=task.get("use_per_slot_encoding"),
@@ -406,10 +409,16 @@ def run_auto_improve_alphazero(
     state_encoder_use_tray_per_slot: bool = False,
     state_encoder_use_opponent_board: bool = False,
     state_encoder_use_power_features: bool = False,
-    # Value target normalization (absolute score mode)
-    value_target_score_scale: float = DELTA_SCALE,
+    # Value target: "differential" (my_score - best_opponent) or "absolute"
+    value_target_mode: str = "differential",
+    value_target_score_scale: float | None = None,
     value_target_score_bias: float = DELTA_BIAS,
     tie_value_target: float = 0.5,
+    # Playout cap randomization (KataGo-style; 0 disables)
+    playout_cap_prob: float = 0.0,
+    playout_cap_frac: float = 0.25,
+    # Auxiliary score-breakdown head loss weight (0 disables)
+    breakdown_value_loss_weight: float = 0.1,
     # Data accumulation (simple replay buffer)
     data_accumulation_enabled: bool = True,
     data_accumulation_decay: float = 0.5,
@@ -617,9 +626,12 @@ def run_auto_improve_alphazero(
             temperature_cutoff=temperature_cutoff,
             max_turns=max_turns,
             strict_rules_mode=strict_rules_mode,
+            value_target_mode=value_target_mode,
             value_target_score_scale=value_target_score_scale,
             value_target_score_bias=value_target_score_bias,
             tie_value_target=tie_value_target,
+            playout_cap_prob=playout_cap_prob,
+            playout_cap_frac=playout_cap_frac,
             # State encoder overrides: passed to generate_self_play_dataset so
             # training data is encoded with the requested feature set even when
             # the current champion model was trained without those features.
@@ -761,9 +773,12 @@ def run_auto_improve_alphazero(
                     seed=teacher_task["seed"],
                     max_turns=teacher_task["max_turns"],
                     strict_rules_mode=teacher_task["strict_rules_mode"],
+                    value_target_mode=teacher_task.get("value_target_mode", "absolute"),
                     value_target_score_scale=teacher_task["value_target_score_scale"],
                     value_target_score_bias=teacher_task["value_target_score_bias"],
                     tie_value_target=teacher_task["tie_value_target"],
+                    playout_cap_prob=teacher_task.get("playout_cap_prob", 0.0),
+                    playout_cap_frac=teacher_task.get("playout_cap_frac", 0.25),
                     enable_identity_features=teacher_task["enable_identity_features"],
                     identity_hash_dim=teacher_task["identity_hash_dim"],
                     use_per_slot_encoding=teacher_task["use_per_slot_encoding"],
@@ -966,6 +981,7 @@ def run_auto_improve_alphazero(
             value_loss_weight=train_value_weight,
             score_value_loss_weight=train_score_value_weight,
             win_value_loss_weight=train_win_value_weight,
+            breakdown_value_loss_weight=breakdown_value_loss_weight,
             early_stop_enabled=train_early_stop_enabled,
             early_stop_patience=train_early_stop_patience,
             early_stop_min_delta=train_early_stop_min_delta,
@@ -1427,12 +1443,36 @@ def main() -> None:
         help="Replay weighting by age (0=latest only, 1=uniform by available rows).",
     )
     p.add_argument(
+        "--value-target-mode",
+        choices=["absolute", "differential"],
+        default="differential",
+        help="Value head target: 'differential' = my_score - best_opponent_score "
+             "(default), 'absolute' = my final score (legacy).",
+    )
+    p.add_argument(
         "--value-target-score-scale",
         type=float,
-        default=DELTA_SCALE,
-        help="Normalization scale for value target (default 120 for absolute mode).",
+        default=None,
+        help="Normalization scale for value target "
+             "(default: 60 for differential mode, 120 for absolute).",
     )
     p.add_argument("--tie-value-target", type=float, default=0.5)
+    p.add_argument(
+        "--playout-cap-prob",
+        type=float,
+        default=0.0,
+        help="Probability a self-play move gets the full MCTS budget and a policy "
+             "target; remaining moves use a cheap search (value targets only). "
+             "0 disables playout cap randomization.",
+    )
+    p.add_argument("--playout-cap-frac", type=float, default=0.25,
+                   help="Fraction of mcts-sims used for cheap searches.")
+    p.add_argument(
+        "--breakdown-weight",
+        type=float,
+        default=0.1,
+        help="Loss weight for the auxiliary score-breakdown value head (0 disables).",
+    )
     # Parallelism
     p.add_argument("--dataset-workers", type=int, default=4)
     p.add_argument(
@@ -1553,8 +1593,12 @@ def main() -> None:
         teacher_root_dirichlet_epsilon=args.teacher_root_dirichlet_epsilon,
         teacher_root_dirichlet_alpha=args.teacher_root_dirichlet_alpha,
         teacher_rollout_policy=args.teacher_rollout_policy,
+        value_target_mode=args.value_target_mode,
         value_target_score_scale=args.value_target_score_scale,
         tie_value_target=args.tie_value_target,
+        playout_cap_prob=args.playout_cap_prob,
+        playout_cap_frac=args.playout_cap_frac,
+        breakdown_value_loss_weight=args.breakdown_weight,
         dataset_workers=args.dataset_workers,
         use_modal=args.use_modal,
         modal_cpu_per_worker=args.modal_cpu_per_worker,
