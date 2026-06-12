@@ -100,7 +100,7 @@ The system has run through 17+ training versions, with the current run (`v17_3_l
 
 ## Known limitations and where this is going
 
-**Round 3–4 suboptimality.** The model plays well in rounds 1–2 but loses points in late rounds. The state encoder does not yet capture "rounds remaining" explicitly enough for the network to learn the urgency shift (e.g., stop drawing cards and start laying eggs aggressively in round 4). Adding a cleaner round/turn countdown feature is the next state encoder change.
+**Round 3–4 suboptimality.** The model plays well in rounds 1–2 but loses points in late rounds. An encoder audit showed round/goal/bonus features are already well represented (rounds remaining, per-goal progress and rank, bonus next-tier distance), so the gap is attributed to the value target rather than missing inputs: an absolute-score target cannot express urgency relative to the opponent. The differential value target (my_score − opponent_score) is the fix being trained; eval now also logs per-component score breakdowns to verify where points are recovered.
 
 **Greedy NN underperforms vs MCTS NN by ~30 pts.** This means the policy heads alone aren't fully capturing the long-horizon value of moves — the network relies on tree search to look ahead. Improving the value head accuracy (so MCTS evaluations are sharper) and increasing self-play MCTS simulations per move are the main levers here.
 
