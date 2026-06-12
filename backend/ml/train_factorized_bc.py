@@ -162,6 +162,15 @@ def _load_as_arrays(
     has_value = np.zeros(n_rows, dtype=np.bool_)
     win_value_targets = np.zeros(n_rows, dtype=np.float32)
     has_win_value = np.zeros(n_rows, dtype=np.bool_)
+    vt_cfg = meta.get("value_target_config", {}) or {}
+    breakdown_components = list(vt_cfg.get("breakdown_components") or [])
+    breakdown_scale = max(1e-9, float(vt_cfg.get("breakdown_scale", 40.0)))
+    breakdown_dim = len(breakdown_components)
+    breakdown_targets = np.zeros((n_rows, max(1, breakdown_dim)), dtype=np.float32)
+    has_breakdown = np.zeros(n_rows, dtype=np.bool_)
+    # Playout cap randomization: rows from cheap searches carry value targets
+    # but no policy target (record_policy=False).
+    has_policy = np.ones(n_rows, dtype=np.bool_)
     is_rl = np.zeros(n_rows, dtype=np.bool_)
     rl_advantage = np.ones(n_rows, dtype=np.float32)
     has_move = np.zeros(n_rows, dtype=np.bool_)
@@ -190,6 +199,14 @@ def _load_as_arrays(
             if "value_target_win" in r:
                 win_value_targets[i] = float(r["value_target_win"])
                 has_win_value[i] = True
+            bd = r.get("value_target_breakdown")
+            if breakdown_dim > 0 and isinstance(bd, list) and len(bd) == breakdown_dim:
+                breakdown_targets[i, :breakdown_dim] = (
+                    np.asarray(bd, dtype=np.float32) / breakdown_scale
+                )
+                has_breakdown[i] = True
+            if r.get("record_policy") is False:
+                has_policy[i] = False
 
             pvt = r.get("policy_visit_targets")
             if isinstance(pvt, dict):
@@ -226,6 +243,12 @@ def _load_as_arrays(
         "has_value": has_value[:i],
         "win_value_targets": win_value_targets[:i],
         "has_win_value": has_win_value[:i],
+        "breakdown_targets": breakdown_targets[:i],
+        "has_breakdown": has_breakdown[:i],
+        "breakdown_components": breakdown_components,
+        "breakdown_scale": breakdown_scale,
+        "has_breakdown_any": bool(has_breakdown[:i].any()),
+        "has_policy": has_policy[:i],
         "is_rl": is_rl[:i],
         "rl_advantage": rl_advantage[:i],
         "has_move": has_move[:i],
@@ -263,6 +286,7 @@ class BCModel(nn.Module):
         has_value_head: bool,
         has_win_value_head: bool,
         has_move_value_head: bool,
+        breakdown_dim: int,
         dropout: float,
         batch_norm_enabled: bool,
         batch_norm_eps: float = 1e-5,
@@ -294,10 +318,22 @@ class BCModel(nn.Module):
         self.move_value_head = (
             nn.Linear(feature_dim + MOVE_FEATURE_DIM, 1) if has_move_value_head else None
         )
+        # Auxiliary score-breakdown head: predicts per-component normalized
+        # score (eggs, bonus cards, round goals, ...) to sharpen the shared
+        # representation feeding the value head. Training-only; not used at
+        # inference.
+        self.breakdown_head = (
+            nn.Linear(hidden2, breakdown_dim) if breakdown_dim > 0 else None
+        )
 
     def forward(
         self, x: torch.Tensor
-    ) -> tuple[dict[str, torch.Tensor], torch.Tensor | None, torch.Tensor | None]:
+    ) -> tuple[
+        dict[str, torch.Tensor],
+        torch.Tensor | None,
+        torch.Tensor | None,
+        torch.Tensor | None,
+    ]:
         h = self.layer1(x)
         if self.bn1 is not None:
             h = self.bn1(h)
@@ -315,7 +351,10 @@ class BCModel(nn.Module):
             if self.win_value_head is not None
             else None
         )
-        return logits, value, win_value
+        breakdown = (
+            self.breakdown_head(h) if self.breakdown_head is not None else None
+        )
+        return logits, value, win_value, breakdown
 
 
 def _warm_start_from_npz(
@@ -477,6 +516,10 @@ def _save_to_npz(model: BCModel, out_path: str | Path, meta_dict: dict) -> None:
             [float(_np(model.move_value_head.bias)[0])], dtype=np.float32
         )
 
+    if model.breakdown_head is not None:
+        d["W_breakdown"] = _np(model.breakdown_head.weight.T)
+        d["b_breakdown"] = _np(model.breakdown_head.bias)
+
     d["metadata_json"] = np.array([json.dumps(meta_dict).encode("utf-8")])
     np.savez_compressed(out_path, **d)
 
@@ -491,6 +534,9 @@ def _eval_pass(
     has_score_value: torch.Tensor,
     win_value_targets: torch.Tensor,
     has_win_value: torch.Tensor,
+    breakdown_targets: torch.Tensor,
+    has_breakdown: torch.Tensor,
+    has_policy: torch.Tensor,
     has_move: torch.Tensor,
     move_pos: torch.Tensor,
     move_negs: torch.Tensor,
@@ -498,6 +544,7 @@ def _eval_pass(
     score_value_loss_weight: float,
     win_value_loss_weight: float,
     move_value_loss_weight: float,
+    breakdown_value_loss_weight: float,
     batch_size: int,
 ) -> dict:
     model.eval()
@@ -515,6 +562,8 @@ def _eval_pass(
     move_margin_rows = 0
     move_pair_correct = 0
     move_pair_total = 0
+    breakdown_mse = 0.0
+    breakdown_n = 0
     n = states.shape[0]
 
     with torch.no_grad():
@@ -522,19 +571,20 @@ def _eval_pass(
             end = min(start + batch_size, n)
             xs = states[start:end].to(device)
             action_ids = hard_targets["action_type"][start:end].to(device)
-            logits, score_value, win_value = model(xs)
+            logits, score_value, win_value, breakdown = model(xs)
             B = xs.shape[0]
+            pol_mask = has_policy[start:end].to(device).float()
 
             action_soft = policy_targets["action_type"][start:end].to(device)
             ce = -torch.sum(
                 action_soft * F.log_softmax(logits["action_type"], dim=1), dim=1
-            )
+            ) * pol_mask
             total_loss += ce.sum().item()
             action_correct += (logits["action_type"].argmax(dim=1) == action_ids).sum().item()
             total += B
 
             for hn, rel_aids in _HEAD_RELEVANT_ACTIONS.items():
-                mask = action_soft[:, rel_aids].sum(dim=1)
+                mask = action_soft[:, rel_aids].sum(dim=1) * pol_mask
                 if mask.sum() < 0.5:
                     continue
                 tgt_soft = policy_targets[hn][start:end].to(device)
@@ -564,6 +614,14 @@ def _eval_pass(
                         * hw_f
                     ).sum().item()
                     win_n += int(hw.sum().item())
+
+            if model.breakdown_head is not None and breakdown is not None:
+                hb = has_breakdown[start:end].to(device)
+                if hb.any():
+                    bt = breakdown_targets[start:end].to(device)
+                    hb_f = hb.float().unsqueeze(1)
+                    breakdown_mse += (((breakdown - bt) ** 2) * hb_f).sum().item()
+                    breakdown_n += int(hb.sum().item()) * breakdown.shape[1]
 
             if model.move_value_head is not None:
                 hm = has_move[start:end]
@@ -606,13 +664,16 @@ def _eval_pass(
     w_brier = win_brier / max(1, win_n) if win_n > 0 else 0.0
     w_log = win_log_loss / max(1, win_n) if win_n > 0 else 0.0
     mv_loss = move_rank_loss / max(1, move_rank_n) if move_rank_n > 0 else 0.0
+    bd_mse = breakdown_mse / max(1, breakdown_n) if breakdown_n > 0 else 0.0
     return {
         "loss": (
             cls_loss
             + score_value_loss_weight * v_mse
             + win_value_loss_weight * w_log
             + move_value_loss_weight * mv_loss
+            + breakdown_value_loss_weight * bd_mse
         ),
+        "breakdown_mse": bd_mse,
         "action_acc": action_correct / max(1, total),
         "score_value_mse": v_mse,
         "win_value_brier": w_brier,
@@ -649,6 +710,7 @@ def train_bc(
     move_value_enabled: bool = True,
     move_value_loss_weight: float = 0.2,
     move_value_num_negatives: int = 4,
+    breakdown_value_loss_weight: float = 0.1,
     batch_norm_enabled: bool = True,
     batch_norm_momentum: float = 0.1,
     batch_norm_eps: float = 1e-5,
@@ -693,6 +755,12 @@ def train_bc(
     has_win_value_target = bool(data["has_win_value_target_any"])
     has_move_value_data = bool(data["has_move_data_any"])
     effective_move_value = bool(move_value_enabled and has_move_value_data)
+    has_breakdown_data = bool(data["has_breakdown_any"])
+    breakdown_dim = (
+        len(data["breakdown_components"])
+        if has_breakdown_data and breakdown_value_loss_weight > 0.0
+        else 0
+    )
 
     # Shuffle and split
     perm = np.random.default_rng(seed).permutation(n_rows)
@@ -710,6 +778,9 @@ def train_bc(
     val_has_value = torch.from_numpy(data["has_value"][val_idx])
     val_win_targets = torch.from_numpy(data["win_value_targets"][val_idx])
     val_has_win = torch.from_numpy(data["has_win_value"][val_idx])
+    val_breakdown_targets = torch.from_numpy(data["breakdown_targets"][val_idx])
+    val_has_breakdown = torch.from_numpy(data["has_breakdown"][val_idx])
+    val_has_policy = torch.from_numpy(data["has_policy"][val_idx])
     val_has_move = torch.from_numpy(data["has_move"][val_idx])
     val_move_pos = torch.from_numpy(data["move_pos"][val_idx])
     val_move_negs = torch.from_numpy(data["move_negs"][val_idx])
@@ -725,6 +796,9 @@ def train_bc(
     train_has_value = torch.from_numpy(data["has_value"][train_idx])
     train_win_targets = torch.from_numpy(data["win_value_targets"][train_idx])
     train_has_win = torch.from_numpy(data["has_win_value"][train_idx])
+    train_breakdown_targets = torch.from_numpy(data["breakdown_targets"][train_idx])
+    train_has_breakdown = torch.from_numpy(data["has_breakdown"][train_idx])
+    train_has_policy = torch.from_numpy(data["has_policy"][train_idx])
     train_rl_adv = torch.from_numpy(data["rl_advantage"][train_idx])
     train_has_move = torch.from_numpy(data["has_move"][train_idx])
     train_move_pos = torch.from_numpy(data["move_pos"][train_idx])
@@ -751,6 +825,7 @@ def train_bc(
         has_value_target,
         has_win_value_target,
         effective_move_value,
+        breakdown_dim,
         dropout,
         batch_norm_enabled,
         batch_norm_eps,
@@ -818,6 +893,8 @@ def train_bc(
         move_margin_rows = 0
         move_pair_correct = 0
         move_pair_total = 0
+        breakdown_mse_sum = 0.0
+        breakdown_seen = 0
         seen = 0
 
         for (batch_idx_t,) in loader:
@@ -827,20 +904,22 @@ def train_bc(
             rl_adv = train_rl_adv[bidx].to(device)
             B = xs.shape[0]
 
-            logits, score_value, win_value = model(xs)
+            logits, score_value, win_value, breakdown = model(xs)
             action_soft = train_policy_targets["action_type"][bidx].to(device)
+            # Rows from cheap playout-cap searches carry no policy target
+            pol_mask = train_has_policy[bidx].to(device).float()
 
-            # Action type CE (always active, scaled by RL advantage)
+            # Action type CE (scaled by RL advantage, masked by record_policy)
             ce_action = -torch.sum(
                 action_soft * F.log_softmax(logits["action_type"], dim=1), dim=1
-            )
-            loss = (ce_action * rl_adv).mean()
+            ) * pol_mask
+            loss = (ce_action * rl_adv).sum() / pol_mask.sum().clamp(min=1)
             loss_sum += ce_action.sum().item()
             action_correct += (logits["action_type"].argmax(dim=1) == action_ids).sum().item()
 
             # Sub-head CE (only active for their relevant action types)
             for hn, rel_aids in _HEAD_RELEVANT_ACTIONS.items():
-                mask = action_soft[:, rel_aids].sum(dim=1)
+                mask = action_soft[:, rel_aids].sum(dim=1) * pol_mask
                 mask_sum = mask.sum()
                 if mask_sum < 0.5:
                     continue
@@ -876,6 +955,18 @@ def train_bc(
                     win_brier_sum += ((win_pred - wt) ** 2 * hw_f).sum().item()
                     win_log_loss_sum += (bce * hw_f).sum().item()
                     win_seen += int(hw.sum().item())
+
+            # Auxiliary breakdown head (MSE on normalized score components)
+            if model.breakdown_head is not None and breakdown is not None:
+                hb = train_has_breakdown[bidx].to(device)
+                if hb.any():
+                    bt = train_breakdown_targets[bidx].to(device)
+                    hb_f = hb.float().unsqueeze(1)
+                    bd2 = ((breakdown - bt) ** 2) * hb_f
+                    bd_loss = bd2.sum() / (hb_f.sum() * breakdown.shape[1]).clamp(min=1)
+                    loss = loss + breakdown_value_loss_weight * bd_loss
+                    breakdown_mse_sum += bd2.sum().item()
+                    breakdown_seen += int(hb.sum().item()) * breakdown.shape[1]
 
             # Move-value ranking head (pairwise softplus loss)
             if model.move_value_head is not None:
@@ -928,13 +1019,18 @@ def train_bc(
         train_w_brier = win_brier_sum / max(1, win_seen) if win_seen > 0 else 0.0
         train_w_log = win_log_loss_sum / max(1, win_seen) if win_seen > 0 else 0.0
         train_mv_loss = move_rank_loss_sum / max(1, move_rank_n) if move_rank_n > 0 else 0.0
+        train_bd_mse = (
+            breakdown_mse_sum / max(1, breakdown_seen) if breakdown_seen > 0 else 0.0
+        )
         train_metrics = {
             "loss": (
                 train_cls_loss
                 + score_value_loss_weight * train_v_mse
                 + win_value_loss_weight * train_w_log
                 + move_value_loss_weight * train_mv_loss
+                + breakdown_value_loss_weight * train_bd_mse
             ),
+            "breakdown_mse": train_bd_mse,
             "action_acc": action_correct / max(1, seen),
             "score_value_mse": train_v_mse,
             "win_value_brier": train_w_brier,
@@ -951,8 +1047,10 @@ def train_bc(
             val_states, val_targets, val_policy_targets,
             val_value_targets, val_has_value,
             val_win_targets, val_has_win,
+            val_breakdown_targets, val_has_breakdown, val_has_policy,
             val_has_move, val_move_pos, val_move_negs, val_num_negs,
-            score_value_loss_weight, win_value_loss_weight, move_value_loss_weight, batch_size,
+            score_value_loss_weight, win_value_loss_weight, move_value_loss_weight,
+            breakdown_value_loss_weight, batch_size,
         )
         model.train()
 
@@ -968,6 +1066,7 @@ def train_bc(
             "train_move_rank_loss": round(train_metrics["move_rank_loss"], 6),
             "train_move_rank_margin_mean": round(train_metrics["move_rank_margin_mean"], 6),
             "train_move_pair_acc": round(train_metrics["move_pair_acc"], 6),
+            "train_breakdown_mse": round(train_metrics["breakdown_mse"], 6),
             "val_loss": round(val_metrics["loss"], 6),
             "val_action_acc": round(val_metrics["action_acc"], 6),
             "val_score_value_mse": round(val_metrics["score_value_mse"], 6),
@@ -977,6 +1076,7 @@ def train_bc(
             "val_move_rank_loss": round(val_metrics["move_rank_loss"], 6),
             "val_move_rank_margin_mean": round(val_metrics["move_rank_margin_mean"], 6),
             "val_move_pair_acc": round(val_metrics["move_pair_acc"], 6),
+            "val_breakdown_mse": round(val_metrics["breakdown_mse"], 6),
             "is_best_epoch": False,
         }
         current_val_loss = float(val_metrics["loss"])
@@ -1050,6 +1150,13 @@ def train_bc(
         "value_prediction_mode": "score_norm_linear" if has_value_target else "none",
         "value_score_scale": value_target_scale,
         "value_score_bias": value_target_bias,
+        "value_target_mode": str(
+            meta.get("value_target_config", {}).get("mode", "absolute")
+        ),
+        "has_breakdown_head": bool(breakdown_dim > 0),
+        "breakdown_components": list(data["breakdown_components"]) if breakdown_dim > 0 else [],
+        "breakdown_scale": float(data["breakdown_scale"]),
+        "breakdown_value_loss_weight": float(breakdown_value_loss_weight),
         "value_loss_weight": float(score_value_loss_weight),
         "score_value_loss_weight": float(score_value_loss_weight),
         "win_value_loss_weight": float(win_value_loss_weight),
@@ -1131,6 +1238,8 @@ def main() -> None:
     parser.add_argument("--disable-move-value", dest="move_value_enabled", action="store_false")
     parser.add_argument("--move-value-loss-weight", type=float, default=0.2)
     parser.add_argument("--move-value-num-negatives", type=int, default=4)
+    parser.add_argument("--breakdown-weight", type=float, default=0.1,
+                        help="Loss weight for the auxiliary score-breakdown head (0 disables)")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
@@ -1157,6 +1266,7 @@ def main() -> None:
         move_value_enabled=args.move_value_enabled,
         move_value_loss_weight=args.move_value_loss_weight,
         move_value_num_negatives=args.move_value_num_negatives,
+        breakdown_value_loss_weight=args.breakdown_weight,
         batch_norm_enabled=args.batch_norm_enabled,
         batch_norm_momentum=args.batch_norm_momentum,
         batch_norm_eps=args.batch_norm_eps,

@@ -125,14 +125,16 @@ class MCTS:
         game: GameState,
         player_idx: int,
         temperature: float = 1.0,
+        num_sims: int | None = None,
     ) -> tuple[list[Move], list[float]]:
         """Run MCTS and return (moves, visit-count probabilities).
 
         temperature=1.0  → sample proportionally to visit^(1/τ)  [training]
         temperature=0.0  → argmax visits                           [inference]
+        num_sims overrides the instance budget (playout cap randomization).
         """
         root = MCTSNode()
-        for _ in range(self.num_sims):
+        for _ in range(num_sims if num_sims is not None else self.num_sims):
             self._run_simulation(root, game, player_idx)
 
         if not root.children:
@@ -329,10 +331,28 @@ class MCTS:
             )
         return rollout_val
 
+    @property
+    def _value_target_mode(self) -> str:
+        return str(getattr(self.model, "value_target_mode", "absolute"))
+
     def _score_to_norm(self, score: float) -> float:
         scale = float(getattr(self.model, "value_score_scale", 120.0) or 120.0)
         bias = float(getattr(self.model, "value_score_bias", 0.0) or 0.0)
+        if self._value_target_mode == "differential":
+            # score is my_score - best_other in [-scale, +scale]; 0 (tie) → 0.5
+            return float(np.clip(
+                0.5 + 0.5 * (float(score) - bias) / max(1e-9, scale), 0.0, 1.0
+            ))
         return float(np.clip((float(score) - bias) / max(1e-9, scale), 0.0, 1.0))
+
+    def _terminal_score_signal(
+        self, my_score: float, other_scores: list[float]
+    ) -> float:
+        """Score signal matching the model's value-target semantics."""
+        if self._value_target_mode == "differential":
+            best_other = max(other_scores) if other_scores else 0.0
+            return float(my_score) - float(best_other)
+        return float(my_score)
 
     def _win_target_from_scores(self, my_score: float, other_scores: list[float]) -> float:
         best_other = max(other_scores) if other_scores else 0.0
@@ -369,7 +389,9 @@ class MCTS:
             my_score = float(final_scores.get(player_name, 0.0))
             others = [s for n, s in final_scores.items() if n != player_name]
             win_t = self._win_target_from_scores(my_score, others)
-            return self._utility_from_win_score(win_t, self._score_to_norm(my_score))
+            return self._utility_from_win_score(
+                win_t, self._score_to_norm(self._terminal_score_signal(my_score, others))
+            )
 
         nn_utility: float | None = None
         if self.value_blend > 0.0:
@@ -413,7 +435,10 @@ class MCTS:
                 ]
                 win_t = self._win_target_from_scores(my_score, other_scores)
                 rollout_utility = self._utility_from_win_score(
-                    win_t, self._score_to_norm(my_score)
+                    win_t,
+                    self._score_to_norm(
+                        self._terminal_score_signal(my_score, other_scores)
+                    ),
                 )
             except Exception:
                 rollout_utility = None

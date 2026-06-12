@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -52,6 +52,10 @@ class EvalResult:
     heuristic_rate_80_99: float
     heuristic_rate_100_119: float
     heuristic_rate_ge_120_bucket: float
+    # Mean score per ScoreBreakdown component — shows WHERE points come from
+    # (bird_vp / eggs / cached_food / tucked_cards / bonus_cards / round_goals / nectar)
+    nn_mean_breakdown: dict = field(default_factory=dict)
+    heuristic_mean_breakdown: dict = field(default_factory=dict)
 
 
 def evaluate_factorized_vs_heuristic(
@@ -95,6 +99,17 @@ def evaluate_factorized_vs_heuristic(
     nn_scores: list[int] = []
     h_scores: list[int] = []
     margins: list[int] = []
+    nn_breakdowns: list[dict] = []
+    h_breakdowns: list[dict] = []
+
+    def _mean_breakdown(breakdowns: list[dict]) -> dict:
+        if not breakdowns:
+            return {}
+        keys = [k for k in breakdowns[0] if k != "total"]
+        return {
+            k: round(sum(b[k] for b in breakdowns) / len(breakdowns), 2)
+            for k in keys
+        }
 
     def _rate(scores: list[int], low: int | None = None, high: int | None = None) -> float:
         n = max(1, len(scores))
@@ -194,13 +209,16 @@ def evaluate_factorized_vs_heuristic(
 
             turns += 1
 
-        final_scores = [int(calculate_score(game, pl).total) for pl in game.players]
+        final_breakdowns = [calculate_score(game, pl) for pl in game.players]
+        final_scores = [int(b.total) for b in final_breakdowns]
         nn_score = final_scores[nn_idx]
         h_score = final_scores[h_idx]
 
         nn_scores.append(nn_score)
         h_scores.append(h_score)
         margins.append(nn_score - h_score)
+        nn_breakdowns.append(final_breakdowns[nn_idx].as_dict())
+        h_breakdowns.append(final_breakdowns[h_idx].as_dict())
 
         if nn_score > h_score:
             nn_wins += 1
@@ -239,6 +257,8 @@ def evaluate_factorized_vs_heuristic(
         heuristic_rate_80_99=_rate(h_scores, low=80, high=100),
         heuristic_rate_100_119=_rate(h_scores, low=100, high=120),
         heuristic_rate_ge_120_bucket=_rate(h_scores, low=120),
+        nn_mean_breakdown=_mean_breakdown(nn_breakdowns),
+        heuristic_mean_breakdown=_mean_breakdown(h_breakdowns),
     )
 
 

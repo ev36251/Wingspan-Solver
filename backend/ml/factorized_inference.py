@@ -67,6 +67,9 @@ class FactorizedPolicyModel:
         self.value_prediction_mode = str(self.meta.get("value_prediction_mode", "sigmoid_norm"))
         self.value_score_scale = float(self.meta.get("value_score_scale", 150.0))
         self.value_score_bias = float(self.meta.get("value_score_bias", 0.0))
+        # "absolute": value head predicts my final score.
+        # "differential": value head predicts my_score - best_opponent_score.
+        self.value_target_mode = str(self.meta.get("value_target_mode", "absolute"))
         self.has_move_value_head = "W_move_value" in z and "b_move_value" in z
         self.W_move_value = z["W_move_value"] if self.has_move_value_head else None
         self.b_move_value = float(z["b_move_value"][0]) if self.has_move_value_head else 0.0
