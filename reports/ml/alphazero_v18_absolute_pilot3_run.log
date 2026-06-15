@@ -27,3 +27,13 @@ game 6/6 | nn_wins=0 h_wins=6 ties=0 | nn_avg=24.2 h_avg=73.8
   Eval: nn_wins=0 / 6 | mean_score=24.2 | win_rate=0.000
 
   [4/4] Promotion gate (8 games, mode=heuristic)...
+game 8/8 | nn_wins=0 h_wins=8 ties=0 | nn_avg=30.0 h_avg=67.5
+  Gate: nn_wins=0 / 8 | win_rate=0.000 | ci95=[0.0, 0.3244] | promoted=False
+  Timing (sec): data=215.7 train=13.4 eval=11.9 gate=15.7 iter=256.7
+
+============================================================
+  AlphaZero iter 2/3 | mcts_sims=24
+  out: reports/ml/alphazero_v18_absolute_pilot3/iter_002
+============================================================
+
+  [1/4] Generating self-play data (6 games, 24 sims, 2 workers)...
