@@ -36,6 +36,7 @@ frontend/.svelte-kit/
 # ML model weights and datasets (too large for git; use Git LFS if needed)
 reports/**/*.npz
 reports/**/*.jsonl
-# Throwaway bootstrap and smoke-test artifacts
+# Throwaway bootstrap, smoke-test, and active training run artifacts
 reports/ml/_boot/
 reports/ml/alphazero_absolute_smoke/
+reports/ml/alphazero_v18_absolute_pilot3/
