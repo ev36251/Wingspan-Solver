@@ -37,3 +37,35 @@ game 8/8 | nn_wins=0 h_wins=8 ties=0 | nn_avg=30.0 h_avg=67.5
 ============================================================
 
   [1/4] Generating self-play data (6 games, 24 sims, 2 workers)...
+  [az-selfplay] game 3/3 | samples=156 | mean_score=36.0 | mean_win_t=0.500 | elapsed=210.9s
+  [az-selfplay] game 3/3 | samples=156 | mean_score=53.8 | mean_win_t=0.500 | elapsed=220.9s
+  Data gen complete: 312 samples | mean_score=44.9
+  Cleaned up shard directory.
+  Combined dataset: 624 samples (new=312 + replay, decay=0.500)
+
+  [2/4] Training (3 epochs, hidden=384/192)...
+Loading dataset: reports/ml/alphazero_v18_absolute_pilot3/iter_002/az_dataset_combined.jsonl
+Loaded 624 samples | feature_dim=148
+Training device: cpu
+warm-start from reports/ml/alphazero_v18_absolute_pilot3/best_model.npz | applied=30 skipped=2
+epoch 1/3 | lr=0.000100 | train_loss=4.8681 train_acc=0.260 train_sv=0.3638 train_wb=0.2642 train_mv=0.6949 | val_loss=4.5612 val_acc=0.371 val_sv=0.1549 val_wb=0.2520 val_mv=0.6955
+epoch 2/3 | lr=0.000300 | train_loss=4.8259 train_acc=0.285 train_sv=0.3535 train_wb=0.2644 train_mv=0.6949 | val_loss=4.5372 val_acc=0.371 val_sv=0.1336 val_wb=0.2526 val_mv=0.6955
+epoch 3/3 | lr=0.000500 | train_loss=4.7272 train_acc=0.297 train_sv=0.3192 train_wb=0.2618 train_mv=0.6949 | val_loss=4.4937 val_acc=0.452 val_sv=0.1039 val_wb=0.2526 val_mv=0.6955
+  Training done: epochs=3 | val_loss=4.4937
+  Cleaned up combined JSONL (freed ~2-3 GB).
+
+  [3/4] Evaluating vs heuristic (6 games, mode=policy)...
+game 6/6 | nn_wins=0 h_wins=6 ties=0 | nn_avg=25.0 h_avg=74.3
+  Eval: nn_wins=0 / 6 | mean_score=25.0 | win_rate=0.000
+
+  [4/4] Promotion gate (8 games, mode=heuristic)...
+game 8/8 | nn_wins=0 h_wins=8 ties=0 | nn_avg=24.0 h_avg=76.6
+  Gate: nn_wins=0 / 8 | win_rate=0.000 | ci95=[0.0, 0.3244] | promoted=False
+  Timing (sec): data=224.0 train=0.2 eval=10.6 gate=14.0 iter=248.8
+
+============================================================
+  AlphaZero iter 3/3 | mcts_sims=24
+  out: reports/ml/alphazero_v18_absolute_pilot3/iter_003
+============================================================
+
+  [1/4] Generating self-play data (6 games, 24 sims, 2 workers)...
