@@ -1,0 +1,71 @@
+auto_improve_alphazero: per-slot encoding → auto-scaled hidden=768/384
+  Preflight bird audit gate passed: semantic_untested_count=0
+  Seeded best_model.npz from reports/ml/_boot/boot_model.npz
+
+============================================================
+  AlphaZero iter 1/5 | mcts_sims=100
+  out: reports/ml/alphazero_v18_absolute/iter_001
+============================================================
+
+  [1/4] Generating self-play data (200 games, 100 sims, 4 workers)...
+  [modal] dispatching 4 shards (50 games each) …
+✓ Initialized. View run at 
+https://modal.com/apps/evan-w-robinson/main/ap-uPFXCrwT6uFlFUZEGjImV2
+✓ Created objects.
+├── 🔨 Created mount /home/user/Wingspan-Solver/wingspan-20260128.xlsx
+├── 🔨 Created mount PythonPackage:backend
+└── 🔨 Created function run_az_shard_remote.
+Stopping app - uncaught exception raised locally: PermissionDeniedError('Host not in allowlist: input-plane.us-east.modal.com. Add this host to your network egress settings to allow access.').
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/Wingspan-Solver/backend/ml/auto_improve_alphazero.py", line 1624, in <module>
+    main()
+  File "/home/user/Wingspan-Solver/backend/ml/auto_improve_alphazero.py", line 1532, in main
+    result = run_auto_improve_alphazero(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/Wingspan-Solver/backend/ml/auto_improve_alphazero.py", line 695, in run_auto_improve_alphazero
+    shard_results = dispatch_shards_modal(
+                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/Wingspan-Solver/backend/ml/modal_selfplay.py", line 221, in dispatch_shards_modal
+    results = list(remote_fn.map(remote_tasks))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/modal/_utils/async_utils.py", line 839, in __iter__
+    yield from run_async_gen(runner, self._async_iterable)
+  File "/usr/local/lib/python3.11/dist-packages/modal/_utils/async_utils.py", line 917, in run_async_gen
+    next_yield = runner.run(gen.asend(next_send))  # type: ignore[arg-type]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/synchronicity/async_utils.py", line 82, in run
+    return self._loop.run_until_complete(wrapper_coro())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/synchronicity/async_utils.py", line 48, in wrapper_coro
+    return await coro_task
+           ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/modal/_utils/async_utils.py", line 749, in asend
+    return await self.gen.asend(value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/dist-packages/modal/parallel_map.py", line 1036, in _map_async
+    async for output in _map_helper(
+  File "/usr/local/lib/python3.11/dist-packages/modal/parallel_map.py", line 1009, in _map_helper
+    async for output in map_output_stream:
+  File "/usr/local/lib/python3.11/dist-packages/modal/_utils/async_utils.py", line 1091, in async_merge
+    raise item.value
+  File "/usr/local/lib/python3.11/dist-packages/modal/_utils/async_utils.py", line 1070, in producer
+    async for item in stream:
+  File "/usr/local/lib/python3.11/dist-packages/modal/_object.py", line 55, in wrapped
+    async for item in stream:
+  File "/usr/local/lib/python3.11/dist-packages/modal/_functions.py", line 1646, in _map
+    async for item in stream:
+  File "/usr/local/lib/python3.11/dist-packages/modal/parallel_map.py", line 965, in _map_invocation_inputplane
+    async for maybe_output in merged:
+  File "/usr/local/lib/python3.11/dist-packages/modal/_utils/async_utils.py", line 1091, in async_merge
+    raise item.value
+  File "/usr/local/lib/python3.11/dist-packages/modal/_utils/async_utils.py", line 1070, in producer
+    async for item in stream:
+  File "/usr/local/lib/python3.11/dist-packages/modal/parallel_map.py", line 758, in pump_inputs
+    response: api_pb2.MapStartOrContinueResponse = await input_plane_stub.MapStartOrContinue(
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+modal.exception.PermissionDeniedError: Host not in allowlist: input-plane.us-east.modal.com. Add this host to your network egress settings to allow access.
