@@ -410,7 +410,7 @@ def run_auto_improve_alphazero(
     state_encoder_use_opponent_board: bool = False,
     state_encoder_use_power_features: bool = False,
     # Value target: "differential" (my_score - best_opponent) or "absolute"
-    value_target_mode: str = "differential",
+    value_target_mode: str = "absolute",
     value_target_score_scale: float | None = None,
     value_target_score_bias: float = DELTA_BIAS,
     tie_value_target: float = 0.5,
@@ -1445,9 +1445,10 @@ def main() -> None:
     p.add_argument(
         "--value-target-mode",
         choices=["absolute", "differential"],
-        default="differential",
-        help="Value head target: 'differential' = my_score - best_opponent_score "
-             "(default), 'absolute' = my final score (legacy).",
+        default="absolute",
+        help="Value head target: 'absolute' = my final score (default; correct for "
+             "Wingspan's parallel-engine scoring), 'differential' = my_score - "
+             "best_opponent_score (experimental, for adversarial calibration).",
     )
     p.add_argument(
         "--value-target-score-scale",
