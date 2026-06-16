@@ -40,3 +40,5 @@ reports/**/*.jsonl
 reports/ml/_boot/
 reports/ml/alphazero_absolute_smoke/
 reports/ml/alphazero_v18_absolute_pilot3/
+reports/ml/alphazero_v18_absolute/
+reports/ml/alphazero_v18_absolute_run.log
