@@ -40,14 +40,18 @@ champion didn't advance again). Eval-vs-heuristic peaked at **57.0 / WR 0.425** 
 | Eval mean (best) | ~49 | ~57 |
 | Eval WR (best) | ~0.175 | ~0.425 |
 
-## Why the ratchet stalled after iter 1 (analysis)
-1. **Candidate reproduces, not exceeds, the champion.** Each candidate is warm-started from the
-   champion and trained only on that champion's self-play (~10.4k samples, 10 epochs). It tends to
-   clone the champion and land slightly *below* it from training noise → gate ~0.40.
+## Why the ratchet stalled after iter 1 (analysis, verified against code + log)
+Note: the replay buffer **was on** (`decay=0.5`, growing 31200→72800 samples across iters — see log
+`Combined dataset: ... (new=10400 + replay)`), so this is **not** a data-quantity problem.
+1. **Candidate is anchored to the champion.** Each candidate **warm-starts from `best_model.npz`**
+   (`applied=32`) **and** trains on a replay buffer dominated by that same champion's self-play
+   (decay 0.5 → recent iters, all from the iter-1 champion, dominate). It is effectively fine-tuning
+   the champion on the champion's own games → reproduces it and lands slightly *below* from training
+   noise → gate ~0.40.
 2. **The 0.55 bar is demanding for marginal gains** given NN-vs-NN gate variance at 30-60 games.
-   Candidates are genuinely close but not reliably better.
-3. **Low self-play diversity** — all training data comes from a single champion, limiting the
-   exploration needed to discover a strictly stronger policy.
+3. **Weak improvement signal** — at `mcts_sims=100`, the search target may be only marginally better
+   than the champion net, leaving little to climb toward. (v20 addresses this with more sims + a
+   0.50 bar + looser anchor.)
 
 ## Operational notes
 - **Gate is the cost bottleneck:** ~50–66 min of each ~85–90 min iter is the NN-vs-NN MCTS gate
