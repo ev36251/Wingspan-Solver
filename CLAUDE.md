@@ -39,6 +39,25 @@ python -m backend.ml.auto_improve_alphazero --out-dir reports/ml/alphazero_vN \
   --no-clean --start-iter N [... same flags as original launch ...]
 ```
 
+### Solo single-seed optimization (current direction)
+Deterministic single-player score maximization. For one fixed seed the *deal*
+is fixed (pre-shuffled deck stack, starting hand, bonus cards, round goals,
+seeded birdfeeder reroll stream); the opening *draft* keep-decision and every
+in-game move are searched to maximize the final score. Because whole games are
+scored to the end, the search discovers engines (food gathering, round-end teal
+caches like Sri Lanka Blue-Magpie, card tucking) that a one-step greedy
+evaluator misses. No opponent and no learned model are required.
+```bash
+# One fixed seed (draft + play searched; prints the best trajectory)
+python -m backend.ml.solo_seed_optimizer single --seed 42 --games 150 --show-trajectory
+
+# Many seeds fanned across Modal containers -> best-line dataset + analytics
+python -m backend.ml.solo_seed_optimizer multi --seeds 0-999 --games-per-seed 150 \
+  --use-modal --seeds-per-shard 1 --out reports/ml/solo_seed/best_lines.jsonl
+```
+`modal_solo.py` is the Modal dispatcher (one container per seed shard).
+See `memory/SOLO_SEED_FINDINGS.md` for the current bird/bonus tier list.
+
 ### Other ML utilities
 ```bash
 python -m backend.ml.alphazero_self_play      # standalone self-play data gen
@@ -95,7 +114,40 @@ Special cases to know:
 
 `BirdSlot` has flags: `counts_double`, `is_sideways`, `is_sideways_blocked`.
 
+### Game rules — important / non-obvious
+
+This is **Wingspan: Oceania** (base + Oceania, no Americas / hummingbirds / promos).
+
+- **Food cost & nectar** (`rules.py` `can_pay_food_cost` / `find_food_payment_options`):
+  every bird costs food, deducted on play. Nectar substitutes **1-for-1** for any
+  food. The Oceania **2-for-1** rule (any 2 food tokens pay for 1 required food)
+  is a *real* rule but applies **only to bird-play costs** — never to bird-power
+  costs (caching, predator discards) or the birdfeeder reset (exactly 1 food),
+  which spend exact food via `food_supply.has/spend` and `_pay_bonus_cost`.
+- **Power colors** (`PowerColor`): brown = "when activated", white/none = "when
+  played", pink = "once between turns", **teal = round end**, yellow = game end.
+  Teal/yellow fire in `timed_powers.py`. **Cached food scores 1 VP per token**
+  (`score_cached_food`), so round-end cache engines (e.g. Sri Lanka Blue-Magpie)
+  compound with board size.
+- **Setup / draft** (`solver/setup_advisor.py` `analyze_setup`): dealt 5 birds +
+  2 bonus; keep a **total of 5** (birds + food), at most **1 of each** of the 5
+  non-nectar food types, keep **1 of 2** bonus cards, plus **1 free nectar**
+  (Oceania). Good lines often keep *fewer* birds and more food.
+- **Solo scoring** (`num_players < 2`): round goals use **fixed-target** scoring
+  (`_compute_round_goal_scores_solo`) — full target → 1st-place pts, half → 2nd,
+  else 0, capped at the real per-round values (max 22). Nectar has its own solo
+  branch (`_score_nectar_solo`). Kept modest so a specialist VP engine still wins
+  while forfeiting goals/nectar.
+
 ### ML pipeline
+
+> **Status:** the 2-player AlphaZero self-play loop (v4–v20) produced weak
+> champions — the greedy NN loses to the rule-based heuristic ~70% of the time
+> and plays a degenerate egg-spam strategy. It is **superseded by the solo
+> single-seed optimization above**, which is the current direction (stronger
+> strategy + a clean best-line dataset). The loop below is kept for reference and
+> as the eventual competitive fine-tuning stage. Old `reports/ml/alphazero_v*`
+> run artifacts were deleted.
 
 The AlphaZero loop in `auto_improve_alphazero.py` runs four steps per iteration:
 
@@ -125,4 +177,5 @@ The AlphaZero loop in `auto_improve_alphazero.py` runs four steps per iteration:
 - `backend/data/registries.py` must be initialized with `load_all(EXCEL_FILE)` before any game engine code runs. Tests do this in `setup_module()` or `conftest.py`.
 - `GameState` is a mutable dataclass; `simulation.py` uses `copy.deepcopy()` for rollouts.
 - Combined training JSONLs are ≈2.75 GB and are auto-deleted after training. Disk abort at <5 GB free.
-- `reports/ml/alphazero_v12/` is the current training run. Resume command is in `memory/MEMORY.md`.
+- Current direction is **solo single-seed optimization** (`backend/ml/solo_seed_optimizer.py`); dataset in `reports/ml/solo_seed/best_lines_*.jsonl`, findings in `memory/SOLO_SEED_FINDINGS.md`. The old AlphaZero `alphazero_v*` runs were deleted.
+- `reports/ml/**/*.jsonl` and `*.npz` are gitignored; the solo dataset is force-added so it survives container recycling.
