@@ -49,3 +49,6 @@ reports/ml/alphazero_v20_compound_run.log
 # Bird-outcome analysis: generated artifacts (logs, samples, ranking JSONs).
 # The committed deliverable is the markdown writeup in memory/.
 reports/ml/champion_birds/
+
+# Solo seed optimizer: generated best-line datasets + run logs.
+reports/ml/solo_seed/
