@@ -133,39 +133,11 @@ def play_game(
     return scores, breakdowns, birds_by_player, actions
 
 
-def run(model_path: str, games: int, mcts_sims: int, board_type: BoardType, seed: int):
-    load_all(EXCEL_FILE)
-    reg = get_bird_registry()
-    model = load_policy_model(model_path)
-    enc = StateEncoder.resolve_for_model(model.meta)
-    mcts = MCTS(model=model, encoder=enc, num_sims=mcts_sims)
-
-    random.seed(seed)
-    np.random.seed(seed % (2**31))
-
-    # Each player-game is one outcome sample.
-    samples = []                     # list of {score, win, birds:[(name,hab)]}
-    actions_total = Counter()
-    t0 = time.time()
-    for g in range(games):
-        scores, _bd, birds, actions = play_game(
-            mcts, enc, board_type=board_type
-        )
-        actions_total += actions
-        best = max(scores.values())
-        for name, score in scores.items():
-            others = [v for n, v in scores.items() if n != name]
-            win = 1.0 if score > max(others) else (0.5 if score == max(others) else 0.0)
-            samples.append({"score": score, "win": win, "birds": birds[name]})
-        if (g + 1) % 5 == 0 or g == 0:
-            elapsed = time.time() - t0
-            print(f"  game {g+1}/{games} | {elapsed:.0f}s "
-                  f"({elapsed/(g+1):.1f}s/game) | last best={best:.0f}")
-
+def _aggregate(samples, actions_total, *, model_path, mcts_sims, board_type, reg):
+    """Build the result dict from accumulated player-game samples."""
     overall_mean = float(np.mean([s["score"] for s in samples]))
     overall_win = float(np.mean([s["win"] for s in samples]))
 
-    # Aggregate per bird across player-games.
     per_bird = defaultdict(lambda: {"plays": 0, "scores": [], "wins": [], "hab": Counter()})
     for s in samples:
         seen_this_game = set()
@@ -194,13 +166,15 @@ def run(model_path: str, games: int, mcts_sims: int, board_type: BoardType, seed
             "win_rate": round(float(np.mean(pb["wins"])), 3),
             "habitats": dict(pb["hab"]),
         })
+    rows.sort(key=lambda r: r["delta"], reverse=True)
 
-    action_mix = {ACTION_LABEL[a]: round(c / sum(actions_total.values()), 3)
+    total_actions = sum(actions_total.values()) or 1
+    action_mix = {ACTION_LABEL[a]: round(c / total_actions, 3)
                   for a, c in sorted(actions_total.items(), key=lambda x: -x[1])}
 
     return {
         "model_path": model_path,
-        "games": games,
+        "games": len(samples) // 2,
         "player_games": len(samples),
         "mcts_sims": mcts_sims,
         "board_type": board_type.value,
@@ -210,6 +184,74 @@ def run(model_path: str, games: int, mcts_sims: int, board_type: BoardType, seed
         "distinct_birds_played": len(rows),
         "birds": rows,
     }
+
+
+def run(model_path, games, mcts_sims, board_type, seed, *,
+        out_path, checkpoint_every=10, resume=False):
+    """Play `games` champion games, persisting samples and checkpointing the
+    aggregated JSON so a container reclaim costs at most `checkpoint_every`
+    games.  With `resume`, continues from an existing samples file.
+    """
+    load_all(EXCEL_FILE)
+    reg = get_bird_registry()
+    model = load_policy_model(model_path)
+    enc = StateEncoder.resolve_for_model(model.meta)
+    mcts = MCTS(model=model, encoder=enc, num_sims=mcts_sims)
+
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    samples_path = out.with_suffix(".samples.jsonl")
+    actions_path = out.with_suffix(".actions.json")
+
+    samples: list[dict] = []
+    actions_total = Counter()
+    start_game = 0
+    if resume and samples_path.exists():
+        for line in samples_path.open():
+            line = line.strip()
+            if line:
+                samples.append(json.loads(line))
+        start_game = len(samples) // 2
+        if actions_path.exists():
+            for k, v in json.loads(actions_path.read_text()).items():
+                actions_total[ActionType(k)] += v
+        print(f"  resumed from {start_game} games ({len(samples)} player-games)")
+    else:
+        samples_path.write_text("")
+
+    # Distinct seed stream per game so resume doesn't replay identical games.
+    sfile = samples_path.open("a")
+    t0 = time.time()
+    for g in range(start_game, games):
+        random.seed(seed * 100003 + g)
+        np.random.seed((seed * 100003 + g) % (2**31))
+        scores, _bd, birds, actions = play_game(mcts, enc, board_type=board_type)
+        actions_total += actions
+        best = max(scores.values())
+        for name, score in scores.items():
+            others = [v for n, v in scores.items() if n != name]
+            win = 1.0 if score > max(others) else (0.5 if score == max(others) else 0.0)
+            rec = {"score": score, "win": win, "birds": birds[name]}
+            samples.append(rec)
+            sfile.write(json.dumps(rec) + "\n")
+        sfile.flush()
+
+        done = g + 1
+        if done % 5 == 0 or g == start_game:
+            elapsed = time.time() - t0
+            per = elapsed / (done - start_game)
+            print(f"  game {done}/{games} | {elapsed:.0f}s ({per:.1f}s/game) | last best={best:.0f}")
+        if done % checkpoint_every == 0:
+            actions_path.write_text(json.dumps({a.value: c for a, c in actions_total.items()}))
+            res = _aggregate(samples, actions_total, model_path=model_path,
+                             mcts_sims=mcts_sims, board_type=board_type, reg=reg)
+            out.write_text(json.dumps(res, indent=2))
+            print(f"    [checkpoint] wrote {out.name} @ {done} games")
+
+    sfile.close()
+    actions_path.write_text(json.dumps({a.value: c for a, c in actions_total.items()}))
+    return _aggregate(samples, actions_total, model_path=model_path,
+                      mcts_sims=mcts_sims, board_type=board_type, reg=reg)
 
 
 def _print_report(result: dict, min_support: int, top_n: int):
@@ -255,15 +297,18 @@ def main():
     p.add_argument("--min-support", type=int, default=4)
     p.add_argument("--top-n", type=int, default=25)
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--checkpoint-every", type=int, default=10)
+    p.add_argument("--resume", action="store_true",
+                   help="Continue from an existing <out>.samples.jsonl file")
     args = p.parse_args()
 
-    result = run(args.model_path, args.games, args.mcts_sims, BoardType.OCEANIA, args.seed)
+    result = run(args.model_path, args.games, args.mcts_sims, BoardType.OCEANIA,
+                 args.seed, out_path=args.out,
+                 checkpoint_every=args.checkpoint_every, resume=args.resume)
 
-    out = Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(result, indent=2))
+    Path(args.out).write_text(json.dumps(result, indent=2))
     _print_report(result, args.min_support, args.top_n)
-    print(f"\nwrote {out}")
+    print(f"\nwrote {args.out}")
 
 
 if __name__ == "__main__":

@@ -46,5 +46,6 @@ reports/ml/alphazero_v19_champion/
 reports/ml/alphazero_v19_champion_run.log
 reports/ml/alphazero_v20_compound/
 reports/ml/alphazero_v20_compound_run.log
-# Bird-outcome analysis: ignore transient run logs, keep the small ranking JSONs
+# Bird-outcome analysis: ignore transient run logs + intermediates, keep ranking JSONs
 reports/ml/champion_birds/*.log
+reports/ml/champion_birds/*.actions.json
