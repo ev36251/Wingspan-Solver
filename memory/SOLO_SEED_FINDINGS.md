@@ -7,7 +7,21 @@ temperature schedule, keeping the best-scoring line. Draft (keep-decision) is
 a search dimension. Parallelized across seeds on Modal (one container/seed).
 
 Harness: `backend/ml/solo_seed_optimizer.py` (+ `modal_solo.py`).
-Dataset: `reports/ml/solo_seed/best_lines_1000.jsonl` (1000 best lines w/ trajectories).
+Canonical dataset: `reports/ml/solo_seed/best_lines_1000_goals.jsonl` (1000 best
+lines, **fixed-target solo goal scoring active**). The earlier
+`best_lines_1000.jsonl` is stale (goals frozen at a flat 22).
+
+### Goals-frozen vs goals-active (1000 seeds each)
+| | mean score | round_goals | bird_vp | tucked | cached | eggs |
+|---|---|---|---|---|---|---|
+| goals frozen (old) | 90.1 | 22.0 (constant) | 31.1 | 10.2 | 6.7 | 11.2 |
+| goals active (new) | 77.0 | 9.6 (0–22) | 30.7 | 9.8 | 6.1 | 12.1 |
+
+The ~13-pt drop is entirely the goal change (free +22 → honestly-earned 9.6);
+every other component is unchanged, so the engine strategy held. The optimizer
+now earns ~9.6 of a possible 22 — it pursues goals when worthwhile but won't
+wreck its engine for them. Goal distribution spans 0–22 (some specialist lines
+take 0). Bird tier list is stable (Nutcracker #1, Sri Lanka Blue-Magpie #2).
 
 ## Headline results (1000 seeds, 150 games/seed, Oceania)
 - Score: mean 90.1, range 66–140.
@@ -42,11 +56,10 @@ Small Clutch Specialist (46×), Avian Theriogenologist (35×), Nest Box Builder
 - **Bird-identity pair combos are too sparse to mine** at this scale (different
   deal each seed). Synergy is *functional* (power-color / engine archetype),
   not specific named pairs.
-- **Round goals score a flat 22 in solo mode** in all 1000 games: with one
-  player there is no opponent to rank against, so the player always "wins"
-  every goal for a fixed amount. ~1/4 of every score is therefore a dead
-  constant the optimizer cannot influence — it learns nothing about goals.
-  Fixing this needs threshold-based solo (Automa-style) goal scoring.
+- ~~Round goals score a flat 22 in solo mode~~ **FIXED**: solo round goals now
+  use fixed-target scoring (`_compute_round_goal_scores_solo` in scoring.py) so
+  goals are a live optimization dimension (mean 9.6, range 0–22). Kept modest by
+  design so a specialist VP engine still wins while forfeiting goals/nectar.
 - Solo only: no competitive play (blocking, goal racing, tray/food denial).
 
 ## Suggested next steps
