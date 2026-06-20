@@ -1,0 +1,129 @@
+"""Modal.com cloud runner for solo single-seed optimization.
+
+The solo optimizer is embarrassingly parallel across seeds, so each Modal
+container runs a shard of seeds and returns the best line found for each.
+Aggregation (analytics + dataset JSONL) happens locally.
+
+Setup (one-time):
+    pip install modal
+    modal setup          # browser auth
+
+Usage:
+    python -m backend.ml.solo_seed_optimizer multi \\
+        --seeds 0-99 --games-per-seed 150 --use-modal --seeds-per-shard 1 \\
+        --out reports/ml/solo_seed/best_lines.jsonl
+
+Notes:
+    - One Modal container per shard; `--seeds-per-shard` controls how many
+      seeds each container handles (1 => maximum parallelism).
+    - Results (best-line rows) are returned as gzip-compressed JSON; only the
+      local machine needs persistent storage.
+"""
+
+from __future__ import annotations
+
+import gzip
+import json
+from pathlib import Path
+
+_HERE = Path(__file__).parent        # backend/ml/
+_BACKEND = _HERE.parent              # backend/
+_PROJECT = _BACKEND.parent           # project root (xlsx lives here)
+_XLSX = _PROJECT / "wingspan-20260128.xlsx"
+
+try:
+    import modal
+    _MODAL_AVAILABLE = True
+except ImportError:
+    _MODAL_AVAILABLE = False
+    modal = None  # type: ignore
+
+
+def _build_image():
+    """Container image: deps + the xlsx at the path config.py expects.
+
+    Modal auto-mounts the `backend` package to /root/backend/, so config.py
+    resolves PROJECT_ROOT = /root and the xlsx must live at /root/wingspan-…
+    """
+    return (
+        modal.Image.debian_slim(python_version="3.12")
+        .pip_install("numpy", "openpyxl", "threadpoolctl")
+        .add_local_file(str(_XLSX), remote_path="/root/wingspan-20260128.xlsx")
+    )
+
+
+if _MODAL_AVAILABLE:
+    _image = _build_image()
+    app = modal.App("wingspan-solo-seed", image=_image)
+
+    @app.function(cpu=2, memory=4096, timeout=7200)
+    def run_solo_shard_remote(task: dict) -> dict:
+        """Run a shard of seeds inside a Modal container.
+
+        task = {"seeds": [int], "games_per_seed": int,
+                "board_type": str, "draft_top_k": int}
+        Returns {"rows_gz": bytes} — gzip-compressed JSON list of best-line rows.
+        """
+        import os
+        os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+        os.environ.setdefault("MKL_NUM_THREADS", "1")
+        os.environ.setdefault("OMP_NUM_THREADS", "1")
+        try:
+            from threadpoolctl import threadpool_limits
+            threadpool_limits(limits=1, user_api="blas")
+        except ImportError:
+            pass
+
+        from backend.config import EXCEL_FILE
+        from backend.data.registries import load_all
+        from backend.models.enums import BoardType
+        from backend.ml.solo_seed_optimizer import optimize_seed, result_to_row
+
+        load_all(EXCEL_FILE)
+        board = BoardType(task["board_type"])
+        gps = int(task["games_per_seed"])
+        top_k = int(task.get("draft_top_k", 12))
+
+        rows = []
+        for seed in task["seeds"]:
+            best = optimize_seed(int(seed), gps, board, draft_top_k=top_k)
+            rows.append(result_to_row(int(seed), best))
+        return {"rows_gz": gzip.compress(json.dumps(rows).encode("utf-8"), 6)}
+
+
+def dispatch_solo_modal(seeds, games_per_seed: int, board_type,
+                        seeds_per_shard: int = 1, draft_top_k: int = 12,
+                        cpu_per_worker: int = 2) -> list[dict]:
+    """Fan seeds out across Modal containers; return all best-line rows."""
+    if not _MODAL_AVAILABLE:
+        raise RuntimeError(
+            "Modal is not installed. Run:\n    pip install modal\n    modal setup"
+        )
+
+    seeds = list(seeds)
+    step = max(1, int(seeds_per_shard))
+    shards = [seeds[i:i + step] for i in range(0, len(seeds), step)]
+    tasks = [
+        {
+            "seeds": s,
+            "games_per_seed": int(games_per_seed),
+            "board_type": board_type.value,
+            "draft_top_k": int(draft_top_k),
+        }
+        for s in shards
+    ]
+    print(f"  [modal] dispatching {len(tasks)} shards "
+          f"({len(seeds)} seeds, {games_per_seed} games/seed) …")
+
+    remote_fn = run_solo_shard_remote
+    requested_cpu = max(1, int(cpu_per_worker))
+    if requested_cpu != 2:
+        remote_fn = remote_fn.with_options(cpu=requested_cpu)
+
+    all_rows: list[dict] = []
+    with modal.enable_output(), app.run():
+        for result in remote_fn.map(tasks):
+            payload = result.get("rows_gz")
+            if isinstance(payload, (bytes, bytearray)):
+                all_rows.extend(json.loads(gzip.decompress(bytes(payload)).decode("utf-8")))
+    return all_rows
