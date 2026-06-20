@@ -7,9 +7,24 @@ temperature schedule, keeping the best-scoring line. Draft (keep-decision) is
 a search dimension. Parallelized across seeds on Modal (one container/seed).
 
 Harness: `backend/ml/solo_seed_optimizer.py` (+ `modal_solo.py`).
-Canonical dataset: `reports/ml/solo_seed/best_lines_1000_goals.jsonl` (1000 best
-lines, **fixed-target solo goal scoring active**). The earlier
-`best_lines_1000.jsonl` is stale (goals frozen at a flat 22).
+Canonical training set: `reports/ml/solo_seed/best_lines_4000_q250.jsonl`
+(4000 best lines, 250 games/seed, fixed-target goal scoring; ~103k state→move
+pairs, 25.8 moves/game). Earlier `best_lines_1000*.jsonl` are smaller/superseded.
+
+### Scale / quality progression (all Oceania, goals active)
+| dataset | seeds | games/seed | mean score | Nutcracker / Blue-Magpie |
+|---|---|---|---|---|
+| 1000@q150 | 1000 | 150 | 77.0 | #1 / #2 |
+| **4000@q250** | 4000 | 250 | **78.7** | #1 (284×) / #2 (250×) |
+
+Higher games-per-seed lifts target quality modestly (+1.7); the tier list and
+~2.63/5 draft are stable across scales.
+
+### Point breakdown (4000@q250, mean total 78.7)
+Bird VPs 31.5 (40%) · Eggs 12.1 (15%) · Tucked cards 10.3 (13%, max 83) ·
+EoR goals 9.8 (12.5%) · Cached food 5.9 (7.5%, max 86) · Nectar 4.7 (6%) ·
+Bonus cards 4.3 (5.5%). Bird VP is the backbone; the high max tuck/cache values
+confirm specialist all-in engines exist in the data.
 
 ### Goals-frozen vs goals-active (1000 seeds each)
 | | mean score | round_goals | bird_vp | tucked | cached | eggs |
