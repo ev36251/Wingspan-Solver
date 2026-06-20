@@ -543,6 +543,14 @@ def compute_round_goal_scores(game_state: GameState, round_num: int) -> dict[str
     if goal.description.lower() == "no goal":
         return {}
 
+    # Solo mode: no opponent to rank against, so score the single player's
+    # progress against fixed targets (Automa-style would compare to a dummy;
+    # this is the simpler fixed-target variant). Points stay capped at the real
+    # 1st-place value (R1=4 .. R4=7, max 22 across the game) so a specialist
+    # engine that ignores goals only forfeits a modest amount and can still win.
+    if game_state.num_players < 2:
+        return _compute_round_goal_scores_solo(game_state, round_num, goal)
+
     progress = [(p.name, goal_progress_for_round(p, goal)) for p in game_state.players]
     progress.sort(key=lambda x: -x[1])
     if not progress:
@@ -565,6 +573,63 @@ def compute_round_goal_scores(game_state: GameState, round_num: int) -> dict[str
         i = j
 
     return scores
+
+
+# Fixed "full credit" targets per round-goal category (the count at which a
+# solo player earns full 1st-place points). Half the target earns partial
+# (2nd-place) credit. Calibrated to realistic end-of-game amounts so goals stay
+# worth a few points each -- never enough to override a strong VP engine.
+def _solo_goal_target(goal) -> int:
+    desc = goal.description.lower()
+    if "total [bird]" in desc:
+        return 8
+    if "[bird] in one row" in desc:
+        return 5
+    if any(f"[bird] in [{h}]" in desc for h in ("forest", "grassland", "wetland")):
+        return 5
+    if "sets of [egg][egg][egg]" in desc:
+        return 2
+    if any(f"[egg] in [{h}]" in desc for h in ("forest", "grassland", "wetland")):
+        return 6
+    if any(f"[egg] in [{n}]" in desc for n in ("bowl", "cavity", "ground", "platform")):
+        return 6
+    if any(f"[{n}] [bird] with [egg]" in desc for n in ("bowl", "cavity", "ground", "platform")):
+        return 4
+    if any(f"[{n}] [bird]" in desc for n in ("bowl", "cavity", "ground", "platform")):
+        return 4
+    if "[feather]" in desc:          # birds worth >4 / <=3 feathers
+        return 4
+    if "brown powers" in desc:
+        return 5
+    if "white & no powers" in desc:
+        return 4
+    if "[bird_with_tucked_card]" in desc:
+        return 4
+    if "[bird] with no [egg]" in desc:
+        return 5
+    if "[card] in hand" in desc:
+        return 6
+    if "[wild] in personal supply" in desc:
+        return 6
+    return 5  # sensible default for any unparsed goal
+
+
+def _compute_round_goal_scores_solo(game_state: GameState, round_num: int, goal) -> dict[str, int]:
+    """Fixed-target solo goal scoring for a single player.
+
+    Full target  -> 1st-place points; half target -> 2nd-place points; else 0.
+    """
+    player = game_state.players[0]
+    progress = goal_progress_for_round(player, goal)
+    target = max(1, _solo_goal_target(goal))
+
+    if progress >= target:
+        pts = _round_goal_pts(1, round_num)
+    elif progress >= max(1, target // 2):
+        pts = _round_goal_pts(2, round_num)
+    else:
+        pts = 0
+    return {player.name: pts}
 
 
 def score_nectar(game_state: GameState, player: Player) -> int:
