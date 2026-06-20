@@ -279,49 +279,53 @@ def _bonus_by_name(deal: Deal, name: str):
 # Multi-seed driver: dataset + analytics
 # ---------------------------------------------------------------------------
 
-def run_multi_seed(seeds, games_per_seed: int, out_path: str | None,
-                   board_type: BoardType = BoardType.OCEANIA):
+def result_to_row(seed: int, best: SoloResult) -> dict:
+    """Serialize a per-seed best result into a JSON-able dataset row."""
+    return {
+        "seed": seed, "score": best.score, "breakdown": best.breakdown,
+        "actions": best.action_counts, "draft": best.draft,
+        "board_birds": best.board_birds, "trajectory": best.trajectory,
+    }
+
+
+def aggregate_and_report(rows: list[dict], games_per_seed: int,
+                         out_path: str | None = None) -> list[dict]:
+    """Write best-line rows to JSONL and print bird/draft analytics."""
     bird_appear: Counter = Counter()
     bird_score_sum: defaultdict = defaultdict(int)
     bonus_appear: Counter = Counter()
     draft_birds_kept: list[int] = []
     scores: list[int] = []
     breakdown_sum: Counter = Counter()
-    rows = []
 
+    rows = sorted(rows, key=lambda r: r["seed"])
     fout = None
     if out_path:
         Path(out_path).parent.mkdir(parents=True, exist_ok=True)
         fout = open(out_path, "w", encoding="utf-8")
 
-    for seed in seeds:
-        best = optimize_seed(seed, games_per_seed, board_type)
-        scores.append(best.score)
-        draft_birds_kept.append(best.draft.get("num_birds_kept", 0))
-        bonus_appear[best.draft.get("bonus", "?")] += 1
-        for b in best.board_birds:
+    for row in rows:
+        scores.append(row["score"])
+        draft = row.get("draft", {})
+        draft_birds_kept.append(draft.get("num_birds_kept", 0))
+        bonus_appear[draft.get("bonus", "?")] += 1
+        for b in row.get("board_birds", []):
             bird_appear[b] += 1
-            bird_score_sum[b] += best.score
-        for k, v in best.breakdown.items():
+            bird_score_sum[b] += row["score"]
+        for k, v in row.get("breakdown", {}).items():
             if k != "total":
                 breakdown_sum[k] += v
-        row = {
-            "seed": seed, "score": best.score, "breakdown": best.breakdown,
-            "actions": best.action_counts, "draft": best.draft,
-            "board_birds": best.board_birds, "trajectory": best.trajectory,
-        }
-        rows.append(row)
         if fout:
             fout.write(json.dumps(row) + "\n")
-        print(f"seed {seed:>4}: best={best.score:>3}  "
-              f"draft_birds={best.draft.get('num_birds_kept')}  "
-              f"bonus={best.draft.get('bonus')!r:<28} "
-              f"{ {k: best.breakdown[k] for k in ('bird_vp','cached_food','tucked_cards','eggs','round_goals')} }")
+        print(f"seed {row['seed']:>4}: best={row['score']:>3}  "
+              f"draft_birds={draft.get('num_birds_kept')}  "
+              f"bonus={draft.get('bonus')!r:<28} "
+              f"{ {k: row['breakdown'][k] for k in ('bird_vp','cached_food','tucked_cards','eggs','round_goals')} }")
 
     if fout:
         fout.close()
 
-    n = len(scores)
+    n = max(1, len(scores))
     print("\n==================== AGGREGATE ====================")
     print(f"seeds: {n}   games/seed: {games_per_seed}")
     print(f"score: mean={sum(scores)/n:.1f}  min={min(scores)}  max={max(scores)}")
@@ -337,6 +341,17 @@ def run_multi_seed(seeds, games_per_seed: int, out_path: str | None,
     for name, cnt in bonus_appear.most_common(10):
         print(f"  {cnt:>2}x  {name}")
     return rows
+
+
+def run_multi_seed(seeds, games_per_seed: int, out_path: str | None,
+                   board_type: BoardType = BoardType.OCEANIA,
+                   draft_top_k: int = 12):
+    """Local (single-process) multi-seed run."""
+    rows = []
+    for seed in seeds:
+        best = optimize_seed(seed, games_per_seed, board_type, draft_top_k)
+        rows.append(result_to_row(seed, best))
+    return aggregate_and_report(rows, games_per_seed, out_path)
 
 
 def _parse_seeds(spec: str) -> list[int]:
@@ -366,6 +381,9 @@ def main():
     m.add_argument("--games-per-seed", type=int, default=150)
     m.add_argument("--board", choices=["oceania", "base"], default="oceania")
     m.add_argument("--out", type=str, default="reports/ml/solo_seed/best_lines.jsonl")
+    m.add_argument("--use-modal", action="store_true",
+                   help="Fan seeds out across Modal containers (one shard each).")
+    m.add_argument("--seeds-per-shard", type=int, default=1)
 
     args = ap.parse_args()
     load_all(EXCEL_FILE)
@@ -385,7 +403,16 @@ def main():
                 print("  " + line)
     else:
         board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
-        run_multi_seed(_parse_seeds(args.seeds), args.games_per_seed, args.out, board)
+        seeds = _parse_seeds(args.seeds)
+        if args.use_modal:
+            from backend.ml.modal_solo import dispatch_solo_modal
+            rows = dispatch_solo_modal(
+                seeds, args.games_per_seed, board,
+                seeds_per_shard=args.seeds_per_shard,
+            )
+            aggregate_and_report(rows, args.games_per_seed, args.out)
+        else:
+            run_multi_seed(seeds, args.games_per_seed, args.out, board)
 
 
 if __name__ == "__main__":
