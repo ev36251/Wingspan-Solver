@@ -1,6 +1,11 @@
 # Wingspan Solver
 
-An AlphaZero-style reinforcement learning engine for the [Wingspan](https://stonemaiergames.com/games/wingspan/) board game. The system trains entirely through self-play: two AI agents play thousands of games against each other, and a neural network learns from the resulting data using Monte Carlo Tree Search (MCTS) for both data generation and evaluation. The policy and value network is implemented in PyTorch, trained with behavioral cloning on self-play data, and served via a FastAPI backend with a React frontend. Self-play is parallelized across 32 Modal.com cloud containers for fast iteration.
+A full rules engine, solver, and strategy-learning pipeline for **Wingspan: Oceania** (base + Oceania expansion). The engine implements every bird power, the full food/nectar economy, and end-of-round/game scoring, served via a FastAPI backend with a React frontend.
+
+Two strategy approaches live in this repo:
+
+1. **Solo single-seed optimization (current direction).** For a fixed, fully deterministic game, the solver searches the opening draft and every move to maximize the final score, replaying the same seed many times. Across many seeds (parallelized on Modal.com) this produces a high-quality dataset of best-scoring lines plus empirical bird/bonus/draft analytics — and it naturally discovers engine-building strategies (food gathering, round-end caching, card tucking) that simpler evaluators miss. See `memory/SOLO_SEED_FINDINGS.md`.
+2. **AlphaZero-style self-play (legacy).** Two MCTS agents play each other and a factorized PyTorch policy/value network learns from the data via behavioral cloning. This produced weak champions (see Known Limitations) and is superseded by the solo approach above; it remains for reference and as the eventual competitive fine-tuning stage.
 
 ---
 
@@ -23,8 +28,10 @@ wingspan-20260128.xlsx
          move_generator.py   All legal moves for a given state
          simulation.py       Fast rollout engine (deepcopy-based)
          monte_carlo.py      MCTS with UCB-PUCT
-    └─ backend/ml/                               Training pipeline
-         alphazero_self_play.py   Self-play data generation (MCTS both sides)
+    └─ backend/ml/                               Strategy pipeline
+         solo_seed_optimizer.py   Deterministic solo single-seed score search (current)
+         modal_solo.py            Modal.com dispatch — one container per seed shard
+         alphazero_self_play.py   Self-play data generation (MCTS both sides, legacy)
          train_factorized_bc.py   PyTorch training: factorized policy + value heads
          evaluate_factorized_bc.py  NN vs rule-based heuristic evaluation
          auto_improve_alphazero.py  Outer loop: self-play → train → eval → gate
@@ -84,9 +91,28 @@ for each iteration:
 
 ---
 
-## What it learned / how it improved
+## Solo single-seed optimization (current direction)
 
-The system has run through 17+ training versions, with the current run (`v17_3_long20_improved_fullfeat`) completing 20 iterations. A few genuine learning dynamics observed:
+For one fixed seed, the entire game is made **deterministic**: a pre-shuffled deck stack (the Nth draw is always the same card), fixed starting hand / bonus cards / round goals, and a seeded birdfeeder reroll stream. The optimizer then replays that exact game many times, searching both the opening **draft** (which birds vs. food to keep — the real Oceania rule: keep 5 total, ≤1 of each food type) and every in-game **move**, on a simulated-annealing temperature schedule, keeping the highest-scoring line. Because each replay is scored to the end of the game, the search "sees" engines pay off — something a one-step greedy evaluator cannot.
+
+Each seed is independent, so seeds are fanned out across Modal.com containers (one per seed). Only the single best line from each seed is kept, so per-seed search effort never overfits a model — the number of *distinct* seeds controls generalization.
+
+**Findings over 1000 seeds** (Oceania, 150 games/seed; full detail in `memory/SOLO_SEED_FINDINGS.md`):
+
+- Mean best score ~90 (range 66–140), built from a balanced engine — bird VP, round-end caching, and card tucking — not egg-spam.
+- Drafts robustly keep **~2.6 of 5 birds**, taking more food (matches expert intuition).
+- The top birds by appearance-and-average-score are the round-end cache engines **Eurasian Nutcracker** and **Sri Lanka Blue-Magpie** — the search rediscovers known strong cards on its own.
+- High-scoring lines fill all three habitats evenly and lean on brown ("when activated") and teal ("round end") engines.
+
+This dataset of best-scoring lines is the foundation for the next step: training a policy/value network on *strong* play (rather than the weak self-play data below) and, later, competitive fine-tuning against an opponent.
+
+---
+
+## What it learned / how it improved (legacy AlphaZero self-play)
+
+> The following describes the earlier 2-player self-play runs (v4–v20). These produced weak champions (see Known Limitations) and have been superseded by the solo approach above; the old `reports/ml/alphazero_v*` artifacts were deleted.
+
+A few genuine learning dynamics observed across those runs:
 
 **Early iterations (iter 1–5):** The network starts near-random. Greedy NN scores 33–44 pts. It quickly learns basic action-type selection — that playing high-point birds and laying eggs beats randomly drawing cards every turn.
 
@@ -152,7 +178,18 @@ pytest -k "test_powers"                        # filter by name
 pytest backend/tests/test_alphazero.py -x -q   # fast fail, quiet
 ```
 
-### ML training (smoke test, ~5 min)
+### Solo single-seed optimization (current direction)
+
+```bash
+# Optimize one fixed seed locally (draft + play searched; prints best line)
+python -m backend.ml.solo_seed_optimizer single --seed 42 --games 150 --show-trajectory
+
+# Fan many seeds across Modal containers -> best-line dataset + analytics
+python -m backend.ml.solo_seed_optimizer multi --seeds 0-999 --games-per-seed 150 \
+  --use-modal --seeds-per-shard 1 --out reports/ml/solo_seed/best_lines.jsonl
+```
+
+### ML training — legacy AlphaZero loop (smoke test, ~5 min)
 
 ```bash
 python -m backend.ml.auto_improve_alphazero \
@@ -170,11 +207,14 @@ python -m backend.ml.auto_improve_alphazero \
   --no-clean --start-iter N [... same flags as original launch ...]
 ```
 
-### Cloud self-play (Modal.com, 32 workers)
+### Cloud compute (Modal.com)
 
 ```bash
+# Solo seed optimization: one container per seed (see command above)
+python -m backend.ml.solo_seed_optimizer multi --use-modal [flags]
+
+# Legacy self-play: dispatch across 32 Modal containers
 python -m backend.ml.modal_selfplay [flags]
-# Dispatches self-play across 32 Modal containers.
 # Local backend/ is mounted fresh — code fixes apply immediately.
 ```
 
@@ -188,12 +228,13 @@ backend/
   engine/        Rules, actions, scoring, timed powers
   models/        Dataclasses (GameState, Player, Board, BirdSlot, ...)
   powers/        446 bird power implementations
-  solver/        Move generation, MCTS, heuristics, simulation
-  ml/            AlphaZero training pipeline
+  solver/        Move generation, MCTS, heuristics, simulation, setup advisor
+  ml/            Solo single-seed optimizer + Modal dispatch, legacy AlphaZero pipeline
   api/           FastAPI routes and Pydantic schemas
 frontend/
   src/           React + TypeScript UI
 reports/
-  ml/            Training run outputs (models, logs, eval results)
+  ml/            Strategy outputs (solo_seed/ best-line datasets, analytics)
+memory/          Findings & proposals (SOLO_SEED_FINDINGS.md, ...)
 backend/tests/   492 pytest tests
 ```
