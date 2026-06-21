@@ -76,6 +76,62 @@ if _MODAL_AVAILABLE:
             os.unlink(tmp.name)
         return {"rows_gz": gzip.compress(json.dumps(rows).encode("utf-8"), 6)}
 
+    @app.function(cpu=2, memory=4096, timeout=14400)
+    def run_2p_dataset_shard_remote(task: dict) -> dict:
+        """Generate opponent-aware BC rows for a shard of seeds (gzipped)."""
+        import os
+        import tempfile
+        os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+        os.environ.setdefault("MKL_NUM_THREADS", "1")
+        os.environ.setdefault("OMP_NUM_THREADS", "1")
+        try:
+            from threadpoolctl import threadpool_limits
+            threadpool_limits(limits=1, user_api="blas")
+        except ImportError:
+            pass
+
+        from backend.config import EXCEL_FILE
+        from backend.data.registries import load_all
+        from backend.models.enums import BoardType
+        from backend.ml.two_player_dataset import build_encoders, seed_rows
+
+        load_all(EXCEL_FILE)
+        mb = task.pop("model_bytes")
+        tmp = tempfile.NamedTemporaryFile(suffix=".npz", delete=False)
+        tmp.write(mb); tmp.close()
+        try:
+            model, model_encoder, train_encoder = build_encoders(tmp.name)
+            board = BoardType(task["board_type"])
+            top_k = int(task.get("top_k", 6))
+            rows = []
+            for s in task["seeds"]:
+                rows.extend(seed_rows(int(s), model, model_encoder, train_encoder, board, top_k))
+        finally:
+            os.unlink(tmp.name)
+        return {"rows_gz": gzip.compress(json.dumps(rows).encode("utf-8"), 6)}
+
+
+def dispatch_2p_dataset_modal(seeds, model_path, board, top_k=6, seeds_per_shard=4):
+    """Fan opponent-aware data generation across Modal containers; return all rows."""
+    if not _MODAL_AVAILABLE:
+        raise RuntimeError("Modal is not installed. Run: pip install modal; modal setup")
+    model_bytes = Path(model_path).read_bytes()
+    seeds = list(seeds)
+    step = max(1, int(seeds_per_shard))
+    shards = [seeds[i:i + step] for i in range(0, len(seeds), step)]
+    tasks = [
+        {"seeds": s, "board_type": board.value, "model_bytes": model_bytes, "top_k": int(top_k)}
+        for s in shards
+    ]
+    print(f"  [modal] dispatching {len(tasks)} dataset shards ({len(seeds)} games) …")
+    all_rows: list[dict] = []
+    with modal.enable_output(), app.run():
+        for result in run_2p_dataset_shard_remote.map(tasks):
+            payload = result.get("rows_gz")
+            if isinstance(payload, (bytes, bytearray)):
+                all_rows.extend(json.loads(gzip.decompress(bytes(payload)).decode("utf-8")))
+    return all_rows
+
 
 def dispatch_2p_eval_modal(mode, seeds, model_path, board, cfg, seeds_per_shard=2):
     """Fan 2-player eval games across Modal containers; return all result rows."""
