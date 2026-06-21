@@ -193,6 +193,22 @@ in rollouts. **differential 83.7 (12/20, 60%) vs score-max 79.3; margin +4.3 +-
 n=20 -- selfish play already captures most resource competition at 1-ply.
 Differential kept as default (free, >= selfish). To confirm: ~100+ games (Modal),
 and/or sharpen the signal (deeper search / more adversarial opponent model).
+
+Strengthening attempts (--mode selfplay, 20 games, alternating seats):
+- Averaged stochastic rollouts (rollouts=4, temp=0.6, diff) vs baseline (1 greedy
+  rollout): **improved 79.4 (11/20, 55%) vs baseline 74.5; +4.9, p=0.41.** Small,
+  within noise. temp=0.6 lowers rollout-policy quality, partly cancelling the
+  variance reduction; baseline's single *greedy* playout is already a good
+  estimate.
+- Deck determinization (--determinize): reshuffles unseen deck per rollout so the
+  search plans over plausible futures instead of peeking at the true order.
+  Honest agent (4 reshuffled rollouts) still beats heuristic 63-46. NOTE: in the
+  fixed-seed harness the peeking baseline has an unfair edge, so determinize is
+  about honest/robust play, not in-sim score.
+Pattern: each search tweak (differential, averaged rollouts) buys ~+5 pts but
+none is significant at n=20. Diminishing returns on rollout tweaks. Bigger levers:
+larger Modal eval to resolve small effects, 2-ply search (model opponent's reply),
+or retrain the net with opponent-board features. Lower temp (~0.3) worth a try.
 - A proper AlphaZero step would train on search VISIT distributions / values
   (not just the best move) -- may transfer better than plain BC, bigger build.
 - Eventually fine-tune competitively against an opponent.
