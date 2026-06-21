@@ -29,7 +29,7 @@ from backend.solver.heuristics import dynamic_weights, _estimate_move_value
 from backend.ml.factorized_inference import FactorizedPolicyModel
 from backend.ml.state_encoder import StateEncoder
 from backend.ml.solo_seed_optimizer import SeededBirdfeeder
-from backend.ml.solo_eval import make_net_chooser
+from backend.ml.solo_eval import make_net_chooser, make_net_sampling_chooser
 
 
 def build_2p_game(seed: int, board: BoardType = BoardType.OCEANIA):
@@ -76,14 +76,24 @@ def play_multi(game, choosers, max_turns: int = 600):
     return [calculate_score(game, pl).total for pl in game.players]
 
 
-def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff"):
+def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff",
+                        rollouts=1, temperature=0.0):
     """1-ply rollout search for seat `my_idx`.
 
     objective="diff"    -> maximize (my_score - best_opponent_score)  [competitive]
     objective="selfish" -> maximize my_score only                    [score-max]
-    Both model the opponent with `opp_chooser` during rollouts.
+
+    With temperature<=0 each candidate gets one greedy rollout (opponent modeled
+    by `opp_chooser`). With temperature>0 both seats sample ~softmax(score/temp)
+    in rollouts and each candidate is averaged over `rollouts` trajectories,
+    which cuts the variance of the noisy point estimate.
     """
-    net_choose = make_net_chooser(model, encoder)
+    stochastic = temperature > 0
+    roll_me = (make_net_sampling_chooser(model, encoder, temperature, seed=my_idx * 7919 + 1)
+               if stochastic else make_net_chooser(model, encoder))
+    roll_opp = (make_net_sampling_chooser(model, encoder, temperature, seed=my_idx * 7919 + 2)
+                if stochastic else opp_chooser)
+    n_roll = rollouts if stochastic else 1
 
     def choose(game, player, moves):
         if len(moves) <= 1:
@@ -93,18 +103,25 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
         ranked = sorted(moves, key=lambda m: -model.score_move(state, m, player, logits=logits))[:top_k]
         best_m, best_v = ranked[0], -1e18
         for m in ranked:
-            sim = fast_clone_game(game)
-            sp = sim.current_player
-            if not execute_move_on_sim(sim, sp, m):
+            total = 0.0
+            n_ok = 0
+            for _ in range(n_roll):
+                sim = fast_clone_game(game)
+                sp = sim.current_player
+                if not execute_move_on_sim(sim, sp, m):
+                    continue
+                sim.advance_turn()
+                _refill_tray(sim)
+                choosers = [roll_me if i == my_idx else roll_opp for i in range(sim.num_players)]
+                scores = play_multi(sim, choosers)
+                if objective == "selfish":
+                    total += scores[my_idx]
+                else:
+                    total += scores[my_idx] - max(scores[j] for j in range(len(scores)) if j != my_idx)
+                n_ok += 1
+            if n_ok == 0:
                 continue
-            sim.advance_turn()
-            _refill_tray(sim)
-            choosers = [net_choose if i == my_idx else opp_chooser for i in range(sim.num_players)]
-            scores = play_multi(sim, choosers)
-            if objective == "selfish":
-                val = scores[my_idx]
-            else:
-                val = scores[my_idx] - max(scores[j] for j in range(len(scores)) if j != my_idx)
+            val = total / n_ok
             if val > best_v:
                 best_m, best_v = m, val
         return best_m
@@ -186,6 +203,45 @@ def ablation(model_path, seeds, board, top_k):
     print(f"differential win rate: {diff_wins}/{n} ({100*diff_wins/n:.0f}%)")
 
 
+def selfplay(model_path, seeds, board, top_k, rollouts, temperature):
+    """Head-to-head: improved search (averaged stochastic rollouts) vs the
+    baseline single greedy-rollout search. Both use the differential objective;
+    the only difference is rollout quality. Seats alternate by seed parity."""
+    load_all(EXCEL_FILE)
+    model = FactorizedPolicyModel(model_path)
+    encoder = StateEncoder.resolve_for_model(model.meta)
+    net_choose = make_net_chooser(model, encoder)
+
+    new_wins = 0
+    new_scores, base_scores = [], []
+    for seed in seeds:
+        new_idx = seed % 2
+        base_idx = 1 - new_idx
+        new_agent = make_search_chooser(model, encoder, top_k, new_idx, net_choose,
+                                        "diff", rollouts=rollouts, temperature=temperature)
+        base_agent = make_search_chooser(model, encoder, top_k, base_idx, net_choose, "diff")
+        game = build_2p_game(seed, board)
+        choosers = [None, None]
+        choosers[new_idx] = new_agent
+        choosers[base_idx] = base_agent
+        scores = play_multi(game, choosers)
+        nw, bs = scores[new_idx], scores[base_idx]
+        new_scores.append(nw)
+        base_scores.append(bs)
+        if nw > bs:
+            new_wins += 1
+        print(f"seed {seed:>3} (new@seat {new_idx}):  new={nw:>3}  base={bs:>3}  "
+              f"{'NEW' if nw > bs else 'base' if nw < bs else 'tie'}")
+
+    n = len(seeds)
+    print("\n==================== SUMMARY ====================")
+    print(f"SELF-PLAY: improved search (rollouts={rollouts}, temp={temperature}) "
+          f"vs baseline (1 greedy rollout) | {n} games")
+    print(f"improved : mean={st.mean(new_scores):.1f}")
+    print(f"baseline : mean={st.mean(base_scores):.1f}")
+    print(f"improved win rate: {new_wins}/{n} ({100*new_wins/n:.0f}%)")
+
+
 def _parse_seeds(spec):
     if "-" in spec and "," not in spec:
         a, b = spec.split("-")
@@ -199,13 +255,18 @@ def main():
     ap.add_argument("--seeds", default="0-19")
     ap.add_argument("--top-k", type=int, default=6)
     ap.add_argument("--board", choices=["oceania", "base"], default="oceania")
-    ap.add_argument("--mode", choices=["heuristic", "ablation"], default="heuristic")
+    ap.add_argument("--mode", choices=["heuristic", "ablation", "selfplay"], default="heuristic")
+    ap.add_argument("--rollouts", type=int, default=4, help="stochastic rollouts/candidate (selfplay)")
+    ap.add_argument("--temperature", type=float, default=0.6, help="rollout sampling temp (selfplay)")
     args = ap.parse_args()
     board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
+    seeds = _parse_seeds(args.seeds)
     if args.mode == "ablation":
-        ablation(args.model, _parse_seeds(args.seeds), board, args.top_k)
+        ablation(args.model, seeds, board, args.top_k)
+    elif args.mode == "selfplay":
+        selfplay(args.model, seeds, board, args.top_k, args.rollouts, args.temperature)
     else:
-        evaluate(args.model, _parse_seeds(args.seeds), board, args.top_k)
+        evaluate(args.model, seeds, board, args.top_k)
 
 
 if __name__ == "__main__":
