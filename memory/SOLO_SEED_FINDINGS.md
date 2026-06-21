@@ -185,6 +185,14 @@ collapses to ~42 vs the search agent (active goal/tray/food suppression, no
 hand-coded blocking).
 Caveat: heuristic is a weak baseline. Next: stronger opponents (search vs
 search; differential vs pure score-max ablation), faster/larger eval.
+
+Ablation (--mode ablation, 20 games, alternating seats): differential (my-opp)
+vs pure score-max (my only), both full search, opponent modeled as net policy
+in rollouts. **differential 83.7 (12/20, 60%) vs score-max 79.3; margin +4.3 +-
+5.5 SEM, one-sided binomial p=0.25.** Direction positive but within noise at
+n=20 -- selfish play already captures most resource competition at 1-ply.
+Differential kept as default (free, >= selfish). To confirm: ~100+ games (Modal),
+and/or sharpen the signal (deeper search / more adversarial opponent model).
 - A proper AlphaZero step would train on search VISIT distributions / values
   (not just the best move) -- may transfer better than plain BC, bigger build.
 - Eventually fine-tune competitively against an opponent.
