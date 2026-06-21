@@ -233,23 +233,31 @@ def _anneal(it: int, iters: int, t0: float = 6.0, t1: float = 0.4) -> float:
     return t0 * ((t1 / t0) ** (it / (iters - 1)))
 
 
-def optimize_seed(seed: int, games: int = 150,
-                  board_type: BoardType = BoardType.OCEANIA,
-                  draft_top_k: int = 12) -> SoloResult:
-    """Search for the best solo line on one seed, optimizing draft + play."""
+def _draft_dict(rec) -> dict:
+    return {
+        "birds_kept": rec.birds_to_keep,
+        "food_kept": rec.food_to_keep,
+        "bonus": rec.bonus_card,
+        "num_birds_kept": len(rec.birds_to_keep),
+    }
+
+
+def _search_seed(seed: int, games: int, board_type: BoardType,
+                 draft_top_k: int) -> list[SoloResult]:
+    """Run the full search; return all line results sorted ascending by score
+    (each tagged with the draft it used)."""
     deal = deal_seed(seed, board_type)
     recs = draft_candidates(deal, top_k=draft_top_k)
     if not recs:
         raise RuntimeError(f"no draft candidates for seed {seed}")
 
-    # Pre-build a base game per candidate draft (reused across iterations).
     bases = []
     for rec in recs:
         g = build_game_from_draft(deal, rec.birds_to_keep, _food_dict_from_rec(rec),
                                   _bonus_by_name(deal, rec.bonus_card))
         bases.append((rec, g))
 
-    best = SoloResult(score=-1)
+    results: list[SoloResult] = []
     for it in range(games):
         temp = _anneal(it, games)
         # Explore drafts more early, exploit the advisor's top pick later.
@@ -257,15 +265,40 @@ def optimize_seed(seed: int, games: int = 150,
         rec, base = bases[draft_idx]
         prng = random.Random((seed * 1_000_003) ^ (it * 2_654_435_761))
         res = play_solo(base, prng, temp)
-        if res.score > best.score:
-            res.draft = {
-                "birds_kept": rec.birds_to_keep,
-                "food_kept": rec.food_to_keep,
-                "bonus": rec.bonus_card,
-                "num_birds_kept": len(rec.birds_to_keep),
-            }
-            best = res
-    return best
+        res.draft = _draft_dict(rec)
+        results.append(res)
+
+    results.sort(key=lambda r: r.score)
+    return results
+
+
+def optimize_seed(seed: int, games: int = 150,
+                  board_type: BoardType = BoardType.OCEANIA,
+                  draft_top_k: int = 12) -> SoloResult:
+    """Best solo line for one seed (draft + play searched)."""
+    return _search_seed(seed, games, board_type, draft_top_k)[-1]
+
+
+def optimize_seed_spread(seed: int, games: int, board_type: BoardType,
+                         draft_top_k: int = 12,
+                         value_samples: int = 3) -> tuple[SoloResult, list[SoloResult]]:
+    """Return (best line, value-only spread).
+
+    The best line trains the policy + value heads; the spread is a set of
+    weaker/middling lines (sampled across score percentiles) used to give the
+    value head discriminative low/medium outcomes -- without polluting the
+    policy.
+    """
+    results = _search_seed(seed, games, board_type, draft_top_k)
+    best = results[-1]
+    n = len(results)
+    extras: list[SoloResult] = []
+    if value_samples > 0 and n > 1:
+        # Evenly spaced percentiles below the best (e.g. ~20/50/80th).
+        pts = [(i + 1) / (value_samples + 1) for i in range(value_samples)]
+        idxs = sorted({min(n - 2, max(0, int(p * (n - 1)))) for p in pts})
+        extras = [results[i] for i in idxs]
+    return best, extras
 
 
 def _bonus_by_name(deal: Deal, name: str):
@@ -279,12 +312,16 @@ def _bonus_by_name(deal: Deal, name: str):
 # Multi-seed driver: dataset + analytics
 # ---------------------------------------------------------------------------
 
-def result_to_row(seed: int, best: SoloResult) -> dict:
-    """Serialize a per-seed best result into a JSON-able dataset row."""
+def result_to_row(seed: int, res: SoloResult, role: str = "policy") -> dict:
+    """Serialize a per-seed line into a JSON-able dataset row.
+
+    role="policy"     -> the best line (trains policy + value heads)
+    role="value_only" -> a weaker line (trains only the value head)
+    """
     return {
-        "seed": seed, "score": best.score, "breakdown": best.breakdown,
-        "actions": best.action_counts, "draft": best.draft,
-        "board_birds": best.board_birds, "trajectory": best.trajectory,
+        "seed": seed, "role": role, "score": res.score, "breakdown": res.breakdown,
+        "actions": res.action_counts, "draft": res.draft,
+        "board_birds": res.board_birds, "trajectory": res.trajectory,
     }
 
 
@@ -304,7 +341,13 @@ def aggregate_and_report(rows: list[dict], games_per_seed: int,
         Path(out_path).parent.mkdir(parents=True, exist_ok=True)
         fout = open(out_path, "w", encoding="utf-8")
 
+    n_value_only = 0
     for row in rows:
+        if fout:
+            fout.write(json.dumps(row) + "\n")
+        if row.get("role", "policy") != "policy":
+            n_value_only += 1
+            continue  # value-only lines are not part of the best-line analytics
         scores.append(row["score"])
         draft = row.get("draft", {})
         draft_birds_kept.append(draft.get("num_birds_kept", 0))
@@ -315,8 +358,6 @@ def aggregate_and_report(rows: list[dict], games_per_seed: int,
         for k, v in row.get("breakdown", {}).items():
             if k != "total":
                 breakdown_sum[k] += v
-        if fout:
-            fout.write(json.dumps(row) + "\n")
         print(f"seed {row['seed']:>4}: best={row['score']:>3}  "
               f"draft_birds={draft.get('num_birds_kept')}  "
               f"bonus={draft.get('bonus')!r:<28} "
@@ -327,7 +368,7 @@ def aggregate_and_report(rows: list[dict], games_per_seed: int,
 
     n = max(1, len(scores))
     print("\n==================== AGGREGATE ====================")
-    print(f"seeds: {n}   games/seed: {games_per_seed}")
+    print(f"best lines: {n}   value-only lines: {n_value_only}   games/seed: {games_per_seed}")
     print(f"score: mean={sum(scores)/n:.1f}  min={min(scores)}  max={max(scores)}")
     print(f"avg draft birds kept: {sum(draft_birds_kept)/n:.2f} / 5")
     print(f"avg score composition: "
@@ -343,14 +384,23 @@ def aggregate_and_report(rows: list[dict], games_per_seed: int,
     return rows
 
 
+def seed_rows(seed: int, games_per_seed: int, board_type: BoardType,
+              draft_top_k: int = 12, value_samples: int = 3) -> list[dict]:
+    """All dataset rows for one seed: the best line + a value-only spread."""
+    best, extras = optimize_seed_spread(seed, games_per_seed, board_type,
+                                        draft_top_k, value_samples)
+    out = [result_to_row(seed, best, "policy")]
+    out += [result_to_row(seed, ex, "value_only") for ex in extras]
+    return out
+
+
 def run_multi_seed(seeds, games_per_seed: int, out_path: str | None,
                    board_type: BoardType = BoardType.OCEANIA,
-                   draft_top_k: int = 12):
+                   draft_top_k: int = 12, value_samples: int = 3):
     """Local (single-process) multi-seed run."""
     rows = []
     for seed in seeds:
-        best = optimize_seed(seed, games_per_seed, board_type, draft_top_k)
-        rows.append(result_to_row(seed, best))
+        rows.extend(seed_rows(seed, games_per_seed, board_type, draft_top_k, value_samples))
     return aggregate_and_report(rows, games_per_seed, out_path)
 
 
@@ -384,6 +434,8 @@ def main():
     m.add_argument("--use-modal", action="store_true",
                    help="Fan seeds out across Modal containers (one shard each).")
     m.add_argument("--seeds-per-shard", type=int, default=1)
+    m.add_argument("--value-samples", type=int, default=3,
+                   help="weaker value-only lines kept per seed (value-head data)")
 
     args = ap.parse_args()
     load_all(EXCEL_FILE)
@@ -409,10 +461,12 @@ def main():
             rows = dispatch_solo_modal(
                 seeds, args.games_per_seed, board,
                 seeds_per_shard=args.seeds_per_shard,
+                value_samples=args.value_samples,
             )
             aggregate_and_report(rows, args.games_per_seed, args.out)
         else:
-            run_multi_seed(seeds, args.games_per_seed, args.out, board)
+            run_multi_seed(seeds, args.games_per_seed, args.out, board,
+                           value_samples=args.value_samples)
 
 
 if __name__ == "__main__":
