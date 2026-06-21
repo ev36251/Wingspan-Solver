@@ -265,3 +265,15 @@ n=100, solo_net_spread:
 **Honesty costs ~1.2 pts (within noise) and won MORE games.** A robust engine
 doesn't need deck foreknowledge -> honest play already scores ~89. Determinization
 is effectively free; make it default for fair 2-player play.
+
+Honest-play tuning (determinize=True, vs heuristic, n=100), recovering peek score:
+| rollouts | temp | agent mean | wins |
+|---|---|---|---|
+| 4 | 0.6 | 88.7 | 90 |
+| 8 | 0.6 | 87.7 | 80 |
+| 8 | 0.3 | 89.1 | 86 |
+(peeking ceiling 89.9). LOWER TEMP is the lever: with determinization supplying
+the future-deck variance, a sharper rollout policy (t=0.3) plays each imagined
+deck better. More rollouts only help at low temp (8@0.6 was worse than 4@0.6 --
+high-temp noise compounds). Best honest config r=8/t=0.3 = 89.1 ~ peek 89.9
+(tied). Honesty gap effectively closed.
