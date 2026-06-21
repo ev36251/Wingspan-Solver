@@ -158,11 +158,22 @@ holds the mean down. Those low seeds are likely deal-limited (a weak deal caps
 the achievable score), so a *mean* of 100 across random deals is probably not
 reachable by search at all. The engine already breaks 100 on good deals.
 
+## Pushing search harder (50 seeds)
+| config | mean | >=100 | max |
+|---|---|---|---|
+| d2 nd5 k8 R4 | 91.9 | 26% | 131 |
+| d2 nd5 k8 R8 | 92.9 | 24% | 134 |
+| **d2 nd8 k8 R4** | **94.3** | **30%** | 141 |
+More drafts keeps being the best lever (nd5->nd8 R4 = +2.4); rollouts saturate.
+Floor barely moves (min ~66-68) -> hard-deal tail is deal-limited. Mean
+approaching a mid-90s ceiling with clear diminishing returns. Recommended max
+config: `d2 nd8 k8 R4` (~94, 30% break 100).
+
 ## Suggested next steps
-- Mean is near the deal-limited ceiling (~92); lever 1 (AlphaZero visit-target
-  training) is a big/uncertain build and unlikely to move a deal-bounded mean.
-- Recommended: bank the solo engine (breaks 100 on good deals, ~92 mean, fast)
-  and pivot to 2-player competitive (the original goal).
+- Solo search is at its practical ceiling (~94 mean, 30% >=100, deal-limited
+  tail). Further pushing yields <1-2 pts.
+- Recommended: bank the solo engine and pivot to 2-player competitive (the
+  original goal).
 - A proper AlphaZero step would train on search VISIT distributions / values
   (not just the best move) -- may transfer better than plain BC, bigger build.
 - Eventually fine-tune competitively against an opponent.
