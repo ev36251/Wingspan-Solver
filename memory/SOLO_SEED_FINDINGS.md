@@ -150,9 +150,19 @@ give diminishing returns once stacked. Recommended defaults:
 - fast        : `d1 nd3 k8` -> ~84 @ ~20s/game
 On Modal (one container/seed) any of these finishes N seeds in ~minutes.
 
+## Multi-rollout (lever 2) + the deal-limit ceiling
+Multiple stochastic rollouts (max-aggregated) per leaf: d2 nd5 k8 + 4 rollouts
+= 91.9 on 50 seeds (only +1.2 over nd5). Saturated. Distribution: median 92,
+**26% of seeds already >=100** (max 131), but a tail of hard deals (66-78)
+holds the mean down. Those low seeds are likely deal-limited (a weak deal caps
+the achievable score), so a *mean* of 100 across random deals is probably not
+reachable by search at all. The engine already breaks 100 on good deals.
+
 ## Suggested next steps
-- Higher score now comes from MORE SEARCH budget (top-k / depth / n-drafts /
-  multiple rollouts), not more BC iterations. Modal makes this fine at scale.
+- Mean is near the deal-limited ceiling (~92); lever 1 (AlphaZero visit-target
+  training) is a big/uncertain build and unlikely to move a deal-bounded mean.
+- Recommended: bank the solo engine (breaks 100 on good deals, ~92 mean, fast)
+  and pivot to 2-player competitive (the original goal).
 - A proper AlphaZero step would train on search VISIT distributions / values
   (not just the best move) -- may transfer better than plain BC, bigger build.
 - Eventually fine-tune competitively against an opponent.
