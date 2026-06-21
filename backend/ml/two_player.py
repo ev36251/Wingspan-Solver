@@ -77,7 +77,7 @@ def play_multi(game, choosers, max_turns: int = 600):
 
 
 def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff",
-                        rollouts=1, temperature=0.0):
+                        rollouts=1, temperature=0.0, determinize=False):
     """1-ply rollout search for seat `my_idx`.
 
     objective="diff"    -> maximize (my_score - best_opponent_score)  [competitive]
@@ -87,13 +87,19 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
     by `opp_chooser`). With temperature>0 both seats sample ~softmax(score/temp)
     in rollouts and each candidate is averaged over `rollouts` trajectories,
     which cuts the variance of the noisy point estimate.
+
+    determinize=True reshuffles the face-down deck order before each rollout, so
+    the search plans over many *plausible* futures instead of peeking at the one
+    true deck order -- honest play under hidden information. Best with rollouts>1
+    so the candidate value averages over different imagined decks.
     """
     stochastic = temperature > 0
     roll_me = (make_net_sampling_chooser(model, encoder, temperature, seed=my_idx * 7919 + 1)
                if stochastic else make_net_chooser(model, encoder))
     roll_opp = (make_net_sampling_chooser(model, encoder, temperature, seed=my_idx * 7919 + 2)
                 if stochastic else opp_chooser)
-    n_roll = rollouts if stochastic else 1
+    n_roll = rollouts if (stochastic or determinize) else 1
+    det_rng = random.Random(my_idx * 104729 + 13)
 
     def choose(game, player, moves):
         if len(moves) <= 1:
@@ -107,6 +113,10 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
             n_ok = 0
             for _ in range(n_roll):
                 sim = fast_clone_game(game)
+                if determinize:
+                    deck = getattr(sim, "_deck_cards", None)
+                    if isinstance(deck, list) and len(deck) > 1:
+                        det_rng.shuffle(deck)  # unseen deck order is hidden info
                 sp = sim.current_player
                 if not execute_move_on_sim(sim, sp, m):
                     continue
@@ -133,7 +143,7 @@ def make_diff_search_chooser(model, encoder, top_k, my_idx, opp_chooser):
     return make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff")
 
 
-def evaluate(model_path, seeds, board, top_k):
+def evaluate(model_path, seeds, board, top_k, rollouts=1, temperature=0.0, determinize=False):
     load_all(EXCEL_FILE)
     model = FactorizedPolicyModel(model_path)
     encoder = StateEncoder.resolve_for_model(model.meta)
@@ -145,7 +155,9 @@ def evaluate(model_path, seeds, board, top_k):
         # Alternate seats so seat advantage cancels.
         my_idx = seed % 2
         game = build_2p_game(seed, board)
-        agent = make_diff_search_chooser(model, encoder, top_k, my_idx, heuristic_chooser)
+        agent = make_search_chooser(model, encoder, top_k, my_idx, heuristic_chooser,
+                                    "diff", rollouts=rollouts, temperature=temperature,
+                                    determinize=determinize)
         choosers = [agent if i == my_idx else heuristic_chooser for i in range(2)]
         scores = play_multi(game, choosers)
         a, o = scores[my_idx], scores[1 - my_idx]
@@ -203,7 +215,7 @@ def ablation(model_path, seeds, board, top_k):
     print(f"differential win rate: {diff_wins}/{n} ({100*diff_wins/n:.0f}%)")
 
 
-def selfplay(model_path, seeds, board, top_k, rollouts, temperature):
+def selfplay(model_path, seeds, board, top_k, rollouts, temperature, determinize=False):
     """Head-to-head: improved search (averaged stochastic rollouts) vs the
     baseline single greedy-rollout search. Both use the differential objective;
     the only difference is rollout quality. Seats alternate by seed parity."""
@@ -218,7 +230,8 @@ def selfplay(model_path, seeds, board, top_k, rollouts, temperature):
         new_idx = seed % 2
         base_idx = 1 - new_idx
         new_agent = make_search_chooser(model, encoder, top_k, new_idx, net_choose,
-                                        "diff", rollouts=rollouts, temperature=temperature)
+                                        "diff", rollouts=rollouts, temperature=temperature,
+                                        determinize=determinize)
         base_agent = make_search_chooser(model, encoder, top_k, base_idx, net_choose, "diff")
         game = build_2p_game(seed, board)
         choosers = [None, None]
@@ -256,17 +269,21 @@ def main():
     ap.add_argument("--top-k", type=int, default=6)
     ap.add_argument("--board", choices=["oceania", "base"], default="oceania")
     ap.add_argument("--mode", choices=["heuristic", "ablation", "selfplay"], default="heuristic")
-    ap.add_argument("--rollouts", type=int, default=4, help="stochastic rollouts/candidate (selfplay)")
-    ap.add_argument("--temperature", type=float, default=0.6, help="rollout sampling temp (selfplay)")
+    ap.add_argument("--rollouts", type=int, default=4, help="stochastic rollouts/candidate")
+    ap.add_argument("--temperature", type=float, default=0.6, help="rollout sampling temp")
+    ap.add_argument("--determinize", action="store_true",
+                    help="reshuffle the unseen deck each rollout (honest hidden-info play)")
     args = ap.parse_args()
     board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
     seeds = _parse_seeds(args.seeds)
     if args.mode == "ablation":
         ablation(args.model, seeds, board, args.top_k)
     elif args.mode == "selfplay":
-        selfplay(args.model, seeds, board, args.top_k, args.rollouts, args.temperature)
+        selfplay(args.model, seeds, board, args.top_k, args.rollouts, args.temperature,
+                 args.determinize)
     else:
-        evaluate(args.model, seeds, board, args.top_k)
+        evaluate(args.model, seeds, board, args.top_k, args.rollouts, args.temperature,
+                 args.determinize)
 
 
 if __name__ == "__main__":
