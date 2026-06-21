@@ -142,6 +142,14 @@ but costs ~2x nd5 for +0.7 -- not worth it. The efficient levers are more
 drafts and more width; combine them (nd5 + k12) rather than paying for depth.
 (Note: the earlier 91.5 on 10 seeds was a lucky sample; base on 50 seeds = 86.)
 
+Combined `d2 nd5 k12` = 91.6 (~175s/game) -- marginally beats depth-3 and nd5
+alone. **The search saturates ~91-92 on 50 seeds regardless of knob**; levers
+give diminishing returns once stacked. Recommended defaults:
+- best value : `d2 nd5 k8` (top-k 8, depth 2, n-drafts 5) -> ~91 @ ~117s/game
+- max        : `d2 nd5 k12` -> ~91.6 @ ~175s/game
+- fast        : `d1 nd3 k8` -> ~84 @ ~20s/game
+On Modal (one container/seed) any of these finishes N seeds in ~minutes.
+
 ## Suggested next steps
 - Higher score now comes from MORE SEARCH budget (top-k / depth / n-drafts /
   multiple rollouts), not more BC iterations. Modal makes this fine at scale.
