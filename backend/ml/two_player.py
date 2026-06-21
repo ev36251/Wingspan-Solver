@@ -76,8 +76,13 @@ def play_multi(game, choosers, max_turns: int = 600):
     return [calculate_score(game, pl).total for pl in game.players]
 
 
-def make_diff_search_chooser(model, encoder, top_k, my_idx, opp_chooser):
-    """1-ply differential rollout search for seat `my_idx`."""
+def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff"):
+    """1-ply rollout search for seat `my_idx`.
+
+    objective="diff"    -> maximize (my_score - best_opponent_score)  [competitive]
+    objective="selfish" -> maximize my_score only                    [score-max]
+    Both model the opponent with `opp_chooser` during rollouts.
+    """
     net_choose = make_net_chooser(model, encoder)
 
     def choose(game, player, moves):
@@ -96,12 +101,19 @@ def make_diff_search_chooser(model, encoder, top_k, my_idx, opp_chooser):
             _refill_tray(sim)
             choosers = [net_choose if i == my_idx else opp_chooser for i in range(sim.num_players)]
             scores = play_multi(sim, choosers)
-            diff = scores[my_idx] - max(scores[j] for j in range(len(scores)) if j != my_idx)
-            if diff > best_v:
-                best_m, best_v = m, diff
+            if objective == "selfish":
+                val = scores[my_idx]
+            else:
+                val = scores[my_idx] - max(scores[j] for j in range(len(scores)) if j != my_idx)
+            if val > best_v:
+                best_m, best_v = m, val
         return best_m
 
     return choose
+
+
+def make_diff_search_chooser(model, encoder, top_k, my_idx, opp_chooser):
+    return make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff")
 
 
 def evaluate(model_path, seeds, board, top_k):
@@ -135,6 +147,45 @@ def evaluate(model_path, seeds, board, top_k):
     print(f"agent win rate: {agent_wins}/{n} ({100*agent_wins/n:.0f}%)")
 
 
+def ablation(model_path, seeds, board, top_k):
+    """Head-to-head: differential objective vs pure score-max (both full search).
+
+    Both agents model the opponent with the net policy inside their rollouts, so
+    the only difference is the objective. Seats alternate by seed parity.
+    """
+    load_all(EXCEL_FILE)
+    model = FactorizedPolicyModel(model_path)
+    encoder = StateEncoder.resolve_for_model(model.meta)
+    net_choose = make_net_chooser(model, encoder)
+
+    diff_wins = 0
+    diff_scores, selfish_scores = [], []
+    for seed in seeds:
+        diff_idx = seed % 2
+        selfish_idx = 1 - diff_idx
+        diff_agent = make_search_chooser(model, encoder, top_k, diff_idx, net_choose, "diff")
+        selfish_agent = make_search_chooser(model, encoder, top_k, selfish_idx, net_choose, "selfish")
+        game = build_2p_game(seed, board)
+        choosers = [None, None]
+        choosers[diff_idx] = diff_agent
+        choosers[selfish_idx] = selfish_agent
+        scores = play_multi(game, choosers)
+        d, s = scores[diff_idx], scores[selfish_idx]
+        diff_scores.append(d)
+        selfish_scores.append(s)
+        if d > s:
+            diff_wins += 1
+        print(f"seed {seed:>3} (diff@seat {diff_idx}):  diff={d:>3}  selfish={s:>3}  "
+              f"{'DIFF' if d > s else 'selfish' if d < s else 'tie'}")
+
+    n = len(seeds)
+    print("\n==================== SUMMARY ====================")
+    print(f"ABLATION: differential (my-opp) vs pure score-max (my only) | {n} games")
+    print(f"differential : mean={st.mean(diff_scores):.1f}")
+    print(f"score-max    : mean={st.mean(selfish_scores):.1f}")
+    print(f"differential win rate: {diff_wins}/{n} ({100*diff_wins/n:.0f}%)")
+
+
 def _parse_seeds(spec):
     if "-" in spec and "," not in spec:
         a, b = spec.split("-")
@@ -148,9 +199,13 @@ def main():
     ap.add_argument("--seeds", default="0-19")
     ap.add_argument("--top-k", type=int, default=6)
     ap.add_argument("--board", choices=["oceania", "base"], default="oceania")
+    ap.add_argument("--mode", choices=["heuristic", "ablation"], default="heuristic")
     args = ap.parse_args()
     board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
-    evaluate(args.model, _parse_seeds(args.seeds), board, args.top_k)
+    if args.mode == "ablation":
+        ablation(args.model, _parse_seeds(args.seeds), board, args.top_k)
+    else:
+        evaluate(args.model, _parse_seeds(args.seeds), board, args.top_k)
 
 
 if __name__ == "__main__":
