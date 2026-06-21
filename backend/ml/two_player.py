@@ -77,11 +77,16 @@ def play_multi(game, choosers, max_turns: int = 600):
 
 
 def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff",
-                        rollouts=1, temperature=0.0, determinize=False):
+                        rollouts=1, temperature=0.0, determinize=False, opp_weight=1.0):
     """1-ply rollout search for seat `my_idx`.
 
-    objective="diff"    -> maximize (my_score - best_opponent_score)  [competitive]
-    objective="selfish" -> maximize my_score only                    [score-max]
+    Objective value of a rollout = my_score - lambda * best_opponent_score, where
+    lambda is the *denial weight*:
+        objective="selfish" -> lambda = 0     (pure score-max)
+        objective="diff"    -> lambda = opp_weight (default 1.0 = full denial)
+    Sweeping opp_weight in (0,1) tests whether a *little* denial awareness helps
+    while full denial hurts -- the n=100 ablations put full denial (lambda=1) at
+    break-even, so the sweet spot is expected to be small.
 
     With temperature<=0 each candidate gets one greedy rollout (opponent modeled
     by `opp_chooser`). With temperature>0 both seats sample ~softmax(score/temp)
@@ -93,6 +98,7 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
     true deck order -- honest play under hidden information. Best with rollouts>1
     so the candidate value averages over different imagined decks.
     """
+    lam = 0.0 if objective == "selfish" else float(opp_weight)
     stochastic = temperature > 0
     roll_me = (make_net_sampling_chooser(model, encoder, temperature, seed=my_idx * 7919 + 1)
                if stochastic else make_net_chooser(model, encoder))
@@ -124,10 +130,10 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
                 _refill_tray(sim)
                 choosers = [roll_me if i == my_idx else roll_opp for i in range(sim.num_players)]
                 scores = play_multi(sim, choosers)
-                if objective == "selfish":
+                if lam == 0.0:
                     total += scores[my_idx]
                 else:
-                    total += scores[my_idx] - max(scores[j] for j in range(len(scores)) if j != my_idx)
+                    total += scores[my_idx] - lam * max(scores[j] for j in range(len(scores)) if j != my_idx)
                 n_ok += 1
             if n_ok == 0:
                 continue
@@ -170,7 +176,9 @@ def play_one(mode, seed, model, encoder, board, cfg):
         a_ch = make_search_chooser(model, encoder, tk, a_idx, heuristic_chooser, obj, ro, tp, det)
         b_ch = heuristic_chooser
     elif mode == "ablation":
-        a_ch = make_search_chooser(model, encoder, tk, a_idx, net_choose, "diff")
+        # a = denial-weighted (lambda = cfg opp_weight); b = pure selfish baseline.
+        a_ch = make_search_chooser(model, encoder, tk, a_idx, net_choose, "diff",
+                                   opp_weight=cfg.get("opp_weight", 1.0))
         b_ch = make_search_chooser(model, encoder, tk, b_idx, net_choose, "selfish")
     elif mode == "selfplay":
         a_ch = make_search_chooser(model, encoder, tk, a_idx, net_choose, obj, ro, tp, det)
@@ -225,11 +233,14 @@ def main():
                     help="reshuffle the unseen deck each rollout (honest hidden-info play)")
     ap.add_argument("--use-modal", action="store_true", help="fan games across Modal containers")
     ap.add_argument("--seeds-per-shard", type=int, default=2)
+    ap.add_argument("--opp-weight", type=float, default=1.0,
+                    help="denial weight lambda for the ablation 'a' agent (0=selfish, 1=full)")
     args = ap.parse_args()
     board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
     seeds = _parse_seeds(args.seeds)
     cfg = {"top_k": args.top_k, "rollouts": args.rollouts,
-           "temperature": args.temperature, "determinize": args.determinize}
+           "temperature": args.temperature, "determinize": args.determinize,
+           "opp_weight": args.opp_weight}
 
     if args.use_modal:
         from backend.ml.modal_two_player import dispatch_2p_eval_modal
