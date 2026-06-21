@@ -127,10 +127,13 @@ if _MODAL_AVAILABLE:
             k_schedule = list(task["k_schedule"])
             rollout = task.get("rollout", "net")
             n_drafts = int(task.get("n_drafts", 3))
+            n_rollouts = int(task.get("n_rollouts", 1))
+            rollout_temp = float(task.get("rollout_temp", 0.7))
             rows = []
             for seed in task["seeds"]:
                 row = search_seed_row(int(seed), model, encoder, k_schedule,
-                                      rollout, n_drafts, board)
+                                      rollout, n_drafts, board,
+                                      n_rollouts=n_rollouts, rollout_temp=rollout_temp)
                 if row is not None:
                     rows.append(row)
         finally:
@@ -139,7 +142,8 @@ if _MODAL_AVAILABLE:
 
 
 def dispatch_search_modal(seeds, model_path, board_type, k_schedule,
-                          rollout="net", n_drafts=3, seeds_per_shard=10) -> list[dict]:
+                          rollout="net", n_drafts=3, seeds_per_shard=10,
+                          n_rollouts=1, rollout_temp=0.7) -> list[dict]:
     """Fan net-guided search generation across Modal containers."""
     if not _MODAL_AVAILABLE:
         raise RuntimeError("Modal is not installed. Run: pip install modal; modal setup")
@@ -151,6 +155,7 @@ def dispatch_search_modal(seeds, model_path, board_type, k_schedule,
         {
             "seeds": s, "board_type": board_type.value, "model_bytes": model_bytes,
             "k_schedule": list(k_schedule), "rollout": rollout, "n_drafts": int(n_drafts),
+            "n_rollouts": int(n_rollouts), "rollout_temp": float(rollout_temp),
         }
         for s in shards
     ]

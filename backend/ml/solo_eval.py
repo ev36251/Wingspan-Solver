@@ -46,6 +46,33 @@ def make_net_chooser(model: FactorizedPolicyModel, encoder: StateEncoder):
     return choose
 
 
+def make_net_sampling_chooser(model: FactorizedPolicyModel, encoder: StateEncoder,
+                              temp: float = 0.7, seed: int = 0):
+    """Stochastic policy: sample a move ~ softmax(score/temp). For exploring
+    rollouts in score-maximizing search."""
+    import math
+    import random as _random
+    rng = _random.Random(seed)
+
+    def choose(game, player, moves):
+        if len(moves) == 1:
+            return moves[0]
+        state = np.asarray(encoder.encode(game, game.current_player_idx), dtype=np.float32)
+        logits, _ = model.forward(state)
+        scores = [model.score_move(state, m, player, logits=logits) for m in moves]
+        mx = max(scores)
+        weights = [math.exp((s - mx) / max(1e-6, temp)) for s in scores]
+        tot = sum(weights)
+        r = rng.random() * tot
+        u = 0.0
+        for m, w in zip(moves, weights):
+            u += w
+            if u >= r:
+                return m
+        return moves[-1]
+    return choose
+
+
 def make_value_lookahead_chooser(model: FactorizedPolicyModel, encoder: StateEncoder,
                                  policy_blend: float = 0.0):
     """1-ply value search: score each move by the net's predicted final-score
