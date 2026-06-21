@@ -161,15 +161,20 @@ def play_one(mode, seed, model, encoder, board, cfg):
     net_choose = make_net_chooser(model, encoder)
     a_idx, b_idx = seed % 2, 1 - (seed % 2)
     tk, ro, tp, det = cfg["top_k"], cfg["rollouts"], cfg["temperature"], cfg["determinize"]
+    # Default deployed objective is "selfish" (pure score-max): the Modal n=100
+    # ablation showed it beats the differential objective 60/40, because the
+    # differential term subtracts a noisy/biased opponent-score estimate. Revisit
+    # once the net can see the opponent's board (then denial value is reliable).
+    obj = cfg.get("objective", "selfish")
     if mode == "heuristic":
-        a_ch = make_search_chooser(model, encoder, tk, a_idx, heuristic_chooser, "diff", ro, tp, det)
+        a_ch = make_search_chooser(model, encoder, tk, a_idx, heuristic_chooser, obj, ro, tp, det)
         b_ch = heuristic_chooser
     elif mode == "ablation":
         a_ch = make_search_chooser(model, encoder, tk, a_idx, net_choose, "diff")
         b_ch = make_search_chooser(model, encoder, tk, b_idx, net_choose, "selfish")
     elif mode == "selfplay":
-        a_ch = make_search_chooser(model, encoder, tk, a_idx, net_choose, "diff", ro, tp, det)
-        b_ch = make_search_chooser(model, encoder, tk, b_idx, net_choose, "diff")
+        a_ch = make_search_chooser(model, encoder, tk, a_idx, net_choose, obj, ro, tp, det)
+        b_ch = make_search_chooser(model, encoder, tk, b_idx, net_choose, obj)
     else:
         raise ValueError(f"unknown mode {mode}")
     game = build_2p_game(seed, board)
