@@ -218,10 +218,25 @@ was garbage. BUT denial still doesn't win, and the 40->49 shift alone is only
 WHY no win yet: the opp-aware net was cloned from SELFISH search, so its move
 RANKING (top_k candidates) rarely proposes denial plays -- the agent can now
 *evaluate* the opponent realistically but isn't *offered* denial moves to pick.
-NEXT (step 3, optional): generate data from DIFFERENTIAL search (using this
-opp-aware net as the now-realistic opponent model) and train a 2nd net so the
-policy learns to propose+value denial. Realistic ceiling caveat: Wingspan
-interaction is limited, so denial may top out near parity.
+Denial-weight sweep (DECISIVE): opp-aware net, agent scores rollouts as
+my - lambda*max(opp), vs pure-selfish baseline, n=100 per lambda:
+    lambda=0.0  50% (by definition)
+    lambda=0.1  49/100  p=0.54
+    lambda=0.25 47/100  p=0.73
+    lambda=0.5  52/100  p=0.31
+    lambda=1.0  49/100  p=0.50
+**Flat at 50% across the whole range -- NO denial weight significantly beats pure
+score-max.** Denial is worth ~nothing in 2-player Wingspan. CONCLUSION: pure
+score-max (lambda=0) is the final objective; do NOT pursue step 3 (training a
+denial policy) -- the sweep already shows the ceiling is parity at every weight.
+Honest caveat: the search only evaluates the net's top_k candidates, which are
+selfish-trained, so it may not surface exotic denial plays; but full denial
+(lambda=1) maximally rewards any denial move that IS in the candidate set and
+still only breaks even, so the conclusion is robust. Matches the game-design
+intuition: taking a bird to deny it costs you tempo/resources on an off-engine
+card while the opponent would have spent their own turn playing it -- usually
+-EV. Natural denial (taking strong birds you want anyway) is already captured by
+score-max.
 
 Strengthening attempts (--mode selfplay, alternating seats):
 - Averaged stochastic rollouts (rollouts=4, temp=0.6) vs baseline (1 greedy
