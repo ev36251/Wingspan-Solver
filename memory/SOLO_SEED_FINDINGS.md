@@ -77,9 +77,28 @@ Small Clutch Specialist (46×), Avian Theriogenologist (35×), Nest Box Builder
   design so a specialist VP engine still wins while forfeiting goals/nectar.
 - Solo only: no competitive play (blocking, goal racing, tray/food denial).
 
+## Net training results (Option A: behavioral cloning)
+- `solo_bc_dataset.py` replays best lines -> (state, factorized targets, value)
+  pairs; `train_factorized_bc` trains; `solo_eval.py` plays real games.
+- **Policy net works.** Greedy net beats the rule-based heuristic and
+  generalizes to held-out seeds (4000+): ~+2 to +4 mean pts (52.2 vs 50.1 on
+  25 seeds; 52.5 vs 48.6 on 100). Fast (numpy inference). This is the working
+  deliverable for a quick solver.
+- **Value head is NOT search-useful.** Greedy 1-ply selection by the value head
+  is ~-24 vs the policy. Adding a value-only line spread (372k samples, value
+  targets 18-99) cut the value *loss* but did not fix selection: policy+value
+  1-ply is -2.2 over 25 seeds (a 5-seed +7.2 was noise). Root cause: MC value
+  targets label every state in a game with the one final score, so the head
+  can't finely rank moves from a position. Fixing it properly needs
+  search-derived value targets (AlphaZero-style iteration), not raw MC labels.
+- **Conclusion:** net-guided MCTS on this value head is NOT justified. The
+  strongest mover we have is the deterministic per-seed *search* itself (~78);
+  the policy net is the fast generalizing solver.
+
 ## Suggested next steps
-1. Implement threshold-based solo round-goal scoring so goals become a real
-   optimization dimension (unblocks ~1/4 of the score).
-2. Train a policy/value net on the best-line dataset (fast, generalizing
-   engine; later guide deeper search).
-3. Eventually fine-tune competitively against an opponent.
+- Strongest move advice today = run the per-seed search (~78).
+- Value-head-free way to beat the greedy net: policy-rollout search (evaluate
+  each candidate by playing to the end with the policy, use the real final
+  score). Robust but slow on CPU (deepcopy per move is the bottleneck).
+- Proper value head would need AlphaZero-style search-target iteration.
+- Eventually fine-tune competitively against an opponent.
