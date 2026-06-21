@@ -55,8 +55,15 @@ def _desc_of(traj_entry: str) -> str:
 
 
 def replay_row(row: dict, encoder: StateEncoder) -> list[dict] | None:
-    """Replay one best line; return its training samples, or None on a mismatch."""
+    """Replay one line; return its training samples, or None on a mismatch.
+
+    role="policy"     -> samples train policy + value (+ move-value) heads
+    role="value_only" -> samples train only the value head (record_policy=False,
+                         no move features) so weak lines give the value head
+                         low/medium outcomes without polluting the policy.
+    """
     seed = int(row["seed"])
+    policy_role = row.get("role", "policy") == "policy"
     draft = row.get("draft") or {}
     if not draft.get("birds_kept") and draft.get("num_birds_kept", 0) != 0:
         return None
@@ -96,19 +103,19 @@ def replay_row(row: dict, encoder: StateEncoder) -> list[dict] | None:
         # Encode the state BEFORE applying the move.
         state = encoder.encode(game, game.current_player_idx)
         targets = encode_factorized_targets(chosen, player)
-        move_pos = list(encode_move_features(chosen, player))
-        move_negs = [
-            list(encode_move_features(m, player))
-            for m in moves if m.description != want
-        ][:4]
-        samples.append({
+        sample = {
             "state": state,
-            "targets": targets,
+            "targets": targets,                 # required by loader even if unused
             "value_target_score": final_score,
-            "record_policy": True,
-            "move_pos": move_pos,
-            "move_negs": move_negs,
-        })
+            "record_policy": policy_role,
+        }
+        if policy_role:
+            sample["move_pos"] = list(encode_move_features(chosen, player))
+            sample["move_negs"] = [
+                list(encode_move_features(m, player))
+                for m in moves if m.description != want
+            ][:4]
+        samples.append(sample)
 
         di += 1
         if execute_move_on_sim(game, player, chosen):

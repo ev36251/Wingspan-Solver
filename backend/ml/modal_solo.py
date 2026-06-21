@@ -77,24 +77,25 @@ if _MODAL_AVAILABLE:
         from backend.config import EXCEL_FILE
         from backend.data.registries import load_all
         from backend.models.enums import BoardType
-        from backend.ml.solo_seed_optimizer import optimize_seed, result_to_row
+        from backend.ml.solo_seed_optimizer import seed_rows
 
         load_all(EXCEL_FILE)
         board = BoardType(task["board_type"])
         gps = int(task["games_per_seed"])
         top_k = int(task.get("draft_top_k", 12))
+        value_samples = int(task.get("value_samples", 3))
 
         rows = []
         for seed in task["seeds"]:
-            best = optimize_seed(int(seed), gps, board, draft_top_k=top_k)
-            rows.append(result_to_row(int(seed), best))
+            rows.extend(seed_rows(int(seed), gps, board, draft_top_k=top_k,
+                                  value_samples=value_samples))
         return {"rows_gz": gzip.compress(json.dumps(rows).encode("utf-8"), 6)}
 
 
 def dispatch_solo_modal(seeds, games_per_seed: int, board_type,
                         seeds_per_shard: int = 1, draft_top_k: int = 12,
-                        cpu_per_worker: int = 2) -> list[dict]:
-    """Fan seeds out across Modal containers; return all best-line rows."""
+                        value_samples: int = 3, cpu_per_worker: int = 2) -> list[dict]:
+    """Fan seeds out across Modal containers; return all rows (best + value-only)."""
     if not _MODAL_AVAILABLE:
         raise RuntimeError(
             "Modal is not installed. Run:\n    pip install modal\n    modal setup"
@@ -109,6 +110,7 @@ def dispatch_solo_modal(seeds, games_per_seed: int, board_type,
             "games_per_seed": int(games_per_seed),
             "board_type": board_type.value,
             "draft_top_k": int(draft_top_k),
+            "value_samples": int(value_samples),
         }
         for s in shards
     ]
