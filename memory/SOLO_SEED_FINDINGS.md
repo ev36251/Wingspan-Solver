@@ -204,12 +204,13 @@ reasoning only pays off with a GOOD opponent model -- which is exactly the case
 for the opponent-board-aware net retrain (the eventual goal). Until then,
 differential hurts.
 
-Strengthening attempts (--mode selfplay, 20 games, alternating seats):
-- Averaged stochastic rollouts (rollouts=4, temp=0.6, diff) vs baseline (1 greedy
-  rollout): **improved 79.4 (11/20, 55%) vs baseline 74.5; +4.9, p=0.41.** Small,
-  within noise. temp=0.6 lowers rollout-policy quality, partly cancelling the
-  variance reduction; baseline's single *greedy* playout is already a good
-  estimate.
+Strengthening attempts (--mode selfplay, alternating seats):
+- Averaged stochastic rollouts (rollouts=4, temp=0.6) vs baseline (1 greedy
+  rollout), both selfish objective:
+    n=20:  improved 79.4 (11/20, 55%) vs 74.5; p=0.41 (noise).
+    **n=100 (Modal): improved 88.4 (63/100, 63%) vs baseline 83.6; p=0.004 --
+    SIGNIFICANT.** Averaged rollouts genuinely help; the n=20 was underpowered.
+    ADOPT rollouts=4/temp=0.6 as the default search config.
 - Deck determinization (--determinize): reshuffles unseen deck per rollout so the
   search plans over plausible futures instead of peeking at the true order.
   Honest agent (4 reshuffled rollouts) still beats heuristic 63-46. NOTE: in the
