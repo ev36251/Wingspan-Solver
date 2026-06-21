@@ -111,6 +111,32 @@ def deep_copy_game(game: GameState) -> GameState:
         return copy.deepcopy(game)
 
 
+def fast_clone_game(game: GameState) -> GameState:
+    """Clone a game ~10x faster than deep_copy_game for search rollouts.
+
+    The deck (`_deck_cards`) is up to ~400 immutable Bird objects and dominates
+    pickle cost. Birds are read-only, so we never need to copy them — only the
+    *list* is mutated (drawn from the top). We detach the deck, pickle the small
+    remaining mutable state, then re-attach the deck as a shallow list copy
+    (sharing the immutable Bird references). Each clone gets an independent list,
+    so drawing on a clone does not affect the original.
+    """
+    deck = getattr(game, "_deck_cards", None)
+    if deck is None:
+        return deep_copy_game(game)
+    try:
+        game._deck_cards = None
+        try:
+            clone = pickle.loads(pickle.dumps(game, protocol=5))
+        finally:
+            game._deck_cards = deck
+        clone._deck_cards = list(deck)  # shallow copy: shared immutable Bird refs
+        return clone
+    except Exception:
+        # Restore happened in finally; fall back to the safe full copy.
+        return deep_copy_game(game)
+
+
 def pick_weighted_random_move(moves: list[Move], game: GameState,
                                player: Player,
                                base_weights=None) -> Move:
