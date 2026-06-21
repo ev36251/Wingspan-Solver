@@ -143,116 +143,61 @@ def make_diff_search_chooser(model, encoder, top_k, my_idx, opp_chooser):
     return make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff")
 
 
-def evaluate(model_path, seeds, board, top_k, rollouts=1, temperature=0.0, determinize=False):
-    load_all(EXCEL_FILE)
-    model = FactorizedPolicyModel(model_path)
-    encoder = StateEncoder.resolve_for_model(model.meta)
-    net_choose = make_net_chooser(model, encoder)
-
-    agent_wins = 0
-    agent_scores, opp_scores = [], []
-    for seed in seeds:
-        # Alternate seats so seat advantage cancels.
-        my_idx = seed % 2
-        game = build_2p_game(seed, board)
-        agent = make_search_chooser(model, encoder, top_k, my_idx, heuristic_chooser,
-                                    "diff", rollouts=rollouts, temperature=temperature,
-                                    determinize=determinize)
-        choosers = [agent if i == my_idx else heuristic_chooser for i in range(2)]
-        scores = play_multi(game, choosers)
-        a, o = scores[my_idx], scores[1 - my_idx]
-        agent_scores.append(a)
-        opp_scores.append(o)
-        if a > o:
-            agent_wins += 1
-        print(f"seed {seed:>3} (seat {my_idx}):  agent={a:>3}  heuristic={o:>3}  "
-              f"{'WIN' if a > o else 'loss' if a < o else 'tie'}")
-
-    n = len(seeds)
-    print("\n==================== SUMMARY ====================")
-    print(f"2-player: differential search agent vs heuristic | {n} games")
-    print(f"agent     : mean={st.mean(agent_scores):.1f}")
-    print(f"heuristic : mean={st.mean(opp_scores):.1f}")
-    print(f"agent win rate: {agent_wins}/{n} ({100*agent_wins/n:.0f}%)")
+# mode -> (label for the agent-of-interest "a", label for the comparator "b")
+MODE_LABELS = {
+    "heuristic": ("agent", "heuristic"),
+    "ablation": ("differential", "score-max"),
+    "selfplay": ("improved", "baseline"),
+}
 
 
-def ablation(model_path, seeds, board, top_k):
-    """Head-to-head: differential objective vs pure score-max (both full search).
+def play_one(mode, seed, model, encoder, board, cfg):
+    """Play one 2-player game for `mode` and return {seed, a_idx, a, b}.
 
-    Both agents model the opponent with the net policy inside their rollouts, so
-    the only difference is the objective. Seats alternate by seed parity.
+    "a" is always the agent of interest, "b" the comparator. Seats alternate by
+    seed parity so seat advantage cancels across an even seed range. Shared by
+    the local loop and the Modal shards.
     """
-    load_all(EXCEL_FILE)
-    model = FactorizedPolicyModel(model_path)
-    encoder = StateEncoder.resolve_for_model(model.meta)
     net_choose = make_net_chooser(model, encoder)
+    a_idx, b_idx = seed % 2, 1 - (seed % 2)
+    tk, ro, tp, det = cfg["top_k"], cfg["rollouts"], cfg["temperature"], cfg["determinize"]
+    if mode == "heuristic":
+        a_ch = make_search_chooser(model, encoder, tk, a_idx, heuristic_chooser, "diff", ro, tp, det)
+        b_ch = heuristic_chooser
+    elif mode == "ablation":
+        a_ch = make_search_chooser(model, encoder, tk, a_idx, net_choose, "diff")
+        b_ch = make_search_chooser(model, encoder, tk, b_idx, net_choose, "selfish")
+    elif mode == "selfplay":
+        a_ch = make_search_chooser(model, encoder, tk, a_idx, net_choose, "diff", ro, tp, det)
+        b_ch = make_search_chooser(model, encoder, tk, b_idx, net_choose, "diff")
+    else:
+        raise ValueError(f"unknown mode {mode}")
+    game = build_2p_game(seed, board)
+    choosers = [None, None]
+    choosers[a_idx], choosers[b_idx] = a_ch, b_ch
+    scores = play_multi(game, choosers)
+    return {"seed": seed, "a_idx": a_idx, "a": scores[a_idx], "b": scores[b_idx]}
 
-    diff_wins = 0
-    diff_scores, selfish_scores = [], []
-    for seed in seeds:
-        diff_idx = seed % 2
-        selfish_idx = 1 - diff_idx
-        diff_agent = make_search_chooser(model, encoder, top_k, diff_idx, net_choose, "diff")
-        selfish_agent = make_search_chooser(model, encoder, top_k, selfish_idx, net_choose, "selfish")
-        game = build_2p_game(seed, board)
-        choosers = [None, None]
-        choosers[diff_idx] = diff_agent
-        choosers[selfish_idx] = selfish_agent
-        scores = play_multi(game, choosers)
-        d, s = scores[diff_idx], scores[selfish_idx]
-        diff_scores.append(d)
-        selfish_scores.append(s)
-        if d > s:
-            diff_wins += 1
-        print(f"seed {seed:>3} (diff@seat {diff_idx}):  diff={d:>3}  selfish={s:>3}  "
-              f"{'DIFF' if d > s else 'selfish' if d < s else 'tie'}")
 
-    n = len(seeds)
+def summarize(mode, results, cfg):
+    from math import comb
+    results = sorted(results, key=lambda r: r["seed"])
+    la, lb = MODE_LABELS[mode]
+    a_scores = [r["a"] for r in results]
+    b_scores = [r["b"] for r in results]
+    n = len(results)
+    wins = sum(1 for r in results if r["a"] > r["b"])
+    dec = sum(1 for r in results if r["a"] != r["b"])
+    for r in results:
+        tag = la.upper() if r["a"] > r["b"] else (lb if r["a"] < r["b"] else "tie")
+        print(f"seed {r['seed']:>3} ({la}@seat {r['a_idx']}):  {la}={r['a']:>3}  {lb}={r['b']:>3}  {tag}")
+    p = sum(comb(dec, i) for i in range(wins, dec + 1)) / 2 ** dec if dec > 0 else 1.0
     print("\n==================== SUMMARY ====================")
-    print(f"ABLATION: differential (my-opp) vs pure score-max (my only) | {n} games")
-    print(f"differential : mean={st.mean(diff_scores):.1f}")
-    print(f"score-max    : mean={st.mean(selfish_scores):.1f}")
-    print(f"differential win rate: {diff_wins}/{n} ({100*diff_wins/n:.0f}%)")
-
-
-def selfplay(model_path, seeds, board, top_k, rollouts, temperature, determinize=False):
-    """Head-to-head: improved search (averaged stochastic rollouts) vs the
-    baseline single greedy-rollout search. Both use the differential objective;
-    the only difference is rollout quality. Seats alternate by seed parity."""
-    load_all(EXCEL_FILE)
-    model = FactorizedPolicyModel(model_path)
-    encoder = StateEncoder.resolve_for_model(model.meta)
-    net_choose = make_net_chooser(model, encoder)
-
-    new_wins = 0
-    new_scores, base_scores = [], []
-    for seed in seeds:
-        new_idx = seed % 2
-        base_idx = 1 - new_idx
-        new_agent = make_search_chooser(model, encoder, top_k, new_idx, net_choose,
-                                        "diff", rollouts=rollouts, temperature=temperature,
-                                        determinize=determinize)
-        base_agent = make_search_chooser(model, encoder, top_k, base_idx, net_choose, "diff")
-        game = build_2p_game(seed, board)
-        choosers = [None, None]
-        choosers[new_idx] = new_agent
-        choosers[base_idx] = base_agent
-        scores = play_multi(game, choosers)
-        nw, bs = scores[new_idx], scores[base_idx]
-        new_scores.append(nw)
-        base_scores.append(bs)
-        if nw > bs:
-            new_wins += 1
-        print(f"seed {seed:>3} (new@seat {new_idx}):  new={nw:>3}  base={bs:>3}  "
-              f"{'NEW' if nw > bs else 'base' if nw < bs else 'tie'}")
-
-    n = len(seeds)
-    print("\n==================== SUMMARY ====================")
-    print(f"SELF-PLAY: improved search (rollouts={rollouts}, temp={temperature}) "
-          f"vs baseline (1 greedy rollout) | {n} games")
-    print(f"improved : mean={st.mean(new_scores):.1f}")
-    print(f"baseline : mean={st.mean(base_scores):.1f}")
-    print(f"improved win rate: {new_wins}/{n} ({100*new_wins/n:.0f}%)")
+    print(f"mode={mode} | {n} games | top_k={cfg['top_k']} rollouts={cfg['rollouts']} "
+          f"temp={cfg['temperature']} determinize={cfg['determinize']}")
+    print(f"{la:<13}: mean={st.mean(a_scores):.1f}")
+    print(f"{lb:<13}: mean={st.mean(b_scores):.1f}")
+    print(f"{la} win rate: {wins}/{n} ({100*wins/n:.0f}%)  one-sided binomial p={p:.3f}")
 
 
 def _parse_seeds(spec):
@@ -273,17 +218,24 @@ def main():
     ap.add_argument("--temperature", type=float, default=0.6, help="rollout sampling temp")
     ap.add_argument("--determinize", action="store_true",
                     help="reshuffle the unseen deck each rollout (honest hidden-info play)")
+    ap.add_argument("--use-modal", action="store_true", help="fan games across Modal containers")
+    ap.add_argument("--seeds-per-shard", type=int, default=2)
     args = ap.parse_args()
     board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
     seeds = _parse_seeds(args.seeds)
-    if args.mode == "ablation":
-        ablation(args.model, seeds, board, args.top_k)
-    elif args.mode == "selfplay":
-        selfplay(args.model, seeds, board, args.top_k, args.rollouts, args.temperature,
-                 args.determinize)
+    cfg = {"top_k": args.top_k, "rollouts": args.rollouts,
+           "temperature": args.temperature, "determinize": args.determinize}
+
+    if args.use_modal:
+        from backend.ml.modal_two_player import dispatch_2p_eval_modal
+        results = dispatch_2p_eval_modal(args.mode, seeds, args.model, board, cfg,
+                                         args.seeds_per_shard)
     else:
-        evaluate(args.model, seeds, board, args.top_k, args.rollouts, args.temperature,
-                 args.determinize)
+        load_all(EXCEL_FILE)
+        model = FactorizedPolicyModel(args.model)
+        encoder = StateEncoder.resolve_for_model(model.meta)
+        results = [play_one(args.mode, s, model, encoder, board, cfg) for s in seeds]
+    summarize(args.mode, results, cfg)
 
 
 if __name__ == "__main__":
