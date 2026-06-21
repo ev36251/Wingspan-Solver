@@ -113,10 +113,24 @@ The combined search **beats the best-of-250 brute search (~78)** and wins
 10/10 vs the greedy net. On Modal (one container/seed) even the 60s config
 finishes any number of seeds in ~1 min wall-clock.
 
+## Flywheel iteration 2 (BC on search lines) — NULL RESULT
+Regenerated 3000 lines with the net-guided search (mean 88.3 vs iter-1 78.6),
+rebuilt BC (70.9k samples), retrained. Imitation val accuracy rose 0.693 ->
+0.725, BUT end-to-end performance was flat on 10 held-out seeds:
+| (same config) | iter-1 | iter-2 |
+|---|---|---|
+| net greedy | 47.2 | 46.6 |
+| combined search | 91.5 | 90.3 |
+Both within per-seed noise (60-125). One BC iteration did not compound. Likely
+because: (a) at this heavy search budget the search dominates the policy prior,
+so a better prior barely changes the searched output; (b) BC on a searcher's
+*chosen moves* teaches surface moves, not the lookahead reasoning behind them,
+so greedy play doesn't improve. Models kept (equivalent): solo_net_spread.npz
+(iter-1), solo_net_iter2.npz.
+
 ## Suggested next steps
-- The net-guided search (~91) now BEATS the search that generated the training
-  data (~78). That is the AlphaZero flywheel signal: regenerate best lines with
-  `solo_search` -> retrain the net on stronger data -> even stronger search.
-- Cheaper/faster config knobs trade speed for score (depth=1 + n-drafts=3
-  ~20s/game lands ~75).
+- Higher score now comes from MORE SEARCH budget (top-k / depth / n-drafts /
+  multiple rollouts), not more BC iterations. Modal makes this fine at scale.
+- A proper AlphaZero step would train on search VISIT distributions / values
+  (not just the best move) -- may transfer better than plain BC, bigger build.
 - Eventually fine-tune competitively against an opponent.
