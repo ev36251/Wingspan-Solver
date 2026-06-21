@@ -174,6 +174,17 @@ config: `d2 nd8 k8 R4` (~94, 30% break 100).
   tail). Further pushing yields <1-2 pts.
 - Recommended: bank the solo engine and pivot to 2-player competitive (the
   original goal).
+
+## Two-player pivot (two_player.py)
+Differential rollout search: roll each candidate out for both seats with the
+policy, score by (my_score - opp_score). 2-player games use real placement goal
++ nectar-majority scoring automatically. vs the rule-based heuristic (10 games,
+alternating seats): **agent 101.0 vs heuristic 41.7, 10/10 wins.** Competitive
+play emerged for free -- the heuristic scores ~70 vs another heuristic but
+collapses to ~42 vs the search agent (active goal/tray/food suppression, no
+hand-coded blocking).
+Caveat: heuristic is a weak baseline. Next: stronger opponents (search vs
+search; differential vs pure score-max ablation), faster/larger eval.
 - A proper AlphaZero step would train on search VISIT distributions / values
   (not just the best move) -- may transfer better than plain BC, bigger build.
 - Eventually fine-tune competitively against an opponent.
