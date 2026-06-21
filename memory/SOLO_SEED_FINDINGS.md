@@ -95,10 +95,28 @@ Small Clutch Specialist (46×), Avian Theriogenologist (35×), Nest Box Builder
   strongest mover we have is the deterministic per-seed *search* itself (~78);
   the policy net is the fast generalizing solver.
 
+## Net-guided rollout search (the strong fast solver) — `solo_search.py`
+Judges moves by *finishing the game* (rollouts), not the unreliable value head.
+`fast_clone_game` (simulation.py) made per-move clones 8.5x cheaper
+(4.55ms -> 0.53ms), which made this affordable. Three combinable knobs:
+top-k (moves expanded ply 1), depth (plies of lookahead via a branching
+schedule), n-drafts (search the top openings too).
+
+Held-out seeds (net rollout), vs greedy net and the best-of-250 brute ceiling:
+| config | mean score | speed |
+|---|---|---|
+| net greedy | ~51 | instant |
+| top-k=5, depth=1, 1 draft (25 seeds) | 71.8 (+20) | 4.5s/game |
+| **top-k=8, depth=2, 3 drafts (10 seeds)** | **91.5 (+44)** | ~60s/game |
+
+The combined search **beats the best-of-250 brute search (~78)** and wins
+10/10 vs the greedy net. On Modal (one container/seed) even the 60s config
+finishes any number of seeds in ~1 min wall-clock.
+
 ## Suggested next steps
-- Strongest move advice today = run the per-seed search (~78).
-- Value-head-free way to beat the greedy net: policy-rollout search (evaluate
-  each candidate by playing to the end with the policy, use the real final
-  score). Robust but slow on CPU (deepcopy per move is the bottleneck).
-- Proper value head would need AlphaZero-style search-target iteration.
+- The net-guided search (~91) now BEATS the search that generated the training
+  data (~78). That is the AlphaZero flywheel signal: regenerate best lines with
+  `solo_search` -> retrain the net on stronger data -> even stronger search.
+- Cheaper/faster config knobs trade speed for score (depth=1 + n-drafts=3
+  ~20s/game lands ~75).
 - Eventually fine-tune competitively against an opponent.
