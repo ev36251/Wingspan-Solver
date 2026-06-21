@@ -204,6 +204,25 @@ reasoning only pays off with a GOOD opponent model -- which is exactly the case
 for the opponent-board-aware net retrain (the eventual goal). Until then,
 differential hurts.
 
+Opponent-aware net (bootstrap step 1 DONE): trained a 2443-dim net (own board +
+leading opponent's full board) on 41.6k BC samples from 2-player selfish search
+(reports/ml/two_player/opp_aware_net.npz, val_acc 0.674). Re-ran the SAME n=100
+ablation with this net as both agent and rollout opponent model:
+- blind net (1693):     differential 40/100 (40%) -- denial HARMFUL.
+- **opp-aware (2443):   differential 49/100 (49%), 72.6 vs 73.2, p=0.50 -- denial
+  now BREAK-EVEN.**
+Seeing the opponent removed denial's penalty (40->49), consistent with the
+hypothesis that the differential term failed because the opponent score estimate
+was garbage. BUT denial still doesn't win, and the 40->49 shift alone is only
+~p=0.20 (two-proportion), so honest read = "moved to parity," not "improved."
+WHY no win yet: the opp-aware net was cloned from SELFISH search, so its move
+RANKING (top_k candidates) rarely proposes denial plays -- the agent can now
+*evaluate* the opponent realistically but isn't *offered* denial moves to pick.
+NEXT (step 3, optional): generate data from DIFFERENTIAL search (using this
+opp-aware net as the now-realistic opponent model) and train a 2nd net so the
+policy learns to propose+value denial. Realistic ceiling caveat: Wingspan
+interaction is limited, so denial may top out near parity.
+
 Strengthening attempts (--mode selfplay, alternating seats):
 - Averaged stochastic rollouts (rollouts=4, temp=0.6) vs baseline (1 greedy
   rollout), both selfish objective:
