@@ -186,13 +186,23 @@ hand-coded blocking).
 Caveat: heuristic is a weak baseline. Next: stronger opponents (search vs
 search; differential vs pure score-max ablation), faster/larger eval.
 
-Ablation (--mode ablation, 20 games, alternating seats): differential (my-opp)
-vs pure score-max (my only), both full search, opponent modeled as net policy
-in rollouts. **differential 83.7 (12/20, 60%) vs score-max 79.3; margin +4.3 +-
-5.5 SEM, one-sided binomial p=0.25.** Direction positive but within noise at
-n=20 -- selfish play already captures most resource competition at 1-ply.
-Differential kept as default (free, >= selfish). To confirm: ~100+ games (Modal),
-and/or sharpen the signal (deeper search / more adversarial opponent model).
+Ablation (--mode ablation, alternating seats): differential (my-opp) vs pure
+score-max (my only), both single-greedy-rollout search, opponent modeled as net
+policy in rollouts.
+- n=20: differential 83.7 (12/20, 60%) vs score-max 79.3; p=0.25 (noise).
+- **n=100 (Modal): score-max WINS. differential 76.7 (40/100, 40%) vs score-max
+  78.8; p=0.98 against differential being better.** The small sample was noise;
+  at scale pure score-max is clearly better.
+WHY: the differential objective subtracts a *noisy, biased* opponent-score
+estimate (opponent is a fixed net that can't even see its own board well), so
+optimizing (my-opp) chases unreliable "denial" value and sometimes makes bad
+blocking plays at the expense of its own engine. Score-max optimizes a clean,
+low-variance target it controls directly. In Wingspan interaction is limited
+(shared tray/feeder/goals), so a strong selfish engine beats naive denial.
+ACTION: **make score-max (selfish) the default objective.** Competitive
+reasoning only pays off with a GOOD opponent model -- which is exactly the case
+for the opponent-board-aware net retrain (the eventual goal). Until then,
+differential hurts.
 
 Strengthening attempts (--mode selfplay, 20 games, alternating seats):
 - Averaged stochastic rollouts (rollouts=4, temp=0.6, diff) vs baseline (1 greedy
