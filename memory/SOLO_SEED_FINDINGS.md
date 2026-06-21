@@ -128,6 +128,20 @@ so a better prior barely changes the searched output; (b) BC on a searcher's
 so greedy play doesn't improve. Models kept (equivalent): solo_net_spread.npz
 (iter-1), solo_net_iter2.npz.
 
+## Search-budget sweep (50 held-out seeds, solo_sweep.py)
+| config | mean | time/game | lever |
+|---|---|---|---|
+| d3 nd3 k8 | 91.4 | ~210s | depth-3 |
+| d2 nd5 k8 | 90.7 | ~117s | +drafts (+4.4 from base) |
+| d2 nd3 k12 | 88.7 | ~105s | +width (+2.4) |
+| d2 nd3 k8 (base) | 86.3 | ~70s | — |
+| d1 nd3 k8 | 84.2 | ~20s | shallow |
+
+Verdict: **drafts > width > depth** for score-per-time. Depth-3 tops out (91.4)
+but costs ~2x nd5 for +0.7 -- not worth it. The efficient levers are more
+drafts and more width; combine them (nd5 + k12) rather than paying for depth.
+(Note: the earlier 91.5 on 10 seeds was a lucky sample; base on 50 seeds = 86.)
+
 ## Suggested next steps
 - Higher score now comes from MORE SEARCH budget (top-k / depth / n-drafts /
   multiple rollouts), not more BC iterations. Modal makes this fine at scale.
