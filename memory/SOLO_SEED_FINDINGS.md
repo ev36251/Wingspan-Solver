@@ -257,3 +257,11 @@ or retrain the net with opponent-board features. Lower temp (~0.3) worth a try.
 - A proper AlphaZero step would train on search VISIT distributions / values
   (not just the best move) -- may transfer better than plain BC, bigger build.
 - Eventually fine-tune competitively against an opponent.
+
+Honesty tax (determinization cost), vs heuristic, selfish rollouts=4 temp=0.6,
+n=100, solo_net_spread:
+- PEEKING  (determinize=False, search clones the real deck): agent mean 89.9, 86/100.
+- HONEST   (determinize=True, deck order hidden):            agent mean 88.7, 90/100.
+**Honesty costs ~1.2 pts (within noise) and won MORE games.** A robust engine
+doesn't need deck foreknowledge -> honest play already scores ~89. Determinization
+is effectively free; make it default for fair 2-player play.
