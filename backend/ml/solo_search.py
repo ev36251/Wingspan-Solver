@@ -35,7 +35,7 @@ from backend.solver.move_generator import generate_all_moves
 from backend.solver.simulation import fast_clone_game, execute_move_on_sim, _refill_tray
 from backend.engine.scoring import calculate_score
 from backend.ml.solo_eval import (
-    heuristic_chooser, make_net_chooser, play_with, _parse_seeds,
+    heuristic_chooser, make_net_chooser, make_net_sampling_chooser, play_with, _parse_seeds,
 )
 from backend.ml.solo_seed_optimizer import (
     deal_seed, draft_candidates, build_game_from_draft,
@@ -70,18 +70,27 @@ def _apply(game, move):
     return True
 
 
-def make_search_chooser(model, encoder, k_schedule=(8,), rollout="net"):
-    roll_choose = make_net_chooser(model, encoder) if rollout == "net" else heuristic_chooser
+def make_search_chooser(model, encoder, k_schedule=(8,), rollout="net",
+                        n_rollouts=1, rollout_temp=0.7):
+    greedy_roll = make_net_chooser(model, encoder) if rollout == "net" else heuristic_chooser
+    sampler = make_net_sampling_chooser(model, encoder, temp=rollout_temp) if n_rollouts > 1 else None
 
     def _ranked(game, player, moves, k):
         state = np.asarray(encoder.encode(game, game.current_player_idx), dtype=np.float32)
         logits, _ = model.forward(state)
         return sorted(moves, key=lambda m: -model.score_move(state, m, player, logits=logits))[:max(1, k)]
 
+    def _rollout_value(game):
+        """Best final score over n_rollouts (1 greedy + (n-1) stochastic)."""
+        best = play_with(fast_clone_game(game), greedy_roll)
+        for _ in range(n_rollouts - 1):
+            best = max(best, play_with(fast_clone_game(game), sampler))
+        return best
+
     def value_of_state(game, level):
         """Best final score reachable from `game`, expanding k_schedule[level:]."""
         if level >= len(k_schedule):
-            return play_with(game, roll_choose)        # leaf: roll out to the end
+            return _rollout_value(game)                # leaf: roll out (max over R)
         player, moves = _advance_to_decision(game)
         if moves is None:
             return calculate_score(game, game.players[0]).total
@@ -148,10 +157,12 @@ def play_with_record(game, choose, max_turns: int = 400):
     return bd.total, traj, bd.as_dict(), [b.name for b in p.board.all_birds()]
 
 
-def search_seed_row(seed, model, encoder, k_schedule, rollout, n_drafts, board):
+def search_seed_row(seed, model, encoder, k_schedule, rollout, n_drafts, board,
+                    n_rollouts=1, rollout_temp=0.7):
     """Run the net-guided search over the top-N drafts; return the best line as a
     training row (same schema as solo_seed_optimizer.result_to_row, role=policy)."""
-    chooser = make_search_chooser(model, encoder, k_schedule, rollout)
+    chooser = make_search_chooser(model, encoder, k_schedule, rollout,
+                                  n_rollouts=n_rollouts, rollout_temp=rollout_temp)
     deal = deal_seed(seed, board)
     recs = draft_candidates(deal, top_k=max(1, n_drafts))
     best = None
@@ -172,12 +183,14 @@ def search_seed_row(seed, model, encoder, k_schedule, rollout, n_drafts, board):
     return best
 
 
-def evaluate(model_path, seeds, board, k_schedule, rollout, n_drafts):
+def evaluate(model_path, seeds, board, k_schedule, rollout, n_drafts,
+             n_rollouts=1, rollout_temp=0.7):
     load_all(EXCEL_FILE)
     model = FactorizedPolicyModel(model_path)
     encoder = StateEncoder.resolve_for_model(model.meta)
     net_choose = make_net_chooser(model, encoder)
-    search_choose = make_search_chooser(model, encoder, k_schedule, rollout)
+    search_choose = make_search_chooser(model, encoder, k_schedule, rollout,
+                                        n_rollouts=n_rollouts, rollout_temp=rollout_temp)
 
     net_s, search_s, secs = [], [], []
     for seed in seeds:
@@ -206,7 +219,7 @@ def evaluate(model_path, seeds, board, k_schedule, rollout, n_drafts):
 
 
 def generate(model_path, seeds, board, k_schedule, rollout, n_drafts,
-             out_path, use_modal, seeds_per_shard):
+             out_path, use_modal, seeds_per_shard, n_rollouts=1, rollout_temp=0.7):
     """Generate best search lines (training rows) for the flywheel's next iter."""
     load_all(EXCEL_FILE)
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
@@ -214,13 +227,15 @@ def generate(model_path, seeds, board, k_schedule, rollout, n_drafts,
         from backend.ml.modal_solo import dispatch_search_modal
         rows = dispatch_search_modal(seeds, model_path, board, k_schedule,
                                      rollout=rollout, n_drafts=n_drafts,
-                                     seeds_per_shard=seeds_per_shard)
+                                     seeds_per_shard=seeds_per_shard,
+                                     n_rollouts=n_rollouts, rollout_temp=rollout_temp)
     else:
         model = FactorizedPolicyModel(model_path)
         encoder = StateEncoder.resolve_for_model(model.meta)
         rows = []
         for s in seeds:
-            r = search_seed_row(s, model, encoder, k_schedule, rollout, n_drafts, board)
+            r = search_seed_row(s, model, encoder, k_schedule, rollout, n_drafts, board,
+                                n_rollouts=n_rollouts, rollout_temp=rollout_temp)
             if r is not None:
                 rows.append(r)
     rows.sort(key=lambda r: r["seed"])
@@ -245,6 +260,8 @@ def main():
         p.add_argument("--inner-top-k", type=int, default=3)
         p.add_argument("--n-drafts", type=int, default=3)
         p.add_argument("--rollout", choices=["net", "heuristic"], default="net")
+        p.add_argument("--rollouts", type=int, default=1, help="rollouts per leaf (max-aggregated)")
+        p.add_argument("--rollout-temp", type=float, default=0.7)
 
     e = sub.add_parser("eval"); _common(e)
     g = sub.add_parser("gen"); _common(g)
@@ -258,11 +275,11 @@ def main():
 
     if args.cmd == "eval":
         evaluate(args.model, _parse_seeds(args.seeds), board, k_schedule,
-                 args.rollout, args.n_drafts)
+                 args.rollout, args.n_drafts, args.rollouts, args.rollout_temp)
     else:
         generate(args.model, _parse_seeds(args.seeds), board, k_schedule,
                  args.rollout, args.n_drafts, args.out, args.use_modal,
-                 args.seeds_per_shard)
+                 args.seeds_per_shard, args.rollouts, args.rollout_temp)
 
 
 if __name__ == "__main__":
