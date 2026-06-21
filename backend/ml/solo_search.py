@@ -19,8 +19,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import statistics as st
 import time
+from pathlib import Path
 
 import numpy as np
 
@@ -118,6 +120,58 @@ def play_seed_with_draft_search(deal, chooser, n_drafts):
     return best
 
 
+def play_with_record(game, choose, max_turns: int = 400):
+    """Like play_with but records the move trajectory (for training data)."""
+    traj = []
+    turns = 0
+    while not game.is_game_over and turns < max_turns:
+        player = game.current_player
+        if player.action_cubes_remaining <= 0:
+            game.advance_round()
+            continue
+        moves = generate_all_moves(game, player)
+        if not moves:
+            player.action_cubes_remaining = 0
+            game.advance_turn()
+            continue
+        mv = choose(game, player, moves)
+        if execute_move_on_sim(game, player, mv):
+            traj.append(f"R{game.current_round} {mv.action_type.value}: {mv.description}")
+            game.advance_turn()
+            _refill_tray(game)
+        else:
+            player.action_cubes_remaining = max(0, player.action_cubes_remaining - 1)
+            game.advance_turn()
+        turns += 1
+    p = game.players[0]
+    bd = calculate_score(game, p)
+    return bd.total, traj, bd.as_dict(), [b.name for b in p.board.all_birds()]
+
+
+def search_seed_row(seed, model, encoder, k_schedule, rollout, n_drafts, board):
+    """Run the net-guided search over the top-N drafts; return the best line as a
+    training row (same schema as solo_seed_optimizer.result_to_row, role=policy)."""
+    chooser = make_search_chooser(model, encoder, k_schedule, rollout)
+    deal = deal_seed(seed, board)
+    recs = draft_candidates(deal, top_k=max(1, n_drafts))
+    best = None
+    for rec in recs[:max(1, n_drafts)]:
+        game = build_game_from_draft(deal, rec.birds_to_keep, _food_dict_from_rec(rec),
+                                     _bonus_by_name(deal, rec.bonus_card))
+        score, traj, bd, birds = play_with_record(game, chooser)
+        if best is None or score > best["score"]:
+            best = {
+                "seed": int(seed), "role": "policy", "score": score,
+                "breakdown": bd, "actions": {},
+                "draft": {
+                    "birds_kept": rec.birds_to_keep, "food_kept": rec.food_to_keep,
+                    "bonus": rec.bonus_card, "num_birds_kept": len(rec.birds_to_keep),
+                },
+                "board_birds": birds, "trajectory": traj,
+            }
+    return best
+
+
 def evaluate(model_path, seeds, board, k_schedule, rollout, n_drafts):
     load_all(EXCEL_FILE)
     model = FactorizedPolicyModel(model_path)
@@ -151,20 +205,64 @@ def evaluate(model_path, seeds, board, k_schedule, rollout, n_drafts):
     print(f"search > net in {wins}/{nN}   |   avg {st.mean(secs):.1f}s/game   max {max(secs):.1f}s")
 
 
+def generate(model_path, seeds, board, k_schedule, rollout, n_drafts,
+             out_path, use_modal, seeds_per_shard):
+    """Generate best search lines (training rows) for the flywheel's next iter."""
+    load_all(EXCEL_FILE)
+    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+    if use_modal:
+        from backend.ml.modal_solo import dispatch_search_modal
+        rows = dispatch_search_modal(seeds, model_path, board, k_schedule,
+                                     rollout=rollout, n_drafts=n_drafts,
+                                     seeds_per_shard=seeds_per_shard)
+    else:
+        model = FactorizedPolicyModel(model_path)
+        encoder = StateEncoder.resolve_for_model(model.meta)
+        rows = []
+        for s in seeds:
+            r = search_seed_row(s, model, encoder, k_schedule, rollout, n_drafts, board)
+            if r is not None:
+                rows.append(r)
+    rows.sort(key=lambda r: r["seed"])
+    with open(out_path, "w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r) + "\n")
+    scores = [r["score"] for r in rows]
+    print(f"generated {len(rows)} lines -> {out_path}")
+    print(f"mean score {st.mean(scores):.1f}  min {min(scores)}  max {max(scores)}")
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="reports/ml/solo_seed/solo_net_spread.npz")
-    ap.add_argument("--seeds", default="4000-4019")
-    ap.add_argument("--board", choices=["oceania", "base"], default="oceania")
-    ap.add_argument("--top-k", type=int, default=8, help="moves expanded at ply 1")
-    ap.add_argument("--depth", type=int, default=1, help="plies of lookahead before rollout")
-    ap.add_argument("--inner-top-k", type=int, default=3, help="moves expanded at deeper plies")
-    ap.add_argument("--n-drafts", type=int, default=3, help="top opening drafts to search")
-    ap.add_argument("--rollout", choices=["net", "heuristic"], default="net")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    def _common(p):
+        p.add_argument("--model", default="reports/ml/solo_seed/solo_net_spread.npz")
+        p.add_argument("--seeds", default="4000-4019")
+        p.add_argument("--board", choices=["oceania", "base"], default="oceania")
+        p.add_argument("--top-k", type=int, default=8)
+        p.add_argument("--depth", type=int, default=1)
+        p.add_argument("--inner-top-k", type=int, default=3)
+        p.add_argument("--n-drafts", type=int, default=3)
+        p.add_argument("--rollout", choices=["net", "heuristic"], default="net")
+
+    e = sub.add_parser("eval"); _common(e)
+    g = sub.add_parser("gen"); _common(g)
+    g.add_argument("--out", default="reports/ml/solo_seed/best_lines_iter2.jsonl")
+    g.add_argument("--use-modal", action="store_true")
+    g.add_argument("--seeds-per-shard", type=int, default=10)
+
     args = ap.parse_args()
     board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
     k_schedule = [args.top_k] + [args.inner_top_k] * max(0, args.depth - 1)
-    evaluate(args.model, _parse_seeds(args.seeds), board, k_schedule, args.rollout, args.n_drafts)
+
+    if args.cmd == "eval":
+        evaluate(args.model, _parse_seeds(args.seeds), board, k_schedule,
+                 args.rollout, args.n_drafts)
+    else:
+        generate(args.model, _parse_seeds(args.seeds), board, k_schedule,
+                 args.rollout, args.n_drafts, args.out, args.use_modal,
+                 args.seeds_per_shard)
 
 
 if __name__ == "__main__":
