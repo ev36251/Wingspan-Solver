@@ -24,7 +24,7 @@ from backend.models.enums import BoardType
 from backend.ml.factorized_inference import FactorizedPolicyModel
 from backend.ml.state_encoder import StateEncoder
 from backend.solver.move_generator import generate_all_moves
-from backend.solver.simulation import execute_move_on_sim, _refill_tray
+from backend.solver.simulation import execute_move_on_sim, _refill_tray, deep_copy_game
 from backend.solver.heuristics import dynamic_weights, _estimate_move_value
 from backend.engine.scoring import calculate_score
 from backend.ml.solo_seed_optimizer import (
@@ -43,6 +43,39 @@ def make_net_chooser(model: FactorizedPolicyModel, encoder: StateEncoder):
         state = np.asarray(encoder.encode(game, game.current_player_idx), dtype=np.float32)
         logits, _ = model.forward(state)
         return max(moves, key=lambda m: model.score_move(state, m, player, logits=logits))
+    return choose
+
+
+def make_value_lookahead_chooser(model: FactorizedPolicyModel, encoder: StateEncoder,
+                                 policy_blend: float = 0.0):
+    """1-ply value search: score each move by the net's predicted final-score
+    value of the state it leads to (optionally blended with the policy score)."""
+    def choose(game, player, moves):
+        if len(moves) == 1:
+            return moves[0]
+        state = np.asarray(encoder.encode(game, game.current_player_idx), dtype=np.float32)
+        logits, _ = model.forward(state)
+        best, best_score = moves[0], -1e18
+        for m in moves:
+            sim = deep_copy_game(game)
+            sp = sim.current_player
+            if execute_move_on_sim(sim, sp, m):
+                sim.advance_turn()
+                _refill_tray(sim)
+            else:
+                continue
+            if sim.is_game_over:
+                val = calculate_score(sim, sim.players[0]).total / 100.0
+            else:
+                s2 = np.asarray(encoder.encode(sim, 0), dtype=np.float32)
+                _, v = model.forward(s2)
+                val = float(v) if v is not None else 0.0
+            score = val
+            if policy_blend > 0.0:
+                score += policy_blend * model.score_move(state, m, player, logits=logits)
+            if score > best_score:
+                best, best_score = m, score
+        return best
     return choose
 
 
@@ -69,16 +102,18 @@ def play_with(game, choose, max_turns: int = 400) -> int:
     return calculate_score(game, game.players[0]).total
 
 
-def evaluate(model_path: str, seeds, board=BoardType.OCEANIA):
+def evaluate(model_path: str, seeds, board=BoardType.OCEANIA, lookahead=False,
+             policy_blend=0.0):
     load_all(EXCEL_FILE)
     model = FactorizedPolicyModel(model_path)
     encoder = StateEncoder.resolve_for_model(model.meta)
     net_choose = make_net_chooser(model, encoder)
+    look_choose = make_value_lookahead_chooser(model, encoder, policy_blend) if lookahead else None
 
-    net_scores, heur_scores, wins = [], [], 0
+    heur_scores, net_scores, look_scores, wins = [], [], [], 0
     for seed in seeds:
         deal = deal_seed(seed, board)
-        rec = draft_candidates(deal, top_k=1)[0]          # same opening for both
+        rec = draft_candidates(deal, top_k=1)[0]          # same opening for all
         food = _food_dict_from_rec(rec)
         bonus = _bonus_by_name(deal, rec.bonus_card)
 
@@ -88,17 +123,28 @@ def evaluate(model_path: str, seeds, board=BoardType.OCEANIA):
         net_scores.append(n)
         if n > h:
             wins += 1
-        print(f"seed {seed:>4}:  net={n:>3}  heuristic={h:>3}  {'NET' if n>h else ('tie' if n==h else 'heur')}")
+        line = f"seed {seed:>4}:  heur={h:>3}  net={n:>3}"
+        if look_choose is not None:
+            lk = play_with(build_game_from_draft(deal, rec.birds_to_keep, food, bonus), look_choose)
+            look_scores.append(lk)
+            line += f"  lookahead={lk:>3}"
+        print(line)
 
     nN = len(net_scores)
     print("\n==================== SUMMARY ====================")
     print(f"fresh seeds (held out): {seeds[0]}–{seeds[-1]}  (n={nN})")
-    print(f"net   greedy : mean={st.mean(net_scores):.1f}  median={st.median(net_scores)}  "
-          f"min={min(net_scores)}  max={max(net_scores)}")
-    print(f"heur  greedy : mean={st.mean(heur_scores):.1f}  median={st.median(heur_scores)}  "
-          f"min={min(heur_scores)}  max={max(heur_scores)}")
-    diff = st.mean(net_scores) - st.mean(heur_scores)
-    print(f"net - heuristic: {diff:+.1f} mean pts   |   net wins {wins}/{nN} ({100*wins/nN:.0f}%)")
+    def row(name, xs):
+        print(f"{name:<16}: mean={st.mean(xs):5.1f}  median={st.median(xs):5.1f}  min={min(xs):>3}  max={max(xs):>3}")
+    row("heuristic", heur_scores)
+    row("net greedy", net_scores)
+    if look_scores:
+        row("net+1ply value", look_scores)
+    print(f"\nnet - heuristic   : {st.mean(net_scores)-st.mean(heur_scores):+.1f} mean pts  "
+          f"(net wins {wins}/{nN})")
+    if look_scores:
+        print(f"1ply - net greedy : {st.mean(look_scores)-st.mean(net_scores):+.1f} mean pts  "
+              f"(value-head signal)")
+        print(f"1ply - heuristic  : {st.mean(look_scores)-st.mean(heur_scores):+.1f} mean pts")
 
 
 def _parse_seeds(spec: str) -> list[int]:
@@ -113,9 +159,14 @@ def main():
     ap.add_argument("--model", default="reports/ml/solo_seed/solo_net.npz")
     ap.add_argument("--seeds", default="4000-4099", help="held-out seeds (>=4000)")
     ap.add_argument("--board", choices=["oceania", "base"], default="oceania")
+    ap.add_argument("--lookahead", action="store_true",
+                    help="also run 1-ply value-head search")
+    ap.add_argument("--policy-blend", type=float, default=0.0,
+                    help="blend policy score into 1-ply value search")
     args = ap.parse_args()
     board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
-    evaluate(args.model, _parse_seeds(args.seeds), board)
+    evaluate(args.model, _parse_seeds(args.seeds), board,
+             lookahead=args.lookahead, policy_blend=args.policy_blend)
 
 
 if __name__ == "__main__":
