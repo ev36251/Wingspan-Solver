@@ -277,3 +277,14 @@ the future-deck variance, a sharper rollout policy (t=0.3) plays each imagined
 deck better. More rollouts only help at low temp (8@0.6 was worse than 4@0.6 --
 high-temp noise compounds). Best honest config r=8/t=0.3 = 89.1 ~ peek 89.9
 (tied). Honesty gap effectively closed.
+
+Completed the honest tuning grid (determinize, vs heuristic, n=100):
+|        | t=0.6 | t=0.3 |
+| r=4    | 88.7  | 86.4  |
+| r=8    | 87.7  | 89.1  |
+Low temp needs ENOUGH rollouts: at t=0.3 the playouts are near-greedy/identical,
+so r=4 has nothing to average (86.4) but r=8 gets enough reshuffled-deck variety
+to benefit (89.1). FINAL HONEST CONFIG: --determinize --rollouts 8 --temperature
+0.3 -> 89.1, tied with the peeking ceiling (89.9). Cheaper fallback r=4 t=0.6 =
+88.7. Honesty gap closed; pushing the MEAN clearly above ~90 is a separate
+stronger-search task (depth/drafts), not a deck-knowledge issue.
