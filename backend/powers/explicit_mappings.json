@@ -4945,7 +4945,7 @@
     }
   },
   "Marsh Warbler": {
-    "class": "backend.powers.base.NoPower",
+    "class": "backend.powers.templates.unique.CopyGameEndPower",
     "kwargs": {
       "__dict__": []
     }
@@ -7900,7 +7900,7 @@
     }
   },
   "Western Yellow Wagtail": {
-    "class": "backend.powers.base.NoPower",
+    "class": "backend.powers.templates.unique.CountsDoubleForBonusCards",
     "kwargs": {
       "__dict__": []
     }

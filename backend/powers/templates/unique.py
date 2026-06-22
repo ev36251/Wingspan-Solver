@@ -32,6 +32,92 @@ class CountsDoubleForGoal(PowerEffect):
         return 1.5
 
 
+class CountsDoubleForBonusCards(PowerEffect):
+    """This bird counts double for every bonus card it qualifies for.
+
+    Bird: Western Yellow Wagtail (Promo UK, Yellow)
+    "For each bonus card you score for which this bird qualifies, it counts double."
+    Implementation: sets a flag on the slot; bonus-card scoring counts a flagged,
+    qualifying bird twice (default eligibility-based bonus cards).
+    """
+
+    def execute(self, ctx: PowerContext) -> PowerResult:
+        slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
+        slot.counts_double_bonus = True
+        return PowerResult(
+            description=f"{ctx.bird.name} now counts double for bonus cards"
+        )
+
+    def estimate_value(self, ctx: PowerContext) -> float:
+        # Doubling a bird's bonus-card contributions is typically ~2-3 pts.
+        return 2.5
+
+
+class CopyGameEndPower(PowerEffect):
+    """Copy a 'Game End' (yellow) power of one of your birds or a neighbor's.
+
+    Bird: Marsh Warbler (Promo UK, Yellow)
+    At game end, find the highest-value yellow power among your other birds and
+    your neighbors' birds, and execute it for THIS bird (so e.g. a "counts double"
+    flag is set on this slot, or board mutations like end-game eggs/tucks/caches
+    are applied to this bird and scored normally). Copy powers and self are
+    skipped to avoid recursion.
+    """
+
+    def execute(self, ctx: PowerContext) -> PowerResult:
+        from backend.powers.registry import get_power
+        from backend.powers.base import NoPower, FallbackPower
+
+        game = ctx.game_state
+        candidates = [ctx.player]
+        for neighbor in (game.player_to_left(ctx.player), game.player_to_right(ctx.player)):
+            if neighbor is not None and neighbor not in candidates:
+                candidates.append(neighbor)
+
+        best = None  # (value, owner, slot_index, habitat, power, bird_name)
+        for owner in candidates:
+            for habitat, slot_idx, slot in _iter_owner_slots(owner):
+                bird = slot.bird
+                if bird is None or bird.color != PowerColor.YELLOW:
+                    continue
+                if owner is ctx.player and slot_idx == ctx.slot_index and habitat == ctx.habitat:
+                    continue  # don't copy self
+                power = get_power(bird)
+                if isinstance(power, (NoPower, FallbackPower, CopyGameEndPower)):
+                    continue
+                # Evaluate the copied power as if it were on THIS bird's slot.
+                copy_ctx = PowerContext(game_state=game, player=ctx.player, bird=bird,
+                                        slot_index=ctx.slot_index, habitat=ctx.habitat)
+                try:
+                    val = power.estimate_value(copy_ctx)
+                except Exception:
+                    val = 1.0
+                if best is None or val > best[0]:
+                    best = (val, power, copy_ctx, bird.name)
+
+        if best is None:
+            return PowerResult(executed=False, description="No yellow power to copy")
+        _, power, copy_ctx, src_name = best
+        if not power.can_execute(copy_ctx):
+            return PowerResult(executed=False, description=f"Cannot copy {src_name}")
+        result = power.execute(copy_ctx)
+        return PowerResult(
+            executed=result.executed,
+            description=f"Copied game-end power of {src_name}",
+        )
+
+    def estimate_value(self, ctx: PowerContext) -> float:
+        return 2.0
+
+
+def _iter_owner_slots(owner):
+    """Yield (habitat, slot_index, slot) for each occupied slot on a board."""
+    for row in owner.board.all_rows():
+        habitat = row.habitat
+        for idx, slot in row.occupied_slots():
+            yield habitat, idx, slot
+
+
 class ActivateAllPredators(PowerEffect):
     """Activate the brown powers of all your other predator birds.
 

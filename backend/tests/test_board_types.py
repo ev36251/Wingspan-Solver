@@ -500,6 +500,44 @@ class TestNectarMajorityScoring:
         assert score_nectar(g, you) == 0 and score_nectar(g, opp) == 0
 
 
+class TestPromoYellowPowers:
+    """Properly-implemented Promo UK yellow (game-end) powers."""
+
+    def test_western_yellow_wagtail_doubles_bonus(self, bird_reg, regs):
+        from backend.engine.scoring import score_bonus_cards
+        from backend.engine.timed_powers import trigger_end_of_game_powers
+        from backend.powers.registry import parse_power, clear_cache
+        from backend.powers.templates.unique import CountsDoubleForBonusCards
+        clear_cache()
+        wag = bird_reg.get("Western Yellow Wagtail")
+        assert isinstance(parse_power(wag), CountsDoubleForBonusCards)
+        game = create_new_game(["A", "B"], board_type=BoardType.OCEANIA)
+        A = game.players[0]
+        bonus_name = next(iter(wag.bonus_eligibility))
+        A.bonus_cards = [regs[1].get(bonus_name)]
+        A.board.grassland.slots[0].bird = wag
+        before = score_bonus_cards(A)
+        trigger_end_of_game_powers(game)
+        after = score_bonus_cards(A)
+        assert A.board.grassland.slots[0].counts_double_bonus
+        assert after == before * 2  # the wagtail's single bonus card now counts double
+
+    def test_marsh_warbler_copies_yellow_power(self, bird_reg):
+        from backend.engine.timed_powers import trigger_end_of_game_powers
+        from backend.powers.registry import parse_power, clear_cache
+        from backend.powers.templates.unique import CopyGameEndPower
+        clear_cache()
+        marsh = bird_reg.get("Marsh Warbler")
+        assert isinstance(parse_power(marsh), CopyGameEndPower)
+        game = create_new_game(["A", "B"], board_type=BoardType.OCEANIA)
+        A = game.players[0]
+        A.board.forest.slots[0].bird = marsh
+        A.board.forest.slots[1].bird = bird_reg.get("Western Yellow Wagtail")
+        trigger_end_of_game_powers(game)
+        # Marsh copied the only other yellow power (the wagtail's double-for-bonus).
+        assert A.board.forest.slots[0].counts_double_bonus
+
+
 # --- Move Generator Tests ---
 
 class TestMoveGeneratorBonus:

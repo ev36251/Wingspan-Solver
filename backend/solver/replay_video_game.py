@@ -240,7 +240,12 @@ def _setup_video_state(seed: int) -> tuple[GameState, list[ScriptStep]]:
     you.food_supply.nectar = 1
 
     # Opponent starts with a generic setup; include Sri Lanka Blue-Magpie as observed.
-    pool = [b for b in bird_reg.all_birds if b.name not in {"Forster's Tern", "Red-Headed Woodpecker", "Brahminy Kite", "Squacco Heron"}]
+    # These video games were recorded before the Promo UK pack, so exclude those
+    # 25 birds from the deck to reproduce the original deals faithfully.
+    from backend.models.enums import GameSet
+    pool = [b for b in bird_reg.all_birds
+            if b.name not in {"Forster's Tern", "Red-Headed Woodpecker", "Brahminy Kite", "Squacco Heron"}
+            and getattr(b, "game_set", None) != GameSet.PROMO_UK]
     rnd.shuffle(pool)
     slbm = _bird(bird_reg, "Sri Lanka Blue-Magpie", overrides)
     opp.hand = [slbm] + [b for b in pool if b.name != slbm.name][:4]

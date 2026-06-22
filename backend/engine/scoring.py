@@ -316,11 +316,13 @@ def bonus_card_details(player: Player) -> list[tuple[BonusCard, int, int]]:
             qualifying = CUSTOM_BONUS_COUNTERS[bonus.name](player)
             details.append((bonus, qualifying, bonus.score(qualifying)))
         else:
-            qualifying = sum(
-                1
-                for bird in player.board.all_birds()
-                if bonus.name in bird.bonus_eligibility
-            )
+            # Each qualifying bird counts once, or twice if it carries the
+            # "counts double for bonus cards" flag (Western Yellow Wagtail).
+            qualifying = 0
+            for row in player.board.all_rows():
+                for _, slot in row.occupied_slots():
+                    if bonus.name in slot.bird.bonus_eligibility:
+                        qualifying += 2 if slot.counts_double_bonus else 1
             details.append((bonus, qualifying, bonus.score(qualifying)))
     return details
 

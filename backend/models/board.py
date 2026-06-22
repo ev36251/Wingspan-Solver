@@ -15,6 +15,7 @@ class BirdSlot:
     spendable_cached_food: dict[FoodType, int] = field(default_factory=dict)
     tucked_cards: int = 0
     counts_double: bool = False  # Teal power: counts double for round goals
+    counts_double_bonus: bool = False  # Yellow power: counts double for bonus cards
     is_sideways: bool = False         # This slot holds a sideways bird (spans 2 cols)
     is_sideways_blocked: bool = False  # This slot is blocked by an adjacent sideways bird
 
