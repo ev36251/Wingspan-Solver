@@ -79,7 +79,7 @@ wingspan-20260128.xlsx
          actions.py    execute_action() + activate_row() (brown power loop)
          scoring.py    calculate_score() → ScoreBreakdown
          timed_powers.py  Pink powers (triggered by opponent actions, end-of-round)
-    └─ backend/powers/                           446 bird powers
+    └─ backend/powers/                           471 bird powers
          registry.py     Bird → PowerEffect lookup (explicit_mappings.json)
          templates/      Implementations: gain_food, lay_eggs, draw_cards,
                          tuck_cards, predator, cache_food, play_bird, unique, special
@@ -183,23 +183,51 @@ A few genuine learning dynamics observed across those runs:
 
 ---
 
-## Known limitations and where this is going
+## What we've learned & what's next
 
-**Round 3–4 suboptimality.** The model plays well in rounds 1–2 but loses points in late rounds. An encoder audit showed round/goal/bonus features are already well represented (rounds remaining, per-goal progress and rank, bonus next-tier distance), so the gap is attributed to the value target rather than missing inputs: an absolute-score target cannot express urgency relative to the opponent. The differential value target (my_score − opponent_score) is the fix being trained; eval now also logs per-component score breakdowns to verify where points are recovered.
+This phase moved the agent from ~60 to a robust, honest **~92–95 mean** by
+*measuring* every lever rather than guessing. The findings (full detail with
+sample sizes and p-values in `memory/SOLO_SEED_FINDINGS.md`):
 
-**Greedy NN underperforms vs MCTS NN by ~30 pts.** This means the policy heads alone aren't fully capturing the long-horizon value of moves — the network relies on tree search to look ahead. Improving the value head accuracy (so MCTS evaluations are sharper) and increasing self-play MCTS simulations per move are the main levers here.
+**Search-lever scorecard** (all measured at n=100 on Modal):
 
-**Move value head instability.** The ranking loss that trains the move value head is sensitive to how "negative" examples are sampled from self-play. Poor negative sampling leads to pair accuracy dropping below the 0.52 gate, and the head gets disabled. Better negative mining (e.g., using moves the MCTS explicitly down-ranked vs random moves) would help.
+| lever | verdict |
+|-------|---------|
+| Rollout search to game-end | the core engine: ~**+40** over greedy play |
+| Averaged stochastic rollouts | ✅ real win (+5, p = 0.004) |
+| Determinization (no deck-peeking) | ✅ ~free (~1 pt) — honest play matches peeking |
+| Differential / "denial" objective | ❌ hurts (40% vs 60%) — selfish play wins |
+| Network retraining (×3 attempts) | ❌ null — at heavy search the *search dominates the prior* |
+| Depth-2 lookahead | ❌ hurts at equal budget — the rollout already looks to game end |
 
-**1v1 focus.** The engine and data pipeline support 2, 3, and 4 player games, but all recent training runs use 2-player games. The policy learned is therefore calibrated for 1v1 — opponent modeling in multiplayer (e.g., blocking bonus cards, adapting to 3-way score gaps) is untrained.
+**Best config:** depth-1, rollouts 8–12, top-k 10, temp 0.3, determinize. This is
+the practical ceiling for the rollout-search approach.
 
-**Power edge cases.** All 446 birds have implemented power logic, but ~15 "unique" birds (RepeatPower, CopyNeighborBrownPower, MoveBird, play-on-top birds) involve complex interactions. These are hand-coded and tested, but rare interaction chains (e.g., Repeat → Copy → another Repeat) have shallow test coverage.
+**Engine correctness is where the real points hid.** Auditing the simulator
+against the real Oceania board surfaced and fixed several rules bugs — tray/feeder
+reset now deals fresh cards, resets are payable with nectar (which scores), and
+round-end goals no longer reward a player with zero of the goal. These raised the
+**bad-deal floor from 52 → 68**, and the video-replay goldens still reproduce the
+real recorded games perfectly (0 divergences), so the engine is strictly more
+faithful.
 
-**Next steps:**
-- Round-awareness features in state encoder
-- Better negative sampling for move value head
-- Expand to 3–4 player self-play
-- Deeper MCTS at eval time (currently limited by inference speed; exporting to ONNX would help)
+**Bird coverage:** all **471** birds (Core, European, Oceania, Asia, **+ the 25
+Promo UK pack**) have explicit, tested power implementations. A solo + 2-player
+tier analysis ranks them; notably, opponent-reactive (pink) birds rank dead-last
+solo but jump to the top in 2-player (e.g. Eurasian Skylark 75 → 109 avg).
+
+### Next steps
+
+- **A learned, search-quality value evaluator.** The one path that could raise
+  the ceiling rather than nudge it: AlphaZero-style iteration with
+  *search-derived* value targets (plain Monte-Carlo targets label every state
+  with the one final score and aren't move-discriminative). This is a real
+  project, not a knob.
+- **Finish the remaining approximate "unique" powers** and audit rare
+  interaction chains (Repeat → Copy → Repeat). Low-risk, steady correctness gains
+  — the kind that already paid off in the floor result.
+- **Multiplayer (3–4 player)** opponent modeling — the pipeline supports it, but
+  play is calibrated for 1v1.
 
 ---
 
@@ -231,7 +259,7 @@ cd frontend && npm run dev
 ### Tests
 
 ```bash
-pytest                                          # all 492 tests
+pytest                                          # full pytest suite
 pytest backend/tests/test_engine.py -v         # single file
 pytest -k "test_powers"                        # filter by name
 pytest backend/tests/test_alphazero.py -x -q   # fast fail, quiet
@@ -286,7 +314,7 @@ backend/
   data/          Bird/bonus/goal loading and registries
   engine/        Rules, actions, scoring, timed powers
   models/        Dataclasses (GameState, Player, Board, BirdSlot, ...)
-  powers/        446 bird power implementations
+  powers/        471 bird power implementations
   solver/        Move generation, MCTS, heuristics, simulation, setup advisor
   ml/            Solo single-seed optimizer + Modal dispatch, legacy AlphaZero pipeline
   api/           FastAPI routes and Pydantic schemas
