@@ -388,3 +388,30 @@ KEY READS / CAVEATS:
   give-fish/lay-egg clauses) yet still ranks high on the tuck value alone.
 - None crack the very top tier (Nutcracker ~99, Blue-Magpie ~98); the best promo
   birds are solid mid-tier engine pieces (~80-87 avg lines).
+
+## Promo UK — 2-PLAYER tier list (4000 player-games, vs solo)
+Played real 2-player rollout-search games (both seats), ranked promo birds by
+appearances x avg player score (mean player score 84.2). Pink "react-to-opponent"
+birds, dead last in SOLO, jump to the TOP -- confirming the solo tiering
+structurally underrated them:
+
+| bird (color) | SOLO appx/avg | 2-PLAYER appx/avg |
+| Eurasian Skylark (pink) | 4x / 74.8  | **105x / 108.7** (highest avg!) |
+| Song Thrush (pink)      | 3x / 75.0  | 53x / 97.5 |
+| Eurasian Blue Tit (pink)| 1x / 62.0 (last) | 17x / 95.0 |
+| Tundra Swan (pink)      | 2x / 70.0  | 4x / 78.5 (still weakest pink) |
+| Western Capercaillie(w) | 12x / 80.3 | 111x / 91.5 (most-played) |
+| European Shag (brown)   | 14x / 84.8 | 83x / 89.5 |
+| Western Yellow Wagtail(y, now impl) | 5x / 78.2 | 33x / 87.0 |
+
+TOP 2-player promo birds: Eurasian Skylark (bonus-draw-when-opp-draws-bonus),
+Western Capercaillie (draw 2 bonus keep 1), Song Thrush + Eurasian Blue Tit
+(gain food when opp gains it), and the brown tuck/gain engines (Shag, Golden
+Plover, Sandwich Tern, Ruddy Turnstone). The properly-implemented Wagtail
+(bonus-doubler) lands above average (87.0).
+CAVEAT: appearances also reflect deal frequency + playability; avg score is the
+cleaner "is it good" signal. Low-appearance birds (Tundra Swan 4x, Willow Warbler
+6x) have noisy avgs.
+TAKEAWAY: the engine LOVES bonus-card synergy in 2-player (Skylark + Capercaillie
+top the list) and the opponent-reactive pink birds are genuinely strong -- play
+them in 2-player, skip them solo.
