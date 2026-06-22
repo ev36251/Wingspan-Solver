@@ -335,3 +335,15 @@ hands up a little, but did not rescue them -- the bad-deal floor is largely
 deal-bound. The real deliverable of this pass is a CORRECT engine.
 TODO for a clean floor verdict: run solo_net on the fully-corrected engine (same
 config) to isolate engine-fix effect from net quality.
+
+CLEAN FLOOR VERDICT (same net solo_net_spread, same heavy-honest config + seeds,
+only the engine differs):
+  broken engine:          mean 96.6, min 52, bottom-10 ~52-61
+  fully-corrected engine: mean 94.4, min 68, bottom-10 [68,68,68,71,74,78,78,79,80,80], <70=3%
+**The ENGINE-CORRECTNESS FIXES RAISED THE FLOOR ~16 pts at the min (52->68);**
+mean is flat (within noise). Correct mechanics (flip the tray to dig out of a bad
+hand; burn use-it-or-lose-it nectar on resets/extras for free scoring) let the
+search RECOVER bad deals -- confirms the user's intuition. The retrain (net v2)
+was NOT the win and is a weaker mover (90.4/min59); use solo_net_spread on the
+corrected engine. Deliverable: corrected engine + solo_net_spread = honest ~94
+mean, floor ~68.
