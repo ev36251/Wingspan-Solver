@@ -45,10 +45,12 @@ class GameSet(Enum):
     EUROPEAN = "european"
     OCEANIA = "oceania"
     ASIA = "asia"
+    PROMO_UK = "promo_uk"
 
 
 # Sets we include in the solver
-INCLUDED_SETS = {GameSet.CORE, GameSet.EUROPEAN, GameSet.OCEANIA, GameSet.ASIA}
+INCLUDED_SETS = {GameSet.CORE, GameSet.EUROPEAN, GameSet.OCEANIA, GameSet.ASIA,
+                 GameSet.PROMO_UK}
 
 # Map from spreadsheet string to GameSet
 SET_NAME_MAP = {
@@ -56,6 +58,7 @@ SET_NAME_MAP = {
     "european": GameSet.EUROPEAN,
     "oceania": GameSet.OCEANIA,
     "asia": GameSet.ASIA,
+    "promoUK": GameSet.PROMO_UK,
 }
 
 

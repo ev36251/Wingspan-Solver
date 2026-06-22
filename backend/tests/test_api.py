@@ -42,7 +42,7 @@ class TestBirdRoutes:
         resp = client.get("/api/birds?limit=10")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["total"] == 446
+        assert data["total"] == 471
         assert len(data["birds"]) == 10
 
     def test_list_birds_pagination(self, client):

@@ -185,7 +185,9 @@
   },
   "American Oystercatcher": {
     "class": "backend.powers.templates.strict.AmericanOystercatcherDraftPlayersPlusOneClockwise",
-    "kwargs": {}
+    "kwargs": {
+      "__dict__": []
+    }
   },
   "American Redstart": {
     "class": "backend.powers.templates.gain_food.GainFoodFromFeeder",
@@ -1622,6 +1624,10 @@
         [
           "count",
           1
+        ],
+        [
+          "spendable",
+          false
         ]
       ]
     }
@@ -1906,6 +1912,10 @@
         [
           "max_targets",
           5
+        ],
+        [
+          "draw_if_tucked",
+          0
         ]
       ]
     }
@@ -1917,6 +1927,10 @@
         [
           "max_targets",
           5
+        ],
+        [
+          "draw_if_tucked",
+          0
         ]
       ]
     }
@@ -2370,7 +2384,16 @@
   "Crested Ibis": {
     "class": "backend.powers.templates.strict.SpoonBilledSandpiperDrawBonusOthersMayDiscardTwo",
     "kwargs": {
-      "__dict__": []
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ]
+      ]
     }
   },
   "Crested Lark": {
@@ -2395,14 +2418,14 @@
     "kwargs": {
       "__dict__": [
         [
+          "max_discard",
+          1
+        ],
+        [
           "food_type",
           {
             "__enum__": "backend.models.enums:FoodType:WILD"
           }
-        ],
-        [
-          "max_discard",
-          1
         ],
         [
           "tuck_per_discard",
@@ -2436,6 +2459,35 @@
         [
           "food_count",
           1
+        ]
+      ]
+    }
+  },
+  "Dartford Warbler": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "any"
+        ],
+        [
+          "nest_filter",
+          {
+            "__enum__": "backend.models.enums:NestType:BOWL"
+          }
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          true
         ]
       ]
     }
@@ -2710,6 +2762,60 @@
       "__dict__": []
     }
   },
+  "Eurasian Blackcap": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "any"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
+  "Eurasian Blue Tit": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:SEED"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
   "Eurasian Collared-Dove": {
     "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
     "kwargs": {
@@ -2920,6 +3026,25 @@
       ]
     }
   },
+  "Eurasian Skylark": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
   "Eurasian Sparrowhawk": {
     "class": "backend.powers.templates.unique.TuckToPayCost",
     "kwargs": {
@@ -2958,6 +3083,23 @@
       ]
     }
   },
+  "Eurasian Wigeon": {
+    "class": "backend.powers.templates.draw_cards.DrawFromTray",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "food_filter",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ]
+      ]
+    }
+  },
   "European Bee-Eater": {
     "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
     "kwargs": {
@@ -2975,10 +3117,54 @@
       ]
     }
   },
+  "European Golden Plover": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          1
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          1
+        ]
+      ]
+    }
+  },
   "European Goldfinch": {
     "class": "backend.powers.templates.strict.PinkTuckFromDeckOnOpponentTuck",
     "kwargs": {
       "__dict__": []
+    }
+  },
+  "European Greenfinch": {
+    "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:SEED"
+          }
+        ],
+        [
+          "cache",
+          false
+        ]
+      ]
     }
   },
   "European Honey Buzzard": {
@@ -3008,6 +3194,62 @@
     "class": "backend.powers.templates.play_bird.PlaceBirdSideways",
     "kwargs": {
       "__dict__": []
+    }
+  },
+  "European Shag": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:FISH"
+          }
+        ],
+        [
+          "food_count",
+          1
+        ]
+      ]
+    }
+  },
+  "European Stonechat": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "self"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
     }
   },
   "European Turtle Dove": {
@@ -3178,6 +3420,29 @@
       ]
     }
   },
+  "Garden Warbler": {
+    "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
+    "kwargs": {
+      "__dict__": [
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "food_discount",
+          0
+        ],
+        [
+          "egg_discount",
+          0
+        ],
+        [
+          "ignore_habitat",
+          false
+        ]
+      ]
+    }
+  },
   "Goldcrest": {
     "class": "backend.powers.templates.play_bird.PlayAdditionalBird",
     "kwargs": {
@@ -3251,6 +3516,10 @@
         [
           "nest_filter",
           null
+        ],
+        [
+          "self_bonus_must_be_distinct_bird",
+          false
         ]
       ]
     }
@@ -4143,6 +4412,10 @@
         [
           "count",
           1
+        ],
+        [
+          "spendable",
+          false
         ]
       ]
     }
@@ -4172,7 +4445,7 @@
       ]
     }
   },
-  "Kererū": {
+  "Kerer\u016b": {
     "class": "backend.powers.templates.strict_more.ConditionalNeighborHasFoodGainFood",
     "kwargs": {
       "__dict__": [
@@ -4262,7 +4535,7 @@
       ]
     }
   },
-  "Kākāpō": {
+  "K\u0101k\u0101p\u014d": {
     "class": "backend.powers.templates.strict.EndGameDrawBonusKeep",
     "kwargs": {
       "__dict__": [
@@ -4363,6 +4636,33 @@
           {
             "__enum__": "backend.models.enums:Habitat:WETLAND"
           }
+        ]
+      ]
+    }
+  },
+  "Lesser Spotted Woodpecker": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          2
+        ],
+        [
+          "target",
+          "self"
+        ],
+        [
+          "nest_filter",
+          null
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          false
         ]
       ]
     }
@@ -4602,6 +4902,17 @@
       ]
     }
   },
+  "Manx Shearwater": {
+    "class": "backend.powers.templates.special.FlockingPower",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
   "Many-Colored Fruit-Dove": {
     "class": "backend.powers.templates.strict.AllPlayersGainFoodThenSelfFoodOrEggBonus",
     "kwargs": {
@@ -4633,6 +4944,12 @@
       ]
     }
   },
+  "Marsh Warbler": {
+    "class": "backend.powers.base.NoPower",
+    "kwargs": {
+      "__dict__": []
+    }
+  },
   "Masked Lapwing": {
     "class": "backend.powers.templates.gain_food.ResetFeederGainFood",
     "kwargs": {
@@ -4644,6 +4961,35 @@
         [
           "cache",
           false
+        ]
+      ]
+    }
+  },
+  "Meadow Pipit": {
+    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ],
+        [
+          "target",
+          "any"
+        ],
+        [
+          "nest_filter",
+          {
+            "__enum__": "backend.models.enums:NestType:GROUND"
+          }
+        ],
+        [
+          "habitat_filter",
+          null
+        ],
+        [
+          "all_players",
+          true
         ]
       ]
     }
@@ -4739,6 +5085,10 @@
         [
           "count",
           1
+        ],
+        [
+          "spendable",
+          false
         ]
       ]
     }
@@ -5532,7 +5882,7 @@
       ]
     }
   },
-  "Pūkeko": {
+  "P\u016bkeko": {
     "class": "backend.powers.templates.lay_eggs.LayEggs",
     "kwargs": {
       "__dict__": [
@@ -5755,6 +6105,10 @@
         [
           "count",
           1
+        ],
+        [
+          "spendable",
+          false
         ]
       ]
     }
@@ -6101,6 +6455,10 @@
         [
           "nest_filter",
           null
+        ],
+        [
+          "self_bonus_must_be_distinct_bird",
+          false
         ]
       ]
     }
@@ -6284,6 +6642,31 @@
       ]
     }
   },
+  "Ruddy Turnstone": {
+    "class": "backend.powers.templates.tuck_cards.DiscardToTuck",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw_count",
+          1
+        ],
+        [
+          "tuck_probability",
+          0.4
+        ],
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+          }
+        ],
+        [
+          "food_on_success",
+          1
+        ]
+      ]
+    }
+  },
   "Ruff": {
     "class": "backend.powers.templates.strict.TuckFromHandThenDrawEqual",
     "kwargs": {
@@ -6385,6 +6768,17 @@
       ]
     }
   },
+  "Sand Martin": {
+    "class": "backend.powers.templates.special.FlockingPower",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ]
+      ]
+    }
+  },
   "Sandhill Crane": {
     "class": "backend.powers.templates.strict.DiscardFoodToTuckFromDeck",
     "kwargs": {
@@ -6402,6 +6796,17 @@
         [
           "tuck_per_discard",
           2
+        ]
+      ]
+    }
+  },
+  "Sandwich Tern": {
+    "class": "backend.powers.templates.special.FlockingPower",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
         ]
       ]
     }
@@ -6699,6 +7104,33 @@
       "__dict__": []
     }
   },
+  "Song Thrush": {
+    "class": "backend.powers.templates.gain_food.GainFoodFromSupply",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_types",
+          [
+            {
+              "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+            }
+          ]
+        ],
+        [
+          "count",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ],
+        [
+          "you_also",
+          false
+        ]
+      ]
+    }
+  },
   "South Island Robin": {
     "class": "backend.powers.templates.unique.ConditionalCacheFromNeighbor",
     "kwargs": {
@@ -6746,7 +7178,16 @@
   "Spoon-Billed Sandpiper": {
     "class": "backend.powers.templates.strict.SpoonBilledSandpiperDrawBonusOthersMayDiscardTwo",
     "kwargs": {
-      "__dict__": []
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          1
+        ]
+      ]
     }
   },
   "Spotless Crake": {
@@ -7036,6 +7477,33 @@
       ]
     }
   },
+  "Tawny Owl": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          0
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
   "Thekla's Lark": {
     "class": "backend.powers.templates.strict_more.DiscardSpecificFoodThenLayEggOnSelfUpTo",
     "kwargs": {
@@ -7136,6 +7604,25 @@
       ]
     }
   },
+  "Tundra Swan": {
+    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          1
+        ],
+        [
+          "keep",
+          1
+        ],
+        [
+          "all_players",
+          false
+        ]
+      ]
+    }
+  },
   "Turkey Vulture": {
     "class": "backend.powers.templates.strict.PinkPredatorSuccessGainDie",
     "kwargs": {
@@ -7157,7 +7644,7 @@
       ]
     }
   },
-  "Tūī": {
+  "T\u016b\u012b": {
     "class": "backend.powers.templates.special.CopyNeighborBrownPower",
     "kwargs": {
       "__dict__": [
@@ -7321,7 +7808,44 @@
   "Welcome Swallow": {
     "class": "backend.powers.templates.strict_more.TuckFromDeckBehindEachBirdInHabitat",
     "kwargs": {
-      "__dict__": []
+      "__dict__": [
+        [
+          "habitat",
+          null
+        ]
+      ]
+    }
+  },
+  "Western Capercaillie": {
+    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "kwargs": {
+      "__dict__": [
+        [
+          "draw",
+          2
+        ],
+        [
+          "keep",
+          2
+        ],
+        [
+          "discard_from_all_bonus",
+          false
+        ]
+      ]
+    }
+  },
+  "Western Jackdaw": {
+    "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+    "kwargs": {
+      "__dict__": [
+        [
+          "food_type",
+          {
+            "__enum__": "backend.models.enums:FoodType:WILD"
+          }
+        ]
+      ]
     }
   },
   "Western Meadowlark": {
@@ -7373,6 +7897,12 @@
           false
         ]
       ]
+    }
+  },
+  "Western Yellow Wagtail": {
+    "class": "backend.powers.base.NoPower",
+    "kwargs": {
+      "__dict__": []
     }
   },
   "White Stork": {
@@ -7441,6 +7971,10 @@
         [
           "count",
           1
+        ],
+        [
+          "spendable",
+          false
         ]
       ]
     }
@@ -7629,6 +8163,33 @@
       ]
     }
   },
+  "Whooper Swan": {
+    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "kwargs": {
+      "__dict__": [
+        [
+          "tuck_count",
+          1
+        ],
+        [
+          "draw_count",
+          1
+        ],
+        [
+          "lay_count",
+          0
+        ],
+        [
+          "food_type",
+          null
+        ],
+        [
+          "food_count",
+          0
+        ]
+      ]
+    }
+  },
   "Whooping Crane": {
     "class": "backend.powers.templates.draw_cards.DrawBonusCards",
     "kwargs": {
@@ -7703,6 +8264,17 @@
     "class": "backend.powers.templates.strict.WillowTitCacheOneFromFeederOptionalResetOnAllSame",
     "kwargs": {
       "__dict__": []
+    }
+  },
+  "Willow Warbler": {
+    "class": "backend.powers.templates.special.FlockingPower",
+    "kwargs": {
+      "__dict__": [
+        [
+          "count",
+          1
+        ]
+      ]
     }
   },
   "Wilson's Snipe": {

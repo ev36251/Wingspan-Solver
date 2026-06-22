@@ -10,7 +10,7 @@ def test_all_bird_powers_smoke_execute_without_exceptions():
     birds, _, _ = load_all(EXCEL_FILE)
     clear_cache()
     all_birds = list(birds.all_birds)
-    assert len(all_birds) == 446
+    assert len(all_birds) == 471
 
     for bird in all_birds:
         game = create_new_game(["A", "B"])

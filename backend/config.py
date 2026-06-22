@@ -11,7 +11,7 @@ EXCEL_FILE = DATA_DIR / "wingspan-20260128.xlsx"
 INCLUDED_SETS = {GameSet.CORE, GameSet.EUROPEAN, GameSet.OCEANIA, GameSet.ASIA}
 
 # Spreadsheet set names that map to our included sets
-INCLUDED_SET_NAMES = {"core", "european", "oceania", "asia"}
+INCLUDED_SET_NAMES = {"core", "european", "oceania", "asia", "promoUK"}
 
 # Bonus cards can belong to multiple sets (e.g., "core, asia")
 # We include a bonus card if ANY of its sets are in our included sets
