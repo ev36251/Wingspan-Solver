@@ -288,3 +288,25 @@ to benefit (89.1). FINAL HONEST CONFIG: --determinize --rollouts 8 --temperature
 0.3 -> 89.1, tied with the peeking ceiling (89.9). Cheaper fallback r=4 t=0.6 =
 88.7. Honesty gap closed; pushing the MEAN clearly above ~90 is a separate
 stronger-search task (depth/drafts), not a deck-knowledge issue.
+
+Floor investigation (raising bad-deal scores):
+- Mechanics audit (Oceania): nectar-spend-for-extra (egg/food/card) and
+  spent-nectar per-habitat scoring are CORRECTLY modeled & generated. The
+  reset_tray ("flip the tray") action was BUGGED: execute_draw_cards cleared the
+  3 face-up cards but never refilled, forcing a blind deck draw -> reset was
+  strictly bad and never used. FIXED (actions.py): discard 3 -> deal 3 fresh.
+  Correctness proof: video-replay goldens' scripted-player divergence_count
+  {2,0,4} -> {0,0,0} (engine now replays 3 real recorded games perfectly).
+- BUT fixing the mechanic did NOT raise the floor. Paired n=100 (same seeds,
+  heavy honest config r=12 k=10 t=0.3 det), broken vs fixed reset:
+  mean 96.6 -> 92.0 (paired diff -4.6, sd 15.6); min 52 -> 51 (unchanged);
+  98/100 games changed. The search isn't equipped to use the newly-available
+  reset: its rollout policy is the net (trained when reset was unused), so it
+  can't exploit a fresh tray; reset gets explored but underdelivers, and the
+  added option cascades trajectory changes (slightly net-negative).
+- TAKEAWAY: the reset fix is a correctness win (kept), not a free floor-raiser.
+  The low tail is largely deal-limited. To actually capitalize on tray-cycling
+  the SOLVER must learn it (regenerate search/BC data on the FIXED engine so the
+  policy discovers reset-recovery), which is a separate retrain -- and given the
+  heavy game-ending search already didn't benefit, the floor may be more
+  deal-bound than the "humans always recover to 80+" intuition suggests.
