@@ -248,12 +248,17 @@ class FewestBirdsGainFood(PowerEffect):
 
 
 class ScoreBonusCardNow(PowerEffect):
-    """Score a bonus card now by caching seeds for each point.
+    """Score a bonus card now by caching 1 token per point on this bird.
 
-    Bird: Great Indian Bustard (White)
-    "Score 1 of your bonus cards now by caching 1 [seed] from the supply
-    on this bird for each point. Also score it normally at game end."
+    keep=True  (Great Indian Bustard, White): keep the card so it ALSO scores
+               normally at game end (the points are counted twice).
+    keep=False + redraw=True (Red-Crowned Crane, White): discard the scored card
+               and draw 1 new bonus card.
     """
+
+    def __init__(self, keep: bool = True, redraw: bool = False):
+        self.keep = keep
+        self.redraw = redraw
 
     def execute(self, ctx: PowerContext) -> PowerResult:
         if not ctx.player.bonus_cards:
@@ -298,17 +303,36 @@ class ScoreBonusCardNow(PowerEffect):
         if chosen is None:
             chosen = max(scored, key=lambda item: (item[1], item[0].name))
 
-        _, best_score = chosen
+        chosen_card, best_score = chosen
 
+        # discard-and-redraw variant (Red-Crowned Crane) resolves even at 0 pts.
+        if best_score <= 0 and self.keep:
+            return PowerResult(executed=False, description="No bonus card points to cache")
+
+        slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
         if best_score > 0:
-            slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
             slot.cache_food(FoodType.SEED, best_score)
-            return PowerResult(
-                food_cached={FoodType.SEED: best_score},
-                description=f"Scored bonus card: cached {best_score} seeds",
-            )
 
-        return PowerResult(executed=False, description="No bonus card points to cache")
+        if not self.keep:
+            # Remove the scored card from hand (it does NOT score again).
+            for i, entry in enumerate(ctx.player.bonus_cards):
+                name = entry.name if isinstance(entry, BonusCard) else str(entry)
+                if name == chosen_card.name:
+                    ctx.player.bonus_cards.pop(i)
+                    break
+            if self.redraw:
+                from backend.powers.templates.draw_cards import (
+                    _draw_one_bonus, _init_bonus_deck_if_needed,
+                )
+                _init_bonus_deck_if_needed(ctx.game_state)
+                new_bc = _draw_one_bonus(ctx.game_state)
+                if new_bc is not None:
+                    ctx.player.bonus_cards.append(new_bc)
+
+        return PowerResult(
+            food_cached={FoodType.SEED: best_score} if best_score > 0 else {},
+            description=f"Scored bonus card: cached {best_score} ({'kept' if self.keep else 'discarded+redrew'})",
+        )
 
     def estimate_value(self, ctx: PowerContext) -> float:
         # Average bonus card scores 3-5 points

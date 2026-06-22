@@ -6057,20 +6057,16 @@
     }
   },
   "Red-Crowned Crane": {
-    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "class": "backend.powers.templates.unique.ScoreBonusCardNow",
     "kwargs": {
       "__dict__": [
         [
-          "draw",
-          1
-        ],
-        [
           "keep",
-          1
+          false
         ],
         [
-          "discard_from_all_bonus",
-          false
+          "redraw",
+          true
         ]
       ]
     }
