@@ -901,12 +901,20 @@ def execute_draw_cards(
 
     bonus_activated = 0
 
-    # Handle reset_bonus (reset tray before drawing)
+    # Handle reset_bonus (reset tray before drawing): discard the face-up tray
+    # and deal fresh cards so the player draws from NEW options this turn. (Was:
+    # cleared but never refilled, leaving an empty tray, so reset was strictly
+    # bad and the search never used it -- the real Oceania rule deals 3 fresh.)
     if reset_bonus and column.reset_bonus:
         rb = column.reset_bonus
         if rb.bonus_type == "reset_tray":
             if _pay_bonus_cost(player, rb.cost_options):
                 game_state.card_tray.clear()
+                while game_state.card_tray.needs_refill() and game_state.deck_remaining > 0:
+                    fresh = _draw_bird_from_deck(game_state)
+                    if not fresh:
+                        break
+                    game_state.card_tray.add_card(fresh)
                 bonus_activated += 1
 
     # Handle "extra" bonus trades (+1 card per use)

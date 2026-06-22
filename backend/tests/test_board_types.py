@@ -381,12 +381,14 @@ class TestOceaniaActions:
         assert result.bonus_activated == 2
 
     def test_draw_cards_reset_tray(self, bird_reg, oceania_game):
-        """Oceania wetland col 1: base=2, reset_bonus=reset_tray (discard food)."""
+        """Oceania wetland col 1 reset_tray: discard the face-up tray and deal 3
+        FRESH cards (the real rule), so the player draws from NEW options. This
+        is a regression guard: reset previously cleared the tray but never
+        refilled it, leaving it empty -> reset was strictly bad and unused."""
         player = oceania_game.players[0]
         filler = bird_reg.get("American Crow")
-        player.board.wetland.slots[0].bird = filler  # 1 bird = col 1
+        player.board.wetland.slots[0].bird = filler  # 1 bird = col 1 (base_gain 2)
         player.food_supply.add(FoodType.SEED, 1)  # Food to pay for tray reset
-        # Put some cards in the tray
         tray_bird = bird_reg.get("Acorn Woodpecker")
         oceania_game.card_tray.face_up = [tray_bird, tray_bird]
         oceania_game.deck_remaining = 10
@@ -397,7 +399,10 @@ class TestOceaniaActions:
         )
         assert result.success
         assert result.bonus_activated == 1
-        # Tray was cleared, then drew from deck
+        # Reset refilled the tray to full from the deck (was 0 before the fix).
+        assert oceania_game.card_tray.count == 3
+        # 3 dealt to refill + 2 drawn (col-1 base_gain) all came from the deck.
+        assert oceania_game.deck_remaining == 5
 
 
 # --- Move Generator Tests ---
