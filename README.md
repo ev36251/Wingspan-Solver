@@ -9,6 +9,65 @@ Two strategy approaches live in this repo:
 
 ---
 
+## Results: from ~60 to the 90s
+
+The agent's score has climbed dramatically over the life of the project. Early
+greedy-network and rule-based play scored in the **50s–60s**. The current agent
+plays full *honest* games — no peeking at the deck order — and scores a **~94
+mean (worst-case floor ~68)** against the rule-based heuristic, which it beats
+roughly **90% of the time**.
+
+### Score progression
+| stage | typical score |
+|-------|---------------|
+| rule-based heuristic / early greedy network | ~50–60 |
+| net-guided rollout search (solo, held-out seeds) | 72 → 91 |
+| **2-player honest rollout search (current)** | **~94 mean, floor ~68** |
+
+### What moved the needle (all measured at n=100 on Modal.com)
+
+- **Rollout search to game-end** is the heart of the agent: judging each move by
+  *playing the game to the finish* instead of a one-step score estimate is worth
+  ~**+40 points** over greedy play, and it discovers real engines (food loops,
+  round-end caches, card tucking) that a shallow evaluator misses.
+- **Averaged stochastic rollouts** — scoring a move by the *average* of several
+  varied playouts rather than one noisy game — is a real, statistically
+  significant gain (63% win rate vs the single-rollout baseline, p = 0.004).
+- **Honest play via determinization** — reshuffling the unseen deck before each
+  rollout so the agent plans over *plausible* futures instead of peeking at the
+  real card order — costs almost nothing (~1 point). The agent wins by building
+  *robust* engines, not by knowing the next card.
+- **Engine-correctness pass (the floor-raiser).** Auditing the simulator against
+  the real Oceania player mat surfaced and fixed several rules bugs: the
+  tray/feeder reset now deals **fresh** cards (it used to clear them and never
+  refill, so resetting was strictly bad); resets are payable with **nectar**, and
+  that nectar **scores** in its habitat; and end-of-round goals no longer award
+  points to a player with **zero** of the goal. These fixes raised the bad-deal
+  **floor from 52 → 68** — the worst hands now recover, exactly as a strong human
+  would by flipping the tray and spending surplus nectar. The real-game replay
+  goldens still reproduce perfectly (0 divergences), so the engine is strictly
+  *more* faithful after the changes.
+
+### What didn't work (measured and ruled out)
+
+- **Denial / "beat the opponent" objective.** Optimizing *my score − opponent
+  score* **loses** to pure score-maximization (40% vs 60%, n = 100). In Wingspan
+  player interaction is limited, so a strong selfish engine beats clumsy
+  sabotage; even with an opponent-board-aware network, denial only reaches
+  break-even. Natural denial (taking strong birds you actually want) is already
+  captured by playing well for yourself.
+- **Network retraining.** Three separate retrains — a behavioral-cloned
+  opponent-aware net, and a fresh solo-flywheel net trained on the corrected
+  engine — all failed to beat the existing `solo_net_spread`. At heavy search
+  budget the **search dominates the policy prior**, so a new prior barely changes
+  the searched output. The lever to push the mean higher is **more search**
+  (depth / drafts / rollouts), not a new network.
+
+Full experiment-by-experiment detail (with sample sizes and p-values) lives in
+`memory/SOLO_SEED_FINDINGS.md`.
+
+---
+
 ## Architecture
 
 ```
