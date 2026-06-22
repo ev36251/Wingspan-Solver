@@ -77,7 +77,8 @@ def play_multi(game, choosers, max_turns: int = 600):
 
 
 def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff",
-                        rollouts=1, temperature=0.0, determinize=False, opp_weight=1.0):
+                        rollouts=1, temperature=0.0, determinize=False, opp_weight=1.0,
+                        depth=1, branch=3):
     """1-ply rollout search for seat `my_idx`.
 
     Objective value of a rollout = my_score - lambda * best_opponent_score, where
@@ -107,6 +108,66 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
     n_roll = rollouts if (stochastic or determinize) else 1
     det_rng = random.Random(my_idx * 104729 + 13)
 
+    def _obj(scores):
+        if lam == 0.0:
+            return scores[my_idx]
+        return scores[my_idx] - lam * max(scores[j] for j in range(len(scores)) if j != my_idx)
+
+    def _step_until_my_turn(sim):
+        """Advance opponents one turn each (via roll_opp) until it is my turn
+        with a legal move, or the game ends."""
+        while not sim.is_game_over:
+            idx = sim.current_player_idx
+            p = sim.current_player
+            if p.action_cubes_remaining <= 0:
+                if all(pl.action_cubes_remaining <= 0 for pl in sim.players):
+                    sim.advance_round()
+                else:
+                    sim.current_player_idx = (idx + 1) % sim.num_players
+                continue
+            if idx == my_idx:
+                return
+            mv_list = generate_all_moves(sim, p)
+            if not mv_list:
+                p.action_cubes_remaining = 0
+                sim.advance_turn()
+                continue
+            mv = roll_opp(sim, p, mv_list)
+            if execute_move_on_sim(sim, p, mv):
+                sim.advance_turn()
+                _refill_tray(sim)
+            else:
+                p.action_cubes_remaining = max(0, p.action_cubes_remaining - 1)
+                sim.advance_turn()
+
+    def _rollout_value(sim):
+        choosers = [roll_me if i == my_idx else roll_opp for i in range(sim.num_players)]
+        return _obj(play_multi(sim, choosers))
+
+    def _value_at_my_turn(sim, remaining):
+        """Best objective value from one of my decisions, searching `remaining`
+        further of my moves (branch-wide) before rolling out."""
+        if remaining <= 0 or sim.is_game_over:
+            return _rollout_value(sim)
+        p = sim.current_player
+        moves = generate_all_moves(sim, p)
+        if not moves:
+            return _rollout_value(sim)
+        st = np.asarray(encoder.encode(sim, sim.current_player_idx), dtype=np.float32)
+        lg, _ = model.forward(st)
+        cand = sorted(moves, key=lambda m: -model.score_move(st, m, p, logits=lg))[:branch]
+        best = -1e18
+        for m in cand:
+            s2 = fast_clone_game(sim)
+            sp = s2.current_player
+            if not execute_move_on_sim(s2, sp, m):
+                continue
+            s2.advance_turn()
+            _refill_tray(s2)
+            _step_until_my_turn(s2)
+            best = max(best, _value_at_my_turn(s2, remaining - 1))
+        return best if best > -1e17 else _rollout_value(sim)
+
     def choose(game, player, moves):
         if len(moves) <= 1:
             return moves[0]
@@ -128,12 +189,12 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
                     continue
                 sim.advance_turn()
                 _refill_tray(sim)
-                choosers = [roll_me if i == my_idx else roll_opp for i in range(sim.num_players)]
-                scores = play_multi(sim, choosers)
-                if lam == 0.0:
-                    total += scores[my_idx]
+                if depth >= 2:
+                    # Look ahead to my next decision(s) before rolling out.
+                    _step_until_my_turn(sim)
+                    total += _value_at_my_turn(sim, depth - 1)
                 else:
-                    total += scores[my_idx] - lam * max(scores[j] for j in range(len(scores)) if j != my_idx)
+                    total += _rollout_value(sim)
                 n_ok += 1
             if n_ok == 0:
                 continue
@@ -172,8 +233,10 @@ def play_one(mode, seed, model, encoder, board, cfg):
     # differential term subtracts a noisy/biased opponent-score estimate. Revisit
     # once the net can see the opponent's board (then denial value is reliable).
     obj = cfg.get("objective", "selfish")
+    dep, brn = cfg.get("depth", 1), cfg.get("branch", 3)
     if mode == "heuristic":
-        a_ch = make_search_chooser(model, encoder, tk, a_idx, heuristic_chooser, obj, ro, tp, det)
+        a_ch = make_search_chooser(model, encoder, tk, a_idx, heuristic_chooser, obj, ro, tp, det,
+                                   depth=dep, branch=brn)
         b_ch = heuristic_chooser
     elif mode == "ablation":
         # a = denial-weighted (lambda = cfg opp_weight); b = pure selfish baseline.
@@ -235,12 +298,14 @@ def main():
     ap.add_argument("--seeds-per-shard", type=int, default=2)
     ap.add_argument("--opp-weight", type=float, default=1.0,
                     help="denial weight lambda for the ablation 'a' agent (0=selfish, 1=full)")
+    ap.add_argument("--depth", type=int, default=1, help="plies of my-move lookahead (>=2 enables it)")
+    ap.add_argument("--branch", type=int, default=3, help="candidates expanded at deeper plies")
     args = ap.parse_args()
     board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
     seeds = _parse_seeds(args.seeds)
     cfg = {"top_k": args.top_k, "rollouts": args.rollouts,
            "temperature": args.temperature, "determinize": args.determinize,
-           "opp_weight": args.opp_weight}
+           "opp_weight": args.opp_weight, "depth": args.depth, "branch": args.branch}
 
     if args.use_modal:
         from backend.ml.modal_two_player import dispatch_2p_eval_modal
