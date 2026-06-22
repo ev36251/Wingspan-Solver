@@ -1,7 +1,7 @@
 """Card tucking power templates — covers ~53 birds."""
 
 import random
-from backend.models.enums import FoodType
+from backend.models.enums import FoodType, NestType
 from backend.powers.base import PowerEffect, PowerContext, PowerResult
 from backend.powers.choices import consume_power_choice
 
@@ -186,6 +186,84 @@ class TuckFromDeck(PowerEffect):
 
     def estimate_value(self, ctx: PowerContext) -> float:
         return self.count * 0.9  # Pure point gain, no hand cost
+
+
+class TuckFromDeckPerCount(PowerEffect):
+    """Tuck N cards from the deck, where N is a counted board condition.
+
+    count_mode:
+      "own_star_nests"        -> birds on your board with a [star]/wild nest
+                                 (Manx Shearwater, includes this bird)
+      "other_birds_in_habitat"-> other birds in this bird's habitat (Sand Martin)
+      "opp_max_forest_birds"  -> birds in the chosen opponent's forest -- an
+                                 approximation of "action cubes on their forest"
+                                 (Willow Warbler); exact fidelity would need
+                                 per-habitat action-cube tracking on Player.
+    """
+
+    def __init__(self, count_mode: str):
+        self.count_mode = count_mode
+
+    def _count(self, ctx: PowerContext) -> int:
+        pl = ctx.player
+        if self.count_mode == "own_star_nests":
+            return sum(1 for b in pl.board.all_birds() if b.nest_type == NestType.WILD)
+        if self.count_mode == "other_birds_in_habitat":
+            return max(0, pl.board.get_row(ctx.habitat).bird_count - 1)
+        if self.count_mode == "opp_max_forest_birds":
+            opps = [p for p in ctx.game_state.players if p is not pl]
+            return max((o.board.forest.bird_count for o in opps), default=0)
+        return 0
+
+    def execute(self, ctx: PowerContext) -> PowerResult:
+        n = self._count(ctx)
+        slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
+        tucked = 0
+        for _ in range(n):
+            if _draw_one_bird(ctx) is None:
+                break
+            slot.tucked_cards += 1
+            tucked += 1
+        return PowerResult(cards_tucked=tucked,
+                           description=f"Tucked {tucked} from deck (per {self.count_mode})")
+
+    def estimate_value(self, ctx: PowerContext) -> float:
+        return self._count(ctx) * 0.9
+
+
+class GiveFishThenTuckLay(PowerEffect):
+    """Give 1 [fish] to another player; if you do, tuck 1 from the deck behind
+    this bird and lay 1 [egg] on it. (Sandwich Tern.)
+
+    Requires another player AND a fish to give -- so it does nothing in solo.
+    """
+
+    def execute(self, ctx: PowerContext) -> PowerResult:
+        pl = ctx.player
+        if pl.food_supply.get(FoodType.FISH) <= 0:
+            return PowerResult(executed=False, description="No fish to give")
+        opp = (ctx.game_state.player_to_left(pl)
+               or next((p for p in ctx.game_state.players if p is not pl), None))
+        if opp is None:
+            return PowerResult(executed=False, description="No other player to give fish")
+        pl.food_supply.spend(FoodType.FISH, 1)
+        opp.food_supply.add(FoodType.FISH, 1)
+        slot = pl.board.get_row(ctx.habitat).slots[ctx.slot_index]
+        tucked = 1 if _draw_one_bird(ctx) is not None else 0
+        slot.tucked_cards += tucked
+        eggs = 0
+        if slot.can_hold_more_eggs():
+            slot.eggs += 1
+            eggs = 1
+        return PowerResult(cards_tucked=tucked, eggs_laid=eggs,
+                           description=f"Gave 1 fish; tucked {tucked}, laid {eggs}")
+
+    def estimate_value(self, ctx: PowerContext) -> float:
+        if ctx.player.food_supply.get(FoodType.FISH) <= 0:
+            return 0.0
+        if len([p for p in ctx.game_state.players if p is not ctx.player]) == 0:
+            return 0.0  # solo: power can't fire
+        return 1.3  # tuck (1) + egg (1) - giving opponent a fish (~-0.7)
 
 
 class DiscardToTuck(PowerEffect):

@@ -4903,12 +4903,12 @@
     }
   },
   "Manx Shearwater": {
-    "class": "backend.powers.templates.special.FlockingPower",
+    "class": "backend.powers.templates.tuck_cards.TuckFromDeckPerCount",
     "kwargs": {
       "__dict__": [
         [
-          "count",
-          1
+          "count_mode",
+          "own_star_nests"
         ]
       ]
     }
@@ -6769,12 +6769,12 @@
     }
   },
   "Sand Martin": {
-    "class": "backend.powers.templates.special.FlockingPower",
+    "class": "backend.powers.templates.tuck_cards.TuckFromDeckPerCount",
     "kwargs": {
       "__dict__": [
         [
-          "count",
-          1
+          "count_mode",
+          "other_birds_in_habitat"
         ]
       ]
     }
@@ -6801,14 +6801,9 @@
     }
   },
   "Sandwich Tern": {
-    "class": "backend.powers.templates.special.FlockingPower",
+    "class": "backend.powers.templates.tuck_cards.GiveFishThenTuckLay",
     "kwargs": {
-      "__dict__": [
-        [
-          "count",
-          1
-        ]
-      ]
+      "__dict__": []
     }
   },
   "Sarus Crane": {
@@ -8267,12 +8262,12 @@
     }
   },
   "Willow Warbler": {
-    "class": "backend.powers.templates.special.FlockingPower",
+    "class": "backend.powers.templates.tuck_cards.TuckFromDeckPerCount",
     "kwargs": {
       "__dict__": [
         [
-          "count",
-          1
+          "count_mode",
+          "opp_max_forest_birds"
         ]
       ]
     }
