@@ -415,3 +415,24 @@ cleaner "is it good" signal. Low-appearance birds (Tundra Swan 4x, Willow Warble
 TAKEAWAY: the engine LOVES bonus-card synergy in 2-player (Skylark + Capercaillie
 top the list) and the opponent-reactive pink birds are genuinely strong -- play
 them in 2-player, skip them solo.
+
+## Depth-2 lookahead in 2-player search — NULL/NEGATIVE
+Added opt-in depth-2 lookahead (--depth/--branch): after a root candidate, step
+opponents one turn, then search my next move (branch-wide) before rolling out.
+Equal-budget A/B vs heuristic, n=100, current engine (incl. promo birds):
+  depth-1 (r8 x k10, width):            mean 92.3, min 63, max 159, 35% >=100
+  depth-2 (r4 x k6 x branch-3, lookahead): mean 89.3, min 58, max 133, 22% >=100
+Depth-2 is WORSE at equal compute. The 1-ply rollout already plays to game end
+(captures long-horizon value), so explicit 2nd-move search is largely redundant
+with it but steals rollout quality (8->4 rollouts, 10->6 width). Spend budget on
+ROLLOUTS + WIDTH, not depth. Matches the solo sweep (depth saturates).
+
+SEARCH LEVERS — final scorecard (2-player honest agent):
+  + averaged stochastic rollouts: significant (+5, p=0.004)
+  + determinization (honest play): ~free (~1 pt)
+  - differential/denial objective: hurts (40% vs 60%)
+  - net retraining (3 attempts): null (search dominates prior)
+  - depth-2 lookahead: hurts at equal budget
+Best config: depth-1, rollouts 8-12, top_k 10, temp 0.3, determinize -> ~92-95
+honest mean. This is the practical ceiling for the rollout-search approach;
+going higher needs a fundamentally better evaluator or far more absolute compute.
