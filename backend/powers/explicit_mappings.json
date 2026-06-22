@@ -3118,30 +3118,9 @@
     }
   },
   "European Golden Plover": {
-    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "class": "backend.powers.templates.promo_uk.TuckHandThenAllPlayersGainDie",
     "kwargs": {
-      "__dict__": [
-        [
-          "tuck_count",
-          1
-        ],
-        [
-          "draw_count",
-          0
-        ],
-        [
-          "lay_count",
-          1
-        ],
-        [
-          "food_type",
-          null
-        ],
-        [
-          "food_count",
-          1
-        ]
-      ]
+      "__dict__": []
     }
   },
   "European Goldfinch": {
@@ -3226,28 +3205,28 @@
     }
   },
   "European Stonechat": {
-    "class": "backend.powers.templates.lay_eggs.LayEggs",
+    "class": "backend.powers.templates.promo_uk.DiscardFoodToLayEggs",
     "kwargs": {
       "__dict__": [
         [
-          "count",
-          1
+          "allowed",
+          {
+            "__tuple__": [
+              {
+                "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
+              },
+              {
+                "__enum__": "backend.models.enums:FoodType:SEED"
+              },
+              {
+                "__enum__": "backend.models.enums:FoodType:FRUIT"
+              }
+            ]
+          }
         ],
         [
-          "target",
-          "self"
-        ],
-        [
-          "nest_filter",
-          null
-        ],
-        [
-          "habitat_filter",
-          null
-        ],
-        [
-          "all_players",
-          false
+          "max_n",
+          3
         ]
       ]
     }
@@ -6643,26 +6622,14 @@
     }
   },
   "Ruddy Turnstone": {
-    "class": "backend.powers.templates.tuck_cards.DiscardToTuck",
+    "class": "backend.powers.templates.promo_uk.DrawDiscardThenGainIfFoodInCost",
     "kwargs": {
       "__dict__": [
-        [
-          "draw_count",
-          1
-        ],
-        [
-          "tuck_probability",
-          0.4
-        ],
         [
           "food_type",
           {
             "__enum__": "backend.models.enums:FoodType:INVERTEBRATE"
           }
-        ],
-        [
-          "food_on_success",
-          1
         ]
       ]
     }
@@ -7473,28 +7440,14 @@
     }
   },
   "Tawny Owl": {
-    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "class": "backend.powers.templates.promo_uk.TuckHandThenCacheFoodPerOwnCost",
     "kwargs": {
       "__dict__": [
         [
-          "tuck_count",
-          1
-        ],
-        [
-          "draw_count",
-          0
-        ],
-        [
-          "lay_count",
-          0
-        ],
-        [
           "food_type",
-          null
-        ],
-        [
-          "food_count",
-          0
+          {
+            "__enum__": "backend.models.enums:FoodType:RODENT"
+          }
         ]
       ]
     }
@@ -7831,14 +7784,12 @@
     }
   },
   "Western Jackdaw": {
-    "class": "backend.powers.templates.cache_food.CacheFoodFromFeeder",
+    "class": "backend.powers.templates.promo_uk.CacheWildThenGainDiePerCache",
     "kwargs": {
       "__dict__": [
         [
-          "food_type",
-          {
-            "__enum__": "backend.models.enums:FoodType:WILD"
-          }
+          "max_cache",
+          3
         ]
       ]
     }
@@ -8159,30 +8110,9 @@
     }
   },
   "Whooper Swan": {
-    "class": "backend.powers.templates.tuck_cards.TuckFromHand",
+    "class": "backend.powers.templates.promo_uk.ColumnTuckFromHandThenDraw",
     "kwargs": {
-      "__dict__": [
-        [
-          "tuck_count",
-          1
-        ],
-        [
-          "draw_count",
-          1
-        ],
-        [
-          "lay_count",
-          0
-        ],
-        [
-          "food_type",
-          null
-        ],
-        [
-          "food_count",
-          0
-        ]
-      ]
+      "__dict__": []
     }
   },
   "Whooping Crane": {
