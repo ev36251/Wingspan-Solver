@@ -347,3 +347,18 @@ search RECOVER bad deals -- confirms the user's intuition. The retrain (net v2)
 was NOT the win and is a weaker mover (90.4/min59); use solo_net_spread on the
 corrected engine. Deliverable: corrected engine + solo_net_spread = honest ~94
 mean, floor ~68.
+
+Solo-flywheel retrain on the CORRECTED engine (the mean-lift attempt) -- NULL:
+Regenerated 2000 best lines on the corrected engine (mean 81.4 vs old 78.7),
+built 181k-sample BC dataset, trained solo_net_corrected.npz (1693-dim).
+Measured heavy honest (r=12 k=10 t=0.3 det) vs heuristic, n=100:
+  solo_net_corrected: mean 92.3, min 65, 24% >=100
+  solo_net_spread:    mean 94.4, min 68, 28% >=100  (still best)
+Retrain is marginally WORSE -- matches the documented flywheel-iter-2 finding:
+at heavy search budget the SEARCH dominates the policy prior, so a better/newer
+prior barely changes (or slightly perturbs) the searched output. BOTH retrains
+this session (BC opp-aware net v2, and this solo flywheel net) failed to beat
+solo_net_spread. CONCLUSION: the net prior is NOT the lever at heavy search.
+~94 mean / floor ~68 is near the honest ceiling at this budget; lifting the MEAN
+further needs more SEARCH (depth/drafts/rollouts), not a new net. Keep
+solo_net_spread on the corrected engine as the deployed mover.
