@@ -362,3 +362,29 @@ solo_net_spread. CONCLUSION: the net prior is NOT the lever at heavy search.
 ~94 mean / floor ~68 is near the honest ceiling at this budget; lifting the MEAN
 further needs more SEARCH (depth/drafts/rollouts), not a new net. Keep
 solo_net_spread on the corrected engine as the deployed mover.
+
+## Promo UK Pack (25 new birds) — engine tier list
+Added the promoUK set (471 birds total). Solo tiering over 1500 seeds (150
+games/seed, corrected engine), ranked by appearances-in-best-line-drafts x avg
+game score:
+
+TOP (brown tuck/gain engines + high-value white) — the engine's favorites:
+  European Shag 14x/84.8, Sandwich Tern 12x/82.8, Western Capercaillie 12x/80.3,
+  Ruddy Turnstone 11x/83.5, European Golden Plover 10x/83.0, Lesser Spotted
+  Woodpecker 8x/81.1, European Greenfinch 7x/81.6. Manx Shearwater 7x but HIGHEST
+  avg 86.9 (tuck-per-star-nest). Eurasian Blackcap 3x/86.3 (low count, high avg).
+MID: Whooper Swan, European Stonechat, Dartford Warbler, Meadow Pipit, Tawny Owl.
+LOW (engine avoids): all 4 PINK birds (Eurasian Blue Tit 1x/62, Tundra Swan 2x,
+  Song Thrush 3x, Eurasian Skylark 4x) + weak teal (Sand Martin 2x, W. Jackdaw 4x).
+
+KEY READS / CAVEATS:
+- The clear pattern: brown "when activated" tuck/gain engines win; pink birds are
+  near-useless HERE because this is SOLO (no opponent to trigger them) -- in
+  2-player the 4 pink birds (gain when opp gains seed/invert, react to opp
+  draw/bonus) would be far better, so the solo tiering UNDERRATES them.
+- Western Yellow Wagtail (bonus-card doubler) and Marsh Warbler (copy yellow) are
+  currently NoPower approximations, so they're underrated (esp. the Wagtail).
+- Sandwich Tern's power auto-parsed approximately (FlockingPower tuck; ignores the
+  give-fish/lay-egg clauses) yet still ranks high on the tuck value alone.
+- None crack the very top tier (Nutcracker ~99, Blue-Magpie ~98); the best promo
+  birds are solid mid-tier engine pieces (~80-87 avg lines).
