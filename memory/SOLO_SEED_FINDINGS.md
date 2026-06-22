@@ -310,3 +310,28 @@ Floor investigation (raising bad-deal scores):
   policy discovers reset-recovery), which is a separate retrain -- and given the
   heavy game-ending search already didn't benefit, the floor may be more
   deal-bound than the "humans always recover to 80+" intuition suggests.
+
+Engine-correctness pass + retrain (matching the real Oceania board, per user):
+FIXES (all tested, goldens updated, divergence stays 0):
+1. reset_tray/feeder: refill the tray/feeder with fresh cards (was cleared, never
+   refilled -> reset strictly bad).
+2. reset payable with ANY food incl. NECTAR (was food-only); nectar spent on any
+   action bonus (reset or wetland egg|nectar extra) now recorded as nectar_spent
+   in that habitat row so it scores; move generator emits '[pay nectar]' variants
+   so the SEARCH chooses food-vs-nectar.
+3. round-goal scoring: a player with 0 of the goal no longer places (was wrongly
+   getting the 2nd-place point). Tiers (4/1/0..7/4/3) and tie-division already ok.
+   (Nectar majority 5/2/tie3/0 and the 7-component total were already correct.)
+RETRAIN: regenerated 800-game opp-aware BC dataset on the corrected engine ->
+opp_aware_net_v2.npz (2443-dim, val_acc 0.669).
+FLOOR RESULT (heavy honest r=12 k=10 t=0.3 det, vs heuristic, n=100):
+  net v2 / corrected engine: mean 90.4, min 59, median 90, <70=9%, >=100=26%.
+  refs (solo_net): broken-engine 96.6/min52 (40% >=100); reset-fix-only 92.0/min51.
+Floor lifted modestly (min 51->59, fewer sub-70 games) BUT mean dipped -- a net
+confound: the BC opp-aware net is weaker at the TOP than solo-optimized solo_net
+(26% vs 40% >=100). Can't cleanly separate engine-fix floor gain from net quality.
+HONEST VERDICT: correct mechanics + a net trained to use them nudged the worst
+hands up a little, but did not rescue them -- the bad-deal floor is largely
+deal-bound. The real deliverable of this pass is a CORRECT engine.
+TODO for a clean floor verdict: run solo_net on the fully-corrected engine (same
+config) to isolate engine-fix effect from net quality.
