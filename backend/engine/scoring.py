@@ -551,12 +551,13 @@ def compute_round_goal_scores(game_state: GameState, round_num: int) -> dict[str
     if game_state.num_players < 2:
         return _compute_round_goal_scores_solo(game_state, round_num, goal)
 
-    progress = [(p.name, goal_progress_for_round(p, goal)) for p in game_state.players]
+    all_progress = [(p.name, goal_progress_for_round(p, goal)) for p in game_state.players]
+    # A player must have at least 1 of the goal element to place at all; players
+    # with 0 score nothing (not even the 2nd-place point).
+    scores: dict[str, int] = {name: 0 for name, _ in all_progress}
+    progress = [(name, v) for name, v in all_progress if v > 0]
     progress.sort(key=lambda x: -x[1])
-    if not progress:
-        return {}
 
-    scores: dict[str, int] = {}
     pos = 1
     i = 0
     while i < len(progress):

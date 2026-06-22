@@ -437,6 +437,37 @@ class TestOceaniaActions:
         assert reset_nectar, "expected a reset-paid-with-nectar move variant"
 
 
+class TestRoundGoalQualification:
+    """2-player end-of-round goals: tiers 1st/2nd/3rd = (4,1,0),(5,2,1),(6,3,2),
+    (7,4,3); ties divide the occupied places (round down); a player with 0 of the
+    goal does NOT place (no 2nd-place point)."""
+
+    def _game_with_goal(self):
+        from backend.data.registries import get_goal_registry
+        goal = next(g for g in get_goal_registry().all_goals
+                    if "total [bird]" in g.description.lower())
+        game = create_new_game(["A", "B"], board_type=BoardType.OCEANIA)
+        game.round_goals = [goal] * 4
+        return game
+
+    def test_zero_progress_player_scores_nothing(self, bird_reg):
+        from backend.engine.scoring import compute_round_goal_scores
+        game = self._game_with_goal()
+        for i in range(3):  # A qualifies, B has 0 birds
+            game.players[0].board.forest.slots[i].bird = bird_reg.get("American Crow")
+        assert compute_round_goal_scores(game, 1) == {"A": 4, "B": 0}
+        assert compute_round_goal_scores(game, 2) == {"A": 5, "B": 0}
+
+    def test_tie_divides_occupied_places(self, bird_reg):
+        from backend.engine.scoring import compute_round_goal_scores
+        game = self._game_with_goal()
+        for p in game.players:  # both have 2 -> tie for 1st
+            for i in range(2):
+                p.board.forest.slots[i].bird = bird_reg.get("American Crow")
+        assert compute_round_goal_scores(game, 1) == {"A": 2, "B": 2}  # (4+1)//2
+        assert compute_round_goal_scores(game, 4) == {"A": 5, "B": 5}  # (7+4)//2
+
+
 class TestNectarMajorityScoring:
     """Oceania end-of-game per-habitat nectar majority: 1st=5, 2nd=2 (needs >=1),
     a >0 tie = 3 each, spending 0 = 0."""
