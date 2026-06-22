@@ -159,12 +159,20 @@ def activate_row(game_state: GameState, player: Player,
     return activations
 
 
-def _pay_bonus_cost(player: Player, cost_options: tuple[str, ...]) -> bool:
+def _pay_bonus_cost(player: Player, cost_options: tuple[str, ...],
+                    prefer_nectar: bool = False, row=None) -> bool:
     """Try to pay one bonus cost. Returns True if successful.
 
-    Tries each cost option in order and pays the first available one.
+    Tries each cost option in order and pays the first available one. If
+    `prefer_nectar` and nectar is a legal option, nectar is tried first (the
+    search uses this to deliberately spend surplus nectar). When nectar is the
+    resource spent and `row` (the action's habitat row) is given, it is recorded
+    as nectar_spent there so it scores for that habitat at round end (Oceania).
     """
-    for cost in cost_options:
+    opts = list(cost_options)
+    if prefer_nectar and "nectar" in opts:
+        opts = ["nectar"] + [o for o in opts if o != "nectar"]
+    for cost in opts:
         if cost == "card" and player.hand:
             # Discard the lowest-VP card (least valuable to keep)
             worst_idx = min(range(len(player.hand)),
@@ -186,6 +194,8 @@ def _pay_bonus_cost(player: Player, cost_options: tuple[str, ...]) -> bool:
         elif cost == "nectar":
             if player.food_supply.get(FoodType.NECTAR) > 0:
                 player.food_supply.spend(FoodType.NECTAR, 1)
+                if row is not None:
+                    row.nectar_spent += 1
                 return True
     return False
 
@@ -729,6 +739,7 @@ def execute_gain_food(
     food_choices: list[FoodType],
     bonus_count: int = 0,
     reset_bonus: bool = False,
+    prefer_nectar: bool = False,
 ) -> ActionResult:
     """Execute the gain food (forest) action.
 
@@ -736,6 +747,8 @@ def execute_gain_food(
         food_choices: Which food types to take from the birdfeeder.
         bonus_count: How many "extra" bonus trades to activate (0, 1, or 2).
         reset_bonus: Whether to activate the reset_feeder bonus (if available).
+        prefer_nectar: Pay this action's bonus cost(s) with nectar first (scores
+            in the forest row).
     """
     setattr(game_state, "_eggs_laid_this_action", set())
     legal, reason = can_gain_food(player, game_state)
@@ -745,6 +758,7 @@ def execute_gain_food(
     bird_count = player.board.forest.bird_count
     column = get_action_column(game_state.board_type, Habitat.FOREST, bird_count)
     food_count = column.base_gain
+    row = player.board.forest
 
     bonus_activated = 0
 
@@ -752,7 +766,7 @@ def execute_gain_food(
     if reset_bonus and column.reset_bonus:
         rb = column.reset_bonus
         if rb.bonus_type == "reset_feeder":
-            if _pay_bonus_cost(player, rb.cost_options):
+            if _pay_bonus_cost(player, rb.cost_options, prefer_nectar, row):
                 game_state.birdfeeder.reroll()
                 bonus_activated += 1
 
@@ -761,7 +775,7 @@ def execute_gain_food(
         bonus = column.bonus
         for _ in range(min(bonus_count, bonus.max_uses)):
             if bonus.bonus_type == "extra":
-                if _pay_bonus_cost(player, bonus.cost_options):
+                if _pay_bonus_cost(player, bonus.cost_options, prefer_nectar, row):
                     food_count += 1
                     bonus_activated += 1
 
@@ -812,12 +826,15 @@ def execute_lay_eggs(
     player: Player,
     egg_distribution: dict[tuple[Habitat, int], int],
     bonus_count: int = 0,
+    prefer_nectar: bool = False,
 ) -> ActionResult:
     """Execute the lay eggs (grassland) action.
 
     Args:
         egg_distribution: Where to place eggs {(habitat, slot_idx): count}
         bonus_count: How many bonus trades to activate (0, 1, or 2).
+        prefer_nectar: Pay bonus cost(s) with nectar first (grassland's extra is
+            card-or-food, so this is normally a no-op; kept for uniformity).
     """
     setattr(game_state, "_eggs_laid_this_action", set())
     legal, reason = can_lay_eggs(player)
@@ -827,6 +844,7 @@ def execute_lay_eggs(
     bird_count = player.board.grassland.bird_count
     column = get_action_column(game_state.board_type, Habitat.GRASSLAND, bird_count)
     egg_count = column.base_gain
+    row = player.board.grassland
 
     # Handle bonus trades
     bonus_activated = 0
@@ -834,7 +852,7 @@ def execute_lay_eggs(
         bonus = column.bonus
         for _ in range(min(bonus_count, bonus.max_uses)):
             if bonus.bonus_type == "extra":
-                if _pay_bonus_cost(player, bonus.cost_options):
+                if _pay_bonus_cost(player, bonus.cost_options, prefer_nectar, row):
                     egg_count += 1
                     bonus_activated += 1
 
@@ -881,6 +899,7 @@ def execute_draw_cards(
     from_deck_count: int = 0,
     bonus_count: int = 0,
     reset_bonus: bool = False,
+    prefer_nectar: bool = False,
 ) -> ActionResult:
     """Execute the draw cards (wetland) action.
 
@@ -889,6 +908,9 @@ def execute_draw_cards(
         from_deck_count: Number of cards to draw from the deck
         bonus_count: How many "extra" bonus trades to activate (0, 1, or 2).
         reset_bonus: Whether to activate the reset_tray bonus (if available).
+        prefer_nectar: Pay this action's bonus cost(s) with nectar first (the
+            reset and the egg/nectar extra both accept nectar; it scores in the
+            wetland row).
     """
     setattr(game_state, "_eggs_laid_this_action", set())
     legal, reason = can_draw_cards(player)
@@ -898,6 +920,7 @@ def execute_draw_cards(
     bird_count = player.board.wetland.bird_count
     column = get_action_column(game_state.board_type, Habitat.WETLAND, bird_count)
     card_count = column.base_gain
+    row = player.board.wetland
 
     bonus_activated = 0
 
@@ -908,7 +931,7 @@ def execute_draw_cards(
     if reset_bonus and column.reset_bonus:
         rb = column.reset_bonus
         if rb.bonus_type == "reset_tray":
-            if _pay_bonus_cost(player, rb.cost_options):
+            if _pay_bonus_cost(player, rb.cost_options, prefer_nectar, row):
                 game_state.card_tray.clear()
                 while game_state.card_tray.needs_refill() and game_state.deck_remaining > 0:
                     fresh = _draw_bird_from_deck(game_state)
@@ -922,7 +945,7 @@ def execute_draw_cards(
         bonus = column.bonus
         for _ in range(min(bonus_count, bonus.max_uses)):
             if bonus.bonus_type == "extra":
-                if _pay_bonus_cost(player, bonus.cost_options):
+                if _pay_bonus_cost(player, bonus.cost_options, prefer_nectar, row):
                     card_count += 1
                     bonus_activated += 1
 
