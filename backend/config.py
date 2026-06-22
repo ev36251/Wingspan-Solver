@@ -116,10 +116,10 @@ BASE_BOARD: dict[Habitat, tuple[ActionColumn, ...]] = {
 OCEANIA_BOARD: dict[Habitat, tuple[ActionColumn, ...]] = {
     Habitat.FOREST: (
         ActionColumn(1, ColumnBonus("extra", ("card",))),
-        ActionColumn(2, reset_bonus=ColumnBonus("reset_feeder", ("food",))),
+        ActionColumn(2, reset_bonus=ColumnBonus("reset_feeder", ("food", "nectar"))),
         ActionColumn(2, ColumnBonus("extra", ("card",))),
         ActionColumn(2, ColumnBonus("extra", ("card",)),
-                     reset_bonus=ColumnBonus("reset_feeder", ("food",))),
+                     reset_bonus=ColumnBonus("reset_feeder", ("food", "nectar"))),
         ActionColumn(3, ColumnBonus("extra", ("card",))),
         ActionColumn(4),
     ),
@@ -133,10 +133,10 @@ OCEANIA_BOARD: dict[Habitat, tuple[ActionColumn, ...]] = {
     ),
     Habitat.WETLAND: (
         ActionColumn(1, ColumnBonus("extra", ("egg", "nectar"))),
-        ActionColumn(2, reset_bonus=ColumnBonus("reset_tray", ("food",))),
+        ActionColumn(2, reset_bonus=ColumnBonus("reset_tray", ("food", "nectar"))),
         ActionColumn(2, ColumnBonus("extra", ("egg", "nectar"))),
         ActionColumn(2, ColumnBonus("extra", ("egg", "nectar")),
-                     reset_bonus=ColumnBonus("reset_tray", ("food",))),
+                     reset_bonus=ColumnBonus("reset_tray", ("food", "nectar"))),
         ActionColumn(3, ColumnBonus("extra", ("egg", "nectar"))),
         ActionColumn(4),
     ),

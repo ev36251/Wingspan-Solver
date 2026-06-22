@@ -404,6 +404,70 @@ class TestOceaniaActions:
         # 3 dealt to refill + 2 drawn (col-1 base_gain) all came from the deck.
         assert oceania_game.deck_remaining == 5
 
+    def test_reset_tray_paid_with_nectar_scores(self, bird_reg, oceania_game):
+        """Reset is payable with any food incl. nectar; nectar spent on the reset
+        is recorded as nectar_spent in the wetland row so it scores (Oceania)."""
+        player = oceania_game.players[0]
+        player.board.wetland.slots[0].bird = bird_reg.get("American Crow")  # col 1
+        start = player.food_supply.get(FoodType.NECTAR)
+        player.food_supply.add(FoodType.NECTAR, 2)  # nectar only — must pay with it
+        oceania_game.card_tray.face_up = [bird_reg.get("Acorn Woodpecker")] * 3
+        oceania_game.deck_remaining = 20
+        before = player.board.wetland.nectar_spent
+        result = execute_draw_cards(
+            oceania_game, player, from_deck_count=2,
+            reset_bonus=True, prefer_nectar=True,
+        )
+        assert result.success and result.bonus_activated == 1
+        assert player.board.wetland.nectar_spent == before + 1   # scores in wetland
+        assert player.food_supply.get(FoodType.NECTAR) == start + 1  # spent exactly 1
+        assert oceania_game.card_tray.count == 3
+
+    def test_nectar_payment_variant_generated(self, bird_reg, oceania_game):
+        """generate_all_moves offers a '[pay nectar]' reset variant when the
+        player holds nectar, so the search can choose to burn it for the score."""
+        player = oceania_game.players[0]
+        player.board.wetland.slots[0].bird = bird_reg.get("American Crow")  # col 1 reset
+        player.food_supply.add(FoodType.NECTAR, 1)
+        player.food_supply.add(FoodType.SEED, 2)
+        oceania_game.card_tray.face_up = [bird_reg.get("Acorn Woodpecker")] * 3
+        oceania_game.deck_remaining = 20
+        moves = generate_all_moves(oceania_game, player)
+        reset_nectar = [m for m in moves if m.prefer_nectar and m.reset_bonus]
+        assert reset_nectar, "expected a reset-paid-with-nectar move variant"
+
+
+class TestNectarMajorityScoring:
+    """Oceania end-of-game per-habitat nectar majority: 1st=5, 2nd=2 (needs >=1),
+    a >0 tie = 3 each, spending 0 = 0."""
+
+    def _setup(self, you_n, opp_n):
+        g = create_new_game(["You", "Opp"], board_type=BoardType.OCEANIA)
+        you, opp = g.players
+        you.board.forest.nectar_spent = you_n
+        opp.board.forest.nectar_spent = opp_n
+        return g, you, opp
+
+    def test_first_place_beats_second(self):
+        from backend.engine.scoring import score_nectar
+        g, you, opp = self._setup(3, 1)
+        assert score_nectar(g, you) == 5 and score_nectar(g, opp) == 2
+
+    def test_positive_tie_is_three_each(self):
+        from backend.engine.scoring import score_nectar
+        g, you, opp = self._setup(2, 2)
+        assert score_nectar(g, you) == 3 and score_nectar(g, opp) == 3
+
+    def test_opponent_zero_gets_nothing(self):
+        from backend.engine.scoring import score_nectar
+        g, you, opp = self._setup(2, 0)
+        assert score_nectar(g, you) == 5 and score_nectar(g, opp) == 0
+
+    def test_both_zero_scores_zero(self):
+        from backend.engine.scoring import score_nectar
+        g, you, opp = self._setup(0, 0)
+        assert score_nectar(g, you) == 0 and score_nectar(g, opp) == 0
+
 
 # --- Move Generator Tests ---
 

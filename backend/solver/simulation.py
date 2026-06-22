@@ -396,19 +396,21 @@ def execute_move_on_sim_result(
             if available:
                 food_choices = [random.choice(available)]
         result = execute_gain_food(
-            game, player, food_choices, move.bonus_count, move.reset_bonus
+            game, player, food_choices, move.bonus_count, move.reset_bonus,
+            move.prefer_nectar,
         )
         return result.success, result
 
     elif move.action_type == ActionType.LAY_EGGS:
-        result = execute_lay_eggs(game, player, move.egg_distribution, move.bonus_count)
+        result = execute_lay_eggs(game, player, move.egg_distribution,
+                                  move.bonus_count, move.prefer_nectar)
         return result.success, result
 
     elif move.action_type == ActionType.DRAW_CARDS:
         deck_draws = move.deck_draws
         result = execute_draw_cards(
             game, player, move.tray_indices, deck_draws,
-            move.bonus_count, move.reset_bonus
+            move.bonus_count, move.reset_bonus, move.prefer_nectar,
         )
         return result.success, result
 

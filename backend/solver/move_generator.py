@@ -1,6 +1,6 @@
 """Enumerate all legal moves for the current player."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from backend.config import (
     EGG_COST_BY_COLUMN,
     get_action_column,
@@ -38,6 +38,8 @@ class Move:
     # Bonus trade
     bonus_count: int = 0
     reset_bonus: bool = False
+    prefer_nectar: bool = False   # pay this action's bonus cost(s) with nectar first
+                                  # (Oceania: spent nectar scores in that habitat)
 
     # Special play-bird mechanics
     target_slot: int | None = None        # For sideways birds: first slot of pair; also play-on-top target
@@ -718,6 +720,27 @@ def generate_draw_cards_moves(game: GameState, player: Player) -> list[Move]:
     return moves
 
 
+def _nectar_payment_variants(moves: list[Move], player: Player) -> list[Move]:
+    """For action moves whose bonus can be paid with nectar, add a variant that
+    pays nectar first (Oceania: spent nectar scores in that habitat). Lets the
+    search *choose* to burn surplus nectar vs save it for bird costs. Only the
+    tray/feeder reset (now any food incl. nectar) and the wetland +card extra
+    (egg|nectar) accept nectar; forest +food (card) and grassland +eggs
+    (card|food) never do, so they get no variant.
+    """
+    if player.food_supply.get(FoodType.NECTAR) <= 0:
+        return []
+    out: list[Move] = []
+    for m in moves:
+        nectar_payable = m.reset_bonus or (
+            m.bonus_count > 0 and m.action_type == ActionType.DRAW_CARDS
+        )
+        if nectar_payable and not m.prefer_nectar:
+            out.append(replace(m, prefer_nectar=True,
+                               description=m.description + " [pay nectar]"))
+    return out
+
+
 def generate_all_moves(game: GameState, player: Player | None = None) -> list[Move]:
     """Generate all legal moves for the current player."""
     if player is None:
@@ -731,4 +754,5 @@ def generate_all_moves(game: GameState, player: Player | None = None) -> list[Mo
     moves.extend(generate_gain_food_moves(game, player))
     moves.extend(generate_lay_eggs_moves(game, player))
     moves.extend(generate_draw_cards_moves(game, player))
+    moves.extend(_nectar_payment_variants(moves, player))
     return moves
