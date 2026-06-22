@@ -417,22 +417,9 @@
     }
   },
   "Australian Ibis": {
-    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "class": "backend.powers.templates.exact_powers.DrawTwoKeepOneTuckOrHand",
     "kwargs": {
-      "__dict__": [
-        [
-          "draw",
-          2
-        ],
-        [
-          "keep",
-          2
-        ],
-        [
-          "all_players",
-          false
-        ]
-      ]
+      "__dict__": []
     }
   },
   "Australian Magpie": {
@@ -1047,20 +1034,16 @@
     }
   },
   "Black-Tailed Godwit": {
-    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "class": "backend.powers.templates.exact_powers.DrawBonusThenDrawCardsKeep",
     "kwargs": {
       "__dict__": [
         [
           "draw",
-          1
+          3
         ],
         [
           "keep",
           1
-        ],
-        [
-          "discard_from_all_bonus",
-          false
         ]
       ]
     }
@@ -2190,20 +2173,12 @@
     }
   },
   "Common Sandpiper": {
-    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "class": "backend.powers.templates.exact_powers.DrawCardsPerConditionKeepOne",
     "kwargs": {
       "__dict__": [
         [
-          "draw",
-          1
-        ],
-        [
-          "keep",
-          1
-        ],
-        [
-          "all_players",
-          false
+          "condition",
+          "wetland_birds_with_egg"
         ]
       ]
     }
@@ -2346,22 +2321,9 @@
     }
   },
   "Corsican Nuthatch": {
-    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "class": "backend.powers.templates.exact_powers.DrawBonusThenGainDie",
     "kwargs": {
-      "__dict__": [
-        [
-          "draw",
-          1
-        ],
-        [
-          "keep",
-          1
-        ],
-        [
-          "discard_from_all_bonus",
-          false
-        ]
-      ]
+      "__dict__": []
     }
   },
   "Count Raggi's Bird-of-Paradise": {
@@ -3232,22 +3194,9 @@
     }
   },
   "European Turtle Dove": {
-    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "class": "backend.powers.templates.exact_powers.DrawBonusThenChoice",
     "kwargs": {
-      "__dict__": [
-        [
-          "draw",
-          1
-        ],
-        [
-          "keep",
-          1
-        ],
-        [
-          "discard_from_all_bonus",
-          false
-        ]
-      ]
+      "__dict__": []
     }
   },
   "Ferruginous Hawk": {
@@ -5694,20 +5643,12 @@
     }
   },
   "Plains-Wanderer": {
-    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "class": "backend.powers.templates.exact_powers.DrawBonusPerConditionKeepOne",
     "kwargs": {
       "__dict__": [
         [
-          "draw",
-          1
-        ],
-        [
-          "keep",
-          1
-        ],
-        [
-          "discard_from_all_bonus",
-          false
+          "condition",
+          "grassland_birds"
         ]
       ]
     }
@@ -5912,22 +5853,9 @@
     }
   },
   "Red Avadavat": {
-    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "class": "backend.powers.templates.exact_powers.GiveCardThenDrawTwo",
     "kwargs": {
-      "__dict__": [
-        [
-          "draw",
-          2
-        ],
-        [
-          "keep",
-          2
-        ],
-        [
-          "all_players",
-          false
-        ]
-      ]
+      "__dict__": []
     }
   },
   "Red Crossbill": {
@@ -5979,20 +5907,16 @@
     }
   },
   "Red Knot": {
-    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "class": "backend.powers.templates.exact_powers.DrawBonusThenDrawCardsKeep",
     "kwargs": {
       "__dict__": [
         [
           "draw",
-          1
+          3
         ],
         [
           "keep",
           1
-        ],
-        [
-          "discard_from_all_bonus",
-          false
         ]
       ]
     }
@@ -6774,22 +6698,9 @@
     }
   },
   "Sarus Crane": {
-    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "class": "backend.powers.templates.exact_powers.EachPlayerMayDiscardEggDraw",
     "kwargs": {
-      "__dict__": [
-        [
-          "draw",
-          1
-        ],
-        [
-          "keep",
-          1
-        ],
-        [
-          "all_players",
-          true
-        ]
-      ]
+      "__dict__": []
     }
   },
   "Satyr Tragopan": {
@@ -7765,22 +7676,9 @@
     }
   },
   "Western Capercaillie": {
-    "class": "backend.powers.templates.draw_cards.DrawBonusCards",
+    "class": "backend.powers.templates.exact_powers.DrawBonusKeepOneGiveOne",
     "kwargs": {
-      "__dict__": [
-        [
-          "draw",
-          2
-        ],
-        [
-          "keep",
-          2
-        ],
-        [
-          "discard_from_all_bonus",
-          false
-        ]
-      ]
+      "__dict__": []
     }
   },
   "Western Jackdaw": {

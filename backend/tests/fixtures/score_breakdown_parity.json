@@ -4,22 +4,22 @@
     "you_score": {
       "bird_vp": 59,
       "eggs": 3,
-      "cached_food": 2,
+      "cached_food": 1,
       "tucked_cards": 23,
       "bonus_cards": 6,
-      "round_goals": 19,
+      "round_goals": 22,
       "nectar": 5,
-      "total": 117
+      "total": 119
     },
     "opp_score": {
-      "bird_vp": 43,
-      "eggs": 6,
-      "cached_food": 18,
-      "tucked_cards": 3,
+      "bird_vp": 48,
+      "eggs": 2,
+      "cached_food": 19,
+      "tucked_cards": 6,
       "bonus_cards": 0,
-      "round_goals": 10,
+      "round_goals": 7,
       "nectar": 10,
-      "total": 90
+      "total": 92
     }
   },
   "constructed_oceania_fixture": {
