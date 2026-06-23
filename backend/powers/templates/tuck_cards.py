@@ -195,10 +195,8 @@ class TuckFromDeckPerCount(PowerEffect):
       "own_star_nests"        -> birds on your board with a [star]/wild nest
                                  (Manx Shearwater, includes this bird)
       "other_birds_in_habitat"-> other birds in this bird's habitat (Sand Martin)
-      "opp_max_forest_birds"  -> birds in the chosen opponent's forest -- an
-                                 approximation of "action cubes on their forest"
-                                 (Willow Warbler); exact fidelity would need
-                                 per-habitat action-cube tracking on Player.
+      "opp_forest_cubes"      -> forest (gain-food) action cubes the chosen
+                                 opponent has placed this round (Willow Warbler).
     """
 
     def __init__(self, count_mode: str):
@@ -210,9 +208,11 @@ class TuckFromDeckPerCount(PowerEffect):
             return sum(1 for b in pl.board.all_birds() if b.nest_type == NestType.WILD)
         if self.count_mode == "other_birds_in_habitat":
             return max(0, pl.board.get_row(ctx.habitat).bird_count - 1)
-        if self.count_mode == "opp_max_forest_birds":
+        if self.count_mode in ("opp_forest_cubes", "opp_max_forest_birds"):
             opps = [p for p in ctx.game_state.players if p is not pl]
-            return max((o.board.forest.bird_count for o in opps), default=0)
+            # Real per-round forest action cubes ("for each action cube on their
+            # forest"); choose the opponent with the most.
+            return max((o.gain_food_actions_this_round for o in opps), default=0)
         return 0
 
     def execute(self, ctx: PowerContext) -> PowerResult:
