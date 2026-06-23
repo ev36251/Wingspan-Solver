@@ -509,18 +509,20 @@ class TestPromoYellowPowers:
         from backend.powers.registry import parse_power, clear_cache
         from backend.powers.templates.unique import CountsDoubleForBonusCards
         clear_cache()
+        from backend.engine.scoring import bonus_card_details
         wag = bird_reg.get("Western Yellow Wagtail")
         assert isinstance(parse_power(wag), CountsDoubleForBonusCards)
         game = create_new_game(["A", "B"], board_type=BoardType.OCEANIA)
         A = game.players[0]
-        bonus_name = next(iter(wag.bonus_eligibility))
+        # Deterministic: pick a bonus the wagtail qualifies for (sorted, not set order).
+        bonus_name = sorted(wag.bonus_eligibility)[0]
         A.bonus_cards = [regs[1].get(bonus_name)]
         A.board.grassland.slots[0].bird = wag
-        before = score_bonus_cards(A)
         trigger_end_of_game_powers(game)
-        after = score_bonus_cards(A)
         assert A.board.grassland.slots[0].counts_double_bonus
-        assert after == before * 2  # the wagtail's single bonus card now counts double
+        # The mechanic: the wagtail (1 bird) counts as 2 toward its bonus card.
+        qualifying = bonus_card_details(A)[0][1]
+        assert qualifying == 2
 
     def test_marsh_warbler_copies_yellow_power(self, bird_reg):
         from backend.engine.timed_powers import trigger_end_of_game_powers

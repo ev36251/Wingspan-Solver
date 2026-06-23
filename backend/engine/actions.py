@@ -76,7 +76,7 @@ def _resolve_end_turn_hand_discards(game_state: GameState, player: Player) -> in
         idx = next((i for i, c in enumerate(player.hand) if c.name == name), None)
         if idx is None:
             continue
-        player.hand.pop(idx)
+        game_state.bird_discard_cards.append(player.hand.pop(idx))
         discarded += 1
 
     while discarded < to_discard and player.hand:
@@ -84,7 +84,7 @@ def _resolve_end_turn_hand_discards(game_state: GameState, player: Player) -> in
             range(len(player.hand)),
             key=lambda i: (player.hand[i].victory_points, player.hand[i].name),
         )
-        player.hand.pop(worst_idx)
+        game_state.bird_discard_cards.append(player.hand.pop(worst_idx))
         discarded += 1
 
     game_state.discard_pile_count += discarded

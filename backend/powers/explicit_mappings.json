@@ -1074,20 +1074,12 @@
     }
   },
   "Blue Rock-Thrush": {
-    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "class": "backend.powers.templates.exact_powers.MoveBirdToNeighbor",
     "kwargs": {
       "__dict__": [
         [
-          "draw",
-          3
-        ],
-        [
-          "keep",
-          3
-        ],
-        [
-          "all_players",
-          false
+          "direction",
+          "left"
         ]
       ]
     }
@@ -7073,20 +7065,12 @@
     }
   },
   "Spotted Dove": {
-    "class": "backend.powers.templates.draw_cards.DrawCards",
+    "class": "backend.powers.templates.exact_powers.MoveBirdToNeighbor",
     "kwargs": {
       "__dict__": [
         [
-          "draw",
-          3
-        ],
-        [
-          "keep",
-          3
-        ],
-        [
-          "all_players",
-          false
+          "direction",
+          "right"
         ]
       ]
     }

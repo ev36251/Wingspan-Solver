@@ -42,6 +42,9 @@ class GameState:
     strict_rules_mode: bool = False
     deck_remaining: int = 0
     discard_pile_count: int = 0
+    # Actual discarded bird cards (face-down discard pile) — some powers draw from
+    # it (e.g. Australian Ibis). discard_pile_count is the historical total.
+    bird_discard_cards: list = field(default_factory=list)
     deck_tracker: "DeckTracker | None" = None
     move_history: list[MoveRecord] = field(default_factory=list)
     # Optional deterministic choices for power resolution.
@@ -150,6 +153,7 @@ class GameState:
         # 4) Refresh the tray at end of round (discard all, then refill to 3).
         discarded = self.card_tray.clear()
         self.discard_pile_count += len(discarded)
+        self.bird_discard_cards.extend(discarded)
 
         def _draw_card_for_tray():
             if self.deck_remaining <= 0:

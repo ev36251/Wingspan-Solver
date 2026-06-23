@@ -189,26 +189,99 @@ class EachPlayerMayDiscardEggDraw(PowerEffect):
 
 
 class DrawTwoKeepOneTuckOrHand(PowerEffect):
-    """Draw 2 [card] (from the discard pile, approximated by the deck), keep 1
-    (tuck it or add to hand), discard the other. (Australian Ibis.)"""
+    """Shuffle the discard pile, draw 2 [card] from it, keep 1 (tuck it behind
+    this bird), discard the other. (Australian Ibis.) Falls back to the deck only
+    if the discard pile runs dry."""
 
     def execute(self, ctx: PowerContext) -> PowerResult:
-        c1 = _draw_one_bird(ctx)
-        c2 = _draw_one_bird(ctx)
-        cards = [c for c in (c1, c2) if c is not None]
+        import random as _r
+        pile = ctx.game_state.bird_discard_cards
+        cards = []
+        for _ in range(2):
+            if pile:
+                cards.append(pile.pop(_r.randrange(len(pile))))
+            else:
+                c = _draw_one_bird(ctx)
+                if c is not None:
+                    cards.append(c)
         if not cards:
-            return PowerResult(executed=False, description="Nothing to draw")
-        # Keep the higher-VP card; tuck it (1 guaranteed VP) behind this bird.
+            return PowerResult(executed=False, description="Discard pile and deck empty")
         keep = max(cards, key=lambda c: c.victory_points)
         slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
-        slot.tucked_cards += 1
+        slot.tucked_cards += 1  # keep it by tucking (1 guaranteed VP)
         for c in cards:
-            if c is not keep:
+            if c is not keep:  # discard the other back to the pile
+                pile.append(c)
                 ctx.game_state.discard_pile_count += 1
-        return PowerResult(cards_tucked=1, description=f"Drew {len(cards)}, tucked 1")
+        return PowerResult(cards_tucked=1,
+                           description=f"Drew {len(cards)} from discard, tucked 1")
 
     def estimate_value(self, ctx: PowerContext) -> float:
         return 1.0
+
+
+class MoveBirdToNeighbor(PowerEffect):
+    """If this bird has no birds to its right, you MAY move it (card only) to the
+    neighbor's mat (you choose its habitat); if you do, draw 3 [card].
+    direction = "left" (Blue Rock-Thrush) or "right" (Spotted Dove).
+
+    Giving the bird away forfeits its VP and tokens, so only do it for a low-VP
+    bird where 3 fresh cards are worth more.
+    """
+
+    def __init__(self, direction: str = "left"):
+        self.direction = direction
+
+    def _rightmost(self, ctx: PowerContext) -> bool:
+        row = ctx.player.board.get_row(ctx.habitat)
+        return all(row.slots[i].bird is None for i in range(ctx.slot_index + 1, len(row.slots)))
+
+    def _neighbor(self, ctx: PowerContext):
+        g = ctx.game_state
+        return (g.player_to_left(ctx.player) if self.direction == "left"
+                else g.player_to_right(ctx.player))
+
+    def _wants_move(self, ctx: PowerContext) -> bool:
+        """Optional power. Default: decline -- giving a bird to a neighbor hands
+        an opponent a free bird (and board/engine), so it's almost never worth it
+        in a 2-player game. Only opt in via an explicit power choice."""
+        from backend.powers.choices import consume_power_choice
+        choice = consume_power_choice(ctx.game_state, ctx.player.name, ctx.bird.name)
+        return bool(choice and choice.get("move"))
+
+    def execute(self, ctx: PowerContext) -> PowerResult:
+        my_slot = ctx.player.board.get_row(ctx.habitat).slots[ctx.slot_index]
+        bird = my_slot.bird
+        if bird is None or not self._rightmost(ctx):
+            return PowerResult(executed=False, description="Not the rightmost bird")
+        if not self._wants_move(ctx):
+            return PowerResult(executed=False, description="Declined the optional move")
+        nb = self._neighbor(ctx)
+        if nb is None:
+            return PowerResult(executed=False, description="No neighbor to move to")
+        for hab in (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND):
+            si = nb.board.get_row(hab).next_empty_slot()
+            if si is not None:
+                # Move the card only — tokens are left behind (forfeited).
+                my_slot.bird = None
+                my_slot.eggs = 0
+                my_slot.tucked_cards = 0
+                my_slot.cached_food = {}
+                my_slot.spendable_cached_food = {}
+                nb.board.get_row(hab).slots[si].bird = bird
+                drawn = 0
+                for _ in range(3):
+                    c = _draw_one_bird(ctx)
+                    if c is None:
+                        break
+                    ctx.player.hand.append(c)
+                    drawn += 1
+                return PowerResult(cards_drawn=drawn,
+                                   description=f"Moved {bird.name} to {self.direction} neighbor, drew {drawn}")
+        return PowerResult(executed=False, description="Neighbor board full")
+
+    def estimate_value(self, ctx: PowerContext) -> float:
+        return 0.0  # optional, declined by default (handing a neighbor a free bird)
 
 
 class DrawBonusKeepOneGiveOne(PowerEffect):
