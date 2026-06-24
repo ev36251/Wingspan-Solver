@@ -514,3 +514,49 @@ play-to-end with H plies + V), then re-run the SAME n=100 honest harness at
 MATCHED compute and compare mean/floor/%>=100 to the 91.7 baseline. A real win =
 beats 91.7 at equal-or-less compute. Only then close the loop (agent-with-V plays
 -> relabel -> retrain V). Dataset: reports/ml/value_gate/data.npz (force-added).
+
+## Value-net STEP 3 -- bootstrap leaf in live search (n=100, honest, same seeds)
+Trained V (reports/ml/value_gate/value_v1.npz, val RMSE 4.0) and wired it into a
+depth-1 search whose LEAF is V instead of a play-to-end rollout (value_gate.py
+make_eval_chooser; leaf_mode v = roll H plies then V, H=0 = pure V; leaf_mode full
+= the rollout baseline). Ran the agent vs heuristic, seeds 0-99, top_k 10, t0.3,
+recording score AND wall-time/game. Full curve:
+
+| leaf config              | mean | floor | %>=100 | s/game |
+|--------------------------|------|-------|--------|--------|
+| pure V (H0)              | 74.3 |  25   |  4%    |   1.1  |
+| boot H8  M3              | 80.9 |  46   |  7%    |  30    |
+| boot H16 M3              | 83.0 |  59   | 10%    |  50    |
+| boot H8  M8              | 85.0 |  53   | 10%    |  77    |
+| boot H16 M8              | 87.6 |  58   | 11%    | 133    |
+| boot H24 M12             | 90.0 |  64   | 23%    | 234    |
+| FULL rollout M12 (ctl)   | 93.3 |  70   | 22%    | 217    |
+
+(full control through THIS harness = 93.3, reproduces the two_player 91.7 baseline
+within noise -> no harness drift. All beat the heuristic p<1e-4 except pure V at
+p=0.018.)
+
+RESULT -- NEGATIVE for strength, POSITIVE for speed:
+- The V-bootstrap is DOMINATED by full rollouts across the ENTIRE compute curve.
+  At MATCHED compute (~220s, both M=12) full=93.3 vs boot=90.0: paired diff +3.31
+  (t=2.24, sign p=0.064) in favor of full. The V curve only climbs toward full by
+  adding more REAL simulation (bigger H / more M) -- i.e. by relying on V LESS.
+- Pure V cratered (74.3, floor 25; wider top_k=40 made it WORSE, 27 on a probe).
+  Cause = OPTIMIZER'S CURSE / distribution shift: argmax-over-candidates-by-V
+  systematically selects states where V over-estimates. A rollout is a NOISY but
+  UNBIASED sample, so argmax-over-rollout-means is safe; argmax-over-V is biased
+  toward V's blind spots. The gate (passive RMSE) cannot see this; only live
+  search can. This is exactly the failure AlphaZero's PUCT-MCTS is built to avoid.
+- So this V is a SPEED lever (a ~85-pt agent at 1/3 compute, ~90 at matched, and
+  it still beats the heuristic even at 1.1 s/game), NOT a ceiling lever.
+
+WHAT WOULD ACTUALLY BEAT 93: (a) PUCT-MCTS with V as leaf + the policy net as
+PRIOR (mcts.py already exists) -- the prior + visit-count averaging + backups make
+it robust to the argmax exploitation that sank greedy-V; this is the real
+AlphaZero recipe and the honest next experiment. (b) DAgger: retrain V on the
+states V-search actually VISITS (not just on-policy agent states) to kill the
+distribution shift, then re-test the bootstrap. (c) Accept ~92-93 as the practical
+ceiling and move the lever elsewhere (richer encoder / move-gen / opponent model).
+Recommendation: try (a) PUCT-MCTS before (b); if neither clears 93 at matched
+compute, the ceiling is not the evaluator. Artifacts: value_v1.npz (force-added),
+compare harness in value_gate.py.
