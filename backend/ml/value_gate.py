@@ -759,7 +759,7 @@ def main():
                "top_k": args.top_k, "rollouts": args.rollouts,
                "n_sims": args.n_sims, "c_puct": args.c_puct,
                "temperature": args.temperature, "determinize": args.determinize}
-        value_path = args.value if args.leaf_mode == "v" else None
+        value_path = args.value if args.leaf_mode in ("v", "mcts") else None
         if args.use_modal:
             rows = dispatch_compare_modal(seeds, args.model, value_path, board, cfg, args.seeds_per_shard)
         else:
