@@ -478,3 +478,39 @@ NO code-default change adopted: the sweep win is sub-noise, and the two_player.p
 argparse defaults feed the dataset/selfplay modes too, so perturbing them isn't
 warranted. The lever for a real ceiling lift remains a learned search-quality
 VALUE evaluator (AlphaZero-style), not more rollout-search tuning.
+
+## Value-net GATE (AlphaZero-of-search-value, step 1 -- backend/ml/value_gate.py)
+Before building any value self-play loop, ran the cheap go/no-go gate: is a
+learned V(state) -> expected rollout return a better SINGLE-SHOT estimator of a
+leaf's value than one actual playout? Logged, as a free byproduct of real
+heuristic-mode agent play (search seat vs heuristic, best config k10/t0.3/det,
+M=16 net-sampling determinized rollouts per candidate), every candidate leaf
+state + its 16 rollout returns. 150 games on Modal (50 shards, ~18 min) ->
+38,967 leaf states (dim 1693, M=16). Trained ridge + a small torch MLP on 80% to
+predict the per-state mean return; gate metric on held-out 20%:
+
+  predict-global-mean RMSE   = 15.9   (spread of true state values; no-info base)
+  one-playout sigma (per-st) =  7.13  (RMSE of ONE rollout vs the state's truth)
+  ridge V RMSE (raw)         =  4.70
+  MLP   V RMSE (raw)         =  4.00  -> 3.58 bias-corrected for label noise s/sqrt(M)
+  R* = (sigma/V_rmse)^2      =  3.96  ->  GREEN
+
+READS:
+- V explains ~95% of the variance in state value (R^2 = 1-(3.58/15.9)^2 = 0.95).
+  The encoder + a tiny MLP already capture almost all of what the rollout
+  estimates -- the evaluator is NOT at the information ceiling; it is learnable.
+- One V-eval is worth ~4 full playouts of ACCURACY, at ~1/300 the cost (<1 ms vs
+  ~4x80 ms). That is the compute lever the rollout-tuning grid could not move.
+- HONEST limit: the current leaf AVERAGES rollouts=12 playouts, so its estimate
+  has RMSE ~ sigma/sqrt(12) = 2.06 -- still sharper than a single V (3.58). So V
+  does NOT by itself beat the 12-rollout leaf on accuracy; its win is COMPUTE
+  (4x signal/playout) -> reinvest into more candidates/depth, or (better) use V to
+  BOOTSTRAP truncated rollouts (roll H plies + V(leaf)) to undercut 12 raw
+  rollouts' variance at lower cost. The MLP is a 40-epoch generic net, so 3.58 is
+  a conservative upper bound on V error; a tuned/larger V will push R* higher.
+VERDICT: GREEN -- proceed to step 3. Wire V into the search leaf as a depth-H
+truncation bootstrap in two_player.make_search_chooser (replace _rollout_value's
+play-to-end with H plies + V), then re-run the SAME n=100 honest harness at
+MATCHED compute and compare mean/floor/%>=100 to the 91.7 baseline. A real win =
+beats 91.7 at equal-or-less compute. Only then close the loop (agent-with-V plays
+-> relabel -> retrain V). Dataset: reports/ml/value_gate/data.npz (force-added).
