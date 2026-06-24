@@ -436,3 +436,45 @@ SEARCH LEVERS — final scorecard (2-player honest agent):
 Best config: depth-1, rollouts 8-12, top_k 10, temp 0.3, determinize -> ~92-95
 honest mean. This is the practical ceiling for the rollout-search approach;
 going higher needs a fundamentally better evaluator or far more absolute compute.
+
+## Corrected-engine re-measure + config sweep (2-player honest, vs heuristic, n=100)
+Every search config above was tuned on an EARLIER engine. Re-ran the baseline + a
+6-cell config sweep on the LATEST fully-corrected engine (471 birds with exact
+per-clause powers; tray/feeder reset deals fresh cards; reset payable with scoring
+nectar; round-goal "must qualify >=1"; real bird discard pile; per-habitat
+action-cube counting). Model solo_net_spread, honest --determinize, the SAME 100
+seeds (0-99) across all configs (so comparisons are paired). Modal, 50 shards/config,
+~7 min each.
+
+| config (rollouts/top_k/temp) | mean | floor | median | %>=100 | wins/100 |
+|---|---|---|---|---|---|
+| r8  k10 t0.3 (task baseline)  | 89.3 | 61 | 90.0 | 17% | 88 |
+| **r12 k10 t0.3 (best cell)**  | **91.7** | 64 | 90.5 | **28%** | **91** |
+| r8  k10 t0.5                  | 90.4 | 58 | 91.5 | 24% | 82 |
+| r12 k10 t0.5                  | 90.8 | **68** | 90.0 | 21% | 85 |
+| r8  k8  t0.3                  | 89.2 | 67 | 88.0 | 18% | 87 |
+| r12 k8  t0.3                  | 91.2 | 61 | 91.0 | 25% | 89 |
+(all p<1e-4 vs the heuristic; heuristic mean ~68-70 throughout.)
+
+READS:
+- ROLLOUTS is the only directionally-consistent lever: r12 >= r8 on mean at all
+  three (k,t) pairs (+2.4 / +0.4 / +2.0), and on win-rate and %>=100, at NO floor
+  cost. top_k 10-vs-8 and temp 0.3-vs-0.5 are within-noise wobbles (k10 ~ k8;
+  t0.3 best at r12, t0.5 best at r8 -- no clean winner).
+- BUT the headline r12-vs-r8 lift is SUB-NOISE. Paired over the same 100 seeds the
+  mean diff is only +2.35 (sd 14.8, t=1.59); sign test 51 up / 43 down / 6 tie,
+  p=0.47. Per-seed variance swamps the shift. All six cells cluster in 89.2-91.7
+  mean -> the grid is SATURATED; no config "clearly beats" another at n=100.
+VERDICT: the corrected engine REPRODUCES the prior best region (rollouts 8-12,
+top_k 10, temp 0.3, determinize) and its ~90-92 honest ceiling -- the re-tune did
+NOT shift the optimum. r12 k10 t0.3 is the best-supported cell (91.7 / floor 64 /
+28% break 100, 91/100 wins) and stays the recommended deployed config, but as
+"directionally best within noise," not a significant gain over r8. The fresh
+corrected-engine honest baseline to quote is r12 k10 t0.3 = ~92 mean / floor ~64 /
+28% >=100 (seeds 0-99, n=100); this sits a touch below the older 94.4/68 figure,
+consistent with the additional recent fixes (discard pile, action-cube counting)
+making the game slightly more accurate/harder -- not a regression to chase.
+NO code-default change adopted: the sweep win is sub-noise, and the two_player.py
+argparse defaults feed the dataset/selfplay modes too, so perturbing them isn't
+warranted. The lever for a real ceiling lift remains a learned search-quality
+VALUE evaluator (AlphaZero-style), not more rollout-search tuning.

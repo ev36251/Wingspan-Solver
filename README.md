@@ -13,16 +13,17 @@ Two strategy approaches live in this repo:
 
 The agent's score has climbed dramatically over the life of the project. Early
 greedy-network and rule-based play scored in the **50s–60s**. The current agent
-plays full *honest* games — no peeking at the deck order — and scores a **~94
-mean (worst-case floor ~68)** against the rule-based heuristic, which it beats
-roughly **90% of the time**.
+plays full *honest* games — no peeking at the deck order — and scores a **~92
+mean (worst-case floor ~64)** against the rule-based heuristic, which it beats
+roughly **90% of the time** (re-measured at n=100 on the latest corrected
+engine; best config r12 / top-k 10 / temp 0.3 / determinize).
 
 ### Score progression
 | stage | typical score |
 |-------|---------------|
 | rule-based heuristic / early greedy network | ~50–60 |
 | net-guided rollout search (solo, held-out seeds) | 72 → 91 |
-| **2-player honest rollout search (current)** | **~94 mean, floor ~68** |
+| **2-player honest rollout search (current)** | **~92 mean, floor ~64** |
 
 ### What moved the needle (all measured at n=100 on Modal.com)
 
@@ -200,8 +201,18 @@ sample sizes and p-values in `memory/SOLO_SEED_FINDINGS.md`):
 | Network retraining (×3 attempts) | ❌ null — at heavy search the *search dominates the prior* |
 | Depth-2 lookahead | ❌ hurts at equal budget — the rollout already looks to game end |
 
-**Best config:** depth-1, rollouts 8–12, top-k 10, temp 0.3, determinize. This is
+**Best config:** depth-1, rollouts 12, top-k 10, temp 0.3, determinize. This is
 the practical ceiling for the rollout-search approach.
+
+**Re-tuned on the corrected engine (n=100, honest, same 100 seeds).** Every config
+above was originally tuned on an older engine, so a 6-cell sweep was re-run on the
+latest corrected engine (rollouts ∈ {8,12} × top-k ∈ {8,10} × temp ∈ {0.3,0.5}).
+The optimum did **not** move: r12 / k10 / t0.3 is again the best cell
+(mean 91.7, floor 64, 28% ≥100, 91/100 wins). Rollouts is the only directionally
+consistent lever (r12 ≥ r8 on every metric at no floor cost), but the r12-vs-r8
+lift is **sub-noise** (+2.35 mean, paired sign-test p = 0.47) — all six cells
+cluster in 89–92, so the search is saturated across this grid. The corrected-engine
+re-measure thus *confirms* the existing best config rather than replacing it.
 
 **Engine correctness is where the real points hid.** Auditing the simulator
 against the real Oceania board surfaced and fixed several rules bugs — tray/feeder
