@@ -296,7 +296,7 @@ class _PUCTNode:
 
 
 def make_mcts_chooser(model, encoder, value_model, my_idx, n_sims=400, c_puct=1.5,
-                      temperature=0.3, determinize=True, dirichlet_eps=0.25,
+                      temperature=0.3, determinize=True, dirichlet_eps=0.0,
                       dirichlet_alpha=0.3, seed=0):
     """Determinized, score-maximizing PUCT-MCTS for seat my_idx.
 
