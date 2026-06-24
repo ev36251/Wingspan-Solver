@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import io
+import math
 import random
 from pathlib import Path
 
@@ -278,13 +279,153 @@ def make_eval_chooser(model, encoder, value_model, top_k, my_idx, leaf_mode,
     return choose
 
 
+class _PUCTNode:
+    __slots__ = ("action", "prior", "N", "W", "children", "expanded")
+
+    def __init__(self, action=None, prior=0.0):
+        self.action = action
+        self.prior = prior
+        self.N = 0
+        self.W = 0.0
+        self.children = []
+        self.expanded = False
+
+    @property
+    def Q(self):
+        return self.W / self.N if self.N > 0 else 0.0
+
+
+def make_mcts_chooser(model, encoder, value_model, my_idx, n_sims=400, c_puct=1.5,
+                      temperature=0.3, determinize=True, dirichlet_eps=0.25,
+                      dirichlet_alpha=0.3, seed=0):
+    """Determinized, score-maximizing PUCT-MCTS for seat my_idx.
+
+    Priors from the policy net (softmax of score_move), leaf value from the
+    trained V (value_model), opponent modeled by net-sampling (matching the
+    rollout baseline). Each simulation reshuffles the unseen deck (honest play).
+    Robust to the optimizer's curse: the policy PRIOR + visit-count averaging +
+    backups keep search from blindly walking into V's over-estimates.
+    """
+    rng = random.Random(seed * 2654435761 + my_idx * 13 + 1)
+    np_rng = np.random.default_rng((seed * 40503 + my_idx) % (2 ** 32))
+    roll_opp = make_net_sampling_chooser(model, encoder, temperature, seed=my_idx * 7919 + 2)
+
+    def _opp_until_me(sim):
+        guard = 0
+        while not sim.is_game_over and guard < 500:
+            guard += 1
+            idx = sim.current_player_idx
+            p = sim.current_player
+            if p.action_cubes_remaining <= 0:
+                if all(pl.action_cubes_remaining <= 0 for pl in sim.players):
+                    sim.advance_round()
+                else:
+                    sim.current_player_idx = (idx + 1) % sim.num_players
+                continue
+            if idx == my_idx:
+                return
+            mvs = generate_all_moves(sim, p)
+            if not mvs:
+                p.action_cubes_remaining = 0; sim.advance_turn(); continue
+            mv = roll_opp(sim, p, mvs)
+            if execute_move_on_sim(sim, p, mv):
+                sim.advance_turn(); _refill_tray(sim)
+            else:
+                p.action_cubes_remaining = max(0, p.action_cubes_remaining - 1); sim.advance_turn()
+
+    def _priors_and_moves(sim):
+        p = sim.players[my_idx]
+        moves = generate_all_moves(sim, p)
+        if not moves:
+            return [], []
+        state = np.asarray(encoder.encode(sim, my_idx), dtype=np.float32)
+        logits, _ = model.forward(state)
+        sc = np.array([model.score_move(state, m, p, logits=logits) for m in moves], dtype=np.float64)
+        e = np.exp(sc - sc.max())
+        return moves, e / max(1e-12, e.sum())
+
+    def _leaf_value(sim):
+        if sim.is_game_over:
+            return float(calculate_score(sim, sim.players[my_idx]).total)
+        return float(value_model.predict(encoder.encode(sim, my_idx)))
+
+    def choose(game, player, moves0):
+        if len(moves0) <= 1:
+            return moves0[0]
+        rmoves, rpr = _priors_and_moves(game)
+        if not rmoves:
+            return moves0[0]
+        if dirichlet_eps > 0 and len(rpr) > 1:
+            noise = np_rng.dirichlet([dirichlet_alpha] * len(rpr))
+            rpr = (1 - dirichlet_eps) * rpr + dirichlet_eps * noise
+        root = _PUCTNode()
+        root.children = [_PUCTNode(m, float(p)) for m, p in zip(rmoves, rpr)]
+        root.expanded = True
+        qlo, qhi = [1e18], [-1e18]
+
+        def _norm(q):
+            if qhi[0] <= qlo[0]:
+                return 0.5
+            return (q - qlo[0]) / (qhi[0] - qlo[0])
+
+        for _ in range(n_sims):
+            sim = fast_clone_game(game)
+            if determinize:
+                deck = getattr(sim, "_deck_cards", None)
+                if isinstance(deck, list) and len(deck) > 1:
+                    rng.shuffle(deck)
+            node = root
+            path = [root]
+            while node.expanded and node.children and not sim.is_game_over:
+                pn = node.N
+                best, bestu = None, -1e18
+                for c in node.children:
+                    u = _norm(c.Q) + c_puct * c.prior * math.sqrt(pn + 1) / (1 + c.N)
+                    if u > bestu:
+                        bestu, best = u, c
+                p = sim.players[my_idx]
+                if p.action_cubes_remaining <= 0:
+                    break
+                if not execute_move_on_sim(sim, p, best.action):
+                    break
+                sim.advance_turn(); _refill_tray(sim)
+                _opp_until_me(sim)
+                node = best
+                path.append(node)
+            if (not node.expanded and not sim.is_game_over
+                    and sim.current_player_idx == my_idx
+                    and sim.players[my_idx].action_cubes_remaining > 0):
+                mv, pr = _priors_and_moves(sim)
+                if mv:
+                    node.children = [_PUCTNode(m, float(p)) for m, p in zip(mv, pr)]
+                node.expanded = True
+            val = _leaf_value(sim)
+            for n in path:
+                n.N += 1
+                n.W += val
+                q = n.W / n.N
+                if q < qlo[0]:
+                    qlo[0] = q
+                if q > qhi[0]:
+                    qhi[0] = q
+        return max(root.children, key=lambda c: c.N).action
+
+    return choose
+
+
 def compare_one_game(seed, model, encoder, value_model, board, cfg):
     """Play one game: search agent (leaf=cfg) vs heuristic. Returns scores + secs."""
     import time
     my_idx = seed % 2
-    ch = make_eval_chooser(model, encoder, value_model, cfg["top_k"], my_idx,
-                           cfg["leaf_mode"], cfg.get("bootstrap_plies", 0),
-                           cfg["rollouts"], cfg["temperature"], cfg["determinize"])
+    if cfg["leaf_mode"] == "mcts":
+        ch = make_mcts_chooser(model, encoder, value_model, my_idx,
+                               n_sims=cfg["n_sims"], c_puct=cfg.get("c_puct", 1.5),
+                               temperature=cfg["temperature"],
+                               determinize=cfg["determinize"], seed=seed)
+    else:
+        ch = make_eval_chooser(model, encoder, value_model, cfg["top_k"], my_idx,
+                               cfg["leaf_mode"], cfg.get("bootstrap_plies", 0),
+                               cfg["rollouts"], cfg["temperature"], cfg["determinize"])
     choosers = [None, None]
     choosers[my_idx] = ch
     choosers[1 - my_idx] = heuristic_chooser
@@ -435,8 +576,12 @@ def _summarize_compare(rows, cfg):
     p = sum(comb(dec, i) for i in range(wins, dec + 1)) / 2 ** dec if dec else 1.0
     ge100 = sum(1 for a in A if a >= 100)
     print("\n==================== COMPARE ====================")
-    print(f"leaf={cfg['leaf_mode']} H={cfg.get('bootstrap_plies')} top_k={cfg['top_k']} "
-          f"M={cfg['rollouts']} temp={cfg['temperature']} det={cfg['determinize']} | n={n}")
+    if cfg["leaf_mode"] == "mcts":
+        print(f"leaf=mcts n_sims={cfg.get('n_sims')} c_puct={cfg.get('c_puct')} "
+              f"temp={cfg['temperature']} det={cfg['determinize']} | n={n}")
+    else:
+        print(f"leaf={cfg['leaf_mode']} H={cfg.get('bootstrap_plies')} top_k={cfg['top_k']} "
+              f"M={cfg['rollouts']} temp={cfg['temperature']} det={cfg['determinize']} | n={n}")
     print(f"  agent mean={st.mean(A):.1f}  floor={min(A)}  median={st.median(A):.1f}  "
           f"max={max(A)}  %>=100={100*ge100/n:.0f}%")
     print(f"  heuristic mean={st.mean(B):.1f}  | agent wins {wins}/{n} ({100*wins/n:.0f}%) p={p:.4f}")
@@ -592,10 +737,12 @@ def main():
     cp.add_argument("--model", default="reports/ml/solo_seed/solo_net_spread.npz")
     cp.add_argument("--value", default="reports/ml/value_gate/value_v1.npz")
     cp.add_argument("--board", choices=["oceania", "base"], default="oceania")
-    cp.add_argument("--leaf-mode", choices=["v", "full"], default="v")
+    cp.add_argument("--leaf-mode", choices=["v", "full", "mcts"], default="v")
     cp.add_argument("--bootstrap-plies", type=int, default=8)
     cp.add_argument("--top-k", type=int, default=10)
     cp.add_argument("--rollouts", type=int, default=3, help="M leaf evals/candidate")
+    cp.add_argument("--n-sims", type=int, default=400, help="MCTS simulations/decision")
+    cp.add_argument("--c-puct", type=float, default=1.5)
     cp.add_argument("--temperature", type=float, default=0.3)
     cp.add_argument("--determinize", action="store_true")
     cp.add_argument("--use-modal", action="store_true")
@@ -610,6 +757,7 @@ def main():
         seeds = _parse_seeds(args.seeds)
         cfg = {"leaf_mode": args.leaf_mode, "bootstrap_plies": args.bootstrap_plies,
                "top_k": args.top_k, "rollouts": args.rollouts,
+               "n_sims": args.n_sims, "c_puct": args.c_puct,
                "temperature": args.temperature, "determinize": args.determinize}
         value_path = args.value if args.leaf_mode == "v" else None
         if args.use_modal:
