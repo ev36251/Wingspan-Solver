@@ -607,3 +607,27 @@ viable), (3) opponent modeling, or (4) accept ~93 as near the practical ceiling 
 this heuristic. The value net's one real use is SPEED (a ~85-pt agent at 1/3
 compute via bootstrap; beats the heuristic even at 1.1 s/game), not the ceiling.
 All harnesses + value_v1.npz live in value_gate.py / reports/ml/value_gate/.
+
+## Branching-factor / move-pruning investigation (profiled, NOT a lever for rollouts)
+Hypothesis: shrink the move set to speed search + make MCTS viable. Measured on
+308 real decision states (medium-policy self-play):
+  - moves/decision: mean 53.7, median 42, p90 108, MAX 232.
+  - by action type (totals): GAIN_FOOD 10006, DRAW_CARDS 4602, LAY_EGGS 1347,
+    PLAY_BIRD 581. The explosion is GAIN_FOOD (feeder food-type combos; mean 32,
+    max 173/decision) and DRAW_CARDS, NOT bird-play payment variants (only 1.26x
+    inflation over distinct (bird,habitat,slot)).
+WHY PRUNING WON'T HELP THE DEPLOYED AGENT: profiled the rollout hot path. Each
+rollout ply costs a FIXED encode+forward = 0.95 ms; score_move is ~0.009 ms/move
+(negligible). Capping ~54 moves -> 16 changes a ply from ~1.43 to ~1.09 ms =
+~1.3x rollout speedup at best (more at the rare 173-move states, ~1x at small
+ones). Since r8->r12 rollouts (1.5x more) was already a sub-noise +2.4, a ~1.3x
+speedup buys <~1 pt -> not worth the complexity/risk. The rollout bottleneck is
+the per-ply NETWORK forward (encoder dim 1693), not the branching factor; the
+top-level decision is ALREADY prior-pruned (top_k=10, the 93.3 config).
+CONSEQUENCES: (1) move-gen pruning is a dead lever for rollout search. (2) It
+WOULD help MCTS (thin tree <-> high branching) but MCTS is dead for other reasons
+(step 4). (3) The only way pruning matters is if combined with a fundamentally
+cheaper per-ply eval -- i.e. the real rollout speed lever is a SMALLER/faster
+encoder+net or encode caching, not fewer moves. Net: confirms ~92-93 is not
+reachable-past by search-efficiency tweaks; the open levers remain structural
+(richer-but-cheaper encoder, opponent modeling) or accept the ceiling.
