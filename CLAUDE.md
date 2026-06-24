@@ -116,7 +116,13 @@ Special cases to know:
 
 ### Game rules — important / non-obvious
 
-This is **Wingspan: Oceania** (base + Oceania, no Americas / hummingbirds / promos).
+This is **Wingspan** with the five sets currently released and present in
+`wingspan-20260128.xlsx`: **Core, Oceania, Asia, European, and Promo-UK** (471
+birds total: core 180, oceania 95, asia 90, european 81, promo_uk 25). No other
+promo sets (promoAsia / promoCA / promoEurope / promoNZ / promoUS) — those release
+later and are not in the data or the `GameSet` enum yet. Note that base/Core is
+North-American themed, so birds like American Robin, Song Sparrow, and the
+hummingbirds (Anna's, Black-Chinned) are legitimately in-scope Core cards.
 
 - **Food cost & nectar** (`rules.py` `can_pay_food_cost` / `find_food_payment_options`):
   every bird costs food, deducted on play. Nectar substitutes **1-for-1** for any
@@ -173,7 +179,12 @@ The AlphaZero loop in `auto_improve_alphazero.py` runs four steps per iteration:
 
 ### Key invariants
 
-- All bird/goal/bonus data lives in `wingspan-20260128.xlsx`. No Americas expansion, no hummingbirds, no promo sets.
+- All bird/goal/bonus data lives in `wingspan-20260128.xlsx`: the 5 released sets
+  (Core, Oceania, Asia, European, Promo-UK = 471 birds). `create_training_game`
+  deals from the whole registry, so scope is governed entirely by what's in the
+  xlsx + the `GameSet` enum — both currently hold exactly these 5 sets. Future
+  promo sets (promoAsia/CA/Europe/NZ/US) are NOT yet present and must not be added
+  to training games until released.
 - `backend/data/registries.py` must be initialized with `load_all(EXCEL_FILE)` before any game engine code runs. Tests do this in `setup_module()` or `conftest.py`.
 - `GameState` is a mutable dataclass; `simulation.py` uses `copy.deepcopy()` for rollouts.
 - Combined training JSONLs are ≈2.75 GB and are auto-deleted after training. Disk abort at <5 GB free.
