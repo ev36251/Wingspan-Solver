@@ -47,6 +47,7 @@ from backend.data.registries import load_all
 from backend.models.enums import BoardType
 from backend.solver.move_generator import generate_all_moves
 from backend.solver.simulation import execute_move_on_sim, fast_clone_game, _refill_tray
+from backend.engine.scoring import calculate_score
 from backend.ml.factorized_inference import FactorizedPolicyModel
 from backend.ml.state_encoder import StateEncoder
 from backend.ml.solo_eval import make_net_chooser, make_net_sampling_chooser
@@ -54,6 +55,83 @@ from backend.ml.two_player import build_2p_game, play_multi, heuristic_chooser
 
 _HERE = Path(__file__).parent
 _XLSX = _HERE.parent.parent / "wingspan-20260128.xlsx"
+
+
+# --------------------------------------------------------------------------- #
+# Value model: numpy-only serve-time inference (no torch on Modal shards)
+# --------------------------------------------------------------------------- #
+class ValueModel:
+    """Tiny MLP V(state) -> expected final score. Standardization (mu/sd) is baked
+    in, so predict() takes the RAW encoder vector. Loaded from a .npz exported by
+    train_value()."""
+
+    def __init__(self, path_or_bytes):
+        if isinstance(path_or_bytes, (bytes, bytearray)):
+            d = np.load(io.BytesIO(bytes(path_or_bytes)))
+        else:
+            d = np.load(path_or_bytes)
+        self.W = [d["W0"].astype(np.float32), d["W1"].astype(np.float32), d["W2"].astype(np.float32)]
+        self.b = [d["b0"].astype(np.float32), d["b1"].astype(np.float32), d["b2"].astype(np.float32)]
+        self.mu = d["mu"].astype(np.float32)
+        self.sd = d["sd"].astype(np.float32)
+        self.scale = float(d["score_scale"])
+
+    def predict(self, x) -> float:
+        h = (np.asarray(x, dtype=np.float32) - self.mu) / self.sd
+        h = np.maximum(0.0, h @ self.W[0] + self.b[0])
+        h = np.maximum(0.0, h @ self.W[1] + self.b[1])
+        return float((h @ self.W[2] + self.b[2])[0]) * self.scale
+
+
+def train_value(data_path, out_path, hidden=(256, 64), epochs=60, lr=1e-3,
+                weight_decay=1e-5, seed=0):
+    """Train an MLP on (state -> mean rollout return), export numpy weights."""
+    import torch
+    d = np.load(data_path)
+    states = d["states"].astype(np.float32)
+    y = d["samples"].mean(axis=1).astype(np.float32)
+    n, D = states.shape
+    rng = np.random.default_rng(seed)
+    idx = rng.permutation(n)
+    cut = int(0.9 * n)
+    tr, te = idx[:cut], idx[cut:]
+    mu = states[tr].mean(axis=0)
+    sd = states[tr].std(axis=0) + 1e-6
+    Xs = (states - mu) / sd
+    scale = 120.0
+
+    torch.manual_seed(seed)
+    h1, h2 = hidden
+    net = torch.nn.Sequential(
+        torch.nn.Linear(D, h1), torch.nn.ReLU(),
+        torch.nn.Linear(h1, h2), torch.nn.ReLU(),
+        torch.nn.Linear(h2, 1))
+    opt = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=weight_decay)
+    lossf = torch.nn.MSELoss()
+    Xt = torch.tensor(Xs[tr]); yt = torch.tensor((y[tr] / scale)).unsqueeze(1)
+    Xv = torch.tensor(Xs[te])
+    bs = 512
+    for ep in range(epochs):
+        perm = torch.randperm(len(tr))
+        for i in range(0, len(tr), bs):
+            b = perm[i:i + bs]
+            opt.zero_grad()
+            loss = lossf(net(Xt[b]), yt[b])
+            loss.backward(); opt.step()
+    with torch.no_grad():
+        pv = net(Xv).squeeze(1).numpy() * scale
+    val_rmse = float(np.sqrt(np.mean((pv - y[te]) ** 2)))
+
+    lin = [m for m in net if isinstance(m, torch.nn.Linear)]
+    arrs = {"score_scale": np.float32(scale),
+            "mu": mu.astype(np.float32), "sd": sd.astype(np.float32)}
+    for k, m in enumerate(lin):
+        arrs[f"W{k}"] = m.weight.detach().numpy().T.astype(np.float32)  # (in,out)
+        arrs[f"b{k}"] = m.bias.detach().numpy().astype(np.float32)
+    out = Path(out_path); out.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(out, **arrs)
+    print(f"  trained V on {len(tr)} states, val RMSE={val_rmse:.2f} -> {out}")
+    return val_rmse
 
 
 # --------------------------------------------------------------------------- #
@@ -110,6 +188,111 @@ def make_logging_search_chooser(model, encoder, top_k, my_idx, M, temperature,
         return best_m
 
     return choose
+
+
+def make_eval_chooser(model, encoder, value_model, top_k, my_idx, leaf_mode,
+                      bootstrap_plies, M, temperature, determinize):
+    """Depth-1 search chooser (selfish) whose LEAF evaluator is selectable:
+        leaf_mode="full" -> play to game end (the rollout-search baseline)
+        leaf_mode="v"    -> roll `bootstrap_plies` of my turns, then V(leaf)
+                            (bootstrap_plies=0 = pure value-net instinct).
+    """
+    roll_me = make_net_sampling_chooser(model, encoder, temperature, seed=my_idx * 7919 + 1)
+    roll_opp = make_net_sampling_chooser(model, encoder, temperature, seed=my_idx * 7919 + 2)
+    det_rng = random.Random(my_idx * 104729 + 13)
+
+    def _step_until_my_turn(sim):
+        while not sim.is_game_over:
+            idx = sim.current_player_idx
+            p = sim.current_player
+            if p.action_cubes_remaining <= 0:
+                if all(pl.action_cubes_remaining <= 0 for pl in sim.players):
+                    sim.advance_round()
+                else:
+                    sim.current_player_idx = (idx + 1) % sim.num_players
+                continue
+            if idx == my_idx:
+                return
+            mvs = generate_all_moves(sim, p)
+            if not mvs:
+                p.action_cubes_remaining = 0; sim.advance_turn(); continue
+            mv = roll_opp(sim, p, mvs)
+            if execute_move_on_sim(sim, p, mv):
+                sim.advance_turn(); _refill_tray(sim)
+            else:
+                p.action_cubes_remaining = max(0, p.action_cubes_remaining - 1); sim.advance_turn()
+
+    def _full_value(sim):
+        choosers = [roll_me if i == my_idx else roll_opp for i in range(sim.num_players)]
+        return play_multi(sim, choosers)[my_idx]
+
+    def _truncated_value(sim):
+        plies = 0
+        while not sim.is_game_over and plies < bootstrap_plies:
+            _step_until_my_turn(sim)
+            if sim.is_game_over:
+                break
+            p = sim.current_player
+            mvs = generate_all_moves(sim, p)
+            if not mvs:
+                p.action_cubes_remaining = 0; sim.advance_turn(); continue
+            mv = roll_me(sim, p, mvs)
+            if execute_move_on_sim(sim, p, mv):
+                sim.advance_turn(); _refill_tray(sim)
+            else:
+                p.action_cubes_remaining = max(0, p.action_cubes_remaining - 1); sim.advance_turn()
+            plies += 1
+        if sim.is_game_over:
+            return calculate_score(sim, sim.players[my_idx]).total
+        return value_model.predict(encoder.encode(sim, my_idx))
+
+    leaf_fn = _full_value if leaf_mode == "full" else _truncated_value
+
+    def choose(game, player, moves):
+        if len(moves) <= 1:
+            return moves[0]
+        state = np.asarray(encoder.encode(game, game.current_player_idx), dtype=np.float32)
+        logits, _ = model.forward(state)
+        ranked = sorted(moves, key=lambda m: -model.score_move(state, m, player, logits=logits))[:top_k]
+        best_m, best_v = ranked[0], -1e18
+        for m in ranked:
+            total, n_ok = 0.0, 0
+            for _ in range(max(1, M)):
+                sim = fast_clone_game(game)
+                if determinize:
+                    deck = getattr(sim, "_deck_cards", None)
+                    if isinstance(deck, list) and len(deck) > 1:
+                        det_rng.shuffle(deck)
+                sp = sim.current_player
+                if not execute_move_on_sim(sim, sp, m):
+                    continue
+                sim.advance_turn(); _refill_tray(sim)
+                total += leaf_fn(sim); n_ok += 1
+            if n_ok == 0:
+                continue
+            val = total / n_ok
+            if val > best_v:
+                best_m, best_v = m, val
+        return best_m
+
+    return choose
+
+
+def compare_one_game(seed, model, encoder, value_model, board, cfg):
+    """Play one game: search agent (leaf=cfg) vs heuristic. Returns scores + secs."""
+    import time
+    my_idx = seed % 2
+    ch = make_eval_chooser(model, encoder, value_model, cfg["top_k"], my_idx,
+                           cfg["leaf_mode"], cfg.get("bootstrap_plies", 0),
+                           cfg["rollouts"], cfg["temperature"], cfg["determinize"])
+    choosers = [None, None]
+    choosers[my_idx] = ch
+    choosers[1 - my_idx] = heuristic_chooser
+    game = build_2p_game(seed, board)
+    t = time.time()
+    scores = play_multi(game, choosers)
+    return {"seed": seed, "a_idx": my_idx, "a": scores[my_idx],
+            "b": scores[1 - my_idx], "secs": round(time.time() - t, 2)}
 
 
 def gen_one_game(seed, model, encoder, board, top_k, M, temperature, determinize):
@@ -187,6 +370,77 @@ if _MODAL_AVAILABLE:
         finally:
             os.unlink(tmp.name)
         return {"blob": _pack_rows(rows), "n": len(rows)}
+
+
+if _MODAL_AVAILABLE:
+    @app.function(cpu=2, memory=4096, timeout=14400)
+    def run_compare_shard_remote(task: dict) -> dict:
+        import os, tempfile, json as _json, gzip as _gz
+        for k in ("OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "OMP_NUM_THREADS"):
+            os.environ.setdefault(k, "1")
+        try:
+            from threadpoolctl import threadpool_limits
+            threadpool_limits(limits=1, user_api="blas")
+        except ImportError:
+            pass
+        load_all(EXCEL_FILE)
+        mb = task.pop("model_bytes")
+        vb = task.pop("value_bytes")
+        tmp = tempfile.NamedTemporaryFile(suffix=".npz", delete=False)
+        tmp.write(mb); tmp.close()
+        try:
+            model = FactorizedPolicyModel(tmp.name)
+            encoder = StateEncoder.resolve_for_model(model.meta)
+            vm = ValueModel(bytes(vb)) if vb else None
+            board = BoardType(task["board_type"])
+            cfg = task["cfg"]
+            rows = [compare_one_game(int(s), model, encoder, vm, board, cfg)
+                    for s in task["seeds"]]
+        finally:
+            os.unlink(tmp.name)
+        return {"rows_gz": _gz.compress(_json.dumps(rows).encode("utf-8"), 6)}
+
+
+def dispatch_compare_modal(seeds, model_path, value_path, board, cfg, seeds_per_shard):
+    if not _MODAL_AVAILABLE:
+        raise RuntimeError("Modal not installed")
+    import json as _json
+    model_bytes = Path(model_path).read_bytes()
+    value_bytes = Path(value_path).read_bytes() if value_path else b""
+    seeds = list(seeds)
+    step = max(1, int(seeds_per_shard))
+    shards = [seeds[i:i + step] for i in range(0, len(seeds), step)]
+    tasks = [{"seeds": s, "board_type": board.value, "model_bytes": model_bytes,
+              "value_bytes": value_bytes, "cfg": cfg} for s in shards]
+    print(f"  [modal] dispatching {len(tasks)} compare shards ({len(seeds)} games, "
+          f"leaf={cfg['leaf_mode']} H={cfg.get('bootstrap_plies')}) …")
+    rows = []
+    with modal.enable_output(), app.run():
+        for result in run_compare_shard_remote.map(tasks):
+            payload = result.get("rows_gz")
+            if isinstance(payload, (bytes, bytearray)):
+                rows.extend(_json.loads(gzip.decompress(bytes(payload)).decode("utf-8")))
+    return rows
+
+
+def _summarize_compare(rows, cfg):
+    import statistics as st
+    from math import comb
+    rows = sorted(rows, key=lambda r: r["seed"])
+    A = [r["a"] for r in rows]; B = [r["b"] for r in rows]
+    secs = [r.get("secs", 0) for r in rows]
+    n = len(A)
+    wins = sum(1 for r in rows if r["a"] > r["b"])
+    dec = sum(1 for r in rows if r["a"] != r["b"])
+    p = sum(comb(dec, i) for i in range(wins, dec + 1)) / 2 ** dec if dec else 1.0
+    ge100 = sum(1 for a in A if a >= 100)
+    print("\n==================== COMPARE ====================")
+    print(f"leaf={cfg['leaf_mode']} H={cfg.get('bootstrap_plies')} top_k={cfg['top_k']} "
+          f"M={cfg['rollouts']} temp={cfg['temperature']} det={cfg['determinize']} | n={n}")
+    print(f"  agent mean={st.mean(A):.1f}  floor={min(A)}  median={st.median(A):.1f}  "
+          f"max={max(A)}  %>=100={100*ge100/n:.0f}%")
+    print(f"  heuristic mean={st.mean(B):.1f}  | agent wins {wins}/{n} ({100*wins/n:.0f}%) p={p:.4f}")
+    print(f"  compute: mean {st.mean(secs):.1f} s/game  (total {sum(secs):.0f}s)")
 
 
 def dispatch_gen_modal(seeds, model_path, board, cfg, seeds_per_shard):
@@ -328,7 +582,49 @@ def main():
     ga = sub.add_parser("gate")
     ga.add_argument("--data", default="reports/ml/value_gate/data.npz")
 
+    tr = sub.add_parser("train")
+    tr.add_argument("--data", default="reports/ml/value_gate/data.npz")
+    tr.add_argument("--out", default="reports/ml/value_gate/value_v1.npz")
+    tr.add_argument("--epochs", type=int, default=60)
+
+    cp = sub.add_parser("compare")
+    cp.add_argument("--seeds", default="0-99")
+    cp.add_argument("--model", default="reports/ml/solo_seed/solo_net_spread.npz")
+    cp.add_argument("--value", default="reports/ml/value_gate/value_v1.npz")
+    cp.add_argument("--board", choices=["oceania", "base"], default="oceania")
+    cp.add_argument("--leaf-mode", choices=["v", "full"], default="v")
+    cp.add_argument("--bootstrap-plies", type=int, default=8)
+    cp.add_argument("--top-k", type=int, default=10)
+    cp.add_argument("--rollouts", type=int, default=3, help="M leaf evals/candidate")
+    cp.add_argument("--temperature", type=float, default=0.3)
+    cp.add_argument("--determinize", action="store_true")
+    cp.add_argument("--use-modal", action="store_true")
+    cp.add_argument("--seeds-per-shard", type=int, default=2)
+
     args = ap.parse_args()
+    if args.cmd == "train":
+        train_value(args.data, args.out, epochs=args.epochs)
+        return
+    if args.cmd == "compare":
+        board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
+        seeds = _parse_seeds(args.seeds)
+        cfg = {"leaf_mode": args.leaf_mode, "bootstrap_plies": args.bootstrap_plies,
+               "top_k": args.top_k, "rollouts": args.rollouts,
+               "temperature": args.temperature, "determinize": args.determinize}
+        value_path = args.value if args.leaf_mode == "v" else None
+        if args.use_modal:
+            rows = dispatch_compare_modal(seeds, args.model, value_path, board, cfg, args.seeds_per_shard)
+        else:
+            load_all(EXCEL_FILE)
+            model = FactorizedPolicyModel(args.model)
+            encoder = StateEncoder.resolve_for_model(model.meta)
+            vm = ValueModel(value_path) if value_path else None
+            rows = [compare_one_game(s, model, encoder, vm, board, cfg) for s in seeds]
+        for r in sorted(rows, key=lambda r: r["seed"]):
+            tag = "AGENT" if r["a"] > r["b"] else ("heur" if r["a"] < r["b"] else "tie")
+            print(f"seed {r['seed']:>3} (agent@{r['a_idx']}): agent={r['a']:>3} heur={r['b']:>3} {tag} ({r.get('secs','?')}s)")
+        _summarize_compare(rows, cfg)
+        return
     if args.cmd == "gen":
         board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
         seeds = _parse_seeds(args.seeds)
