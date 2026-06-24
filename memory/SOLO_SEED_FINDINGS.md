@@ -560,3 +560,50 @@ ceiling and move the lever elsewhere (richer encoder / move-gen / opponent model
 Recommendation: try (a) PUCT-MCTS before (b); if neither clears 93 at matched
 compute, the ceiling is not the evaluator. Artifacts: value_v1.npz (force-added),
 compare harness in value_gate.py.
+
+## Value-net STEP 4 -- PUCT-MCTS with V leaf + policy prior (n=100, honest)
+Built a determinized, score-maximizing PUCT (value_gate.py make_mcts_chooser):
+policy-net softmax priors, our V at leaves, net-sampling opponent in-tree, per-sim
+deck reshuffle, MinMax-normalized Q in the PUCT term, most-visited root action.
+This is the AlphaZero recipe meant to survive the optimizer's curse that sank
+greedy-V. (Inference uses Dirichlet root noise = 0; an initial run left it at 0.25
+and was re-run noise-free.)
+
+| MCTS config              | mean | floor | %>=100 | s/game |
+|--------------------------|------|-------|--------|--------|
+| n_sims 400 (noise 0.25)  | 68.2 |  27   |  2%    | 191    |
+| n_sims 800 (noise 0.25)  | 70.0 |  36   |  3%    | 365    |
+| n_sims 400 (noise 0)     | 71.6 |  45   |  1%    | 195    |
+| n_sims 800 (noise 0)     | 74.0 |  30   |  2%    | 377    |
+| (ref) bootstrap H24 M12  | 90.0 |  64   | 23%    | 234    |
+| (ref) FULL rollout M12   | 93.3 |  70   | 22%    | 217    |
+
+RESULT -- MCTS is DECISIVELY WORSE than rollout search here. Even noise-free and
+at 1.7x full compute (377s) it tops out ~74 (about pure-V level), barely beating
+the heuristic (60% wins). It scales with sims (72->74) but nowhere near 93.
+WHY (structural, not a tuning miss): Wingspan has a HIGH BRANCHING FACTOR (often
+20-50+ legal moves/decision) and an EXPENSIVE simulator (each sim replays the
+descent: my moves + opponent turns from root). At the ~400-800 sims affordable
+within full's compute, the tree is barely populated -- most nodes get <=1 visit,
+so the most-visited root action collapses back to "policy prior + a thin layer of
+V lookups." Rollout search spends the SAME compute on 120 full-game evaluations
+that directly, unbiasedly estimate each candidate move's value -> far more
+sample-efficient for this structure. MCTS shines when sims >> branching and the
+simulator is cheap; both are false here.
+
+## OVERARCHING CONCLUSION -- a learned value does NOT beat rollouts in this game
+Three integration methods, all n=100 honest at matched compute vs the 93.3 rollout
+baseline:
+  - greedy V leaf (pure)      : 74.3  (optimizer's curse)
+  - V bootstrap (H plies + V) : 90.0  (dominated; speed lever, not strength)
+  - PUCT-MCTS (V + prior)     : 74.0  (sample-inefficient at this branching)
+The passive gate was GREEN (V is accurate, R*~4, 95% of variance) yet NONE of the
+active uses beat full rollouts. The rollout's unbiased full-game estimate is hard
+to beat under selection/argmax pressure at an affordable sim budget. So ~92-93 is
+NOT an evaluator/search-method problem fixable by a value net. The remaining
+levers are structural: (1) richer state encoding / better features, (2) better or
+PRUNED move generation (shrink the branching factor -> would also make MCTS
+viable), (3) opponent modeling, or (4) accept ~93 as near the practical ceiling vs
+this heuristic. The value net's one real use is SPEED (a ~85-pt agent at 1/3
+compute via bootstrap; beats the heuristic even at 1.1 s/game), not the ceiling.
+All harnesses + value_v1.npz live in value_gate.py / reports/ml/value_gate/.
