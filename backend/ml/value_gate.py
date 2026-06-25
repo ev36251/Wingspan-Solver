@@ -436,6 +436,30 @@ def compare_one_game(seed, model, encoder, value_model, board, cfg):
             "b": scores[1 - my_idx], "secs": round(time.time() - t, 2)}
 
 
+def tiering_detail_one_game(seed, model, encoder, board, top_k=6):
+    """Play one 2p selfish-search game; return per-bird rows with habitat + the
+    points sitting on that bird (eggs / cached food / tucked cards) + game score."""
+    from backend.ml.two_player import make_search_chooser
+    net = make_net_chooser(model, encoder)
+    agents = [make_search_chooser(model, encoder, top_k, i, net, "selfish")
+              for i in range(2)]
+    game = build_2p_game(seed, board)
+    scores = play_multi(game, agents)
+    rows = []
+    for i, p in enumerate(game.players):
+        for hab, _idx, slot in p.board.all_slots():
+            if slot.bird is None:
+                continue
+            b = slot.bird
+            rows.append({
+                "seed": seed, "player": i, "score": int(scores[i]),
+                "bird": b.name, "habitat": hab.value, "eggs": int(slot.eggs),
+                "cached": int(slot.total_cached_food),
+                "tucked": int(slot.tucked_cards), "vp": int(b.victory_points),
+            })
+    return rows
+
+
 def gen_one_game(seed, model, encoder, board, top_k, M, temperature, determinize):
     """Play one heuristic-mode game (search agent vs heuristic) logging leaves."""
     sink: list = []
@@ -586,6 +610,51 @@ def _summarize_compare(rows, cfg):
           f"max={max(A)}  %>=100={100*ge100/n:.0f}%")
     print(f"  heuristic mean={st.mean(B):.1f}  | agent wins {wins}/{n} ({100*wins/n:.0f}%) p={p:.4f}")
     print(f"  compute: mean {st.mean(secs):.1f} s/game  (total {sum(secs):.0f}s)")
+
+
+if _MODAL_AVAILABLE:
+    @app.function(cpu=2, memory=4096, timeout=14400)
+    def run_detail_shard_remote(task: dict) -> dict:
+        import os, tempfile, json as _json, gzip as _gz
+        for k in ("OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "OMP_NUM_THREADS"):
+            os.environ.setdefault(k, "1")
+        try:
+            from threadpoolctl import threadpool_limits
+            threadpool_limits(limits=1, user_api="blas")
+        except ImportError:
+            pass
+        load_all(EXCEL_FILE)
+        mb = task.pop("model_bytes")
+        tmp = tempfile.NamedTemporaryFile(suffix=".npz", delete=False)
+        tmp.write(mb); tmp.close()
+        try:
+            model = FactorizedPolicyModel(tmp.name)
+            encoder = StateEncoder.resolve_for_model(model.meta)
+            board = BoardType(task["board_type"])
+            rows = []
+            for s in task["seeds"]:
+                rows.extend(tiering_detail_one_game(int(s), model, encoder, board, task.get("top_k", 6)))
+        finally:
+            os.unlink(tmp.name)
+        return {"rows_gz": _gz.compress(_json.dumps(rows).encode("utf-8"), 6)}
+
+
+def dispatch_detail_modal(seeds, model_path, board, top_k, seeds_per_shard):
+    import json as _json
+    model_bytes = Path(model_path).read_bytes()
+    seeds = list(seeds)
+    step = max(1, int(seeds_per_shard))
+    shards = [seeds[i:i + step] for i in range(0, len(seeds), step)]
+    tasks = [{"seeds": s, "board_type": board.value, "model_bytes": model_bytes,
+              "top_k": top_k} for s in shards]
+    print(f"  [modal] dispatching {len(tasks)} detail shards ({len(seeds)} games) …")
+    rows = []
+    with modal.enable_output(), app.run():
+        for result in run_detail_shard_remote.map(tasks):
+            payload = result.get("rows_gz")
+            if isinstance(payload, (bytes, bytearray)):
+                rows.extend(_json.loads(gzip.decompress(bytes(payload)).decode("utf-8")))
+    return rows
 
 
 def dispatch_gen_modal(seeds, model_path, board, cfg, seeds_per_shard):
