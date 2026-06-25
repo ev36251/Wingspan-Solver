@@ -503,6 +503,7 @@ except ImportError:
 if _MODAL_AVAILABLE:
     _image = (
         modal.Image.debian_slim(python_version="3.12")
+        .env({"PYTHONHASHSEED": "0"})  # deterministic hash order -> reproducible games
         .pip_install("numpy", "openpyxl", "threadpoolctl")
         .add_local_file(str(_XLSX), remote_path="/root/wingspan-20260128.xlsx")
     )
@@ -778,6 +779,8 @@ def _parse_seeds(spec):
 
 
 def main():
+    from backend.determinism import ensure_deterministic_hashing
+    ensure_deterministic_hashing()
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
 

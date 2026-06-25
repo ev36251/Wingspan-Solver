@@ -47,6 +47,7 @@ def _build_image():
     """
     return (
         modal.Image.debian_slim(python_version="3.12")
+        .env({"PYTHONHASHSEED": "0"})  # deterministic hash order -> reproducible games
         .pip_install("numpy", "openpyxl", "threadpoolctl")
         .add_local_file(str(_XLSX), remote_path="/root/wingspan-20260128.xlsx")
     )

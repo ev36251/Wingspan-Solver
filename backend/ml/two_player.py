@@ -284,6 +284,8 @@ def _parse_seeds(spec):
 
 
 def main():
+    from backend.determinism import ensure_deterministic_hashing
+    ensure_deterministic_hashing()
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="reports/ml/solo_seed/solo_net_spread.npz")
     ap.add_argument("--seeds", default="0-19")

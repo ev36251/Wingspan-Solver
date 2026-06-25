@@ -780,8 +780,11 @@ def rollout_draft_evaluation(
     top_options = options[:k]
 
     scored: list[tuple[float, float, list[Bird], tuple[FoodType, ...], BonusCard]] = []
-    for static_score, birds, food, bonus in top_options:
-        rng = random.Random()
+    for _opt_i, (static_score, birds, food, bonus) in enumerate(top_options):
+        # Deterministic per-option seed (was `random.Random()` — unseeded, which
+        # pulled OS entropy each process and made the draft non-reproducible).
+        # Index-based so it doesn't depend on PYTHONHASHSEED.
+        rng = random.Random(0x5EED + _opt_i)
         game = _build_draft_rollout_game(
             kept_birds=birds,
             kept_food=food,
