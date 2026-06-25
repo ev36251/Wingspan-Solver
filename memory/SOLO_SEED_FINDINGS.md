@@ -688,3 +688,34 @@ here. Raising the ceiling is NOT an ML-on-top-of-search problem. A full
 multi-iteration self-play loop with soft visit targets remains technically
 untested but is low-probability given 4 nulls + the clear mechanism. Practical
 ceiling vs this opponent is ~92; the agent is strong and now reproducible.
+
+## Soft-target self-play loop: iter-1 net evaluated (NULL, 5th confirmation)
+Built the self-play / expert-iteration loop the prior note flagged as the one
+"technically untested" lever (selfplay_soft.py): both seats play the deployed
+strong search (rollouts>1, determinize, temperature), and instead of argmax we
+log the search's value-weighted softmax over the top_k candidates as factorized
+SOFT policy targets -- the AlphaZero "improved policy" signal none of the earlier
+hard-target BC attempts used. Generated soft_iter1.jsonl (15,600 rows, dim 2443,
+opponent-board encoder) on Modal, trained soft_net1.npz (net_1), set an explicit
+fail-fast gate before evaluating.
+
+FAIL-FAST GATE (deterministic n=100 vs heuristic, r12/k10/t0.3, same seeds, paired):
+  solo_net_spread (baseline) : 91.0
+  soft_net1       (net_1)    : 86.0  (heuristic 70.1; win rate 80/100)
+  paired diff = -4.98 (t=-2.90), 36 up / 62 dn, sign-test p=0.011
+net_1 is SIGNIFICANTLY WORSE than the 91.0 baseline -> FAILS the gate decisively.
+Per the pre-registered rule (beat 91.0 paired-significant -> iterate to net_2;
+else stop), the loop STOPS at iter 1. Did NOT iterate to net_2.
+
+Likely contributors: only 15,600 training rows for a 2443-dim net (val_acc ~0.59),
+and -- the recurring mechanism -- the search dominating the prior so a noisier
+prior actively hurts. This is the 5th independent null on net retraining
+(after: solo BC flywheel iter2, opp-aware v1, opp-aware v2, value-net arc).
+
+FINAL CONCLUSION: every branch of the AlphaZero recipe has now been tried and
+confirmed dominated by the rollout search for this game/opponent -- policy prior
+(hard BC x3, soft self-play x1), value leaf (greedy-V, bootstrap, MCTS), opponent
+features, draft tuning, config re-sweep, move pruning. The ~91-92 ceiling vs this
+heuristic is a property of (rollout search + game + opponent), not the net.
+Raising it is not an ML-on-top-of-search problem. The deployed solo_net_spread
+agent at r12/k10/t0.3 = 91.0 is the practical, reproducible champion. Stop here.
