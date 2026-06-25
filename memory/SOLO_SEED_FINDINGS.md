@@ -631,3 +631,33 @@ cheaper per-ply eval -- i.e. the real rollout speed lever is a SMALLER/faster
 encoder+net or encode caching, not fewer moves. Net: confirms ~92-93 is not
 reachable-past by search-efficiency tweaks; the open levers remain structural
 (richer-but-cheaper encoder, opponent modeling) or accept the ceiling.
+
+## Deterministic re-sweep + draft/engine-feature investigation (post hash-seed fix)
+With games now reproducible (PYTHONHASHSEED pinned), re-ran the config sweep and
+investigated two suspected levers. All three came back NEGATIVE.
+
+CONFIG SWEEP (n=100, deterministic, vs heuristic):
+  r8/k10/t0.3=90.1  r12/k10/t0.3=91.0  r16/k10/t0.3=91.8  r12/k10/t0.5=89.8
+  r12/k8/t0.3=91.5  (r8/k10/t0.5 lost to a Modal hiccup)
+  The means trend up with rollouts, BUT it is NOT paired-significant even with
+  hash noise removed: r16-r8 = +1.68 (t=1.11, sign p=0.42, 44up/53dn); r12-r8
+  p=0.76. Per-seed it's a coin flip. -> config tuning is a DEAD lever; the search
+  is genuinely saturated at ~91, not noise-hidden. Clean baseline: r12/k10/t0.3
+  = 91.0 (deterministic, reproducible).
+
+DRAFT (#4): measured kept-vs-played across deterministic games. 2.58 birds kept,
+  1.88 played to board, ~0.6 used as tuck/discard fuel, only 0.10 (4%) wasted
+  (kept then left in hand all game). The draft is already efficient (analyze_setup
+  is Monte-Carlo reranked + prefers 2-3 birds). No over-keeping; no change.
+
+ENGINE FEATURES (#5): the 2-player agent's rollouts use the NET
+  (make_net_sampling_chooser), NOT heuristics.py. So adding engine-awareness to
+  the heuristic only reaches the SOLO agent (simulate_playout) and the heuristic
+  opponent -- not the deployed 2p agent. And the heuristic already phase-scales
+  engine_value/early_game_engine_bonus. Giving the 2p agent engine-awareness
+  requires retraining the NET (overlaps #1/#3), not a heuristic tweak.
+
+NET: the consistent session result holds -- search dominates, ~92 is the real
+ceiling vs this heuristic, and the only remaining lever is a better learned
+policy/value (expert iteration / opponent-aware retraining), which is a real
+project with genuine null-risk, not a quick win.
