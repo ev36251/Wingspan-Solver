@@ -32,4 +32,13 @@ def ensure_deterministic_hashing() -> None:
     if os.environ.get("PYTHONHASHSEED") == _PINNED:
         return
     os.environ["PYTHONHASHSEED"] = _PINNED
-    os.execv(sys.executable, [sys.executable, *sys.argv])
+    # Preserve the original invocation form. `python -m pkg.mod` sets
+    # __main__.__spec__; re-exec'ing the bare script path would break package
+    # imports, so reconstruct the `-m` form in that case.
+    import __main__
+    spec = getattr(__main__, "__spec__", None)
+    if spec is not None and getattr(spec, "name", None):
+        args = [sys.executable, "-m", spec.name, *sys.argv[1:]]
+    else:
+        args = [sys.executable, *sys.argv]
+    os.execv(sys.executable, args)
