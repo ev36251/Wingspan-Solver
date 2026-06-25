@@ -661,3 +661,30 @@ NET: the consistent session result holds -- search dominates, ~92 is the real
 ceiling vs this heuristic, and the only remaining lever is a better learned
 policy/value (expert iteration / opponent-aware retraining), which is a real
 project with genuine null-risk, not a quick win.
+
+## Net-retraining bet: existing opponent-aware nets evaluated (NULL, 4th confirmation)
+Committed to "retrain the net." Found the opponent-aware BC pipeline already
+exists (two_player_dataset.py: search teacher + opponent-board encoder, dim 2443)
+AND two trained models (opp_aware_net.npz, opp_aware_net_v2.npz) -- never cleanly
+evaluated (solo_net_spread still deployed). Evaluated them first.
+
+Deterministic n=100 vs heuristic, r12/k10/t0.3, same seeds (paired):
+  solo_net_spread (baseline) : 91.0
+  opp_aware_net   (v1)       : 88.9  (paired -2.09, sign p=0.36)
+  opp_aware_net_v2(v2)       : 90.2  (paired -0.87, sign p=0.61)  92% win rate
+Both statistically EQUAL to the solo net (not better; v1 slightly worse).
+
+This is the 4th independent confirmation that retraining the policy net does NOT
+move the full-search 2p agent: (1) solo BC flywheel iter2 flat, (2) opp-aware v1,
+(3) opp-aware v2, plus the value-net work (greedy-V 74, bootstrap 90, MCTS 74 --
+all <= rollouts). ROOT CAUSE: at the deployed budget (top_k=10 x 12 rollouts) the
+SEARCH dominates the policy prior, so a different/better prior washes out. Adding
+opponent-board features (the one genuinely-new lever) did not help either.
+
+CONCLUSION: the ~92 ceiling is a property of (rollout search + this game + this
+heuristic opponent), not the policy/value net. Both halves of the AlphaZero
+recipe (policy prior, value leaf) are confirmed dominated by the rollout search
+here. Raising the ceiling is NOT an ML-on-top-of-search problem. A full
+multi-iteration self-play loop with soft visit targets remains technically
+untested but is low-probability given 4 nulls + the clear mechanism. Practical
+ceiling vs this opponent is ~92; the agent is strong and now reproducible.
