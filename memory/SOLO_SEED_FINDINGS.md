@@ -719,3 +719,48 @@ features, draft tuning, config re-sweep, move pruning. The ~91-92 ceiling vs thi
 heuristic is a property of (rollout search + game + opponent), not the net.
 Raising it is not an ML-on-top-of-search problem. The deployed solo_net_spread
 agent at r12/k10/t0.3 = 91.0 is the practical, reproducible champion. Stop here.
+
+## Beyond the net: budget / algorithm / opponent sweep (the FIRST real lever)
+After 5 net-retraining nulls, tested the three levers that are *different in kind*
+from "another net": more search budget, a different search algorithm, a stronger
+opponent. All n=100 deterministic vs heuristic, seeds 0-99, paired sign-test vs
+the leaf=full k10/r12/t0.3/det baseline (which re-measured at mean 93.2 here).
+
+  config                      mean   dVS base   up/dn   sign-p
+  baseline  k10/r12           93.2     --        --       --
+  A budget  k8/r6  (low)      87.5    -5.70     32/64    0.001 *
+  A budget  k16/r24 (high)    96.2    +3.00     58/39    0.067
+  B depth-2 lookahead         85.8    -7.33     24/75    0.000 *  (worse)
+  B MCTS n_sims=200 (V leaf)  70.0   -23.18      7/92    0.000 *  (ties heuristic)
+  C selfplay r12 (vs r1 opp)  91.6    -1.61     48/50    0.920     (robust)
+  C denial ablation l=0.3     80.5      n/a       --      --       (see below)
+
+KEY FINDING -- SEARCH BUDGET IS THE ONE LEVER THAT SCALES. The budget ladder is
+monotone: r6=87.5 < r12=93.2 < r24=96.2. The low point is significantly worse
+(p=0.001) and the high point trends better (+3.0, 58/39, p=0.067). Independently
+corroborated by selfplay: the strong agent (r12) beats a weak-search opponent
+(r1) 66/100 (p=0.001). Three signals agree -- raw rollout budget buys strength,
+at ~linear compute cost. This is the first thing in the entire project that moves
+the number after ~6 net/value/algorithm nulls.
+
+ALGORITHM (B) -- NULL/WORSE. A different search *shape* does not help:
+  - depth-2 minimax-over-own-moves (k8/r2/b3): 85.8, significantly worse.
+  - PUCT-MCTS with the trained V as leaf (n_sims=200): 70.0, barely ties the
+    heuristic. Consistent with the RED value-gate -- V is a weak leaf, so any
+    algorithm that leans on V instead of full rollouts collapses. Depth-1 rollout
+    search remains the best shape; the leaf quality (full playout) is what matters.
+
+OPPONENT (C) -- AGENT IS ROBUST; DENIAL STILL NULL. Against a real search
+opponent (not the weak heuristic) the agent still scores 91.6, statistically
+equal to its 93.2 vs-heuristic score (paired 48/50, p=0.92). So the ~92-96 level
+is NOT an artifact of a weak opponent -- contention does not crush it. Denial-
+awareness remains null: WITHIN the ablation run, differential (l=0.3) vs selfish
+scored 80.5 vs 80.1 (55/100, p=0.18). (The -12.6 "dVS base" for the ablation row
+is an apples-to-oranges pairing -- that config is a cheap single-rollout agent
+playing a strong opponent, not comparable to the r12-vs-heuristic baseline.)
+
+PRACTICAL CONCLUSION: to make the agent stronger, spend more rollouts -- it scales
+monotonically and predictably. The net, the search algorithm, and the objective
+are all saturated; budget is the free dial. Deployed default stays k10/r12 (93.2,
+the speed/strength knee); bump to k16/r24 for ~+3 when compute allows. Higher
+budget likely keeps helping with diminishing returns (untested above r24).
