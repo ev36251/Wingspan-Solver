@@ -1216,28 +1216,31 @@
 	}
 
 	.player-tab {
-		padding: 8px 20px;
+		padding: 9px 22px;
 		background: none;
 		border: none;
-		border-bottom: 2px solid transparent;
+		border-bottom: 2.5px solid transparent;
 		margin-bottom: -2px;
 		font-size: 0.9rem;
 		color: var(--text-muted);
 		cursor: pointer;
-		font-weight: 500;
+		font-weight: 600;
 		display: flex;
 		align-items: center;
 		gap: 6px;
+		border-radius: 8px 8px 0 0;
+		transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 	}
 
 	.player-tab:hover {
 		color: var(--text);
-		background: none;
+		background: var(--accent-soft);
 	}
 
 	.player-tab.active {
-		color: var(--accent);
+		color: var(--accent-strong);
 		border-bottom-color: var(--accent);
+		background: var(--bg-card);
 	}
 
 	.player-tab.is-current .current-dot {
@@ -1338,9 +1341,12 @@
 	}
 
 	.panel-title {
-		font-size: 0.85rem;
-		color: var(--text);
-		margin-bottom: 6px;
+		font-size: 0.7rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--accent-strong);
+		margin-bottom: 8px;
 	}
 
 	.panel-header-row {
@@ -1368,8 +1374,9 @@
 	}
 
 	.goal-item.active-round {
-		background: #fef9f0;
+		background: var(--accent-soft);
 		border: 1px solid var(--accent);
+		box-shadow: 0 1px 2px var(--shadow);
 	}
 
 	.goal-header {
@@ -1504,17 +1511,20 @@
 	}
 
 	.die-token {
-		font-size: 1.1rem;
-		padding: 4px 10px;
-		border: 1px solid #d4c9b8;
-		background: #faf6ef;
-		border-radius: 6px;
+		font-size: 1.15rem;
+		padding: 5px 11px;
+		border: 1px solid var(--border-strong);
+		background: linear-gradient(180deg, #ffffff, #f4eee2);
+		border-radius: 9px;
 		cursor: pointer;
+		box-shadow: 0 1px 2px var(--shadow);
+		transition: transform 0.05s ease, border-color 0.15s ease, background 0.15s ease;
 	}
 
 	.die-token:hover {
-		background: #fee;
-		border-color: #c00;
+		background: #fdeaea;
+		border-color: #d06b6b;
+		transform: translateY(-1px);
 	}
 
 	.feeder-empty {
@@ -1531,16 +1541,18 @@
 
 	.feeder-add-btn {
 		font-size: 1rem;
-		padding: 3px 10px;
-		border: 1px dashed var(--border);
+		padding: 4px 10px;
+		border: 1px dashed var(--border-strong);
 		background: transparent;
-		border-radius: 4px;
+		border-radius: 7px;
 		cursor: pointer;
+		transition: all 0.15s ease;
 	}
 
 	.feeder-add-btn:hover {
 		border-color: var(--accent);
-		background: #fdf8ef;
+		border-style: solid;
+		background: var(--accent-soft);
 	}
 
 	.feeder-add-btn.choice {
