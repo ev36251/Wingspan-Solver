@@ -95,8 +95,8 @@
 	}
 
 	.error {
-		background: #fef2f2;
-		color: #dc2626;
+		background: var(--error-bg);
+		color: var(--error-text);
 		padding: 8px 12px;
 		border-radius: 6px;
 		font-size: 0.85rem;
@@ -143,7 +143,7 @@
 
 	.winner-col {
 		font-weight: 800;
-		background: #fff7db;
+		background: var(--accent-soft);
 	}
 
 	.empty {

@@ -147,7 +147,7 @@
 		border: 1px solid #ddd;
 		border-radius: 8px;
 		padding: 0.55rem 0.65rem;
-		background: #fafafa;
+		background: var(--surface-sunken);
 		display: grid;
 		gap: 0.3rem;
 	}
@@ -178,7 +178,7 @@
 	}
 
 	.status-best {
-		background: #fff3cf;
+		background: var(--accent-soft);
 		color: #8a5b00;
 	}
 

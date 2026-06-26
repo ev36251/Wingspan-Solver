@@ -31,6 +31,7 @@
 
 	let scoreSheet: ScoreSheet;
 	let solverPanel: SolverPanel;
+	let solverBusy = false;
 	let showFeederAdd = false;
 	let didGameOverRefresh = false;
 	const LOCAL_STORAGE_GAME_KEY = 'wingspan_solver_active_game_id';
@@ -752,8 +753,12 @@
 				triggerRefresh={saveCounter}
 			/>
 			<div class="game-actions">
-				<button class="solve-btn" on:click={() => solverPanel?.solve()} disabled={isGameOver}>
-					Recommend for {state.players[activePlayerIdx]?.name || 'Player'}
+				<button class="solve-btn" on:click={() => solverPanel?.solve()} disabled={isGameOver || solverBusy}>
+					{#if solverBusy}
+						<span class="btn-spinner" aria-hidden="true"></span> Analyzing…
+					{:else}
+						Recommend for {state.players[activePlayerIdx]?.name || 'Player'}
+					{/if}
 				</button>
 				<button on:click={endTurnAndSave} disabled={saving || isGameOver}>
 					End Turn
@@ -861,6 +866,7 @@
 					playerIdx={activePlayerIdx}
 					playerName={state.players[activePlayerIdx]?.name || ''}
 					bind:this={solverPanel}
+					bind:busy={solverBusy}
 						on:apply={(e) => applyRecommendation(e.detail)}
 					/>
 
@@ -1047,8 +1053,8 @@
 	}
 
 	.error {
-		background: #fef2f2;
-		color: #dc2626;
+		background: var(--error-bg);
+		color: var(--error-text);
 		padding: 8px 12px;
 		border-radius: 6px;
 		font-size: 0.85rem;
@@ -1075,12 +1081,12 @@
 		font-size: 0.8rem;
 		padding: 4px 10px;
 		border: 1px solid #ddd;
-		background: #f9f9f9;
+		background: var(--surface-sunken);
 		color: #999;
 	}
 
 	.remove:hover {
-		background: #fee;
+		background: var(--error-bg);
 		color: #c00;
 		border-color: #c00;
 	}
@@ -1096,7 +1102,7 @@
 		padding: 10px 12px;
 		border: 1px solid var(--border);
 		border-radius: 8px;
-		background: #faf6ef;
+		background: var(--surface-sunken);
 	}
 
 	.board-type-label {
@@ -1161,7 +1167,7 @@
 		padding: 10px 12px;
 		border: 1px solid var(--border);
 		border-radius: 8px;
-		background: #fef9f0;
+		background: var(--accent-soft);
 		font-size: 0.9rem;
 		font-weight: 600;
 		color: var(--text);
@@ -1195,6 +1201,23 @@
 
 	.solve-btn:hover {
 		filter: brightness(1.1);
+	}
+
+	.btn-spinner {
+		display: inline-block;
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		border: 2px solid rgba(255, 255, 255, 0.5);
+		border-top-color: #fff;
+		animation: btnspin 0.7s linear infinite;
+		vertical-align: -1px;
+		margin-right: 4px;
+	}
+	@keyframes btnspin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.solve-btn:disabled {
@@ -1455,7 +1478,7 @@
 		font-size: 0.7rem;
 		font-weight: 600;
 		border: 1px solid var(--border);
-		background: #faf6ef;
+		background: var(--surface-sunken);
 		border-radius: 3px;
 		cursor: pointer;
 		display: flex;
@@ -1465,7 +1488,7 @@
 
 	.goal-pt-btn:hover {
 		border-color: var(--accent);
-		background: #fef9f0;
+		background: var(--accent-soft);
 	}
 
 	.goal-pt-btn.selected {
@@ -1481,7 +1504,7 @@
 		font-size: 0.7rem;
 		font-weight: 700;
 		border: 1px solid var(--border);
-		background: #f5f5f5;
+		background: var(--surface-sunken);
 		border-radius: 3px;
 		cursor: pointer;
 		display: flex;
@@ -1573,7 +1596,7 @@
 		font-size: 0.65rem;
 		padding: 1px 8px;
 		border: 1px solid var(--accent);
-		background: #fef9f0;
+		background: var(--accent-soft);
 		color: var(--accent);
 		border-radius: 3px;
 		cursor: pointer;
@@ -1581,7 +1604,7 @@
 	}
 
 	.toggle-add-btn:hover {
-		background: #fdf0d5;
+		background: var(--accent-soft);
 	}
 
 	.toggle-add-btn.active {
@@ -1593,14 +1616,14 @@
 		font-size: 0.65rem;
 		padding: 1px 6px;
 		border: 1px solid #ddd;
-		background: #f5f5f5;
+		background: var(--surface-sunken);
 		color: #999;
 		border-radius: 3px;
 		cursor: pointer;
 	}
 
 	.clear-btn:hover {
-		background: #fee;
+		background: var(--error-bg);
 		color: #c00;
 		border-color: #c00;
 	}
@@ -1624,7 +1647,7 @@
 		font-size: 0.65rem;
 		padding: 2px 6px;
 		border: 1px solid #b0c4de;
-		background: white;
+		background: var(--surface-sunken);
 		border-radius: 3px;
 		cursor: pointer;
 		color: #1565c0;
@@ -1646,13 +1669,13 @@
 		padding: 1px 5px;
 		border-radius: 3px;
 		border: 1px solid #ddd;
-		background: #f5f5f5;
+		background: var(--surface-sunken);
 		color: #999;
 		line-height: 1;
 	}
 
 	.remove-btn:hover {
-		background: #fee;
+		background: var(--error-bg);
 		color: #c00;
 		border-color: #c00;
 	}
@@ -1668,7 +1691,7 @@
 		border: 1px solid var(--border);
 		border-radius: 6px;
 		padding: 6px 8px;
-		background: #fefdf8;
+		background: var(--surface-sunken);
 	}
 
 	.nectar-player-name {
@@ -1711,7 +1734,7 @@
 		font-size: 0.85rem;
 		font-weight: 700;
 		border: 1px solid #d4c9b8;
-		background: #faf6ef;
+		background: var(--surface-sunken);
 		border-radius: 4px;
 		cursor: pointer;
 		display: flex;

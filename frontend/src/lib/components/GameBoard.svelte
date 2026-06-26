@@ -520,7 +520,7 @@
 		flex-direction: column;
 		align-items: center;
 		padding: 4px 0;
-		border-bottom: 1px solid #e0dcd4;
+		border-bottom: 1px solid var(--border);
 		width: 100%;
 	}
 
@@ -554,12 +554,13 @@
 	}
 
 	/* Per-food tints; brighten when the player actually holds some. */
-	.sidebar-food.food-invertebrate.has-food { background: #f3e9d7; border-color: #e6d3ac; }
-	.sidebar-food.food-seed.has-food { background: #f6eecb; border-color: #ecdf9f; }
-	.sidebar-food.food-fish.has-food { background: #dceaf2; border-color: #b9d6e6; }
-	.sidebar-food.food-fruit.has-food { background: #f6dee0; border-color: #ecc1c6; }
-	.sidebar-food.food-rodent.has-food { background: #e9e3da; border-color: #d4c9b8; }
-	.sidebar-food.food-nectar.has-food { background: #f7dfe9; border-color: #eebdce; }
+	/* Food tints via color-mix over the card bg, so they adapt to light/dark. */
+	.sidebar-food.food-invertebrate.has-food { background: color-mix(in srgb, #c9a36a 24%, var(--bg-card)); border-color: color-mix(in srgb, #c9a36a 45%, var(--bg-card)); }
+	.sidebar-food.food-seed.has-food { background: color-mix(in srgb, #e3c84e 24%, var(--bg-card)); border-color: color-mix(in srgb, #e3c84e 45%, var(--bg-card)); }
+	.sidebar-food.food-fish.has-food { background: color-mix(in srgb, #4a9fd4 24%, var(--bg-card)); border-color: color-mix(in srgb, #4a9fd4 45%, var(--bg-card)); }
+	.sidebar-food.food-fruit.has-food { background: color-mix(in srgb, #d96b76 24%, var(--bg-card)); border-color: color-mix(in srgb, #d96b76 45%, var(--bg-card)); }
+	.sidebar-food.food-rodent.has-food { background: color-mix(in srgb, #9a8f80 24%, var(--bg-card)); border-color: color-mix(in srgb, #9a8f80 45%, var(--bg-card)); }
+	.sidebar-food.food-nectar.has-food { background: color-mix(in srgb, #de7aa8 24%, var(--bg-card)); border-color: color-mix(in srgb, #de7aa8 45%, var(--bg-card)); }
 
 	.sidebar-food-icon {
 		font-size: 1.05rem;
@@ -786,7 +787,7 @@
 		font-size: 0.85rem;
 		font-weight: 800;
 		color: #6a1b9a;
-		background: #f3e5f5;
+		background: color-mix(in srgb, #9c27b0 16%, var(--bg-card));
 		border-radius: 4px;
 		padding: 0 4px;
 	}
@@ -805,7 +806,7 @@
 		font-size: 0.6rem;
 		font-weight: 700;
 		border: 1px solid var(--border);
-		background: #f5f5f5;
+		background: var(--surface-sunken);
 		border-radius: 3px;
 		cursor: pointer;
 		display: flex;
@@ -844,7 +845,7 @@
 		padding: 0;
 		font-size: 0.55rem;
 		border: 1px solid var(--border);
-		background: #fff3e0;
+		background: var(--accent-soft);
 		border-radius: 2px;
 		cursor: pointer;
 		display: flex;
@@ -854,7 +855,7 @@
 
 	.cache-food-btn:hover {
 		border-color: #e65100;
-		background: #ffe0b2;
+		background: color-mix(in srgb, #e65100 20%, var(--bg-card));
 	}
 
 	.cache-remove-btns {
@@ -865,15 +866,15 @@
 	.cache-remove-btn {
 		padding: 0 3px;
 		font-size: 0.55rem;
-		border: 1px solid #ffccbc;
-		background: #fff3e0;
+		border: 1px solid color-mix(in srgb, #bf360c 30%, var(--bg-card));
+		background: var(--accent-soft);
 		border-radius: 2px;
 		cursor: pointer;
 		color: #bf360c;
 	}
 
 	.cache-remove-btn:hover {
-		background: #ffccbc;
+		background: color-mix(in srgb, #bf360c 22%, var(--bg-card));
 	}
 
 	/* Add bird to slot */
@@ -925,7 +926,7 @@
 		font-size: 0.6rem;
 		padding: 2px 5px;
 		border: 1px solid var(--accent);
-		background: #fdf8ef;
+		background: var(--accent-soft);
 		color: var(--accent);
 		border-radius: 3px;
 		cursor: pointer;
@@ -945,7 +946,7 @@
 		padding: 2px 6px;
 		margin-top: 2px;
 		border: 1px solid var(--border);
-		background: #f5f5f5;
+		background: var(--surface-sunken);
 		border-radius: 3px;
 		cursor: pointer;
 	}
@@ -955,8 +956,8 @@
 		font-size: 0.65rem;
 		padding: 1px 5px;
 		border-radius: 3px;
-		border: 1px solid #ddd;
-		background: #f5f5f5;
+		border: 1px solid var(--border);
+		background: var(--surface-sunken);
 		color: #999;
 		line-height: 1;
 		cursor: pointer;
@@ -964,7 +965,7 @@
 	}
 
 	.remove-btn:hover {
-		background: #fee;
+		background: var(--error-bg);
 		color: #c00;
 		border-color: #c00;
 	}
@@ -992,7 +993,7 @@
 
 	.hand-card {
 		font-size: 0.8rem;
-		background: #f5f0e8;
+		background: var(--surface-sunken);
 		padding: 3px 8px;
 		border-radius: 4px;
 		display: flex;
@@ -1052,7 +1053,7 @@
 	/* Bonus cards */
 	.bonus-badge {
 		font-size: 0.7rem;
-		background: #f3e5f5;
+		background: color-mix(in srgb, #9c27b0 16%, var(--bg-card));
 		color: #6a1b9a;
 		padding: 2px 8px;
 		border-radius: 4px;
@@ -1077,7 +1078,7 @@
 		top: 100%;
 		left: 0;
 		right: 0;
-		background: white;
+		background: var(--surface-sunken);
 		border: 1px solid var(--border);
 		border-radius: 0 0 6px 6px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
@@ -1090,11 +1091,11 @@
 	.bonus-dropdown li {
 		padding: 6px 10px;
 		cursor: pointer;
-		border-bottom: 1px solid #f0f0f0;
+		border-bottom: 1px solid var(--border);
 	}
 
 	.bonus-dropdown li:hover {
-		background: #f5f0e8;
+		background: var(--surface-sunken);
 	}
 
 	.dropdown-name {

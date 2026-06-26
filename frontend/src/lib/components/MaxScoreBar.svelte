@@ -140,7 +140,7 @@
 		font-size: 0.7rem;
 		padding: 2px 8px;
 		border: 1px solid var(--border);
-		background: #f5f5f5;
+		background: var(--surface-sunken);
 		border-radius: 4px;
 		cursor: pointer;
 		color: var(--text-muted);
@@ -159,14 +159,14 @@
 
 	.error-text {
 		font-size: 0.75rem;
-		color: #dc2626;
+		color: var(--error-text);
 	}
 
 	.breakdown {
 		position: absolute;
 		top: 100%;
 		left: 0;
-		background: white;
+		background: var(--surface-sunken);
 		border: 1px solid var(--border);
 		border-radius: 6px;
 		padding: 8px 12px;

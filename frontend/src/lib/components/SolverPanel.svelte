@@ -14,6 +14,8 @@
 	export let disabled = false;
 	export let playerIdx: number = 0;
 	export let playerName: string = '';
+	/** Bindable: true while a recommendation is being computed (drives the header button). */
+	export let busy = false;
 
 	let appliedRank: number | null = null;
 
@@ -63,10 +65,15 @@
 
 	export async function solve() {
 		loading = true;
+		busy = true;
 		error = '';
 		showResetInput = false;
 		afterResetRecs = [];
 		advisor = null;
+		elapsed = 0;
+		const t0 = Date.now();
+		clearInterval(elapsedTimer);
+		elapsedTimer = setInterval(() => (elapsed = Math.round((Date.now() - t0) / 1000)), 250);
 		try {
 			// The advisor (percentage lines) is the headline; the ranked move list
 			// is still fetched for the click-to-apply mechanics.
@@ -83,9 +90,22 @@
 			error = e instanceof Error ? e.message : 'Failed to get recommendations';
 			recommendations = [];
 		} finally {
+			clearInterval(elapsedTimer);
 			loading = false;
+			busy = false;
 		}
 	}
+
+	// Loading progress: the engine move-pick can take ~60-90s, so show elapsed
+	// time and a hint about which phase we're likely in.
+	let elapsed = 0;
+	let elapsedTimer: ReturnType<typeof setInterval>;
+	$: loadingPhase =
+		elapsed < 4
+			? 'Reading the board…'
+			: elapsed < 75
+				? 'Engine searching the strongest move…'
+				: 'Estimating outcomes…';
 
 	// Clear recommendations when player tab changes
 	$: if (playerName !== solvedForPlayer && recommendations.length > 0) {
@@ -388,7 +408,20 @@
 		<div class="error">{error}</div>
 	{/if}
 
-	{#if advisor && advisor.main_line}
+	{#if loading}
+		<div class="solving" role="status" aria-live="polite">
+			<span class="spinner" aria-hidden="true"></span>
+			<div class="solving-text">
+				<span class="solving-phase">{loadingPhase}</span>
+				<span class="solving-sub">
+					{elapsed}s · the trained engine can take up to ~90s
+				</span>
+			</div>
+			<div class="solving-bar"><span class="solving-bar-fill"></span></div>
+		</div>
+	{/if}
+
+	{#if advisor && advisor.main_line && !loading}
 		<div class="advisor">
 			<div class="advisor-head">Engine read</div>
 			<div class="line main-line">
@@ -416,7 +449,7 @@
 		</div>
 	{/if}
 
-	{#if recommendations.length > 0}
+	{#if recommendations.length > 0 && !loading}
 		<div class="timing">
 			Best moves for <strong>{solvedForPlayer}</strong> &middot; {evaluationTime.toFixed(1)}ms
 		</div>
@@ -679,8 +712,8 @@
 	}
 
 	.error {
-		background: #fef2f2;
-		color: #dc2626;
+		background: var(--error-bg);
+		color: var(--error-text);
 		padding: 8px 12px;
 		border-radius: 6px;
 		font-size: 0.85rem;
@@ -697,7 +730,7 @@
 		padding: 8px 12px;
 		border: 1px solid var(--border);
 		border-radius: 6px;
-		background: #fefdf8;
+		background: var(--surface-sunken);
 	}
 
 	.rec.clickable {
@@ -708,7 +741,7 @@
 	.rec.clickable:hover {
 		border-color: var(--accent);
 		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-		background: #fef9f0;
+		background: var(--accent-soft);
 	}
 
 	.rec.applied {
@@ -727,7 +760,7 @@
 
 	.rec.top-pick {
 		border-color: var(--accent);
-		background: #fef9f0;
+		background: var(--accent-soft);
 	}
 
 	.rec-header {
@@ -750,6 +783,78 @@
 	.action-type {
 		font-weight: 500;
 		font-size: 0.85rem;
+	}
+
+	/* Loading / solving indicator */
+	.solving {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		grid-template-areas: 'spin text' 'bar bar';
+		align-items: center;
+		gap: 4px 12px;
+		padding: 14px;
+		margin-bottom: 14px;
+		border: 1px solid var(--accent);
+		border-radius: 10px;
+		background: color-mix(in srgb, var(--accent) 7%, transparent);
+	}
+	.spinner {
+		grid-area: spin;
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		border: 3px solid color-mix(in srgb, var(--accent) 30%, transparent);
+		border-top-color: var(--accent);
+		animation: spin 0.8s linear infinite;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	.solving-text {
+		grid-area: text;
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+	}
+	.solving-phase {
+		font-weight: 600;
+		font-size: 0.9rem;
+	}
+	.solving-sub {
+		font-size: 0.74rem;
+		color: var(--text-muted);
+	}
+	.solving-bar {
+		grid-area: bar;
+		height: 4px;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--accent) 18%, transparent);
+		overflow: hidden;
+		margin-top: 8px;
+	}
+	.solving-bar-fill {
+		display: block;
+		height: 100%;
+		width: 35%;
+		border-radius: 999px;
+		background: var(--accent);
+		animation: indeterminate 1.4s ease-in-out infinite;
+	}
+	@keyframes indeterminate {
+		0% {
+			margin-left: -35%;
+		}
+		100% {
+			margin-left: 100%;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.spinner,
+		.solving-bar-fill {
+			animation-duration: 0s;
+		}
 	}
 
 	/* Percentage-play advisor */
@@ -942,7 +1047,7 @@
 	}
 
 	.skip-warning {
-		color: #dc2626;
+		color: var(--error-text);
 		font-weight: 600;
 	}
 
@@ -1027,7 +1132,7 @@
 	}
 
 	.close-btn:hover {
-		color: #dc2626;
+		color: var(--error-text);
 	}
 
 	/* Dice inputs */
@@ -1113,7 +1218,7 @@
 		top: 100%;
 		left: 0;
 		right: 0;
-		background: white;
+		background: var(--surface-sunken);
 		border: 1px solid var(--border);
 		border-top: none;
 		border-radius: 0 0 4px 4px;
