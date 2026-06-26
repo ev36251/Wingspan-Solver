@@ -33,10 +33,12 @@ from backend.ml.solo_eval import make_net_chooser, make_net_sampling_chooser
 
 
 # Named search-budget presets for the 2-player rollout-search agent. Budget is
-# the one lever that scales agent strength (memory/SOLO_SEED_FINDINGS.md: the
-# monotone ladder r6=87.5 < r12=93.2 < r24=96.2 vs heuristic, n=100). Each preset
-# also pins temperature=0.3 + determinize, the config those numbers were measured
-# at. "default" is the speed/strength knee; step up when compute allows.
+# the one lever that scales agent strength (memory/SOLO_SEED_FINDINGS.md). The
+# ladder vs heuristic (n=100, paired) plateaus at ~96: r6=87.5 < r12=93.2 <
+# r24=96.2 == r36=96.3. So "strong" (r24) is the diminishing-returns knee and the
+# value pick; "max" (r36) is the highest measured point but adds nothing over
+# "strong" for ~1.5x compute. Each preset pins temperature=0.3 + determinize, the
+# config those numbers were measured at.
 BUDGET_PRESETS = {
     "default": dict(top_k=10, rollouts=12, temperature=0.3, determinize=True),
     "strong":  dict(top_k=16, rollouts=24, temperature=0.3, determinize=True),

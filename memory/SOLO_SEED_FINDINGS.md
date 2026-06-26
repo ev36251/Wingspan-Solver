@@ -730,13 +730,16 @@ the leaf=full k10/r12/t0.3/det baseline (which re-measured at mean 93.2 here).
   baseline  k10/r12           93.2     --        --       --
   A budget  k8/r6  (low)      87.5    -5.70     32/64    0.001 *
   A budget  k16/r24 (high)    96.2    +3.00     58/39    0.067
+  A budget  k20/r36 (xhigh)   96.3    +3.11     59/40    0.070     (PLATEAU)
   B depth-2 lookahead         85.8    -7.33     24/75    0.000 *  (worse)
   B MCTS n_sims=200 (V leaf)  70.0   -23.18      7/92    0.000 *  (ties heuristic)
   C selfplay r12 (vs r1 opp)  91.6    -1.61     48/50    0.920     (robust)
   C denial ablation l=0.3     80.5      n/a       --      --       (see below)
 
-KEY FINDING -- SEARCH BUDGET IS THE ONE LEVER THAT SCALES. The budget ladder is
-monotone: r6=87.5 < r12=93.2 < r24=96.2. The low point is significantly worse
+KEY FINDING -- SEARCH BUDGET IS THE ONE LEVER THAT SCALES (TO A PLATEAU). The
+ladder rises then flattens: r6=87.5 < r12=93.2 < r24=96.2 == r36=96.3. r24 and
+r36 are statistically identical, so the diminishing-returns knee is ~k16/r24
+(+3.0 over default); pushing to r36 (1.5x compute) buys +0.1 = nothing. The low point is significantly worse
 (p=0.001) and the high point trends better (+3.0, 58/39, p=0.067). Independently
 corroborated by selfplay: the strong agent (r12) beats a weak-search opponent
 (r1) 66/100 (p=0.001). Three signals agree -- raw rollout budget buys strength,
@@ -769,8 +772,8 @@ budget likely keeps helping with diminishing returns (untested above r24).
 Because budget is the scaling lever, the 2p agent now takes a named `--strength`
 preset (backend/ml/two_player.py BUDGET_PRESETS, shared into value_gate compare):
   default = k10/r12 (93.2, speed/strength knee)
-  strong  = k16/r24 (96.2, ~+3, ~2x compute)
-  max     = k20/r36 (highest measured point)
+  strong  = k16/r24 (96.2, ~+3, ~2x compute) <- value pick, the plateau knee
+  max     = k20/r36 (96.3, == strong; highest measured, no gain for ~1.5x more)
 Each pins temperature=0.3 + determinize (the config the numbers were measured at).
   python -m backend.ml.two_player --mode heuristic --seeds 0-99 --strength strong --use-modal
   python -m backend.ml.value_gate compare --seeds 0-99 --leaf-mode full --strength max --use-modal
