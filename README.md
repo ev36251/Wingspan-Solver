@@ -9,6 +9,79 @@ Two strategy approaches live in this repo:
 
 ---
 
+## In plain English (start here)
+
+**What this is.** A Wingspan helper. You type your current game into a web app,
+hit "Recommend," and it tells you the strongest move to make — plus your odds of
+different final scores.
+
+**How the engine actually "thinks": rollouts.** It doesn't use a formula to
+guess whether a move is good. Instead, for each move it's weighing, it *finishes
+the game in its head* — it imagines playing all the way to the end and sees what
+score it gets. One imagined full game = one **rollout**. It does this many times
+and picks the move that leads to the best scores on average. This one idea is the
+whole project: judging a move by *playing it out to the end* (instead of guessing)
+is worth roughly **+40 points** over "obvious" greedy play, and it's why the
+engine discovers real strategies — food engines, end-of-round caching, tucking
+cards — because those only pay off later, and rollouts actually *see* later.
+
+**What "R" and "K" mean (the two thinking dials).** It can't imagine *infinite*
+games (that'd take forever), so two settings control how hard it thinks:
+
+- **K = top-k = how many candidate moves it seriously considers** each turn.
+  `K10` = look at the 10 most promising moves; `K20` = look at 20.
+- **R = rollouts = how many full games it imagines per candidate move.**
+  `R12` = finish the game 12 times for each move and average; `R36` = 36 times.
+
+So **`K10/R12`** means: *take the 10 best-looking moves, play each out to the end
+12 times, average the scores, pick the winner.* More of either dial = more
+thinking = usually better moves, but slower. `K20/R36` is the most we tried.
+
+**Where it landed: ~92, and why turning the dials up stops helping.** We cranked
+the thinking dials to see if more compute kept buying score (all vs the built-in
+opponent, 100 games each):
+
+| thinking budget | average score |
+|---|---|
+| light (`K8/R6`) | ~88 |
+| **default (`K10/R12`)** | **~93** |
+| heavy (`K16/R24`) | ~96 |
+| heaviest (`K20/R36`) | ~96 *(no better)* |
+
+Two things stand out: more thinking *does* help — but it **flattens out around
+96**. Going from R24 to R36 (50% more compute) bought essentially nothing. So
+~92–96 isn't a bug; it's a **ceiling**.
+
+**Why ~96 is the ceiling (the whole issue).** We tried hard to break past it with
+fancier methods: training a neural net to pick moves, training one to *guess* the
+final score without playing it out, different search algorithms (MCTS, deeper
+look-ahead), and letting it learn by playing against itself. **Every one of them
+failed to beat plain rollout search.** The reason is always the same: the
+rollouts are already doing the hard work. When you finish the game 12+ times and
+average, that average is such a good judge of a move that a neural net's "hunch"
+just gets overruled by the rollouts anyway — the smarter guess gets washed out.
+So the ceiling isn't the AI being dumb; it's that **for this game, against this
+opponent, ~96 is about the best score reachable**, and the only lever that
+reliably helps (more rollouts) has diminishing returns. Past R24 you pay double
+the time for noise.
+
+**Bottom line on the engine.** It plays a genuinely strong, *honest* game — it
+doesn't cheat by peeking at the deck (it reshuffles the unseen cards before each
+imagined game), it beats the rule-based opponent ~90–95% of the time, and it
+hits 100+ points in about a third of games. It's about as strong as rollout
+search gets here. Use **default** for speed, **heavy (K16/R24)** for the last few
+points.
+
+**The app you actually use.** On top of the engine is a web companion: type in
+your game, tap "Recommend," and it gives you the strongest move (chosen by that
+~92 engine) plus plain-English odds — e.g. *"~70% of the time this finishes 70+
+points"* and longshots like *"~3% chance you draw this bird → big jump."* One
+honest tradeoff: the *move* comes from the strong engine, but the *score numbers*
+come from a faster, rougher stand-in, because a true ~96-level score *distribution*
+would take ~an hour per question — useless mid-turn.
+
+---
+
 ## Results: from ~60 to the 90s
 
 The agent's score has climbed dramatically over the life of the project. Early
