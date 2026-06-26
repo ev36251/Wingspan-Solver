@@ -112,6 +112,32 @@ def test_strong_rollout_policy_recognized_and_legal():
         assert strong_rollout_move(moves, game, p) in moves
 
 
+# --------------------------- strong engine move-pick ----------------------- #
+def test_strong_engine_best_move_returns_legal_move():
+    """The literal ~91 agent returns one of the asking player's legal moves."""
+    import numpy as np
+    from backend.ml.factorized_inference import FactorizedPolicyModel
+    from backend.ml.state_encoder import StateEncoder
+    from backend.solver.move_generator import generate_all_moves
+    from backend.solver.strong_move import strong_engine_best_move
+    from backend.ml.action_codec import action_signature
+
+    random.seed(11)
+    game = create_training_game(num_players=2, board_type=BoardType.OCEANIA)
+    idx = game.current_player_idx
+    model = FactorizedPolicyModel("reports/ml/solo_seed/solo_net_spread.npz")
+    enc = StateEncoder.resolve_for_model(model.meta)
+    legal_sigs = {action_signature(m) for m in generate_all_moves(game, game.players[idx])}
+
+    best, dets = strong_engine_best_move(
+        game, idx, model, enc, top_k=5, rollouts=2,
+        time_budget_s=20.0, max_determinizations=2, seed=0,
+    )
+    assert best is not None
+    assert action_signature(best) in legal_sigs
+    assert 1 <= dets <= 2
+
+
 # --------------------------- endpoint smoke -------------------------------- #
 def test_advisor_endpoint_returns_lines(monkeypatch):
     from backend.main import app

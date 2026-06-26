@@ -1348,16 +1348,20 @@ async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> Advi
     top = None
     used_engine = False
     if policy_model is not None and state_encoder is not None:
-        from backend.engine_search import EngineConfig, search_best_move
-        eng_cfg = EngineConfig(
-            time_budget_ms=1500 if is_pytest else 12000,
-            num_determinizations=0,  # auto-tune from budget
-            max_rollout_depth=80, top_k=req.upside_shortlist or 5, seed=0,
+        # The literal ~91-benchmarked rollout-search agent, determinized for
+        # companion-mode hidden info, inside a turn-friendly wall-clock budget.
+        from backend.solver.strong_move import strong_engine_best_move
+        best, _dets = strong_engine_best_move(
+            game, player_idx, policy_model, state_encoder,
+            top_k=6 if is_pytest else 10,
+            rollouts=2 if is_pytest else 12,
+            temperature=0.3,
+            time_budget_s=10.0 if is_pytest else 80.0,
+            max_determinizations=1 if is_pytest else 3,
+            seed=0,
         )
-        eng = search_best_move(game, player_idx=player_idx, cfg=eng_cfg,
-                               policy_model=policy_model, state_encoder=state_encoder)
-        if eng.best_move is not None:
-            top = eng.best_move
+        if best is not None:
+            top = best
             used_engine = True
     if top is None:
         la_results, _, _ = timed_lookahead_search(
