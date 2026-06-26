@@ -32,6 +32,18 @@ from backend.ml.solo_seed_optimizer import SeededBirdfeeder
 from backend.ml.solo_eval import make_net_chooser, make_net_sampling_chooser
 
 
+# Named search-budget presets for the 2-player rollout-search agent. Budget is
+# the one lever that scales agent strength (memory/SOLO_SEED_FINDINGS.md: the
+# monotone ladder r6=87.5 < r12=93.2 < r24=96.2 vs heuristic, n=100). Each preset
+# also pins temperature=0.3 + determinize, the config those numbers were measured
+# at. "default" is the speed/strength knee; step up when compute allows.
+BUDGET_PRESETS = {
+    "default": dict(top_k=10, rollouts=12, temperature=0.3, determinize=True),
+    "strong":  dict(top_k=16, rollouts=24, temperature=0.3, determinize=True),
+    "max":     dict(top_k=20, rollouts=36, temperature=0.3, determinize=True),
+}
+
+
 def build_2p_game(seed: int, board: BoardType = BoardType.OCEANIA):
     """Deterministic 2-player setup (real draft for both seats + seeded feeder)."""
     random.seed(seed)
@@ -302,9 +314,18 @@ def main():
                     help="denial weight lambda for the ablation 'a' agent (0=selfish, 1=full)")
     ap.add_argument("--depth", type=int, default=1, help="plies of my-move lookahead (>=2 enables it)")
     ap.add_argument("--branch", type=int, default=3, help="candidates expanded at deeper plies")
+    ap.add_argument("--strength", choices=sorted(BUDGET_PRESETS),
+                    help="named search-budget preset; overrides --top-k/--rollouts/"
+                         "--temperature/--determinize (default|strong|max)")
     args = ap.parse_args()
     board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
     seeds = _parse_seeds(args.seeds)
+    if args.strength:
+        preset = BUDGET_PRESETS[args.strength]
+        args.top_k, args.rollouts = preset["top_k"], preset["rollouts"]
+        args.temperature, args.determinize = preset["temperature"], preset["determinize"]
+        print(f"  [strength={args.strength}] top_k={args.top_k} rollouts={args.rollouts} "
+              f"temp={args.temperature} determinize={args.determinize}")
     cfg = {"top_k": args.top_k, "rollouts": args.rollouts,
            "temperature": args.temperature, "determinize": args.determinize,
            "opp_weight": args.opp_weight, "depth": args.depth, "branch": args.branch}

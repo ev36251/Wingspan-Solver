@@ -817,10 +817,20 @@ def main():
     cp.add_argument("--c-puct", type=float, default=1.5)
     cp.add_argument("--temperature", type=float, default=0.3)
     cp.add_argument("--determinize", action="store_true")
+    cp.add_argument("--strength", choices=("default", "strong", "max"),
+                    help="named search-budget preset for leaf=full (overrides "
+                         "--top-k/--rollouts/--temperature/--determinize)")
     cp.add_argument("--use-modal", action="store_true")
     cp.add_argument("--seeds-per-shard", type=int, default=2)
 
     args = ap.parse_args()
+    if getattr(args, "strength", None):
+        from backend.ml.two_player import BUDGET_PRESETS
+        pr = BUDGET_PRESETS[args.strength]
+        args.top_k, args.rollouts = pr["top_k"], pr["rollouts"]
+        args.temperature, args.determinize = pr["temperature"], pr["determinize"]
+        print(f"  [strength={args.strength}] top_k={args.top_k} rollouts={args.rollouts} "
+              f"temp={args.temperature} determinize={args.determinize}")
     if args.cmd == "train":
         train_value(args.data, args.out, epochs=args.epochs)
         return

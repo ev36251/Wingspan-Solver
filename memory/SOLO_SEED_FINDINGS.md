@@ -764,3 +764,13 @@ monotonically and predictably. The net, the search algorithm, and the objective
 are all saturated; budget is the free dial. Deployed default stays k10/r12 (93.2,
 the speed/strength knee); bump to k16/r24 for ~+3 when compute allows. Higher
 budget likely keeps helping with diminishing returns (untested above r24).
+
+### Selectable strength presets (wired)
+Because budget is the scaling lever, the 2p agent now takes a named `--strength`
+preset (backend/ml/two_player.py BUDGET_PRESETS, shared into value_gate compare):
+  default = k10/r12 (93.2, speed/strength knee)
+  strong  = k16/r24 (96.2, ~+3, ~2x compute)
+  max     = k20/r36 (highest measured point)
+Each pins temperature=0.3 + determinize (the config the numbers were measured at).
+  python -m backend.ml.two_player --mode heuristic --seeds 0-99 --strength strong --use-modal
+  python -m backend.ml.value_gate compare --seeds 0-99 --leaf-mode full --strength max --use-modal
