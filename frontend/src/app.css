@@ -1,15 +1,28 @@
 /* Wingspan Solver — Global Styles */
 :root {
-	--forest: #2d5016;
-	--grassland: #8b7355;
-	--wetland: #1a5276;
+	/* Habitat palette */
+	--forest: #3a6b1e;
+	--grassland: #b08948;
+	--wetland: #1f6ea3;
+
+	/* Brand / surfaces — warm "field guide" feel */
 	--accent: #c4883b;
-	--bg: #f5f0e8;
+	--accent-strong: #a96f29;
+	--accent-soft: #f4e7d2;
+	--bg: #efe9dd;
 	--bg-card: #ffffff;
-	--text: #2c2c2c;
-	--text-muted: #6b6b6b;
-	--border: #d4c9b8;
-	--shadow: rgba(0, 0, 0, 0.08);
+	--surface: #ffffff;
+	--surface-sunken: #f7f2e9;
+	--text: #2a2722;
+	--text-muted: #79716a;
+	--border: #ddd2bf;
+	--border-strong: #cabfa8;
+	--shadow: rgba(60, 45, 20, 0.08);
+	--shadow-lg: rgba(60, 45, 20, 0.16);
+
+	--radius: 10px;
+	--radius-sm: 7px;
+	--radius-lg: 14px;
 }
 
 * {
@@ -19,76 +32,140 @@
 }
 
 body {
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-	background: var(--bg);
+	font-family:
+		'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	background:
+		radial-gradient(1200px 600px at 80% -10%, #f7f0e2 0%, transparent 60%),
+		var(--bg);
 	color: var(--text);
 	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
 }
 
 button {
 	cursor: pointer;
-	border: 1px solid var(--border);
-	border-radius: 6px;
-	padding: 6px 14px;
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius-sm);
+	padding: 7px 14px;
 	font-size: 0.875rem;
+	font-weight: 500;
 	background: var(--bg-card);
 	color: var(--text);
-	transition: all 0.15s;
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		transform 0.05s ease,
+		box-shadow 0.15s ease;
 }
 
 button:hover {
-	background: #eee;
+	background: var(--surface-sunken);
+	border-color: var(--accent);
+}
+
+button:active {
+	transform: translateY(1px);
 }
 
 button.primary {
-	background: var(--accent);
-	color: white;
-	border-color: var(--accent);
+	background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+	color: #fff;
+	border-color: var(--accent-strong);
+	box-shadow: 0 1px 2px var(--shadow);
 }
 
 button.primary:hover {
-	background: #b37a30;
+	background: linear-gradient(180deg, var(--accent-strong) 0%, #976223 100%);
+	border-color: #976223;
 }
 
 button:disabled {
-	opacity: 0.5;
+	opacity: 0.45;
 	cursor: not-allowed;
+	transform: none;
 }
 
-input, select {
-	border: 1px solid var(--border);
-	border-radius: 6px;
-	padding: 6px 10px;
+input,
+select {
+	border: 1px solid var(--border-strong);
+	border-radius: var(--radius-sm);
+	padding: 7px 11px;
 	font-size: 0.875rem;
+	font-family: inherit;
 	background: var(--bg-card);
 	color: var(--text);
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
 	outline: none;
 	border-color: var(--accent);
-	box-shadow: 0 0 0 2px rgba(196, 136, 59, 0.2);
+	box-shadow: 0 0 0 3px rgba(196, 136, 59, 0.18);
+}
+
+::placeholder {
+	color: #a99f92;
 }
 
 .card {
 	background: var(--bg-card);
 	border: 1px solid var(--border);
-	border-radius: 8px;
+	border-radius: var(--radius);
 	padding: 16px;
-	box-shadow: 0 1px 3px var(--shadow);
+	box-shadow:
+		0 1px 2px var(--shadow),
+		0 6px 18px -12px var(--shadow-lg);
 }
 
-.habitat-forest { background: var(--forest); color: white; }
-.habitat-grassland { background: var(--grassland); color: white; }
-.habitat-wetland { background: var(--wetland); color: white; }
+.habitat-forest {
+	background: var(--forest);
+	color: white;
+}
+.habitat-grassland {
+	background: var(--grassland);
+	color: white;
+}
+.habitat-wetland {
+	background: var(--wetland);
+	color: white;
+}
 
-.food-icon { font-size: 1.1em; }
+.food-icon {
+	font-size: 1.1em;
+}
 
-h1, h2, h3 {
-	font-weight: 600;
+h1,
+h2,
+h3 {
+	font-weight: 700;
 	color: var(--text);
+	letter-spacing: -0.01em;
 }
 
-h1 { font-size: 1.5rem; }
-h2 { font-size: 1.25rem; }
-h3 { font-size: 1rem; }
+h1 {
+	font-size: 1.55rem;
+}
+h2 {
+	font-size: 1.25rem;
+}
+h3 {
+	font-size: 1rem;
+}
+
+/* Pleasant scrollbars */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar {
+	width: 9px;
+	height: 9px;
+}
+*::-webkit-scrollbar-thumb {
+	background: var(--border-strong);
+	border-radius: 999px;
+}
