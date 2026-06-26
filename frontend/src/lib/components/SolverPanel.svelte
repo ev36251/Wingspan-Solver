@@ -392,7 +392,12 @@
 		<div class="advisor">
 			<div class="advisor-head">Engine read</div>
 			<div class="line main-line">
-				<span class="line-move">{advisor.main_line.move_description}</span>
+				<span class="line-move">
+					{advisor.main_line.move_description}
+					{#if advisor.main_line.details?.picked_by === 'engine'}
+						<span class="engine-badge" title="Move chosen by the trained engine">engine pick</span>
+					{/if}
+				</span>
 				<span class="line-text">{advisor.main_line.sentence}</span>
 			</div>
 			{#if advisor.upside_lines.length > 0}
@@ -777,6 +782,18 @@
 	.advisor .line-move {
 		font-weight: 600;
 		font-size: 0.85rem;
+	}
+	.engine-badge {
+		margin-left: 6px;
+		font-size: 0.62rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		padding: 1px 6px;
+		border-radius: 999px;
+		background: var(--accent);
+		color: var(--surface, #fff);
+		vertical-align: middle;
 	}
 	.advisor .line-text {
 		font-size: 0.85rem;

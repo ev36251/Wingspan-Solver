@@ -102,6 +102,8 @@ def _iter_policy_model_candidates() -> list[Path]:
         [
             Path("reports/ml/factorized_bc_model.npz"),
             Path("reports/ml/champion_factorized_model.npz"),
+            # The trained solo policy/value net (the engine used for move selection).
+            Path("reports/ml/solo_seed/solo_net_spread.npz"),
         ]
     )
 
@@ -1336,36 +1338,54 @@ async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> Advi
 
     start = time.perf_counter()
 
-    # 1) Find the recommended move with a time-bounded lookahead. The advisor
-    #    needs a strong candidate, not perfect endgame play, so we always use the
-    #    budgeted search (never the exhaustive endgame_search, which can blow up
-    #    when many action cubes remain) to keep latency predictable.
+    # 1) Pick the strongest move with the TRAINED ENGINE: determinized IS-MCTS
+    #    guided by the policy net (handles companion-mode hidden info via
+    #    determinization). Falls back to the time-bounded heuristic lookahead if
+    #    the net isn't available. Time-budgeted to stay well inside a turn.
     is_pytest = bool(os.getenv("PYTEST_CURRENT_TEST"))
-    la_results, _, _ = timed_lookahead_search(
-        game=game, player=player,
-        time_budget_ms=800 if is_pytest else 2500,
-        max_depth=3 if is_pytest else 4,
-        base_beam_width=6 if is_pytest else 8,
-        leaf_evaluator=_nn_blended_leaf_value,
-    )
-    if not la_results:
-        raise HTTPException(400, "No legal moves to advise on")
-    top = la_results[0]
+    player_idx = next((i for i, p in enumerate(game.players) if p.name == player.name), 0)
+    policy_model, state_encoder = _get_policy_components()
+    top = None
+    used_engine = False
+    if policy_model is not None and state_encoder is not None:
+        from backend.engine_search import EngineConfig, search_best_move
+        eng_cfg = EngineConfig(
+            time_budget_ms=1500 if is_pytest else 12000,
+            num_determinizations=0,  # auto-tune from budget
+            max_rollout_depth=80, top_k=req.upside_shortlist or 5, seed=0,
+        )
+        eng = search_best_move(game, player_idx=player_idx, cfg=eng_cfg,
+                               policy_model=policy_model, state_encoder=state_encoder)
+        if eng.best_move is not None:
+            top = eng.best_move
+            used_engine = True
+    if top is None:
+        la_results, _, _ = timed_lookahead_search(
+            game=game, player=player,
+            time_budget_ms=800 if is_pytest else 2500,
+            max_depth=3 if is_pytest else 4,
+            base_beam_width=6 if is_pytest else 8,
+            leaf_evaluator=_nn_blended_leaf_value,
+        )
+        if not la_results:
+            raise HTTPException(400, "No legal moves to advise on")
+        top = la_results[0].move
+    move = top  # the recommended Move (from the engine or the heuristic fallback)
 
     # 2) Project the recommended move's final-score distribution (many sims so
     #    the percentiles are stable), and build the main line.
     main_sims = 12 if is_pytest else req.main_sims
-    rollout_scores = _project_final_scores(game, player.name, top.move,
+    rollout_scores = _project_final_scores(game, player.name, move,
                                            simulations=main_sims, strong=True)
     if not rollout_scores:
         raise HTTPException(500, "Could not project outcomes for the recommended move")
 
-    details: dict = {}
-    if top.move.bird_name:
-        details["bird_name"] = top.move.bird_name
-    if top.move.habitat:
-        details["habitat"] = top.move.habitat.value
-    ml = adv.main_line(top.move.description, top.move.action_type.value, rollout_scores, details)
+    details: dict = {"picked_by": "engine" if used_engine else "heuristic"}
+    if move.bird_name:
+        details["bird_name"] = move.bird_name
+    if move.habitat:
+        details["habitat"] = move.habitat.value
+    ml = adv.main_line(move.description, move.action_type.value, rollout_scores, details)
     main_line_model = AdvisorMainLine(
         move_description=ml.move_description, action_type=ml.action_type,
         sentence=ml.sentence(), typical=ml.typical, floor_prob=ml.floor_prob,
