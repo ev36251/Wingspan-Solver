@@ -92,6 +92,26 @@ def test_main_line_percentiles_and_sentence():
     assert str(ml.floor_score) in s
 
 
+# --------------------------- strong rollout policy ------------------------- #
+def test_strong_rollout_policy_recognized_and_legal():
+    """simulate_playout accepts the new 'strong'/hero params and runs to a score."""
+    from backend.solver.simulation import simulate_playout, strong_rollout_move
+    from backend.solver.move_generator import generate_all_moves
+
+    random.seed(3)
+    game = create_training_game(num_players=2, board_type=BoardType.OCEANIA)
+    hero = game.players[game.current_player_idx].name
+    result = simulate_playout(game, max_turns=260, rollout_policy="fast",
+                              hero_name=hero, hero_policy="strong")
+    assert hero in result and isinstance(result[hero], int)
+
+    # strong_rollout_move returns one of the legal moves
+    p = game.current_player
+    moves = generate_all_moves(game, p)
+    if moves:
+        assert strong_rollout_move(moves, game, p) in moves
+
+
 # --------------------------- endpoint smoke -------------------------------- #
 def test_advisor_endpoint_returns_lines(monkeypatch):
     from backend.main import app

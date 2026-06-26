@@ -190,7 +190,8 @@ def _candidate_leverage(game, player, bird: Bird) -> tuple[float, str]:
 
 def _conditional_scores(game, player_name: str, bird: Bird, sims: int) -> list[int]:
     """Median final score of playouts where `bird` is added to the player's hand
-    (i.e. 'if you had this card')."""
+    (i.e. 'if you had this card'). Uses the strong hero policy so the conditional
+    score is comparable to the main line (both reflect competent play)."""
     out: list[int] = []
     for _ in range(max(1, sims)):
         sim = deep_copy_game(game)
@@ -198,7 +199,8 @@ def _conditional_scores(game, player_name: str, bird: Bird, sims: int) -> list[i
         if sp is None:
             continue
         sp.hand.append(bird)
-        result = simulate_playout(sim, max_turns=260)
+        result = simulate_playout(sim, max_turns=260, rollout_policy="fast",
+                                  hero_name=player_name, hero_policy="strong")
         if player_name in result:
             out.append(result[player_name])
     return out

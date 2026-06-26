@@ -319,8 +319,16 @@ def _project_final_scores(
     player_name: str,
     move: Move,
     simulations: int,
+    strong: bool = False,
 ) -> list[int]:
-    """Estimate final score distribution for a move via rollout playouts."""
+    """Estimate final score distribution for a move via rollout playouts.
+
+    strong=True drives the asking player with the full heuristic (realistic
+    competent play, ~mid-60s) while opponents stay on the cheap medium policy;
+    the default keeps the light policy used by the heuristic-forecast path."""
+    hero = player_name if strong else None
+    hero_policy = "strong" if strong else None
+    opp_policy = "fast" if strong else "medium"  # opponents cheap; hero carries the score
     scores: list[int] = []
     for _ in range(max(1, simulations)):
         sim = deep_copy_game(game)
@@ -330,7 +338,8 @@ def _project_final_scores(
         success = execute_move_on_sim(sim, sim_player, move)
         if success:
             sim.advance_turn()
-        result = simulate_playout(sim, max_turns=260)
+        result = simulate_playout(sim, max_turns=260, rollout_policy=opp_policy,
+                                  hero_name=hero, hero_policy=hero_policy)
         if player_name in result:
             scores.append(result[player_name])
     return scores
@@ -1259,9 +1268,12 @@ class AdvisorRequest(BaseModel):
     player_idx: int | None = None
     # Which expansions are in the deck (one-time setting). Empty/None = all sets.
     active_sets: list[str] | None = None
-    main_sims: int = Field(default=80, ge=20, le=300)
-    upside_shortlist: int = Field(default=8, ge=0, le=20)
-    upside_sims: int = Field(default=10, ge=4, le=40)
+    # Sim counts are modest because the advisor uses the strong (heuristic) rollout
+    # policy (~316ms/playout) so the score levels are realistic rather than the
+    # weak light-policy ~40.
+    main_sims: int = Field(default=24, ge=12, le=120)
+    upside_shortlist: int = Field(default=4, ge=0, le=20)
+    upside_sims: int = Field(default=4, ge=3, le=20)
 
 
 class AdvisorMainLine(BaseModel):
@@ -1343,7 +1355,8 @@ async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> Advi
     # 2) Project the recommended move's final-score distribution (many sims so
     #    the percentiles are stable), and build the main line.
     main_sims = 12 if is_pytest else req.main_sims
-    rollout_scores = _project_final_scores(game, player.name, top.move, simulations=main_sims)
+    rollout_scores = _project_final_scores(game, player.name, top.move,
+                                           simulations=main_sims, strong=True)
     if not rollout_scores:
         raise HTTPException(500, "Could not project outcomes for the recommended move")
 
