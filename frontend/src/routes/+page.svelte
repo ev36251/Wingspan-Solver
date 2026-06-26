@@ -1272,6 +1272,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
+		min-width: 0; /* let the column shrink so the board scrolls instead of widening the grid */
 	}
 
 	.tray-panel {
@@ -1333,6 +1334,7 @@
 		top: 16px;
 		max-height: calc(100vh - 32px);
 		overflow-y: auto;
+		min-width: 0;
 	}
 
 	/* Sidebar panels */
@@ -1739,6 +1741,37 @@
 		.side-column {
 			position: static;
 			max-height: none;
+		}
+	}
+
+	/* Phones / narrow screens */
+	@media (max-width: 640px) {
+		.game-header {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 8px;
+		}
+
+		.game-actions {
+			flex-wrap: wrap;
+		}
+		.game-actions button {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+
+		/* Tabs scroll horizontally if there are many players. */
+		.player-tabs {
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.player-tab {
+			padding: 8px 14px;
+			white-space: nowrap;
+		}
+
+		.new-game {
+			margin: 8px auto;
 		}
 	}
 </style>

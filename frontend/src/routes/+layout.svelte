@@ -28,4 +28,17 @@
 		color: var(--accent);
 		font-size: 1.5rem;
 	}
+
+	@media (max-width: 640px) {
+		.app-layout {
+			padding: 10px;
+		}
+		header {
+			margin-bottom: 12px;
+			padding-bottom: 8px;
+		}
+		header h1 {
+			font-size: 1.25rem;
+		}
+	}
 </style>

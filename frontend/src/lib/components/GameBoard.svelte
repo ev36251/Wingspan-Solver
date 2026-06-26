@@ -499,6 +499,7 @@
 		display: flex;
 		gap: 8px;
 		margin-bottom: 12px;
+		min-width: 0;
 	}
 
 	/* Player sidebar */
@@ -623,6 +624,7 @@
 		display: flex;
 		gap: 6px;
 		align-items: stretch;
+		min-width: 0;
 	}
 
 	.habitat-label {
@@ -652,6 +654,7 @@
 		display: flex;
 		gap: 4px;
 		flex: 1;
+		min-width: 0; /* allow the row to shrink/scroll instead of forcing page width */
 	}
 
 	.slot {
@@ -1104,5 +1107,30 @@
 		display: block;
 		font-size: 0.7rem;
 		color: var(--text-muted);
+	}
+
+	/* Phones: keep the food rail fixed, scroll each habitat row's slots. */
+	@media (max-width: 640px) {
+		.board-area {
+			gap: 6px;
+		}
+		.player-sidebar {
+			min-width: 54px;
+			padding: 6px 4px;
+		}
+		.habitat-label {
+			min-width: 58px;
+			font-size: 0.62rem;
+			padding: 6px 6px;
+		}
+		.slots {
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+			padding-bottom: 3px;
+		}
+		.slots .slot {
+			flex: 0 0 auto;
+			min-width: 116px;
+		}
 	}
 </style>
