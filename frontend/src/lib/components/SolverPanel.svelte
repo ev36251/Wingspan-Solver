@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { solveHeuristic, solveAfterReset, searchBirds } from '$lib/api/client';
-	import type { SolverRecommendation, AfterResetRecommendation } from '$lib/api/types';
+	import { solveHeuristic, solveAfterReset, searchBirds, solveAdvisor } from '$lib/api/client';
+	import type {
+		SolverRecommendation,
+		AfterResetRecommendation,
+		AdvisorResponse
+	} from '$lib/api/types';
 	import { FOOD_ICONS } from '$lib/api/types';
 
 	const dispatch = createEventDispatcher();
@@ -19,6 +23,24 @@
 	let error = '';
 	let feederRerollAvailable = false;
 	let solvedForPlayer = '';
+
+	// Percentage-play advisor (main line + upside lines)
+	let advisor: AdvisorResponse | null = null;
+	// One-time setting: which expansions are in the deck (sharpens draw odds).
+	const ALL_SETS = ['core', 'oceania', 'asia', 'european', 'promo_uk'];
+	const SET_LABELS: Record<string, string> = {
+		core: 'Core',
+		oceania: 'Oceania',
+		asia: 'Asia',
+		european: 'European',
+		promo_uk: 'Promo (UK)'
+	};
+	export let activeSets: string[] = [...ALL_SETS];
+	function toggleSet(s: string) {
+		activeSets = activeSets.includes(s)
+			? activeSets.filter((x) => x !== s)
+			: [...activeSets, s];
+	}
 
 	// After-reset flow state
 	let showResetInput = false;
@@ -44,12 +66,19 @@
 		error = '';
 		showResetInput = false;
 		afterResetRecs = [];
+		advisor = null;
 		try {
-			const data = await solveHeuristic(gameId, playerIdx);
-			recommendations = data.recommendations;
-			evaluationTime = data.evaluation_time_ms;
-			feederRerollAvailable = data.feeder_reroll_available || false;
-			solvedForPlayer = data.player_name || playerName;
+			// The advisor (percentage lines) is the headline; the ranked move list
+			// is still fetched for the click-to-apply mechanics.
+			const [recs, adv] = await Promise.all([
+				solveHeuristic(gameId, playerIdx),
+				solveAdvisor(gameId, playerIdx, activeSets).catch(() => null)
+			]);
+			recommendations = recs.recommendations;
+			evaluationTime = recs.evaluation_time_ms;
+			feederRerollAvailable = recs.feeder_reroll_available || false;
+			solvedForPlayer = recs.player_name || playerName;
+			advisor = adv;
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to get recommendations';
 			recommendations = [];
@@ -64,6 +93,7 @@
 		solvedForPlayer = '';
 		showResetInput = false;
 		afterResetRecs = [];
+		advisor = null;
 	}
 
 	function hasResetOption(rec: SolverRecommendation): 'feeder' | 'tray' | null {
@@ -198,18 +228,6 @@
 	const getWhy = (rec: SolverRecommendation) => detailsOf(rec)?.why as string[] | undefined;
 	const getBreakdown = (rec: SolverRecommendation) =>
 		detailsOf(rec)?.breakdown as Record<string, number> | undefined;
-	const projectedFinal = (rec: SolverRecommendation) => {
-		const v = detailsOf(rec)?.projected_final_score;
-		return typeof v === 'number' ? v : null;
-	};
-	const pHit = (rec: SolverRecommendation, key: 'p100' | 'p110' | 'p120') => {
-		const v = detailsOf(rec)?.[key];
-		return typeof v === 'number' ? Math.round(v * 100) : null;
-	};
-	const rolloutSamples = (rec: SolverRecommendation) => {
-		const v = detailsOf(rec)?.rollout_samples;
-		return typeof v === 'number' ? v : null;
-	};
 
 	type BreakdownLine = { label: string; value: number; isNegative: boolean; tooltip?: string };
 	let expandedBreakdownRanks = new Set<number>();
@@ -358,8 +376,39 @@
 		<h3>Recommendations{playerName ? ` for ${playerName}` : ''}</h3>
 	</div>
 
+	<div class="set-toggles" title="Which expansions are in the deck (sharpens draw odds)">
+		{#each ALL_SETS as s}
+			<button class:on={activeSets.includes(s)} on:click={() => toggleSet(s)} {disabled}>
+				{SET_LABELS[s]}
+			</button>
+		{/each}
+	</div>
+
 	{#if error}
 		<div class="error">{error}</div>
+	{/if}
+
+	{#if advisor && advisor.main_line}
+		<div class="advisor">
+			<div class="advisor-head">Engine read</div>
+			<div class="line main-line">
+				<span class="line-move">{advisor.main_line.move_description}</span>
+				<span class="line-text">{advisor.main_line.sentence}</span>
+			</div>
+			{#if advisor.upside_lines.length > 0}
+				<div class="upside-head">Longshots</div>
+				{#each advisor.upside_lines as up}
+					<div class="line upside-line">
+						<span class="line-text">{up.sentence}</span>
+						<span class="line-reason">{up.reason}</span>
+					</div>
+				{/each}
+			{/if}
+			<div class="advisor-foot">
+				deck pool ≈ {advisor.pool_size} unseen birds · ~{advisor.expected_draws} more
+				draws expected
+			</div>
+		</div>
 	{/if}
 
 	{#if recommendations.length > 0}
@@ -386,7 +435,6 @@
 						{#if appliedRank === rec.rank}
 							<span class="applied-badge">Applied!</span>
 						{/if}
-						<span class="score">{rec.score.toFixed(1)} pts</span>
 					</div>
 					<div class="rec-desc">{rec.description}</div>
 					{#if rec.reasoning}
@@ -405,22 +453,6 @@
 									<span>{part}</span>
 								{/if}
 							{/each}
-						</div>
-					{/if}
-					{#if projectedFinal(rec) !== null}
-						<div class="rec-forecast">
-							<span class="label">Forecast:</span>
-							<span>Expected final: {projectedFinal(rec)?.toFixed(1)}</span>
-							<span class="reason-sep"> · </span>
-							<span>100+: {pHit(rec, 'p100')}%</span>
-							<span class="reason-sep"> · </span>
-							<span>110+: {pHit(rec, 'p110')}%</span>
-							<span class="reason-sep"> · </span>
-							<span>120+: {pHit(rec, 'p120')}%</span>
-							{#if rolloutSamples(rec) !== null}
-								<span class="reason-sep"> · </span>
-								<span>{rolloutSamples(rec)} sims</span>
-							{/if}
 						</div>
 					{/if}
 					{#if hasWhy(rec)}
@@ -606,7 +638,6 @@
 							<div class="rec-header">
 								<span class="rank">#{rec.rank}</span>
 								<span class="rec-desc-inline">{rec.description}</span>
-								<span class="score">{rec.score.toFixed(1)} pts</span>
 							</div>
 							{#if rec.reasoning}
 								<div class="rec-reasoning">
@@ -716,11 +747,73 @@
 		font-size: 0.85rem;
 	}
 
-	.score {
-		margin-left: auto;
+	/* Percentage-play advisor */
+	.advisor {
+		border: 1px solid var(--accent);
+		border-radius: 8px;
+		padding: 12px 14px;
+		margin-bottom: 14px;
+		background: color-mix(in srgb, var(--accent) 7%, transparent);
+	}
+	.advisor-head,
+	.upside-head {
+		font-size: 0.72rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		font-weight: 700;
+		color: var(--accent);
+		margin-bottom: 6px;
+	}
+	.upside-head {
+		margin-top: 10px;
+		color: var(--text-muted);
+	}
+	.advisor .line {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		margin-bottom: 6px;
+	}
+	.advisor .line-move {
 		font-weight: 600;
 		font-size: 0.85rem;
+	}
+	.advisor .line-text {
+		font-size: 0.85rem;
+		line-height: 1.35;
+	}
+	.advisor .upside-line .line-text {
+		color: var(--text);
+	}
+	.advisor .line-reason {
+		font-size: 0.72rem;
+		color: var(--text-muted);
+		font-style: italic;
+	}
+	.advisor-foot {
+		margin-top: 8px;
+		font-size: 0.68rem;
+		color: var(--text-muted);
+	}
+	.set-toggles {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin: 6px 0 10px;
+	}
+	.set-toggles button {
+		font-size: 0.7rem;
+		padding: 2px 8px;
+		border-radius: 999px;
+		border: 1px solid var(--border);
+		background: var(--surface);
+		color: var(--text-muted);
+		cursor: pointer;
+	}
+	.set-toggles button.on {
+		border-color: var(--accent);
 		color: var(--accent);
+		font-weight: 600;
 	}
 
 	.rec-desc {
@@ -760,13 +853,6 @@
 	}
 
 	.rec-why {
-		font-size: 0.7rem;
-		color: var(--text-muted);
-		margin-top: 4px;
-		padding-left: 32px;
-	}
-
-	.rec-forecast {
 		font-size: 0.7rem;
 		color: var(--text-muted);
 		margin-top: 4px;

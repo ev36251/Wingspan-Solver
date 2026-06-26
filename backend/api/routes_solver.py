@@ -1255,6 +1255,141 @@ async def solve_after_reset(game_id: str, req: AfterResetRequest) -> AfterResetR
         )
 
 
+class AdvisorRequest(BaseModel):
+    player_idx: int | None = None
+    # Which expansions are in the deck (one-time setting). Empty/None = all sets.
+    active_sets: list[str] | None = None
+    main_sims: int = Field(default=80, ge=20, le=300)
+    upside_shortlist: int = Field(default=8, ge=0, le=20)
+    upside_sims: int = Field(default=10, ge=4, le=40)
+
+
+class AdvisorMainLine(BaseModel):
+    move_description: str
+    action_type: str
+    sentence: str
+    typical: int
+    floor_prob: float
+    floor_score: int
+    stretch_score: int
+    samples: int
+    details: dict = Field(default_factory=dict)
+
+
+class AdvisorUpsideLine(BaseModel):
+    bird_name: str
+    bird_vp: int
+    draw_prob: float
+    conditional_typical: int
+    lift_vs_main: int
+    reason: str
+    sentence: str
+
+
+class AdvisorResponse(BaseModel):
+    player_name: str
+    main_line: AdvisorMainLine | None = None
+    upside_lines: list[AdvisorUpsideLine] = Field(default_factory=list)
+    pool_size: int = 0
+    expected_draws: float = 0.0
+    evaluation_time_ms: float = 0.0
+
+
+@router.post("/{game_id}/solve/advisor", response_model=AdvisorResponse)
+async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorResponse:
+    """Percentage-play advice: a likely-outcome 'main line' and low-probability
+    'upside lines', framed as sentences with no raw point estimate."""
+    from backend.models.enums import GameSet
+    from backend.solver import advisor as adv
+
+    game = _get_game(game_id)
+    if game.is_game_over:
+        raise HTTPException(400, "Game is already over")
+    if req is None:
+        req = AdvisorRequest()
+
+    if req.player_idx is not None:
+        if req.player_idx < 0 or req.player_idx >= len(game.players):
+            raise HTTPException(400, f"Invalid player_idx: {req.player_idx}")
+        player = game.players[req.player_idx]
+    else:
+        player = game.current_player
+
+    active_sets: set[GameSet] | None = None
+    if req.active_sets:
+        try:
+            active_sets = {GameSet(s) for s in req.active_sets}
+        except ValueError as e:
+            raise HTTPException(400, f"Unknown game set: {e}")
+
+    start = time.perf_counter()
+
+    # 1) Find the recommended move with a time-bounded lookahead. The advisor
+    #    needs a strong candidate, not perfect endgame play, so we always use the
+    #    budgeted search (never the exhaustive endgame_search, which can blow up
+    #    when many action cubes remain) to keep latency predictable.
+    is_pytest = bool(os.getenv("PYTEST_CURRENT_TEST"))
+    la_results, _, _ = timed_lookahead_search(
+        game=game, player=player,
+        time_budget_ms=800 if is_pytest else 2500,
+        max_depth=3 if is_pytest else 4,
+        base_beam_width=6 if is_pytest else 8,
+        leaf_evaluator=_nn_blended_leaf_value,
+    )
+    if not la_results:
+        raise HTTPException(400, "No legal moves to advise on")
+    top = la_results[0]
+
+    # 2) Project the recommended move's final-score distribution (many sims so
+    #    the percentiles are stable), and build the main line.
+    main_sims = 12 if is_pytest else req.main_sims
+    rollout_scores = _project_final_scores(game, player.name, top.move, simulations=main_sims)
+    if not rollout_scores:
+        raise HTTPException(500, "Could not project outcomes for the recommended move")
+
+    details: dict = {}
+    if top.move.bird_name:
+        details["bird_name"] = top.move.bird_name
+    if top.move.habitat:
+        details["habitat"] = top.move.habitat.value
+    ml = adv.main_line(top.move.description, top.move.action_type.value, rollout_scores, details)
+    main_line_model = AdvisorMainLine(
+        move_description=ml.move_description, action_type=ml.action_type,
+        sentence=ml.sentence(), typical=ml.typical, floor_prob=ml.floor_prob,
+        floor_score=ml.floor_score, stretch_score=ml.stretch_score,
+        samples=ml.samples, details=ml.details,
+    )
+
+    # 3) Upside lines: high-ceiling birds the player does not hold yet.
+    upside_models: list[AdvisorUpsideLine] = []
+    pool_size = 0
+    expected_draws = 0.0
+    if req.upside_shortlist > 0:
+        pool_size = len(adv.unseen_pool(game, active_sets))
+        expected_draws = adv.estimate_future_draws(game, player)
+        upside = adv.find_upside_lines(
+            game, player, ml.typical, active_sets,
+            shortlist=req.upside_shortlist,
+            sims_per_bird=(6 if is_pytest else req.upside_sims),
+        )
+        for u in upside:
+            upside_models.append(AdvisorUpsideLine(
+                bird_name=u.bird_name, bird_vp=u.bird_vp, draw_prob=round(u.draw_prob, 4),
+                conditional_typical=u.conditional_typical, lift_vs_main=u.lift_vs_main,
+                reason=u.reason, sentence=u.sentence(),
+            ))
+
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    return AdvisorResponse(
+        player_name=player.name,
+        main_line=main_line_model,
+        upside_lines=upside_models,
+        pool_size=pool_size,
+        expected_draws=round(expected_draws, 2),
+        evaluation_time_ms=round(elapsed_ms, 1),
+    )
+
+
 @router.post("/{game_id}/analyze", response_model=AnalysisResponse)
 async def analyze_game_endpoint(game_id: str, player_name: str | None = None) -> AnalysisResponse:
     """Post-game deviation analysis."""

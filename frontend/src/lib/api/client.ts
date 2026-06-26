@@ -149,6 +149,23 @@ export async function solveHeuristic(gameId: string, playerIdx?: number) {
 	}>(`/games/${gameId}/solve/heuristic${params}`, { method: 'POST' });
 }
 
+export async function solveAdvisor(
+	gameId: string,
+	playerIdx?: number,
+	activeSets?: string[]
+) {
+	return request<import('./types').AdvisorResponse>(
+		`/games/${gameId}/solve/advisor`,
+		{
+			method: 'POST',
+			body: JSON.stringify({
+				player_idx: playerIdx,
+				active_sets: activeSets && activeSets.length ? activeSets : null
+			})
+		}
+	);
+}
+
 export async function getMaxScore(gameId: string, playerName?: string) {
 	const params = playerName ? `?player_name=${encodeURIComponent(playerName)}` : '';
 	return request<import('./types').MaxScoreResponse>(
