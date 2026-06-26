@@ -261,12 +261,12 @@
 			</div>
 			<!-- Food supply (vertical) -->
 			{#each SIDEBAR_FOOD_ORDER as ft}
-				<div class="sidebar-food" title={ft}>
+				<div class="sidebar-food food-{ft}" class:has-food={foodCounts[ft] > 0} title={ft}>
 					<span class="sidebar-food-icon">{FOOD_ICONS[ft]}</span>
 					<span class="sidebar-food-count">{foodCounts[ft]}</span>
 					<div class="sidebar-food-btns">
-						<button class="food-adj" on:click={() => adjustFood(ft, 1)}>+</button>
-						<button class="food-adj" on:click={() => adjustFood(ft, -1)}>-</button>
+						<button class="food-adj" on:click={() => adjustFood(ft, 1)} title="Add {ft}">+</button>
+						<button class="food-adj" on:click={() => adjustFood(ft, -1)} title="Remove {ft}">−</button>
 					</div>
 				</div>
 			{/each}
@@ -507,11 +507,11 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 4px;
-		background: #f9f6f0;
+		background: var(--surface-sunken);
 		border: 1px solid var(--border);
-		border-radius: 8px;
+		border-radius: 10px;
 		padding: 8px 6px;
-		min-width: 64px;
+		min-width: 66px;
 	}
 
 	.sidebar-item {
@@ -543,15 +543,31 @@
 	.sidebar-food {
 		display: flex;
 		align-items: center;
-		gap: 2px;
+		gap: 3px;
 		width: 100%;
 		justify-content: center;
+		padding: 2px 3px;
+		border-radius: 7px;
+		border: 1px solid transparent;
+		transition: background 0.15s ease, border-color 0.15s ease;
 	}
 
+	/* Per-food tints; brighten when the player actually holds some. */
+	.sidebar-food.food-invertebrate.has-food { background: #f3e9d7; border-color: #e6d3ac; }
+	.sidebar-food.food-seed.has-food { background: #f6eecb; border-color: #ecdf9f; }
+	.sidebar-food.food-fish.has-food { background: #dceaf2; border-color: #b9d6e6; }
+	.sidebar-food.food-fruit.has-food { background: #f6dee0; border-color: #ecc1c6; }
+	.sidebar-food.food-rodent.has-food { background: #e9e3da; border-color: #d4c9b8; }
+	.sidebar-food.food-nectar.has-food { background: #f7dfe9; border-color: #eebdce; }
+
 	.sidebar-food-icon {
-		font-size: 1rem;
+		font-size: 1.05rem;
 		width: 20px;
 		text-align: center;
+		filter: saturate(0.9);
+	}
+	.sidebar-food.has-food .sidebar-food-icon {
+		filter: none;
 	}
 
 	.sidebar-food-count {
@@ -559,23 +575,28 @@
 		font-weight: 700;
 		min-width: 14px;
 		text-align: center;
+		color: var(--text-muted);
+	}
+	.sidebar-food.has-food .sidebar-food-count {
+		color: var(--text);
 	}
 
 	.sidebar-food-btns {
 		display: flex;
 		flex-direction: column;
-		gap: 1px;
+		gap: 2px;
 	}
 
 	.food-adj {
-		width: 16px;
-		height: 14px;
+		width: 17px;
+		height: 15px;
 		padding: 0;
-		font-size: 0.6rem;
+		font-size: 0.7rem;
 		font-weight: 700;
-		border: 1px solid var(--border);
-		background: #f5f5f5;
-		border-radius: 2px;
+		border: 1px solid var(--border-strong);
+		background: var(--bg-card);
+		color: var(--text-muted);
+		border-radius: 4px;
 		cursor: pointer;
 		display: flex;
 		align-items: center;
@@ -586,6 +607,7 @@
 	.food-adj:hover {
 		border-color: var(--accent);
 		color: var(--accent);
+		background: var(--accent-soft);
 	}
 
 	/* Habitats */
@@ -606,15 +628,19 @@
 	.habitat-label {
 		writing-mode: horizontal-tb;
 		padding: 6px 10px;
-		border-radius: 6px;
+		border-radius: 8px;
 		font-size: 0.75rem;
-		font-weight: 600;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
 		min-width: 90px;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
 		gap: 2px;
+		box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 1px 2px var(--shadow);
+		text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
 	}
 
 	.nectar-badge {
@@ -631,18 +657,21 @@
 	.slot {
 		flex: 1;
 		border: 1px solid var(--border);
-		border-radius: 6px;
+		border-radius: 8px;
 		padding: 6px;
-		min-height: 60px;
+		min-height: 64px;
 		font-size: 0.75rem;
-		background: white;
+		background: var(--surface-sunken);
 		display: flex;
 		flex-direction: column;
-		justify-content: flex-start;
+		justify-content: stretch;
+		transition: border-color 0.15s ease, box-shadow 0.15s ease;
 	}
 
 	.slot.occupied {
-		background: #fefdf8;
+		background: var(--bg-card);
+		border-color: var(--border-strong);
+		box-shadow: 0 1px 2px var(--shadow);
 	}
 
 	.slot.editing {
@@ -846,20 +875,28 @@
 
 	/* Add bird to slot */
 	.add-bird-btn {
-		font-size: 0.7rem;
+		font-size: 0.72rem;
+		font-weight: 600;
 		padding: 4px 8px;
-		border: 1px dashed var(--border);
+		border: 1.5px dashed var(--border-strong);
 		background: transparent;
-		color: var(--text-muted);
-		border-radius: 4px;
+		color: #a99f92;
+		border-radius: 6px;
 		cursor: pointer;
 		width: 100%;
-		text-align: center;
+		flex: 1;
+		min-height: 52px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.15s ease;
 	}
 
 	.add-bird-btn:hover {
 		border-color: var(--accent);
+		border-style: solid;
 		color: var(--accent);
+		background: var(--accent-soft);
 	}
 
 	.add-bird-panel {
