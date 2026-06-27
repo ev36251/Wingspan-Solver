@@ -803,6 +803,10 @@ def main():
     tr.add_argument("--data", default="reports/ml/value_gate/data.npz")
     tr.add_argument("--out", default="reports/ml/value_gate/value_v1.npz")
     tr.add_argument("--epochs", type=int, default=60)
+    tr.add_argument("--hidden", default="256,64",
+                    help="comma-separated hidden layer sizes (two layers, e.g. 512,128)")
+    tr.add_argument("--lr", type=float, default=1e-3)
+    tr.add_argument("--weight-decay", type=float, default=1e-5)
 
     cp = sub.add_parser("compare")
     cp.add_argument("--seeds", default="0-99")
@@ -832,7 +836,9 @@ def main():
         print(f"  [strength={args.strength}] top_k={args.top_k} rollouts={args.rollouts} "
               f"temp={args.temperature} determinize={args.determinize}")
     if args.cmd == "train":
-        train_value(args.data, args.out, epochs=args.epochs)
+        hidden = tuple(int(x) for x in args.hidden.split(","))
+        train_value(args.data, args.out, hidden=hidden, epochs=args.epochs,
+                    lr=args.lr, weight_decay=args.weight_decay)
         return
     if args.cmd == "compare":
         board = BoardType.OCEANIA if args.board == "oceania" else BoardType.BASE
