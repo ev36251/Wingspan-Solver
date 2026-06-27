@@ -40,6 +40,15 @@ CUBES_BY_ROUND = {1: 8, 2: 7, 3: 6, 4: 5}
 UPSIDE_MIN_LIFT = 4
 # Headline probability for the main line: "~P of the time you'll score >= Y".
 MAIN_LINE_PROB = 0.70
+# How many of YOUR OWN turns pass before a drawn upside card lands in hand. You
+# can't have it instantly: the soonest a blind deck draw reaches your hand is a
+# turn or two out. The conditional rollout only adds the bird after this many
+# hero turns, so its score reflects the real remaining window to play it.
+UPSIDE_ARRIVAL_TURNS = 2
+# A draw only counts as "useful" if it lands with at least this many of your
+# turns left to actually pay for and play the bird. Turns inside this tail buffer
+# are removed from the draw-odds estimate (you'd see the card too late to use it).
+UPSIDE_USE_BUFFER_TURNS = 3
 
 
 # --------------------------------------------------------------------------- #
@@ -75,16 +84,27 @@ def unseen_pool(game, active_sets: set[GameSet] | None = None) -> list[Bird]:
     return [b for b in birds if b.name not in seen]
 
 
-def estimate_future_draws(game, player) -> float:
+def remaining_hero_turns(game, player) -> int:
+    """Total turns this player still has: this round's leftover cubes + the cubes
+    of every later round."""
+    rnd = max(1, int(getattr(game, "current_round", 1)))
+    turns = max(0, int(getattr(player, "action_cubes_remaining", 0)))
+    for r in range(rnd + 1, 5):
+        turns += CUBES_BY_ROUND.get(r, 0)
+    return turns
+
+
+def estimate_future_draws(game, player, tail_buffer_turns: int = 0) -> float:
     """Expected number of cards this player still draws before the game ends.
 
     Sum of remaining player-turns (this round's cubes + all later rounds) times
-    the blended draw rate, capped by what's left in the deck."""
-    rnd = max(1, int(getattr(game, "current_round", 1)))
-    remaining_turns = max(0, int(getattr(player, "action_cubes_remaining", 0)))
-    for r in range(rnd + 1, 5):
-        remaining_turns += CUBES_BY_ROUND.get(r, 0)
-    draws = remaining_turns * DRAW_RATE_PER_TURN
+    the blended draw rate, capped by what's left in the deck. If
+    `tail_buffer_turns` > 0, the final that-many turns are excluded -- a card seen
+    that late can't be paid for and played, so it shouldn't count as a "useful"
+    draw."""
+    remaining_turns = remaining_hero_turns(game, player)
+    usable_turns = max(0, remaining_turns - max(0, tail_buffer_turns))
+    draws = usable_turns * DRAW_RATE_PER_TURN
     deck_left = int(getattr(game, "deck_remaining", 0) or 0)
     return float(min(draws, deck_left)) if deck_left else float(draws)
 
@@ -159,7 +179,7 @@ class UpsideLine:
     def sentence(self) -> str:
         pct = self.draw_prob * 100
         pct_str = f"{pct:.0f}%" if pct >= 1 else f"{pct:.1f}%"
-        return (f"~{pct_str} chance you draw {self.bird_name} before the game ends; "
+        return (f"~{pct_str} chance you draw {self.bird_name} in time to use it; "
                 f"if you do, this line can reach about {self.conditional_typical} points "
                 f"(+{self.lift_vs_main}).")
 
@@ -188,19 +208,20 @@ def _candidate_leverage(game, player, bird: Bird) -> tuple[float, str]:
     return score, reason
 
 
-def _conditional_scores(game, player_name: str, bird: Bird, sims: int) -> list[int]:
-    """Median final score of playouts where `bird` is added to the player's hand
-    (i.e. 'if you had this card'). Uses the strong hero policy so the conditional
-    score is comparable to the main line (both reflect competent play)."""
+def _conditional_scores(game, player_name: str, bird: Bird, sims: int,
+                        arrival_turns: int = UPSIDE_ARRIVAL_TURNS) -> list[int]:
+    """Median final score of playouts where `bird` arrives in the player's hand
+    after `arrival_turns` of their own turns (i.e. 'if you draw this card a few
+    turns from now'), not instantly. Uses the strong hero policy so the
+    conditional score is comparable to the main line (both reflect competent
+    play). If the game ends before the card arrives, the line simply gets no
+    benefit -- which is the honest answer for a too-late draw."""
     out: list[int] = []
     for _ in range(max(1, sims)):
-        sim = deep_copy_game(game)
-        sp = sim.get_player(player_name)
-        if sp is None:
-            continue
-        sp.hand.append(bird)
-        result = simulate_playout(sim, max_turns=260, rollout_policy="fast",
-                                  hero_name=player_name, hero_policy="strong")
+        result = simulate_playout(game, max_turns=260, rollout_policy="fast",
+                                  hero_name=player_name, hero_policy="strong",
+                                  inject_card=bird,
+                                  inject_after_hero_turns=arrival_turns)
         if player_name in result:
             out.append(result[player_name])
     return out
@@ -213,7 +234,10 @@ def find_upside_lines(game, player, main_typical: int, active_sets: set[GameSet]
     pool = unseen_pool(game, active_sets)
     if not pool:
         return []
-    expected_draws = estimate_future_draws(game, player)
+    # Odds of drawing a specific card IN TIME to use it: discount the final few
+    # turns, which are too late to pay for and play a freshly drawn bird.
+    expected_draws = estimate_future_draws(game, player,
+                                           tail_buffer_turns=UPSIDE_USE_BUFFER_TURNS)
     p_one = draw_probability(len(pool), expected_draws)
     if p_one <= 0:
         return []

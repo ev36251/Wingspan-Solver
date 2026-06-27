@@ -451,6 +451,8 @@ def simulate_playout(
     rollout_policy: str = "medium",
     hero_name: str | None = None,
     hero_policy: str | None = None,
+    inject_card=None,
+    inject_after_hero_turns: int = 0,
 ) -> dict[str, int]:
     """Run a single random playout from the current state to game end.
 
@@ -460,13 +462,24 @@ def simulate_playout(
     everyone else uses `rollout_policy` -- lets the advisor drive the asking
     player with the (slow but strong) heuristic while opponents stay cheap, since
     a player's own final score barely depends on opponent strength.
+    If `inject_card` is given, it is added to the hero's hand only AFTER the hero
+    has taken `inject_after_hero_turns` of their own turns -- modelling "you draw
+    this card a few turns from now" rather than "you have it instantly". If the
+    game ends before that many hero turns elapse, the card never arrives (so a
+    late-game draw correctly yields little or no lift).
     """
     sim = deep_copy_game(game)
     strict_mode = getattr(sim, "strict_rules_mode", False)
     turns = 0
+    hero_turns_taken = 0
+    injected = inject_card is None
 
     while not sim.is_game_over and turns < max_turns:
         player = sim.current_player
+        is_hero = hero_name is not None and player.name == hero_name
+        if is_hero and not injected and hero_turns_taken >= inject_after_hero_turns:
+            player.hand.append(inject_card)
+            injected = True
         if strict_mode:
             from backend.powers.registry import get_power_source, is_strict_power_source_allowed
             for p in sim.players:
@@ -522,6 +535,8 @@ def simulate_playout(
                 sim.advance_turn()
                 _refill_tray(sim)
 
+        if is_hero:
+            hero_turns_taken += 1
         turns += 1
 
     # Calculate final scores
