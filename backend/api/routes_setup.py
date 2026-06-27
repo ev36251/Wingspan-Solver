@@ -20,8 +20,9 @@ class SetupAnalyzeRequest(BaseModel):
     rollout_simulations: int = Field(default=15, ge=0, le=60)
     rollout_max_turns: int = Field(default=220, ge=60, le=300)
     # Use the net-guided rollout-search engine to evaluate each opening (the real
-    # ~92 agent plays the draft out). Strongest, but slower (~1-2 min).
+    # ~92 agent plays the draft out). Strongest, but slower (~35s per opening).
     use_engine: bool = Field(default=True)
+    engine_openings: int = Field(default=4, ge=2, le=6)  # how many openings the engine plays out
     engine_sims: int = Field(default=2, ge=1, le=6)
     engine_rollouts: int = Field(default=1, ge=1, le=4)
 
@@ -91,10 +92,11 @@ async def analyze_draft(req: SetupAnalyzeRequest) -> SetupAnalyzeResponse:
         from backend.api.routes_solver import _get_policy_components
         model, encoder = _get_policy_components()
         if model is not None:
-            # Engine playouts are expensive (~15-18s each): clamp to keep the
-            # whole draft analysis inside a turn (~top-3 x 2 sims ≈ 110s).
+            # Engine playouts are expensive (~15-18s each). Widening the number
+            # of openings the engine plays out raises the floor on bad hands at
+            # the cost of latency (~35s per opening x engine_sims).
             sims = req.engine_sims
-            top_k = min(top_k, 3)
+            top_k = req.engine_openings
 
     recommendations = analyze_setup(
         birds, bonus_cards, round_goals,
