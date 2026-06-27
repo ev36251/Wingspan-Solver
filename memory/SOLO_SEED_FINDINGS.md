@@ -777,3 +777,33 @@ preset (backend/ml/two_player.py BUDGET_PRESETS, shared into value_gate compare)
 Each pins temperature=0.3 + determinize (the config the numbers were measured at).
   python -m backend.ml.two_player --mode heuristic --seeds 0-99 --strength strong --use-modal
   python -m backend.ml.value_gate compare --seeds 0-99 --leaf-mode full --strength max --use-modal
+
+## Headroom + value-bootstrap (is the engine improvable? what's fast?)
+Two follow-up experiments to decide whether to keep improving the engine.
+
+HEADROOM (is the agent near-optimal?). Solo regime, 40 seeds: compared a one-shot
+deployed agent (top draft only, cheap depth-1 search k6/r1) to the heavy
+multi-draft best line per deal (best_lines_4000_spread, the "ceiling"):
+  agent one-shot : mean 73.3  median 72
+  ceiling (best) : mean 78.4  median 78
+  regret         : mean +5.2  median +6  (7% of ceiling); within 3pts on 38% of seeds
+And this OVERSTATES the gap -- the agent here is deliberately cheap (k6/r1/1-draft)
+vs the deployed K10/R12 + draft search, which would close most of it (true headroom
+~2-3 pts). Several seeds the one-shot agent BEAT the stored ceiling, confirming the
+"ceiling" is near the real optimum and the agent is close to it. CONCLUSION: the
+engine is near its achievable ceiling -- consistent with the 2p budget plateau
+(R24==R36). Chasing more engine points is low value; the product is the frontier.
+
+VALUE-BOOTSTRAP LEAF (what's fast?). 2p vs heuristic, n=60, measured score + s/game:
+  leaf=full (roll to game end), k10/r12        : 92.7  | 245 s/game
+  leaf=v (roll 8 of my turns, then value net)  : 82.0  |  31 s/game
+The truncated-rollout + value-net leaf is ~8x FASTER but 11 pts weaker, and the
+bottleneck is the value net's quality (value_v1 is a known-weak leaf, RED gate).
+So the value-bootstrap MECHANISM is the right lever for SPEED -- the missing piece
+is a better-trained value net. This is the highest-value remaining ML work, but
+its payoff is the PRODUCT (fast strong evaluation ~30s instead of 245s -> strong
+score numbers + a snappy "deep" mode), not a higher score ceiling.
+
+NET TAKEAWAY: stop chasing the score ceiling (it's near-optimal). The one ML lever
+worth pursuing is a better value net to make the value-bootstrap leaf fast AND
+strong -- which fixes the app's latency + weak-numbers problems, not the ceiling.
