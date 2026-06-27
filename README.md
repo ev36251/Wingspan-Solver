@@ -1,11 +1,27 @@
 # Wingspan Solver
 
-A full rules engine, solver, and strategy-learning pipeline for **Wingspan: Oceania** (base + Oceania expansion). The engine implements every bird power, the full food/nectar economy, and end-of-round/game scoring, served via a FastAPI backend with a React frontend.
+A full rules engine, solver, and **play-assistant web app** for **Wingspan**, covering
+the five released sets — **Core, Oceania, Asia, European, and Promo-UK (471 birds total)**.
+The engine implements every bird power, the full food/nectar economy, and
+end-of-round/game scoring, served via a FastAPI backend with a Svelte frontend.
 
-Two strategy approaches live in this repo:
+Three things live in this repo:
 
-1. **Solo single-seed optimization (current direction).** For a fixed, fully deterministic game, the solver searches the opening draft and every move to maximize the final score, replaying the same seed many times. Across many seeds (parallelized on Modal.com) this produces a high-quality dataset of best-scoring lines plus empirical bird/bonus/draft analytics — and it naturally discovers engine-building strategies (food gathering, round-end caching, card tucking) that simpler evaluators miss. See `memory/SOLO_SEED_FINDINGS.md`.
-2. **AlphaZero-style self-play (legacy).** Two MCTS agents play each other and a factorized PyTorch policy/value network learns from the data via behavioral cloning. This produced weak champions (see Known Limitations) and is superseded by the solo approach above; it remains for reference and as the eventual competitive fine-tuning stage.
+1. **The play assistant (the product).** A web companion: enter your real game,
+   tap "Recommend," and it returns the strongest move — chosen by a rollout-search
+   agent that scores in the low-to-mid **90s** — plus plain-English odds
+   ("~70% of the time this finishes 70+ points") and longshot lines ("~3% chance
+   you draw this bird → big jump"). See **"In plain English"** above.
+2. **Solo single-seed optimization (the dataset/analytics engine).** For a fixed,
+   fully deterministic game, the solver searches the opening draft and every move
+   to maximize the final score, replaying the same seed many times. Across many
+   seeds (parallelized on Modal.com) this produces a high-quality dataset of
+   best-scoring lines plus empirical bird/bonus/draft analytics. See
+   `memory/SOLO_SEED_FINDINGS.md`.
+3. **AlphaZero-style self-play (legacy, superseded).** Two MCTS agents play each
+   other and a factorized policy/value network learns by behavioral cloning. This
+   produced weak champions and is kept for reference only — see
+   **"Legacy / superseded code"** near the bottom.
 
 ---
 
@@ -403,9 +419,29 @@ backend/
   ml/            Solo single-seed optimizer + Modal dispatch, legacy AlphaZero pipeline
   api/           FastAPI routes and Pydantic schemas
 frontend/
-  src/           React + TypeScript UI
+  src/           Svelte + TypeScript UI (the play-assistant app)
 reports/
   ml/            Strategy outputs (solo_seed/ best-line datasets, analytics)
 memory/          Findings & proposals (SOLO_SEED_FINDINGS.md, ...)
-backend/tests/   492 pytest tests
+backend/tests/   pytest suite (engine correctness, solver, advisor)
 ```
+
+---
+
+## Legacy / superseded code
+
+The AlphaZero-style self-play training loop (v4–v20) produced weak champions and
+is **superseded** by the rollout-search agent + solo optimizer. It is kept for
+reference only and is **not** part of the play assistant. These modules are the
+dead loop drivers — safe to ignore:
+
+- `backend/ml/auto_improve_alphazero.py` — the self-play training-loop driver
+- `backend/ml/auto_improve.py`, `backend/ml/auto_improve_factorized.py` — older loop drivers
+- `backend/ml/self_play_dataset.py` — legacy dataset generator
+- `backend/ml/modal_selfplay.py` — Modal dispatch for the legacy loop
+
+> **Note:** a few utilities first written for the loop are still used by current
+> code and are *not* legacy — e.g. `alphazero_self_play._encode_policy_visit_targets`
+> (reused by the soft-target generator `selfplay_soft.py`) and `mcts.py`. That
+> shared usage is why these files stay in place rather than being moved into a
+> `legacy/` folder (moving them would break live imports for no real benefit).

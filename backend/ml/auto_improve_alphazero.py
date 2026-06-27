@@ -1,4 +1,6 @@
-"""AlphaZero self-play training pipeline for Wingspan.
+"""[LEGACY — superseded by the rollout-search agent + solo optimizer; kept for reference, not used by the play assistant. See README 'Legacy / superseded code'.]
+
+AlphaZero self-play training pipeline for Wingspan.
 
 Mirrors the structure of auto_improve_factorized.py but replaces the heuristic
 teacher + lookahead data generation with MCTS self-play.

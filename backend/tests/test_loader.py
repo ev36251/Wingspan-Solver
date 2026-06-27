@@ -36,20 +36,21 @@ def goal_reg(registries) -> GoalRegistry:
 
 class TestBirdLoading:
     def test_total_bird_count(self, bird_reg):
-        """Should load birds from core + european + oceania + asia only."""
-        assert len(bird_reg) >= 440
-        assert len(bird_reg) <= 460
+        """The five released sets: core + european + oceania + asia + promo_uk (471)."""
+        assert len(bird_reg) == 471
 
-    def test_no_americas_birds(self, bird_reg):
-        """No americas or promo birds should be loaded."""
+    def test_only_released_sets(self, bird_reg):
+        """Only the five released sets load; no future promo sets (promoAsia/CA/Europe/NZ/US)."""
+        released = {GameSet.CORE, GameSet.EUROPEAN, GameSet.OCEANIA, GameSet.ASIA, GameSet.PROMO_UK}
         for bird in bird_reg.all_birds:
-            assert bird.game_set in {GameSet.CORE, GameSet.EUROPEAN, GameSet.OCEANIA, GameSet.ASIA}
+            assert bird.game_set in released
 
     def test_birds_per_set(self, bird_reg):
         assert len(bird_reg.by_set(GameSet.CORE)) == 180
         assert len(bird_reg.by_set(GameSet.EUROPEAN)) == 81
         assert len(bird_reg.by_set(GameSet.OCEANIA)) == 95
         assert len(bird_reg.by_set(GameSet.ASIA)) == 90
+        assert len(bird_reg.by_set(GameSet.PROMO_UK)) == 25
 
     # --- Specific bird spot checks ---
 
