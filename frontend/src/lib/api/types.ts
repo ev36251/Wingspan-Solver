@@ -146,10 +146,19 @@ export interface AdvisorUpsideLine {
 	sentence: string;
 }
 
+export interface AdvisorAlternative {
+	description: string;
+	habitat: string | null;
+	typical: number;
+	delta_vs_best: number;
+	is_recommended: boolean;
+}
+
 export interface AdvisorResponse {
 	player_name: string;
 	main_line: AdvisorMainLine | null;
 	upside_lines: AdvisorUpsideLine[];
+	alternatives: AdvisorAlternative[];
 	pool_size: number;
 	expected_draws: number;
 	evaluation_time_ms: number;

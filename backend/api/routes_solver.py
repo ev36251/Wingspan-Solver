@@ -1300,10 +1300,19 @@ class AdvisorUpsideLine(BaseModel):
     sentence: str
 
 
+class AdvisorAlternative(BaseModel):
+    description: str
+    habitat: str | None = None
+    typical: int
+    delta_vs_best: int   # points below the recommended move (0 = the pick)
+    is_recommended: bool = False
+
+
 class AdvisorResponse(BaseModel):
     player_name: str
     main_line: AdvisorMainLine | None = None
     upside_lines: list[AdvisorUpsideLine] = Field(default_factory=list)
+    alternatives: list[AdvisorAlternative] = Field(default_factory=list)
     pool_size: int = 0
     expected_draws: float = 0.0
     evaluation_time_ms: float = 0.0
@@ -1416,11 +1425,54 @@ async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> Advi
                 reason=u.reason, sentence=u.sentence(),
             ))
 
+    # 4) Alternatives ("why this move"): the recommended move's typical score vs
+    #    a few alternatives — especially the SAME bird in other habitats (the
+    #    placement question) plus the next-best other moves.
+    alternatives: list[AdvisorAlternative] = []
+    try:
+        from backend.solver.move_generator import generate_all_moves
+        all_moves = generate_all_moves(game, player)
+        alt_moves = []
+        # same bird, other habitats (the placement comparison)
+        if move.bird_name:
+            for m in all_moves:
+                if (m.action_type.value == "play_bird" and m.bird_name == move.bird_name
+                        and m.description != move.description):
+                    alt_moves.append(m)
+        # a couple of top other moves by the net prior (different action/bird)
+        if policy_model is not None and state_encoder is not None and len(all_moves) > 1:
+            import numpy as _np
+            st = _np.asarray(state_encoder.encode(game, player_idx), dtype=_np.float32)
+            lg, _ = policy_model.forward(st)
+            others = [m for m in all_moves
+                      if m.description != move.description and m.bird_name != move.bird_name]
+            others.sort(key=lambda m: -policy_model.score_move(st, m, player, logits=lg))
+            alt_moves += others[:2]
+        alt_moves = alt_moves[:4]
+
+        alt_sims = 3 if is_pytest else 8
+        best_typ = ml.typical
+        cand = [(move, best_typ, True)]
+        for m in alt_moves:
+            sc = _project_final_scores(game, player.name, m, simulations=alt_sims, strong=True)
+            if sc:
+                cand.append((m, int(round(adv.quantile(sorted(float(x) for x in sc), 0.5))), False))
+        cand.sort(key=lambda c: -c[1])
+        for m, typ, is_best in cand:
+            alternatives.append(AdvisorAlternative(
+                description=m.description,
+                habitat=m.habitat.value if m.habitat else None,
+                typical=typ, delta_vs_best=typ - best_typ, is_recommended=is_best,
+            ))
+    except Exception:
+        alternatives = []
+
     elapsed_ms = (time.perf_counter() - start) * 1000
     return AdvisorResponse(
         player_name=player.name,
         main_line=main_line_model,
         upside_lines=upside_models,
+        alternatives=alternatives,
         pool_size=pool_size,
         expected_draws=round(expected_draws, 2),
         evaluation_time_ms=round(elapsed_ms, 1),

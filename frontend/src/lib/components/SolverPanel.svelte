@@ -442,6 +442,22 @@
 					</div>
 				{/each}
 			{/if}
+			{#if advisor.alternatives && advisor.alternatives.length > 1}
+				<div class="upside-head">Why this move (alternatives the engine weighed)</div>
+				<div class="alt-list">
+					{#each advisor.alternatives as alt}
+						<div class="alt" class:alt-best={alt.is_recommended}>
+							<span class="alt-val">{alt.typical}</span>
+							<span class="alt-desc">{alt.description}</span>
+							{#if !alt.is_recommended}
+								<span class="alt-delta">{alt.delta_vs_best}</span>
+							{:else}
+								<span class="alt-delta best">pick</span>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
 			<div class="advisor-foot">
 				deck pool ≈ {advisor.pool_size} unseen birds · ~{advisor.expected_draws} more
 				draws expected
@@ -911,6 +927,42 @@
 		font-size: 0.72rem;
 		color: var(--text-muted);
 		font-style: italic;
+	}
+	.alt-list {
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+	}
+	.alt {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: center;
+		gap: 8px;
+		font-size: 0.78rem;
+		padding: 3px 6px;
+		border-radius: 6px;
+	}
+	.alt-best {
+		background: color-mix(in srgb, var(--accent) 12%, transparent);
+	}
+	.alt-val {
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+		color: var(--accent-strong);
+	}
+	.alt-desc {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.alt-delta {
+		font-size: 0.7rem;
+		color: var(--text-muted);
+		font-variant-numeric: tabular-nums;
+	}
+	.alt-delta.best {
+		color: var(--accent);
+		font-weight: 700;
 	}
 	.advisor-foot {
 		margin-top: 8px;
