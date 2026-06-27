@@ -867,3 +867,22 @@ bird in wetland to churn the tray) instead of being fooled by weak playouts.
 
 FLAG (correctness): the 47-tuck salvage line on seed 13 is suspiciously high and
 worth a tuck-power audit -- if a bug it inflates scores; if legit, more headroom.
+
+## Engine-in-draft + tuck audit
+ENGINE-IN-DRAFT (deployed). Per user: the powerful net-guided search agent (the
+~92 engine), not the heuristic, should make the DRAFT decision (the floor lever).
+setup_advisor.rollout_draft_evaluation now takes model/encoder; when present it
+plays each candidate opening out with make_search_chooser (hero=net rollout
+search, selfish; opponents = cheap heuristic) instead of a heuristic playout.
+routes_setup loads the deployed net and uses it by default (use_engine=True),
+clamped to top-3 openings x 2 sims to fit a turn (~107s measured). Falls back to
+the strong heuristic playout if no net. This is the draft_floor experiment's
+configuration (net search + multi-opening) wired into the product, which lifted
+the worst-deal mean 75->81 and floor 55->65.
+
+TUCK AUDIT (seed 13, the 47-tuck flag): tucks concentrate on Red-Winged Blackbird
+(27) + Common Chiffchaff (9) -- both per-activation card-tuckers in the wetland.
+Final score was only 63 (NOT inflated), i.e. the agent traded everything else for
+a wetland tuck engine on a bad hand. Looks like a LEGITIMATE tuck-engine salvage,
+not a scoring bug. The high single-bird count (27) is plausible for a dedicated
+wetland engine but a per-activation count trace would confirm with certainty.
