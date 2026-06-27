@@ -944,3 +944,22 @@ whether it fully STACKS with the draft lift (likely partial overlap). Actionable
 the deployed solo/draft search could move to k_schedule=(8,3) or (16,) for ~+3,
 trading latency. The 2p ceiling claim still stands for the 2p agent; "search is
 saturated" was over-generalized from 2p to solo.
+
+## The two levers STACK (draft + mid-game depth) -> +10.3
+2x2 over 100 deals (solo agent):
+  baseline   (d1, k8 depth-1) : 76.9
+  draft only (d4, k8)         : 84.3  (+7.4)
+  midgame    (d1, k8x3 depth2): 79.2  (+2.3)
+  BOTH       (d4, k8x3)       : 87.2  (+10.3)
+Independent sum +9.7; actual +10.3 -> they STACK (slightly super-additive). The
+solo agent was under-searched on TWO independent axes (it wasn't searching the
+draft at all, and was depth-1 mid-game); fixing both lifts it 76.9 -> 87.2.
+
+DEPLOYMENT REALITY: the cheap/deployed win is the DRAFT lever (+7.4), already in
+the engine-in-draft advisor (4 openings, depth-1 playouts). The mid-game depth
+lever (+2-3) means deeper playouts (two_player make_search_chooser depth>=2),
+which ~triples latency -- worth a "deep" mode but too slow as the default draft
+advisor (would be ~105s/opening). These are compute-on-the-right-axes wins (solo,
+not 2p): the 2p move-agent remains at its ~96 ceiling. Highest-value follow-up:
+regenerate the best-line training dataset with d4+depth2 (now that it scores +10
+higher) and retrain the solo net on the stronger lines.
