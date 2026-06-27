@@ -766,9 +766,17 @@ def rollout_draft_evaluation(
     top_k: int = 5,
     simulations_per_option: int = 15,
     rollout_max_turns: int = 220,
-    rollout_policy: str = "medium",
+    rollout_policy: str = "strong",
 ) -> list[tuple[float, list[Bird], tuple[FoodType, ...], BonusCard]]:
-    """Rerank top setup options by average simulated final score."""
+    """Rerank top setup options by average simulated final score.
+
+    Draft choice is the biggest lever on the score *floor* (a bad opening caps the
+    whole game), and rescuing a bad hand depends on lines a weak playout can't
+    see -- e.g. keeping food over bad birds, dropping a placeholder bird in the
+    wetland to churn the tray. So the rollouts use the *strong* policy (the
+    rule-based player, hero-only to stay fast) rather than the old ~40-level
+    "medium" policy, which couldn't tell which opening enables a strong salvage.
+    """
     from backend.solver.simulation import simulate_playout
 
     if not options:
@@ -794,9 +802,15 @@ def rollout_draft_evaluation(
             num_players=num_players,
             rng=rng,
         )
+        # Hero (Player_1) plays strong; opponents stay cheap (their strength
+        # barely affects the hero's own final score) so reranking stays fast.
+        hero = "Player_1" if rollout_policy == "strong" else None
+        opp_policy = "fast" if rollout_policy == "strong" else rollout_policy
         totals: list[float] = []
         for _ in range(sims):
-            out = simulate_playout(game, max_turns=rollout_max_turns, rollout_policy=rollout_policy)
+            out = simulate_playout(game, max_turns=rollout_max_turns,
+                                   rollout_policy=opp_policy,
+                                   hero_name=hero, hero_policy="strong")
             totals.append(float(out.get("Player_1", 0.0)))
         avg_final = sum(totals) / len(totals) if totals else static_score
         scored.append((avg_final, static_score, birds, food, bonus))

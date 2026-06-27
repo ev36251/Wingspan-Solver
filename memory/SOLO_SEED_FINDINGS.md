@@ -837,3 +837,33 @@ CONCLUSION: value_v2 is a better artifact (keep it), but value-bootstrap is a
 Don't invest further in value nets or more value data. The app keeps full-rollout
 quality for moves; if a fast "quick look" mode is wanted, value-bootstrap (~84)
 is an option but won't match the strong agent.
+
+## The FLOOR lever: draft quality (the first real engine win in a while)
+User pushed on raising the worst-case score (salvaging bad starts). Investigation:
+
+WHAT DRIVES SCORE (best-line data, worst vs best deals): board size + eggs + bonus.
+  worst 40 deals: 6.0 birds, 8 eggs, 26 bird_vp, 2.6 bonus  (score ~57)
+  best  40 deals: 9.4 birds, 16 eggs, 41 bird_vp, 8.0 bonus (score ~116)
+On bad deals the agent ALREADY salvages (draws heavily ~8.8 draw-actions/game,
+plays into wetland, values tray resets, even built a 47-card tuck engine on the
+worst seed to reach 70). So the floor isn't a play-quality bug mid-game.
+
+DRAFT IS THE FLOOR LEVER. The opening (which birds/food to keep) caps the whole
+game. Deployed agent commits to ONE opening; searching 4 and keeping the best, on
+the 22 worst deals:
+  1 opening : mean 75.1  floor(min) 55
+  4 openings: mean 81.0  floor(min) 65
+  -> +5.9 mean, 17/22 improved (max +25), and the worst-case FLOOR rose 55 -> 65.
+
+DATA CORRECTION: the agent beats the old best_lines_*_spread "ceiling" by 10-40
+pts on many seeds -> that spread dataset is NOT a true max, so the earlier
+headroom number understated real headroom. Draft search captures some of it.
+
+DEPLOYED FIX: setup_advisor.rollout_draft_evaluation now reranks draft options
+with the STRONG hero rollout policy (was the ~40-level "medium"), so the draft
+advisor correctly values salvage openings (keep food over bad birds, placeholder
+bird in wetland to churn the tray) instead of being fooled by weak playouts.
+~12s for top-5 x 10 sims.
+
+FLAG (correctness): the 47-tuck salvage line on seed 13 is suspiciously high and
+worth a tuck-power audit -- if a bug it inflates scores; if legit, more headroom.
