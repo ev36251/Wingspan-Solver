@@ -963,3 +963,44 @@ advisor (would be ~105s/opening). These are compute-on-the-right-axes wins (solo
 not 2p): the 2p move-agent remains at its ~96 ceiling. Highest-value follow-up:
 regenerate the best-line training dataset with d4+depth2 (now that it scores +10
 higher) and retrain the solo net on the stronger lines.
+
+## Retraining the solo net on stronger lines does NOT beat the champion (negative result)
+Followed the "highest-value follow-up" above: regenerated 800 best-lines with the
++10 config (4-opening draft + depth-2 mid-game search) -> `best_lines_strong.jsonl`,
+mean **87.5** / p10 74 / min 57 (vs the old training lines ~78.6 / p10 66). The
+stronger DATA is real. Then retrained the solo net two ways and evaluated on
+HELD-OUT seeds 800-959 (outside the 0-799 training range), KS=(8,), n_drafts=4,
+vs the deployed `solo_net_spread.npz`:
+
+  attempt                         | held-out mean | floor (p10) | wins/160 | delta
+  --------------------------------|---------------|-------------|----------|------
+  champion (solo_net_spread)      | 85.6-85.8     | 73          |   --     |  --
+  warm-start fine-tune (strong)   | 82.2          | 66          | 49/160   | -3.7
+  fresh train ("combined" x3)     | 84.8          | 69          | 71/160   | -0.7
+
+Both LOSE to the champion. The fine-tune regressed hardest (catastrophic
+forgetting: 731 strong lines / 19k samples pulled the net off the broad
+distribution it learned from 4000 lines). The "combined" retrain was MEANT to mix
+the original 4000 spread lines back in to prevent forgetting -- but the build
+skipped 16205/18400 lines: **the original `best_lines_4000_spread.jsonl` no longer
+replays through `solo_bc_dataset.replay_row`** (its `solo_seed_optimizer`
+trajectory/description format differs from the `solo_search` format the replayer
+now matches against; only ~2 of 16000 reproduced). So "combined" was effectively
+strong-only x3 with duplicate train/val leakage -- not a true mix -- and still
+came in -0.7.
+
+CONCLUSION (now empirical, twice): **the solo net is not the bottleneck.** Better
+training DATA does not yield a better policy net here, because the move pick is
+search-dominated -- the net is only a rollout prior + draft ranker, and the
+deployed `solo_net_spread` already priors those well enough that search washes out
+policy differences. This matches every prior net-retrain null in this project (5x
+in the 2p loop). The champion `solo_net_spread.npz` is UNCHANGED / not replaced.
+
+The actual strength levers remain the two already documented and (for draft)
+deployed: draft breadth (+7.4) and mid-game search depth (+2-3), which STACK to
++10. A genuinely stronger net would require regenerating a LARGE broad+strong
+dataset entirely in `solo_search` format (so it replays) -- thousands of seeds of
+Modal compute -- with no expectation it beats search-dominated play. Not worth it
+unless the goal is a stronger STANDALONE (search-free) policy for faster draft
+advice. Failed nets (`solo_net_strong.npz`, `solo_net_combined.npz`) are
+gitignored and not promoted.
