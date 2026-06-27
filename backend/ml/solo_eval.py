@@ -7,7 +7,7 @@ behavioral cloning of the best-of-N search produced a policy that (a) beats the
 heuristic and (b) generalizes beyond the training seeds.
 
 Usage:
-    python -m backend.ml.solo_eval --model reports/ml/solo_seed/solo_net.npz \
+    python -m backend.ml.solo_eval --model reports/ml/solo_seed/solo_net_spread.npz \
         --seeds 4000-4099
 """
 
