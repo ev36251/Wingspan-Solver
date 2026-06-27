@@ -911,3 +911,15 @@ and a DIFFERENT axis from the in-game rollout budget (which plateaued at ~96 in
 (that used a spread dataset, not a true max). Deployed: the setup advisor uses the
 net-search engine across N openings (engine_openings, default 4; up to 6 for max
 floor at ~35s/opening).
+
+## Draft saturation curve (where does the draft lift level off?)
+Best-of-first-k ranked openings, mean over 150 deals (one pass, k=1..8):
+  k:    1     2     3     4     5     6     7     8
+  mean: 77.6  80.1  82.1  83.4  84.6  85.2  85.6  86.4
+  gain:  -   +2.55 +1.97 +1.35 +1.13 +0.62 +0.42 +0.81*
+Front-loaded with a long tail. Cumulative lift: 1->4 = +5.8 (~2/3 of the total),
+1->6 = +7.6 (matches the broad mean-vs-floor run exactly), 1->8 = +8.8. Marginal
+gain drops below ~1 pt/opening after k=4 and never fully saturates by 8 (the +0.81
+at k=8 is tail noise). At ~35s/opening, the practical sweet spot is 4-6 openings;
+the product default of 4 captures ~2/3 of the lift -- a good speed/quality knee,
+with 6 available for max floor.
