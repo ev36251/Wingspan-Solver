@@ -923,3 +923,24 @@ gain drops below ~1 pt/opening after k=4 and never fully saturates by 8 (the +0.
 at k=8 is tail noise). At ~35s/opening, the practical sweet spot is 4-6 openings;
 the product default of 4 captures ~2/3 of the lift -- a good speed/quality knee,
 with 6 available for max floor.
+
+## Mid-game search IS a lever in the SOLO regime (prediction was wrong)
+Probe: does wider/deeper in-game search help on top of a good draft? Fixed
+n_drafts=2; varied the solo_search k_schedule over 120 deals:
+  depth-1 k8  (current deployed) : mean 80.4
+  depth-1 k16 (wider)            : mean 83.2  (+2.8)
+  depth-2 k8x3 (deeper)          : mean 84.2  (+3.8)
+Both wider AND deeper help, monotonically. This CONTRADICTS the predicted
+"saturated" -- but it's a different agent: the earlier ~96 plateau (Exp A budget
+ladder, Exp B depth-2 worse) was the 2-PLAYER leaf=full rollout agent vs the
+heuristic, already at high budget + opponent contention. THIS is the SOLO agent
+(solo_net_spread + solo_search recursive k_schedule), whose deployed config
+(k8, depth-1) is genuinely UNDER-searched mid-game.
+
+So the SOLO agent (the one the draft advisor / engine-in-draft uses) has a SECOND
+headroom lever beyond the draft: deeper/wider mid-game search (+3-4). Caveats:
+(1) it's a compute cost -- depth-2 (8,3) is ~3x/game, k16 ~2x; (2) not yet tested
+whether it fully STACKS with the draft lift (likely partial overlap). Actionable:
+the deployed solo/draft search could move to k_schedule=(8,3) or (16,) for ~+3,
+trading latency. The 2p ceiling claim still stands for the 2p agent; "search is
+saturated" was over-generalized from 2p to solo.
