@@ -141,6 +141,83 @@ if _MODAL_AVAILABLE:
             os.unlink(tmp.name)
         return {"rows_gz": gzip.compress(json.dumps(rows).encode("utf-8"), 6)}
 
+    @app.function(cpu=2, memory=4096, timeout=14400)
+    def run_draft_scores_shard_remote(task: dict) -> dict:
+        """Per seed, play out each of the top-N ranked openings with the search
+        agent and return the list of scores (in ranked order). Used to map the
+        draft saturation curve: best-of-first-k for k=1..N from one pass.
+
+        task = {"seeds": [int], "board_type": str, "model_bytes": bytes,
+                "k_schedule": [int], "n_openings": int}
+        Returns {"scores_gz": bytes} — {seed: [score_1, ..., score_N]}.
+        """
+        import os, tempfile
+        for k in ("OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "OMP_NUM_THREADS"):
+            os.environ.setdefault(k, "1")
+        try:
+            from threadpoolctl import threadpool_limits
+            threadpool_limits(limits=1, user_api="blas")
+        except ImportError:
+            pass
+
+        from backend.config import EXCEL_FILE
+        from backend.data.registries import load_all
+        from backend.models.enums import BoardType
+        from backend.ml.factorized_inference import FactorizedPolicyModel
+        from backend.ml.state_encoder import StateEncoder
+        from backend.ml.solo_eval import play_with
+        from backend.ml.solo_search import (deal_seed, draft_candidates, build_game_from_draft,
+                                            _food_dict_from_rec, _bonus_by_name, make_search_chooser)
+
+        load_all(EXCEL_FILE)
+        mb = task.pop("model_bytes")
+        tmp = tempfile.NamedTemporaryFile(suffix=".npz", delete=False)
+        tmp.write(mb); tmp.close()
+        try:
+            model = FactorizedPolicyModel(tmp.name)
+            enc = StateEncoder.resolve_for_model(model.meta)
+            board = BoardType(task["board_type"])
+            n_openings = int(task["n_openings"])
+            chooser = make_search_chooser(model, enc, tuple(task["k_schedule"]),
+                                          "net", n_rollouts=1)
+            out = {}
+            for seed in task["seeds"]:
+                deal = deal_seed(int(seed), board)
+                recs = draft_candidates(deal, top_k=n_openings)[:n_openings]
+                scores = []
+                for rec in recs:
+                    game = build_game_from_draft(deal, rec.birds_to_keep,
+                                                 _food_dict_from_rec(rec),
+                                                 _bonus_by_name(deal, rec.bonus_card))
+                    scores.append(int(play_with(game, chooser)))
+                out[int(seed)] = scores
+        finally:
+            os.unlink(tmp.name)
+        return {"scores_gz": gzip.compress(json.dumps(out).encode("utf-8"), 6)}
+
+
+def dispatch_draft_scores(seeds, model_path, board_type, k_schedule, n_openings,
+                          seeds_per_shard=4):
+    """Fan the per-opening draft scoring across Modal; return {seed: [scores]}."""
+    if not _MODAL_AVAILABLE:
+        raise RuntimeError("Modal not installed")
+    model_bytes = Path(model_path).read_bytes()
+    seeds = list(seeds)
+    step = max(1, int(seeds_per_shard))
+    shards = [seeds[i:i + step] for i in range(0, len(seeds), step)]
+    tasks = [{"seeds": s, "board_type": board_type.value, "model_bytes": model_bytes,
+              "k_schedule": list(k_schedule), "n_openings": int(n_openings)} for s in shards]
+    print(f"  [modal] dispatching {len(tasks)} draft-curve shards ({len(seeds)} seeds, "
+          f"{n_openings} openings) …")
+    out = {}
+    with modal.enable_output(), app.run():
+        for result in run_draft_scores_shard_remote.map(tasks):
+            blob = result.get("scores_gz")
+            if isinstance(blob, (bytes, bytearray)):
+                out.update({int(k): v for k, v in
+                            json.loads(gzip.decompress(bytes(blob)).decode("utf-8")).items()})
+    return out
+
 
 def dispatch_search_modal(seeds, model_path, board_type, k_schedule,
                           rollout="net", n_drafts=3, seeds_per_shard=10,
