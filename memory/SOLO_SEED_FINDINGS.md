@@ -886,3 +886,28 @@ Final score was only 63 (NOT inflated), i.e. the agent traded everything else fo
 a wetland tuck engine on a bad hand. Looks like a LEGITIMATE tuck-engine salvage,
 not a scoring bug. The high single-bird count (27) is plausible for a dedicated
 wetland engine but a per-activation count trace would confirm with certainty.
+
+## Draft search raises the MEAN, not just the floor (the biggest real win)
+Q: does running the agent over many games with the improved (multi-opening) draft
+raise the mean? Experiment: agent over 200 deals (solo), 1 opening vs 6 openings.
+  metric      1-draft  6-draft  lift
+  mean         77.2     84.9    +7.6
+  median       77.0     84.5    +7.5
+  floor p5     63       69      +6
+  min          57       65      +8
+  p25          70       76      +6
+  p90          91       99      +8
+  improved on 155/200 deals.
+
+The lift is ~UNIFORM across the whole distribution (+6..+8 everywhere, incl. the
+top p90) and the MEAN rises the full +7.6 -- NOT diluted as predicted. Reason:
+even good hands have a non-obvious best opening, so searching 6 finds a better one
+on almost every deal (155/200), not just the bad ones.
+
+This makes the DRAFT the single biggest under-exploited lever in the project --
+and a DIFFERENT axis from the in-game rollout budget (which plateaued at ~96 in
+2p). Draft search (opening selection) is clearly not saturated: 1->6 openings adds
++7.6 to the mean. Also retroactively explains the bogus "small headroom" reading
+(that used a spread dataset, not a true max). Deployed: the setup advisor uses the
+net-search engine across N openings (engine_openings, default 4; up to 6 for max
+floor at ~35s/opening).
