@@ -1,4 +1,7 @@
-"""Direct auto-improve entrypoint for the strict factorized pipeline only."""
+"""[LEGACY — superseded by the rollout-search agent + solo optimizer; kept for reference, not used by the play assistant. See README 'Legacy / superseded code'.]
+
+Direct auto-improve entrypoint for the strict factorized pipeline only.
+"""
 
 from __future__ import annotations
 

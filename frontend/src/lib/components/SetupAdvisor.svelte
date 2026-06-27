@@ -472,8 +472,8 @@
 	}
 
 	.error {
-		background: #fef2f2;
-		color: #dc2626;
+		background: var(--error-bg);
+		color: var(--error-text);
 		padding: 8px 12px;
 		border-radius: 6px;
 		font-size: 0.85rem;
@@ -503,7 +503,7 @@
 		top: 100%;
 		left: 0;
 		right: 0;
-		background: white;
+		background: var(--surface-sunken);
 		border: 1px solid var(--border);
 		border-radius: 0 0 6px 6px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
@@ -520,7 +520,7 @@
 	}
 
 	.dropdown li:hover {
-		background: #f5f0e8;
+		background: var(--surface-sunken);
 	}
 
 	.dropdown .item-name {
@@ -625,14 +625,14 @@
 		font-size: 0.75rem;
 		padding: 2px 8px;
 		border: 1px solid #ddd;
-		background: #f9f9f9;
+		background: var(--surface-sunken);
 		color: #999;
 		cursor: pointer;
 		border-radius: 4px;
 	}
 
 	.remove:hover {
-		background: #fee;
+		background: var(--error-bg);
 		color: #c00;
 		border-color: #c00;
 	}
@@ -668,12 +668,12 @@
 		border-radius: 8px;
 		padding: 12px;
 		margin-bottom: 10px;
-		background: #fefcf9;
+		background: var(--surface-sunken);
 	}
 
 	.recommendation.top-pick {
 		border-color: var(--accent);
-		background: #fdf8ef;
+		background: var(--accent-soft);
 		box-shadow: 0 0 0 1px var(--accent);
 	}
 

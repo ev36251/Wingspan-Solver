@@ -261,12 +261,12 @@
 			</div>
 			<!-- Food supply (vertical) -->
 			{#each SIDEBAR_FOOD_ORDER as ft}
-				<div class="sidebar-food" title={ft}>
+				<div class="sidebar-food food-{ft}" class:has-food={foodCounts[ft] > 0} title={ft}>
 					<span class="sidebar-food-icon">{FOOD_ICONS[ft]}</span>
 					<span class="sidebar-food-count">{foodCounts[ft]}</span>
 					<div class="sidebar-food-btns">
-						<button class="food-adj" on:click={() => adjustFood(ft, 1)}>+</button>
-						<button class="food-adj" on:click={() => adjustFood(ft, -1)}>-</button>
+						<button class="food-adj" on:click={() => adjustFood(ft, 1)} title="Add {ft}">+</button>
+						<button class="food-adj" on:click={() => adjustFood(ft, -1)} title="Remove {ft}">−</button>
 					</div>
 				</div>
 			{/each}
@@ -499,6 +499,7 @@
 		display: flex;
 		gap: 8px;
 		margin-bottom: 12px;
+		min-width: 0;
 	}
 
 	/* Player sidebar */
@@ -507,11 +508,11 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 4px;
-		background: #f9f6f0;
+		background: var(--surface-sunken);
 		border: 1px solid var(--border);
-		border-radius: 8px;
+		border-radius: 10px;
 		padding: 8px 6px;
-		min-width: 64px;
+		min-width: 66px;
 	}
 
 	.sidebar-item {
@@ -519,7 +520,7 @@
 		flex-direction: column;
 		align-items: center;
 		padding: 4px 0;
-		border-bottom: 1px solid #e0dcd4;
+		border-bottom: 1px solid var(--border);
 		width: 100%;
 	}
 
@@ -543,15 +544,32 @@
 	.sidebar-food {
 		display: flex;
 		align-items: center;
-		gap: 2px;
+		gap: 3px;
 		width: 100%;
 		justify-content: center;
+		padding: 2px 3px;
+		border-radius: 7px;
+		border: 1px solid transparent;
+		transition: background 0.15s ease, border-color 0.15s ease;
 	}
 
+	/* Per-food tints; brighten when the player actually holds some. */
+	/* Food tints via color-mix over the card bg, so they adapt to light/dark. */
+	.sidebar-food.food-invertebrate.has-food { background: color-mix(in srgb, #c9a36a 24%, var(--bg-card)); border-color: color-mix(in srgb, #c9a36a 45%, var(--bg-card)); }
+	.sidebar-food.food-seed.has-food { background: color-mix(in srgb, #e3c84e 24%, var(--bg-card)); border-color: color-mix(in srgb, #e3c84e 45%, var(--bg-card)); }
+	.sidebar-food.food-fish.has-food { background: color-mix(in srgb, #4a9fd4 24%, var(--bg-card)); border-color: color-mix(in srgb, #4a9fd4 45%, var(--bg-card)); }
+	.sidebar-food.food-fruit.has-food { background: color-mix(in srgb, #d96b76 24%, var(--bg-card)); border-color: color-mix(in srgb, #d96b76 45%, var(--bg-card)); }
+	.sidebar-food.food-rodent.has-food { background: color-mix(in srgb, #9a8f80 24%, var(--bg-card)); border-color: color-mix(in srgb, #9a8f80 45%, var(--bg-card)); }
+	.sidebar-food.food-nectar.has-food { background: color-mix(in srgb, #de7aa8 24%, var(--bg-card)); border-color: color-mix(in srgb, #de7aa8 45%, var(--bg-card)); }
+
 	.sidebar-food-icon {
-		font-size: 1rem;
+		font-size: 1.05rem;
 		width: 20px;
 		text-align: center;
+		filter: saturate(0.9);
+	}
+	.sidebar-food.has-food .sidebar-food-icon {
+		filter: none;
 	}
 
 	.sidebar-food-count {
@@ -559,23 +577,28 @@
 		font-weight: 700;
 		min-width: 14px;
 		text-align: center;
+		color: var(--text-muted);
+	}
+	.sidebar-food.has-food .sidebar-food-count {
+		color: var(--text);
 	}
 
 	.sidebar-food-btns {
 		display: flex;
 		flex-direction: column;
-		gap: 1px;
+		gap: 2px;
 	}
 
 	.food-adj {
-		width: 16px;
-		height: 14px;
+		width: 17px;
+		height: 15px;
 		padding: 0;
-		font-size: 0.6rem;
+		font-size: 0.7rem;
 		font-weight: 700;
-		border: 1px solid var(--border);
-		background: #f5f5f5;
-		border-radius: 2px;
+		border: 1px solid var(--border-strong);
+		background: var(--bg-card);
+		color: var(--text-muted);
+		border-radius: 4px;
 		cursor: pointer;
 		display: flex;
 		align-items: center;
@@ -586,6 +609,7 @@
 	.food-adj:hover {
 		border-color: var(--accent);
 		color: var(--accent);
+		background: var(--accent-soft);
 	}
 
 	/* Habitats */
@@ -601,20 +625,25 @@
 		display: flex;
 		gap: 6px;
 		align-items: stretch;
+		min-width: 0;
 	}
 
 	.habitat-label {
 		writing-mode: horizontal-tb;
 		padding: 6px 10px;
-		border-radius: 6px;
+		border-radius: 8px;
 		font-size: 0.75rem;
-		font-weight: 600;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
 		min-width: 90px;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
 		gap: 2px;
+		box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 1px 2px var(--shadow);
+		text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
 	}
 
 	.nectar-badge {
@@ -626,23 +655,27 @@
 		display: flex;
 		gap: 4px;
 		flex: 1;
+		min-width: 0; /* allow the row to shrink/scroll instead of forcing page width */
 	}
 
 	.slot {
 		flex: 1;
 		border: 1px solid var(--border);
-		border-radius: 6px;
+		border-radius: 8px;
 		padding: 6px;
-		min-height: 60px;
+		min-height: 64px;
 		font-size: 0.75rem;
-		background: white;
+		background: var(--surface-sunken);
 		display: flex;
 		flex-direction: column;
-		justify-content: flex-start;
+		justify-content: stretch;
+		transition: border-color 0.15s ease, box-shadow 0.15s ease;
 	}
 
 	.slot.occupied {
-		background: #fefdf8;
+		background: var(--bg-card);
+		border-color: var(--border-strong);
+		box-shadow: 0 1px 2px var(--shadow);
 	}
 
 	.slot.editing {
@@ -754,7 +787,7 @@
 		font-size: 0.85rem;
 		font-weight: 800;
 		color: #6a1b9a;
-		background: #f3e5f5;
+		background: color-mix(in srgb, #9c27b0 16%, var(--bg-card));
 		border-radius: 4px;
 		padding: 0 4px;
 	}
@@ -773,7 +806,7 @@
 		font-size: 0.6rem;
 		font-weight: 700;
 		border: 1px solid var(--border);
-		background: #f5f5f5;
+		background: var(--surface-sunken);
 		border-radius: 3px;
 		cursor: pointer;
 		display: flex;
@@ -812,7 +845,7 @@
 		padding: 0;
 		font-size: 0.55rem;
 		border: 1px solid var(--border);
-		background: #fff3e0;
+		background: var(--accent-soft);
 		border-radius: 2px;
 		cursor: pointer;
 		display: flex;
@@ -822,7 +855,7 @@
 
 	.cache-food-btn:hover {
 		border-color: #e65100;
-		background: #ffe0b2;
+		background: color-mix(in srgb, #e65100 20%, var(--bg-card));
 	}
 
 	.cache-remove-btns {
@@ -833,33 +866,41 @@
 	.cache-remove-btn {
 		padding: 0 3px;
 		font-size: 0.55rem;
-		border: 1px solid #ffccbc;
-		background: #fff3e0;
+		border: 1px solid color-mix(in srgb, #bf360c 30%, var(--bg-card));
+		background: var(--accent-soft);
 		border-radius: 2px;
 		cursor: pointer;
 		color: #bf360c;
 	}
 
 	.cache-remove-btn:hover {
-		background: #ffccbc;
+		background: color-mix(in srgb, #bf360c 22%, var(--bg-card));
 	}
 
 	/* Add bird to slot */
 	.add-bird-btn {
-		font-size: 0.7rem;
+		font-size: 0.72rem;
+		font-weight: 600;
 		padding: 4px 8px;
-		border: 1px dashed var(--border);
+		border: 1.5px dashed var(--border-strong);
 		background: transparent;
-		color: var(--text-muted);
-		border-radius: 4px;
+		color: #a99f92;
+		border-radius: 6px;
 		cursor: pointer;
 		width: 100%;
-		text-align: center;
+		flex: 1;
+		min-height: 52px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.15s ease;
 	}
 
 	.add-bird-btn:hover {
 		border-color: var(--accent);
+		border-style: solid;
 		color: var(--accent);
+		background: var(--accent-soft);
 	}
 
 	.add-bird-panel {
@@ -885,7 +926,7 @@
 		font-size: 0.6rem;
 		padding: 2px 5px;
 		border: 1px solid var(--accent);
-		background: #fdf8ef;
+		background: var(--accent-soft);
 		color: var(--accent);
 		border-radius: 3px;
 		cursor: pointer;
@@ -905,7 +946,7 @@
 		padding: 2px 6px;
 		margin-top: 2px;
 		border: 1px solid var(--border);
-		background: #f5f5f5;
+		background: var(--surface-sunken);
 		border-radius: 3px;
 		cursor: pointer;
 	}
@@ -915,8 +956,8 @@
 		font-size: 0.65rem;
 		padding: 1px 5px;
 		border-radius: 3px;
-		border: 1px solid #ddd;
-		background: #f5f5f5;
+		border: 1px solid var(--border);
+		background: var(--surface-sunken);
 		color: #999;
 		line-height: 1;
 		cursor: pointer;
@@ -924,7 +965,7 @@
 	}
 
 	.remove-btn:hover {
-		background: #fee;
+		background: var(--error-bg);
 		color: #c00;
 		border-color: #c00;
 	}
@@ -952,7 +993,7 @@
 
 	.hand-card {
 		font-size: 0.8rem;
-		background: #f5f0e8;
+		background: var(--surface-sunken);
 		padding: 3px 8px;
 		border-radius: 4px;
 		display: flex;
@@ -1012,7 +1053,7 @@
 	/* Bonus cards */
 	.bonus-badge {
 		font-size: 0.7rem;
-		background: #f3e5f5;
+		background: color-mix(in srgb, #9c27b0 16%, var(--bg-card));
 		color: #6a1b9a;
 		padding: 2px 8px;
 		border-radius: 4px;
@@ -1037,7 +1078,7 @@
 		top: 100%;
 		left: 0;
 		right: 0;
-		background: white;
+		background: var(--surface-sunken);
 		border: 1px solid var(--border);
 		border-radius: 0 0 6px 6px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
@@ -1050,11 +1091,11 @@
 	.bonus-dropdown li {
 		padding: 6px 10px;
 		cursor: pointer;
-		border-bottom: 1px solid #f0f0f0;
+		border-bottom: 1px solid var(--border);
 	}
 
 	.bonus-dropdown li:hover {
-		background: #f5f0e8;
+		background: var(--surface-sunken);
 	}
 
 	.dropdown-name {
@@ -1067,5 +1108,30 @@
 		display: block;
 		font-size: 0.7rem;
 		color: var(--text-muted);
+	}
+
+	/* Phones: keep the food rail fixed, scroll each habitat row's slots. */
+	@media (max-width: 640px) {
+		.board-area {
+			gap: 6px;
+		}
+		.player-sidebar {
+			min-width: 54px;
+			padding: 6px 4px;
+		}
+		.habitat-label {
+			min-width: 58px;
+			font-size: 0.62rem;
+			padding: 6px 6px;
+		}
+		.slots {
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+			padding-bottom: 3px;
+		}
+		.slots .slot {
+			flex: 0 0 auto;
+			min-width: 116px;
+		}
 	}
 </style>

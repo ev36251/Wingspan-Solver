@@ -31,6 +31,7 @@
 
 	let scoreSheet: ScoreSheet;
 	let solverPanel: SolverPanel;
+	let solverBusy = false;
 	let showFeederAdd = false;
 	let didGameOverRefresh = false;
 	const LOCAL_STORAGE_GAME_KEY = 'wingspan_solver_active_game_id';
@@ -752,8 +753,12 @@
 				triggerRefresh={saveCounter}
 			/>
 			<div class="game-actions">
-				<button class="solve-btn" on:click={() => solverPanel?.solve()} disabled={isGameOver}>
-					Recommend for {state.players[activePlayerIdx]?.name || 'Player'}
+				<button class="solve-btn" on:click={() => solverPanel?.solve()} disabled={isGameOver || solverBusy}>
+					{#if solverBusy}
+						<span class="btn-spinner" aria-hidden="true"></span> Analyzing…
+					{:else}
+						Recommend for {state.players[activePlayerIdx]?.name || 'Player'}
+					{/if}
 				</button>
 				<button on:click={endTurnAndSave} disabled={saving || isGameOver}>
 					End Turn
@@ -861,6 +866,7 @@
 					playerIdx={activePlayerIdx}
 					playerName={state.players[activePlayerIdx]?.name || ''}
 					bind:this={solverPanel}
+					bind:busy={solverBusy}
 						on:apply={(e) => applyRecommendation(e.detail)}
 					/>
 
@@ -1047,8 +1053,8 @@
 	}
 
 	.error {
-		background: #fef2f2;
-		color: #dc2626;
+		background: var(--error-bg);
+		color: var(--error-text);
 		padding: 8px 12px;
 		border-radius: 6px;
 		font-size: 0.85rem;
@@ -1075,12 +1081,12 @@
 		font-size: 0.8rem;
 		padding: 4px 10px;
 		border: 1px solid #ddd;
-		background: #f9f9f9;
+		background: var(--surface-sunken);
 		color: #999;
 	}
 
 	.remove:hover {
-		background: #fee;
+		background: var(--error-bg);
 		color: #c00;
 		border-color: #c00;
 	}
@@ -1096,7 +1102,7 @@
 		padding: 10px 12px;
 		border: 1px solid var(--border);
 		border-radius: 8px;
-		background: #faf6ef;
+		background: var(--surface-sunken);
 	}
 
 	.board-type-label {
@@ -1161,7 +1167,7 @@
 		padding: 10px 12px;
 		border: 1px solid var(--border);
 		border-radius: 8px;
-		background: #fef9f0;
+		background: var(--accent-soft);
 		font-size: 0.9rem;
 		font-weight: 600;
 		color: var(--text);
@@ -1197,6 +1203,23 @@
 		filter: brightness(1.1);
 	}
 
+	.btn-spinner {
+		display: inline-block;
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		border: 2px solid rgba(255, 255, 255, 0.5);
+		border-top-color: #fff;
+		animation: btnspin 0.7s linear infinite;
+		vertical-align: -1px;
+		margin-right: 4px;
+	}
+	@keyframes btnspin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
 	.solve-btn:disabled {
 		opacity: 0.5;
 		cursor: default;
@@ -1216,28 +1239,31 @@
 	}
 
 	.player-tab {
-		padding: 8px 20px;
+		padding: 9px 22px;
 		background: none;
 		border: none;
-		border-bottom: 2px solid transparent;
+		border-bottom: 2.5px solid transparent;
 		margin-bottom: -2px;
 		font-size: 0.9rem;
 		color: var(--text-muted);
 		cursor: pointer;
-		font-weight: 500;
+		font-weight: 600;
 		display: flex;
 		align-items: center;
 		gap: 6px;
+		border-radius: 8px 8px 0 0;
+		transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 	}
 
 	.player-tab:hover {
 		color: var(--text);
-		background: none;
+		background: var(--accent-soft);
 	}
 
 	.player-tab.active {
-		color: var(--accent);
+		color: var(--accent-strong);
 		border-bottom-color: var(--accent);
+		background: var(--bg-card);
 	}
 
 	.player-tab.is-current .current-dot {
@@ -1269,6 +1295,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
+		min-width: 0; /* let the column shrink so the board scrolls instead of widening the grid */
 	}
 
 	.tray-panel {
@@ -1330,6 +1357,7 @@
 		top: 16px;
 		max-height: calc(100vh - 32px);
 		overflow-y: auto;
+		min-width: 0;
 	}
 
 	/* Sidebar panels */
@@ -1338,9 +1366,12 @@
 	}
 
 	.panel-title {
-		font-size: 0.85rem;
-		color: var(--text);
-		margin-bottom: 6px;
+		font-size: 0.7rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--accent-strong);
+		margin-bottom: 8px;
 	}
 
 	.panel-header-row {
@@ -1368,8 +1399,9 @@
 	}
 
 	.goal-item.active-round {
-		background: #fef9f0;
+		background: var(--accent-soft);
 		border: 1px solid var(--accent);
+		box-shadow: 0 1px 2px var(--shadow);
 	}
 
 	.goal-header {
@@ -1446,7 +1478,7 @@
 		font-size: 0.7rem;
 		font-weight: 600;
 		border: 1px solid var(--border);
-		background: #faf6ef;
+		background: var(--surface-sunken);
 		border-radius: 3px;
 		cursor: pointer;
 		display: flex;
@@ -1456,7 +1488,7 @@
 
 	.goal-pt-btn:hover {
 		border-color: var(--accent);
-		background: #fef9f0;
+		background: var(--accent-soft);
 	}
 
 	.goal-pt-btn.selected {
@@ -1472,7 +1504,7 @@
 		font-size: 0.7rem;
 		font-weight: 700;
 		border: 1px solid var(--border);
-		background: #f5f5f5;
+		background: var(--surface-sunken);
 		border-radius: 3px;
 		cursor: pointer;
 		display: flex;
@@ -1504,17 +1536,20 @@
 	}
 
 	.die-token {
-		font-size: 1.1rem;
-		padding: 4px 10px;
-		border: 1px solid #d4c9b8;
-		background: #faf6ef;
-		border-radius: 6px;
+		font-size: 1.15rem;
+		padding: 5px 11px;
+		border: 1px solid var(--border-strong);
+		background: linear-gradient(180deg, #ffffff, #f4eee2);
+		border-radius: 9px;
 		cursor: pointer;
+		box-shadow: 0 1px 2px var(--shadow);
+		transition: transform 0.05s ease, border-color 0.15s ease, background 0.15s ease;
 	}
 
 	.die-token:hover {
-		background: #fee;
-		border-color: #c00;
+		background: #fdeaea;
+		border-color: #d06b6b;
+		transform: translateY(-1px);
 	}
 
 	.feeder-empty {
@@ -1531,16 +1566,18 @@
 
 	.feeder-add-btn {
 		font-size: 1rem;
-		padding: 3px 10px;
-		border: 1px dashed var(--border);
+		padding: 4px 10px;
+		border: 1px dashed var(--border-strong);
 		background: transparent;
-		border-radius: 4px;
+		border-radius: 7px;
 		cursor: pointer;
+		transition: all 0.15s ease;
 	}
 
 	.feeder-add-btn:hover {
 		border-color: var(--accent);
-		background: #fdf8ef;
+		border-style: solid;
+		background: var(--accent-soft);
 	}
 
 	.feeder-add-btn.choice {
@@ -1559,7 +1596,7 @@
 		font-size: 0.65rem;
 		padding: 1px 8px;
 		border: 1px solid var(--accent);
-		background: #fef9f0;
+		background: var(--accent-soft);
 		color: var(--accent);
 		border-radius: 3px;
 		cursor: pointer;
@@ -1567,7 +1604,7 @@
 	}
 
 	.toggle-add-btn:hover {
-		background: #fdf0d5;
+		background: var(--accent-soft);
 	}
 
 	.toggle-add-btn.active {
@@ -1579,14 +1616,14 @@
 		font-size: 0.65rem;
 		padding: 1px 6px;
 		border: 1px solid #ddd;
-		background: #f5f5f5;
+		background: var(--surface-sunken);
 		color: #999;
 		border-radius: 3px;
 		cursor: pointer;
 	}
 
 	.clear-btn:hover {
-		background: #fee;
+		background: var(--error-bg);
 		color: #c00;
 		border-color: #c00;
 	}
@@ -1610,7 +1647,7 @@
 		font-size: 0.65rem;
 		padding: 2px 6px;
 		border: 1px solid #b0c4de;
-		background: white;
+		background: var(--surface-sunken);
 		border-radius: 3px;
 		cursor: pointer;
 		color: #1565c0;
@@ -1632,13 +1669,13 @@
 		padding: 1px 5px;
 		border-radius: 3px;
 		border: 1px solid #ddd;
-		background: #f5f5f5;
+		background: var(--surface-sunken);
 		color: #999;
 		line-height: 1;
 	}
 
 	.remove-btn:hover {
-		background: #fee;
+		background: var(--error-bg);
 		color: #c00;
 		border-color: #c00;
 	}
@@ -1654,7 +1691,7 @@
 		border: 1px solid var(--border);
 		border-radius: 6px;
 		padding: 6px 8px;
-		background: #fefdf8;
+		background: var(--surface-sunken);
 	}
 
 	.nectar-player-name {
@@ -1697,7 +1734,7 @@
 		font-size: 0.85rem;
 		font-weight: 700;
 		border: 1px solid #d4c9b8;
-		background: #faf6ef;
+		background: var(--surface-sunken);
 		border-radius: 4px;
 		cursor: pointer;
 		display: flex;
@@ -1727,6 +1764,37 @@
 		.side-column {
 			position: static;
 			max-height: none;
+		}
+	}
+
+	/* Phones / narrow screens */
+	@media (max-width: 640px) {
+		.game-header {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 8px;
+		}
+
+		.game-actions {
+			flex-wrap: wrap;
+		}
+		.game-actions button {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+
+		/* Tabs scroll horizontally if there are many players. */
+		.player-tabs {
+			overflow-x: auto;
+			-webkit-overflow-scrolling: touch;
+		}
+		.player-tab {
+			padding: 8px 14px;
+			white-space: nowrap;
+		}
+
+		.new-game {
+			margin: 8px auto;
 		}
 	}
 </style>

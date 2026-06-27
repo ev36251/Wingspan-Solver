@@ -1,4 +1,6 @@
-"""Auto-improve loop for factorized BC with strict promotion gating.
+"""[LEGACY — superseded by the rollout-search agent + solo optimizer; kept for reference, not used by the play assistant. See README 'Legacy / superseded code'.]
+
+Auto-improve loop for factorized BC with strict promotion gating.
 
 Implements:
 - Policy improvement data generation (proposal+lookahead)

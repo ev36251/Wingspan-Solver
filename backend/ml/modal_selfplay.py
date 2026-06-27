@@ -1,4 +1,6 @@
-"""Modal.com cloud runner for AlphaZero self-play shards.
+"""[LEGACY — superseded by the rollout-search agent + solo optimizer; kept for reference, not used by the play assistant. See README 'Legacy / superseded code'.]
+
+Modal.com cloud runner for AlphaZero self-play shards.
 
 Dispatches self-play data-generation workers to Modal containers so that
 dozens of shards can run in parallel without being limited by local CPU count.

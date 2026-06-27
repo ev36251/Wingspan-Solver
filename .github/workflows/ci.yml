@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend tests (engine + solver + advisor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          # Serve-time inference is numpy-only (no torch); the heavy ML/training
+          # tests are intentionally excluded from CI to keep it fast.
+          pip install -e ".[dev]" numpy
+      - name: Run core test suite
+        env:
+          PYTHONHASHSEED: '0'
+        run: |
+          pytest -q \
+            backend/tests/test_engine.py \
+            backend/tests/test_models.py \
+            backend/tests/test_loader.py \
+            backend/tests/test_powers.py \
+            backend/tests/test_bonus_scoring.py \
+            backend/tests/test_round_goal_coverage.py \
+            backend/tests/test_score_breakdown_parity.py \
+            backend/tests/test_advisor.py
+
+  frontend:
+    name: Frontend check + build
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install deps
+        run: npm install
+      - name: Type-check
+        run: |
+          npx svelte-kit sync
+          npx svelte-check --tsconfig ./tsconfig.json
+      - name: Build
+        run: npm run build

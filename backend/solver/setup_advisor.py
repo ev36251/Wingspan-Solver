@@ -766,10 +766,26 @@ def rollout_draft_evaluation(
     top_k: int = 5,
     simulations_per_option: int = 15,
     rollout_max_turns: int = 220,
-    rollout_policy: str = "medium",
+    rollout_policy: str = "strong",
+    model=None,
+    encoder=None,
+    eng_top_k: int = 6,
+    eng_rollouts: int = 1,
 ) -> list[tuple[float, list[Bird], tuple[FoodType, ...], BonusCard]]:
-    """Rerank top setup options by average simulated final score."""
-    from backend.solver.simulation import simulate_playout
+    """Rerank top setup options by average simulated final score.
+
+    Draft choice is the biggest lever on the score *floor* (a bad opening caps the
+    whole game), and rescuing a bad hand depends on lines a weak playout can't
+    see -- e.g. keeping food over bad birds, dropping a placeholder bird in the
+    wetland to churn the tray.
+
+    If `model`/`encoder` are given, each candidate opening is played out by the
+    NET-GUIDED ROLLOUT-SEARCH AGENT (the deployed ~92 engine) -- the strongest
+    available evaluator, so the draft pick reflects how the real engine would play
+    the opening. Otherwise it falls back to the strong rule-based playout (still
+    far better than the old ~40-level "medium" policy that couldn't see salvages).
+    """
+    from backend.solver.simulation import simulate_playout, fast_clone_game
 
     if not options:
         return []
@@ -779,9 +795,16 @@ def rollout_draft_evaluation(
     sims = max(1, int(simulations_per_option))
     top_options = options[:k]
 
+    use_engine = model is not None and encoder is not None
+    if use_engine:
+        from backend.ml.two_player import make_search_chooser, heuristic_chooser, play_multi
+
     scored: list[tuple[float, float, list[Bird], tuple[FoodType, ...], BonusCard]] = []
-    for static_score, birds, food, bonus in top_options:
-        rng = random.Random()
+    for _opt_i, (static_score, birds, food, bonus) in enumerate(top_options):
+        # Deterministic per-option seed (was `random.Random()` — unseeded, which
+        # pulled OS entropy each process and made the draft non-reproducible).
+        # Index-based so it doesn't depend on PYTHONHASHSEED.
+        rng = random.Random(0x5EED + _opt_i)
         game = _build_draft_rollout_game(
             kept_birds=birds,
             kept_food=food,
@@ -791,9 +814,36 @@ def rollout_draft_evaluation(
             num_players=num_players,
             rng=rng,
         )
+
+        if use_engine:
+            # The real engine plays the opening out: hero (Player_1) = net-guided
+            # rollout search (selfish), opponents = cheap heuristic.
+            hero_idx = next((i for i, p in enumerate(game.players)
+                             if p.name == "Player_1"), 0)
+            totals: list[float] = []
+            for _ in range(sims):
+                ch = [
+                    make_search_chooser(model, encoder, eng_top_k, hero_idx,
+                                        heuristic_chooser, objective="selfish",
+                                        rollouts=eng_rollouts, temperature=0.3,
+                                        determinize=True)
+                    if i == hero_idx else heuristic_chooser
+                    for i in range(game.num_players)
+                ]
+                totals.append(float(play_multi(fast_clone_game(game), ch)[hero_idx]))
+            avg_final = sum(totals) / len(totals) if totals else static_score
+            scored.append((avg_final, static_score, birds, food, bonus))
+            continue
+
+        # Hero (Player_1) plays strong; opponents stay cheap (their strength
+        # barely affects the hero's own final score) so reranking stays fast.
+        hero = "Player_1" if rollout_policy == "strong" else None
+        opp_policy = "fast" if rollout_policy == "strong" else rollout_policy
         totals: list[float] = []
         for _ in range(sims):
-            out = simulate_playout(game, max_turns=rollout_max_turns, rollout_policy=rollout_policy)
+            out = simulate_playout(game, max_turns=rollout_max_turns,
+                                   rollout_policy=opp_policy,
+                                   hero_name=hero, hero_policy="strong")
             totals.append(float(out.get("Player_1", 0.0)))
         avg_final = sum(totals) / len(totals) if totals else static_score
         scored.append((avg_final, static_score, birds, food, bonus))
@@ -816,6 +866,10 @@ def analyze_setup(
     rollout_top_k: int = 0,
     rollout_simulations: int = 0,
     rollout_max_turns: int = 220,
+    model=None,
+    encoder=None,
+    eng_top_k: int = 6,
+    eng_rollouts: int = 1,
 ) -> list[SetupRecommendation]:
     """Evaluate all starting draft combinations and return the best options.
 
@@ -856,6 +910,10 @@ def analyze_setup(
             top_k=rollout_top_k,
             simulations_per_option=rollout_simulations,
             rollout_max_turns=rollout_max_turns,
+            model=model,
+            encoder=encoder,
+            eng_top_k=eng_top_k,
+            eng_rollouts=eng_rollouts,
         )
 
     # Build recommendations

@@ -346,6 +346,27 @@ def fast_rollout_move(moves: list[Move], game: GameState, player: Player) -> Mov
     return random.choices([m for m, _ in top_n], weights=selection_weights, k=1)[0]
 
 
+def strong_rollout_move(moves: list[Move], game: GameState, player: Player) -> Move:
+    """Choose a move with the full dynamic-weight heuristic (the rule-based agent
+    that plays a solid game). Heavier than `medium`, but playouts driven by it
+    reach realistic final scores instead of the weak ~40 of the light policies --
+    used by the advisor so its percentage lines reflect competent play."""
+    if not moves:
+        raise ValueError("No moves to pick from")
+    if len(moves) == 1:
+        return moves[0]
+    from backend.solver.heuristics import _estimate_move_value, dynamic_weights
+    w = dynamic_weights(game)
+    scored = [(m, _estimate_move_value(game, player, m, w)) for m in moves]
+    scored.sort(key=lambda x: -x[1])
+    if random.random() < 0.90:
+        return scored[0][0]
+    top_n = scored[:min(3, len(scored))]
+    min_score = min(s for _, s in top_n)
+    weights = [max(s - min_score + 0.2, 0.05) for _, s in top_n]
+    return random.choices([m for m, _ in top_n], weights=weights, k=1)[0]
+
+
 def medium_rollout_move(moves: list[Move], game: GameState, player: Player) -> Move:
     """Choose a move with a medium-cost rollout policy."""
     if not moves:
@@ -428,18 +449,37 @@ def simulate_playout(
     max_turns: int = 200,
     base_weights=None,
     rollout_policy: str = "medium",
+    hero_name: str | None = None,
+    hero_policy: str | None = None,
+    inject_card=None,
+    inject_after_hero_turns: int = 0,
 ) -> dict[str, int]:
     """Run a single random playout from the current state to game end.
 
     Returns a dict of {player_name: final_score}.
     If base_weights is provided, it's used for move evaluation during playout.
+    If `hero_name`/`hero_policy` are set, that one player uses `hero_policy` while
+    everyone else uses `rollout_policy` -- lets the advisor drive the asking
+    player with the (slow but strong) heuristic while opponents stay cheap, since
+    a player's own final score barely depends on opponent strength.
+    If `inject_card` is given, it is added to the hero's hand only AFTER the hero
+    has taken `inject_after_hero_turns` of their own turns -- modelling "you draw
+    this card a few turns from now" rather than "you have it instantly". If the
+    game ends before that many hero turns elapse, the card never arrives (so a
+    late-game draw correctly yields little or no lift).
     """
     sim = deep_copy_game(game)
     strict_mode = getattr(sim, "strict_rules_mode", False)
     turns = 0
+    hero_turns_taken = 0
+    injected = inject_card is None
 
     while not sim.is_game_over and turns < max_turns:
         player = sim.current_player
+        is_hero = hero_name is not None and player.name == hero_name
+        if is_hero and not injected and hero_turns_taken >= inject_after_hero_turns:
+            player.hand.append(inject_card)
+            injected = True
         if strict_mode:
             from backend.powers.registry import get_power_source, is_strict_power_source_allowed
             for p in sim.players:
@@ -465,10 +505,13 @@ def simulate_playout(
             sim.current_player_idx = (sim.current_player_idx + 1) % sim.num_players
             continue
 
-        if rollout_policy == "fast":
+        policy = hero_policy if (hero_name is not None and player.name == hero_name) else rollout_policy
+        if policy == "fast":
             move = fast_rollout_move(moves, sim, player)
-        elif rollout_policy == "medium":
+        elif policy == "medium":
             move = medium_rollout_move(moves, sim, player)
+        elif policy == "strong":
+            move = strong_rollout_move(moves, sim, player)
         else:
             move = pick_weighted_random_move(moves, sim, player, base_weights)
         success = execute_move_on_sim(sim, player, move)
@@ -492,6 +535,8 @@ def simulate_playout(
                 sim.advance_turn()
                 _refill_tray(sim)
 
+        if is_hero:
+            hero_turns_taken += 1
         turns += 1
 
     # Calculate final scores

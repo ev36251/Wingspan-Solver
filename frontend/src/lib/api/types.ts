@@ -124,6 +124,46 @@ export interface SolverRecommendation {
 	details: Record<string, unknown>;
 }
 
+export interface AdvisorMainLine {
+	move_description: string;
+	action_type: string;
+	sentence: string;
+	typical: number;
+	floor_prob: number;
+	floor_score: number;
+	stretch_score: number;
+	samples: number;
+	details: Record<string, unknown>;
+}
+
+export interface AdvisorUpsideLine {
+	bird_name: string;
+	bird_vp: number;
+	draw_prob: number;
+	conditional_typical: number;
+	lift_vs_main: number;
+	reason: string;
+	sentence: string;
+}
+
+export interface AdvisorAlternative {
+	description: string;
+	habitat: string | null;
+	typical: number;
+	delta_vs_best: number;
+	is_recommended: boolean;
+}
+
+export interface AdvisorResponse {
+	player_name: string;
+	main_line: AdvisorMainLine | null;
+	upside_lines: AdvisorUpsideLine[];
+	alternatives: AdvisorAlternative[];
+	pool_size: number;
+	expected_draws: number;
+	evaluation_time_ms: number;
+}
+
 export interface ActionResult {
 	success: boolean;
 	action_type: string;

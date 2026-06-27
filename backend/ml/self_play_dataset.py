@@ -1,4 +1,6 @@
-"""Generate policy/value training data from Wingspan self-play.
+"""[LEGACY — superseded by the rollout-search agent + solo optimizer; kept for reference, not used by the play assistant. See README 'Legacy / superseded code'.]
+
+Generate policy/value training data from Wingspan self-play.
 
 Phase 1 pipeline:
 - Uses current rules engine as environment.

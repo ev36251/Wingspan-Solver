@@ -417,6 +417,8 @@ def _fmt_breakdown(bd: dict) -> str:
 
 
 def main():
+    from backend.determinism import ensure_deterministic_hashing
+    ensure_deterministic_hashing()
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
 

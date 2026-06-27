@@ -11,7 +11,7 @@ the schema `train_factorized_bc` expects:
 
 Usage:
     python -m backend.ml.solo_bc_dataset \
-        --in reports/ml/solo_seed/best_lines_4000_q250.jsonl \
+        --in reports/ml/solo_seed/best_lines_4000_spread.jsonl \
         --out-jsonl reports/ml/solo_seed/solo_bc.jsonl \
         --out-meta  reports/ml/solo_seed/solo_bc.meta.json
 """
@@ -197,7 +197,7 @@ def build(in_path: str, out_jsonl: str, out_meta: str) -> dict:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="in_path",
-                    default="reports/ml/solo_seed/best_lines_4000_q250.jsonl")
+                    default="reports/ml/solo_seed/best_lines_4000_spread.jsonl")
     ap.add_argument("--out-jsonl", default="reports/ml/solo_seed/solo_bc.jsonl")
     ap.add_argument("--out-meta", default="reports/ml/solo_seed/solo_bc.meta.json")
     args = ap.parse_args()

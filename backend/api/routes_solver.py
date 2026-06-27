@@ -102,6 +102,8 @@ def _iter_policy_model_candidates() -> list[Path]:
         [
             Path("reports/ml/factorized_bc_model.npz"),
             Path("reports/ml/champion_factorized_model.npz"),
+            # The trained solo policy/value net (the engine used for move selection).
+            Path("reports/ml/solo_seed/solo_net_spread.npz"),
         ]
     )
 
@@ -319,8 +321,16 @@ def _project_final_scores(
     player_name: str,
     move: Move,
     simulations: int,
+    strong: bool = False,
 ) -> list[int]:
-    """Estimate final score distribution for a move via rollout playouts."""
+    """Estimate final score distribution for a move via rollout playouts.
+
+    strong=True drives the asking player with the full heuristic (realistic
+    competent play, ~mid-60s) while opponents stay on the cheap medium policy;
+    the default keeps the light policy used by the heuristic-forecast path."""
+    hero = player_name if strong else None
+    hero_policy = "strong" if strong else None
+    opp_policy = "fast" if strong else "medium"  # opponents cheap; hero carries the score
     scores: list[int] = []
     for _ in range(max(1, simulations)):
         sim = deep_copy_game(game)
@@ -330,7 +340,8 @@ def _project_final_scores(
         success = execute_move_on_sim(sim, sim_player, move)
         if success:
             sim.advance_turn()
-        result = simulate_playout(sim, max_turns=260)
+        result = simulate_playout(sim, max_turns=260, rollout_policy=opp_policy,
+                                  hero_name=hero, hero_policy=hero_policy)
         if player_name in result:
             scores.append(result[player_name])
     return scores
@@ -1253,6 +1264,219 @@ async def solve_after_reset(game_id: str, req: AfterResetRequest) -> AfterResetR
             reset_type="tray",
             total_to_gain=card_count,
         )
+
+
+class AdvisorRequest(BaseModel):
+    player_idx: int | None = None
+    # Which expansions are in the deck (one-time setting). Empty/None = all sets.
+    active_sets: list[str] | None = None
+    # Sim counts are modest because the advisor uses the strong (heuristic) rollout
+    # policy (~316ms/playout) so the score levels are realistic rather than the
+    # weak light-policy ~40.
+    main_sims: int = Field(default=24, ge=12, le=120)
+    upside_shortlist: int = Field(default=4, ge=0, le=20)
+    upside_sims: int = Field(default=4, ge=3, le=20)
+
+
+class AdvisorMainLine(BaseModel):
+    move_description: str
+    action_type: str
+    sentence: str
+    typical: int
+    floor_prob: float
+    floor_score: int
+    stretch_score: int
+    samples: int
+    details: dict = Field(default_factory=dict)
+
+
+class AdvisorUpsideLine(BaseModel):
+    bird_name: str
+    bird_vp: int
+    draw_prob: float
+    conditional_typical: int
+    lift_vs_main: int
+    reason: str
+    sentence: str
+
+
+class AdvisorAlternative(BaseModel):
+    description: str
+    habitat: str | None = None
+    typical: int
+    delta_vs_best: int   # points below the recommended move (0 = the pick)
+    is_recommended: bool = False
+
+
+class AdvisorResponse(BaseModel):
+    player_name: str
+    main_line: AdvisorMainLine | None = None
+    upside_lines: list[AdvisorUpsideLine] = Field(default_factory=list)
+    alternatives: list[AdvisorAlternative] = Field(default_factory=list)
+    pool_size: int = 0
+    expected_draws: float = 0.0
+    evaluation_time_ms: float = 0.0
+
+
+@router.post("/{game_id}/solve/advisor", response_model=AdvisorResponse)
+async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorResponse:
+    """Percentage-play advice: a likely-outcome 'main line' and low-probability
+    'upside lines', framed as sentences with no raw point estimate."""
+    from backend.models.enums import GameSet
+    from backend.solver import advisor as adv
+
+    game = _get_game(game_id)
+    if game.is_game_over:
+        raise HTTPException(400, "Game is already over")
+    if req is None:
+        req = AdvisorRequest()
+
+    if req.player_idx is not None:
+        if req.player_idx < 0 or req.player_idx >= len(game.players):
+            raise HTTPException(400, f"Invalid player_idx: {req.player_idx}")
+        player = game.players[req.player_idx]
+    else:
+        player = game.current_player
+
+    active_sets: set[GameSet] | None = None
+    if req.active_sets:
+        try:
+            active_sets = {GameSet(s) for s in req.active_sets}
+        except ValueError as e:
+            raise HTTPException(400, f"Unknown game set: {e}")
+
+    start = time.perf_counter()
+
+    # 1) Pick the strongest move with the TRAINED ENGINE: determinized IS-MCTS
+    #    guided by the policy net (handles companion-mode hidden info via
+    #    determinization). Falls back to the time-bounded heuristic lookahead if
+    #    the net isn't available. Time-budgeted to stay well inside a turn.
+    is_pytest = bool(os.getenv("PYTEST_CURRENT_TEST"))
+    player_idx = next((i for i, p in enumerate(game.players) if p.name == player.name), 0)
+    policy_model, state_encoder = _get_policy_components()
+    top = None
+    used_engine = False
+    if policy_model is not None and state_encoder is not None:
+        # The literal ~91-benchmarked rollout-search agent, determinized for
+        # companion-mode hidden info, inside a turn-friendly wall-clock budget.
+        from backend.solver.strong_move import strong_engine_best_move
+        best, _dets = strong_engine_best_move(
+            game, player_idx, policy_model, state_encoder,
+            top_k=6 if is_pytest else 10,
+            rollouts=2 if is_pytest else 12,
+            temperature=0.3,
+            time_budget_s=10.0 if is_pytest else 80.0,
+            max_determinizations=1 if is_pytest else 3,
+            seed=0,
+        )
+        if best is not None:
+            top = best
+            used_engine = True
+    if top is None:
+        la_results, _, _ = timed_lookahead_search(
+            game=game, player=player,
+            time_budget_ms=800 if is_pytest else 2500,
+            max_depth=3 if is_pytest else 4,
+            base_beam_width=6 if is_pytest else 8,
+            leaf_evaluator=_nn_blended_leaf_value,
+        )
+        if not la_results:
+            raise HTTPException(400, "No legal moves to advise on")
+        top = la_results[0].move
+    move = top  # the recommended Move (from the engine or the heuristic fallback)
+
+    # 2) Project the recommended move's final-score distribution (many sims so
+    #    the percentiles are stable), and build the main line.
+    main_sims = 12 if is_pytest else req.main_sims
+    rollout_scores = _project_final_scores(game, player.name, move,
+                                           simulations=main_sims, strong=True)
+    if not rollout_scores:
+        raise HTTPException(500, "Could not project outcomes for the recommended move")
+
+    details: dict = {"picked_by": "engine" if used_engine else "heuristic"}
+    if move.bird_name:
+        details["bird_name"] = move.bird_name
+    if move.habitat:
+        details["habitat"] = move.habitat.value
+    ml = adv.main_line(move.description, move.action_type.value, rollout_scores, details)
+    main_line_model = AdvisorMainLine(
+        move_description=ml.move_description, action_type=ml.action_type,
+        sentence=ml.sentence(), typical=ml.typical, floor_prob=ml.floor_prob,
+        floor_score=ml.floor_score, stretch_score=ml.stretch_score,
+        samples=ml.samples, details=ml.details,
+    )
+
+    # 3) Upside lines: high-ceiling birds the player does not hold yet.
+    upside_models: list[AdvisorUpsideLine] = []
+    pool_size = 0
+    expected_draws = 0.0
+    if req.upside_shortlist > 0:
+        pool_size = len(adv.unseen_pool(game, active_sets))
+        expected_draws = adv.estimate_future_draws(game, player)
+        upside = adv.find_upside_lines(
+            game, player, ml.typical, active_sets,
+            shortlist=req.upside_shortlist,
+            sims_per_bird=(6 if is_pytest else req.upside_sims),
+        )
+        for u in upside:
+            upside_models.append(AdvisorUpsideLine(
+                bird_name=u.bird_name, bird_vp=u.bird_vp, draw_prob=round(u.draw_prob, 4),
+                conditional_typical=u.conditional_typical, lift_vs_main=u.lift_vs_main,
+                reason=u.reason, sentence=u.sentence(),
+            ))
+
+    # 4) Alternatives ("why this move"): the recommended move's typical score vs
+    #    a few alternatives — especially the SAME bird in other habitats (the
+    #    placement question) plus the next-best other moves.
+    alternatives: list[AdvisorAlternative] = []
+    try:
+        from backend.solver.move_generator import generate_all_moves
+        all_moves = generate_all_moves(game, player)
+        alt_moves = []
+        # same bird, other habitats (the placement comparison)
+        if move.bird_name:
+            for m in all_moves:
+                if (m.action_type.value == "play_bird" and m.bird_name == move.bird_name
+                        and m.description != move.description):
+                    alt_moves.append(m)
+        # a couple of top other moves by the net prior (different action/bird)
+        if policy_model is not None and state_encoder is not None and len(all_moves) > 1:
+            import numpy as _np
+            st = _np.asarray(state_encoder.encode(game, player_idx), dtype=_np.float32)
+            lg, _ = policy_model.forward(st)
+            others = [m for m in all_moves
+                      if m.description != move.description and m.bird_name != move.bird_name]
+            others.sort(key=lambda m: -policy_model.score_move(st, m, player, logits=lg))
+            alt_moves += others[:2]
+        alt_moves = alt_moves[:4]
+
+        alt_sims = 3 if is_pytest else 8
+        best_typ = ml.typical
+        cand = [(move, best_typ, True)]
+        for m in alt_moves:
+            sc = _project_final_scores(game, player.name, m, simulations=alt_sims, strong=True)
+            if sc:
+                cand.append((m, int(round(adv.quantile(sorted(float(x) for x in sc), 0.5))), False))
+        cand.sort(key=lambda c: -c[1])
+        for m, typ, is_best in cand:
+            alternatives.append(AdvisorAlternative(
+                description=m.description,
+                habitat=m.habitat.value if m.habitat else None,
+                typical=typ, delta_vs_best=typ - best_typ, is_recommended=is_best,
+            ))
+    except Exception:
+        alternatives = []
+
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    return AdvisorResponse(
+        player_name=player.name,
+        main_line=main_line_model,
+        upside_lines=upside_models,
+        alternatives=alternatives,
+        pool_size=pool_size,
+        expected_draws=round(expected_draws, 2),
+        evaluation_time_ms=round(elapsed_ms, 1),
+    )
 
 
 @router.post("/{game_id}/analyze", response_model=AnalysisResponse)

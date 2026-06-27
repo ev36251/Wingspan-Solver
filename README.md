@@ -1,11 +1,100 @@
 # Wingspan Solver
 
-A full rules engine, solver, and strategy-learning pipeline for **Wingspan: Oceania** (base + Oceania expansion). The engine implements every bird power, the full food/nectar economy, and end-of-round/game scoring, served via a FastAPI backend with a React frontend.
+A full rules engine, solver, and **play-assistant web app** for **Wingspan**, covering
+the five released sets — **Core, Oceania, Asia, European, and Promo-UK (471 birds total)**.
+The engine implements every bird power, the full food/nectar economy, and
+end-of-round/game scoring, served via a FastAPI backend with a Svelte frontend.
 
-Two strategy approaches live in this repo:
+Three things live in this repo:
 
-1. **Solo single-seed optimization (current direction).** For a fixed, fully deterministic game, the solver searches the opening draft and every move to maximize the final score, replaying the same seed many times. Across many seeds (parallelized on Modal.com) this produces a high-quality dataset of best-scoring lines plus empirical bird/bonus/draft analytics — and it naturally discovers engine-building strategies (food gathering, round-end caching, card tucking) that simpler evaluators miss. See `memory/SOLO_SEED_FINDINGS.md`.
-2. **AlphaZero-style self-play (legacy).** Two MCTS agents play each other and a factorized PyTorch policy/value network learns from the data via behavioral cloning. This produced weak champions (see Known Limitations) and is superseded by the solo approach above; it remains for reference and as the eventual competitive fine-tuning stage.
+1. **The play assistant (the product).** A web companion: enter your real game,
+   tap "Recommend," and it returns the strongest move — chosen by a rollout-search
+   agent that scores in the low-to-mid **90s** — plus plain-English odds
+   ("~70% of the time this finishes 70+ points") and longshot lines ("~3% chance
+   you draw this bird → big jump"). See **"In plain English"** above.
+2. **Solo single-seed optimization (the dataset/analytics engine).** For a fixed,
+   fully deterministic game, the solver searches the opening draft and every move
+   to maximize the final score, replaying the same seed many times. Across many
+   seeds (parallelized on Modal.com) this produces a high-quality dataset of
+   best-scoring lines plus empirical bird/bonus/draft analytics. See
+   `memory/SOLO_SEED_FINDINGS.md`.
+3. **AlphaZero-style self-play (legacy, superseded).** Two MCTS agents play each
+   other and a factorized policy/value network learns by behavioral cloning. This
+   produced weak champions and is kept for reference only — see
+   **"Legacy / superseded code"** near the bottom.
+
+---
+
+## In plain English (start here)
+
+**What this is.** A Wingspan helper. You type your current game into a web app,
+hit "Recommend," and it tells you the strongest move to make — plus your odds of
+different final scores.
+
+**How the engine actually "thinks": rollouts.** It doesn't use a formula to
+guess whether a move is good. Instead, for each move it's weighing, it *finishes
+the game in its head* — it imagines playing all the way to the end and sees what
+score it gets. One imagined full game = one **rollout**. It does this many times
+and picks the move that leads to the best scores on average. This one idea is the
+whole project: judging a move by *playing it out to the end* (instead of guessing)
+is worth roughly **+40 points** over "obvious" greedy play, and it's why the
+engine discovers real strategies — food engines, end-of-round caching, tucking
+cards — because those only pay off later, and rollouts actually *see* later.
+
+**What "R" and "K" mean (the two thinking dials).** It can't imagine *infinite*
+games (that'd take forever), so two settings control how hard it thinks:
+
+- **K = top-k = how many candidate moves it seriously considers** each turn.
+  `K10` = look at the 10 most promising moves; `K20` = look at 20.
+- **R = rollouts = how many full games it imagines per candidate move.**
+  `R12` = finish the game 12 times for each move and average; `R36` = 36 times.
+
+So **`K10/R12`** means: *take the 10 best-looking moves, play each out to the end
+12 times, average the scores, pick the winner.* More of either dial = more
+thinking = usually better moves, but slower. `K20/R36` is the most we tried.
+
+**Where it landed: ~92, and why turning the dials up stops helping.** We cranked
+the thinking dials to see if more compute kept buying score (all vs the built-in
+opponent, 100 games each):
+
+| thinking budget | average score |
+|---|---|
+| light (`K8/R6`) | ~88 |
+| **default (`K10/R12`)** | **~93** |
+| heavy (`K16/R24`) | ~96 |
+| heaviest (`K20/R36`) | ~96 *(no better)* |
+
+Two things stand out: more thinking *does* help — but it **flattens out around
+96**. Going from R24 to R36 (50% more compute) bought essentially nothing. So
+~92–96 isn't a bug; it's a **ceiling**.
+
+**Why ~96 is the ceiling (the whole issue).** We tried hard to break past it with
+fancier methods: training a neural net to pick moves, training one to *guess* the
+final score without playing it out, different search algorithms (MCTS, deeper
+look-ahead), and letting it learn by playing against itself. **Every one of them
+failed to beat plain rollout search.** The reason is always the same: the
+rollouts are already doing the hard work. When you finish the game 12+ times and
+average, that average is such a good judge of a move that a neural net's "hunch"
+just gets overruled by the rollouts anyway — the smarter guess gets washed out.
+So the ceiling isn't the AI being dumb; it's that **for this game, against this
+opponent, ~96 is about the best score reachable**, and the only lever that
+reliably helps (more rollouts) has diminishing returns. Past R24 you pay double
+the time for noise.
+
+**Bottom line on the engine.** It plays a genuinely strong, *honest* game — it
+doesn't cheat by peeking at the deck (it reshuffles the unseen cards before each
+imagined game), it beats the rule-based opponent ~90–95% of the time, and it
+hits 100+ points in about a third of games. It's about as strong as rollout
+search gets here. Use **default** for speed, **heavy (K16/R24)** for the last few
+points.
+
+**The app you actually use.** On top of the engine is a web companion: type in
+your game, tap "Recommend," and it gives you the strongest move (chosen by that
+~92 engine) plus plain-English odds — e.g. *"~70% of the time this finishes 70+
+points"* and longshots like *"~3% chance you draw this bird → big jump."* One
+honest tradeoff: the *move* comes from the strong engine, but the *score numbers*
+come from a faster, rougher stand-in, because a true ~96-level score *distribution*
+would take ~an hour per question — useless mid-turn.
 
 ---
 
@@ -13,16 +102,17 @@ Two strategy approaches live in this repo:
 
 The agent's score has climbed dramatically over the life of the project. Early
 greedy-network and rule-based play scored in the **50s–60s**. The current agent
-plays full *honest* games — no peeking at the deck order — and scores a **~94
-mean (worst-case floor ~68)** against the rule-based heuristic, which it beats
-roughly **90% of the time**.
+plays full *honest* games — no peeking at the deck order — and scores a **~92
+mean (worst-case floor ~64)** against the rule-based heuristic, which it beats
+roughly **90% of the time** (re-measured at n=100 on the latest corrected
+engine; best config r12 / top-k 10 / temp 0.3 / determinize).
 
 ### Score progression
 | stage | typical score |
 |-------|---------------|
 | rule-based heuristic / early greedy network | ~50–60 |
 | net-guided rollout search (solo, held-out seeds) | 72 → 91 |
-| **2-player honest rollout search (current)** | **~94 mean, floor ~68** |
+| **2-player honest rollout search (current)** | **~92 mean, floor ~64** |
 
 ### What moved the needle (all measured at n=100 on Modal.com)
 
@@ -200,8 +290,18 @@ sample sizes and p-values in `memory/SOLO_SEED_FINDINGS.md`):
 | Network retraining (×3 attempts) | ❌ null — at heavy search the *search dominates the prior* |
 | Depth-2 lookahead | ❌ hurts at equal budget — the rollout already looks to game end |
 
-**Best config:** depth-1, rollouts 8–12, top-k 10, temp 0.3, determinize. This is
+**Best config:** depth-1, rollouts 12, top-k 10, temp 0.3, determinize. This is
 the practical ceiling for the rollout-search approach.
+
+**Re-tuned on the corrected engine (n=100, honest, same 100 seeds).** Every config
+above was originally tuned on an older engine, so a 6-cell sweep was re-run on the
+latest corrected engine (rollouts ∈ {8,12} × top-k ∈ {8,10} × temp ∈ {0.3,0.5}).
+The optimum did **not** move: r12 / k10 / t0.3 is again the best cell
+(mean 91.7, floor 64, 28% ≥100, 91/100 wins). Rollouts is the only directionally
+consistent lever (r12 ≥ r8 on every metric at no floor cost), but the r12-vs-r8
+lift is **sub-noise** (+2.35 mean, paired sign-test p = 0.47) — all six cells
+cluster in 89–92, so the search is saturated across this grid. The corrected-engine
+re-measure thus *confirms* the existing best config rather than replacing it.
 
 **Engine correctness is where the real points hid.** Auditing the simulator
 against the real Oceania board surfaced and fixed several rules bugs — tray/feeder
@@ -319,9 +419,29 @@ backend/
   ml/            Solo single-seed optimizer + Modal dispatch, legacy AlphaZero pipeline
   api/           FastAPI routes and Pydantic schemas
 frontend/
-  src/           React + TypeScript UI
+  src/           Svelte + TypeScript UI (the play-assistant app)
 reports/
   ml/            Strategy outputs (solo_seed/ best-line datasets, analytics)
 memory/          Findings & proposals (SOLO_SEED_FINDINGS.md, ...)
-backend/tests/   492 pytest tests
+backend/tests/   pytest suite (engine correctness, solver, advisor)
 ```
+
+---
+
+## Legacy / superseded code
+
+The AlphaZero-style self-play training loop (v4–v20) produced weak champions and
+is **superseded** by the rollout-search agent + solo optimizer. It is kept for
+reference only and is **not** part of the play assistant. These modules are the
+dead loop drivers — safe to ignore:
+
+- `backend/ml/auto_improve_alphazero.py` — the self-play training-loop driver
+- `backend/ml/auto_improve.py`, `backend/ml/auto_improve_factorized.py` — older loop drivers
+- `backend/ml/self_play_dataset.py` — legacy dataset generator
+- `backend/ml/modal_selfplay.py` — Modal dispatch for the legacy loop
+
+> **Note:** a few utilities first written for the loop are still used by current
+> code and are *not* legacy — e.g. `alphazero_self_play._encode_policy_visit_targets`
+> (reused by the soft-target generator `selfplay_soft.py`) and `mcts.py`. That
+> shared usage is why these files stay in place rather than being moved into a
+> `legacy/` folder (moving them would break live imports for no real benefit).
