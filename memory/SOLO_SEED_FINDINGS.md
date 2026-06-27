@@ -807,3 +807,33 @@ score numbers + a snappy "deep" mode), not a higher score ceiling.
 NET TAKEAWAY: stop chasing the score ceiling (it's near-optimal). The one ML lever
 worth pursuing is a better value net to make the value-bootstrap leaf fast AND
 strong -- which fixes the app's latency + weak-numbers problems, not the ceiling.
+
+## Better value net: trained, but the bootstrap payoff is small (honest null-ish)
+Acted on "train a better value net to make the value-bootstrap leaf fast AND
+strong." Findings:
+
+ESTIMATOR improved cleanly. A capacity sweep on the SAME data (39k states, M=16):
+  net           val_rmse   gate R* (playouts worth)
+  (256,64) v1     3.94        4.1
+  (512,128)       3.65        5.0   <- chosen -> value_v2.npz (val_rmse 3.52)
+  (768,256)       3.68        4.9
+  (1024,256,64)   3.57        5.3
+So value_v1 was just undertrained/too small; value_v2 is a strictly better
+estimator (no new data needed -- and since capacity helped the estimator but NOT
+play (below), more DATA won't help play either).
+
+PLAY barely moved. value-bootstrap leaf, 2p vs heuristic, n=60 (score | s/game):
+  full rollout (roll to end)        92.7 | 245
+  value_v1, boot-8/r3               82.0 |  31
+  value_v2, boot-8/r3               83.2 |  32   (+1.2 from the better net)
+  value_v2, boot-12/r3              84.4 |  42   (+1.2 more from rolling further)
+The value-bootstrap evaluator is ~6-8x FASTER but plateaus ~8 pts below full
+rollout, and a better net + more bootstrap plies each buy only ~1 pt. ROOT CAUSE:
+the net isn't the bottleneck -- inside search its residual errors get exploited
+(optimizer's curse), and final-score-from-midgame variance is partly irreducible.
+
+CONCLUSION: value_v2 is a better artifact (keep it), but value-bootstrap is a
+"6x faster / ~8 pts weaker" tradeoff, NOT the hoped-for fast-AND-strong leaf.
+Don't invest further in value nets or more value data. The app keeps full-rollout
+quality for moves; if a fast "quick look" mode is wanted, value-bootstrap (~84)
+is an option but won't match the strong agent.
