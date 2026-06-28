@@ -20,6 +20,8 @@
 	let appliedRank: number | null = null;
 
 	let recommendations: SolverRecommendation[] = [];
+	// Description of the move the strong engine picked (badged + sorted to #1).
+	let enginePickDesc = '';
 	let evaluationTime = 0;
 	let loading = false;
 	let error = '';
@@ -86,6 +88,27 @@
 			feederRerollAvailable = recs.feeder_reroll_available || false;
 			solvedForPlayer = recs.player_name || playerName;
 			advisor = adv;
+
+			// The clickable list comes from the fast heuristic, but the actual move
+			// pick should be the strong engine's. Promote the engine's chosen move to
+			// the top of the clickable list (and renumber) so the card you apply IS
+			// the engine pick, not the heuristic's top-ranked card. The engine pick is
+			// reliably present in the list (same root moves); we only reorder.
+			enginePickDesc =
+				adv?.main_line?.details?.picked_by === 'engine'
+					? adv.main_line.move_description ?? ''
+					: '';
+			if (enginePickDesc) {
+				const i = recommendations.findIndex((r) => r.description === enginePickDesc);
+				if (i > 0) {
+					const reordered = [
+						recommendations[i],
+						...recommendations.slice(0, i),
+						...recommendations.slice(i + 1)
+					];
+					recommendations = reordered.map((r, idx) => ({ ...r, rank: idx + 1 }));
+				}
+			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to get recommendations';
 			recommendations = [];
@@ -110,6 +133,7 @@
 	// Clear recommendations when player tab changes
 	$: if (playerName !== solvedForPlayer && recommendations.length > 0) {
 		recommendations = [];
+		enginePickDesc = '';
 		solvedForPlayer = '';
 		showResetInput = false;
 		afterResetRecs = [];
@@ -486,6 +510,9 @@
 						<span class="rank">#{rec.rank}</span>
 						<span class="action-icon">{ACTION_ICONS[rec.action_type] || '?'}</span>
 						<span class="action-type">{ACTION_LABELS[rec.action_type] || rec.action_type}</span>
+						{#if enginePickDesc && rec.description === enginePickDesc}
+							<span class="engine-badge" title="Chosen by the trained engine (the strongest move)">engine pick</span>
+						{/if}
 						{#if appliedRank === rec.rank}
 							<span class="applied-badge">Applied!</span>
 						{/if}
