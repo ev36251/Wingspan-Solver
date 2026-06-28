@@ -3,6 +3,7 @@
 import copy
 import json
 import os
+import random
 import re
 import time
 from pathlib import Path
@@ -26,6 +27,7 @@ from backend.solver.lookahead import endgame_search
 from backend.solver.move_generator import Move
 from backend.solver.simulation import deep_copy_game, execute_move_on_sim, simulate_playout
 from backend.engine_search import EngineConfig, search_best_move
+from backend.engine_search.belief import sample_hidden_state
 
 router = APIRouter()
 
@@ -322,18 +324,29 @@ def _project_final_scores(
     move: Move,
     simulations: int,
     strong: bool = False,
+    determinize: bool = True,
+    seed: int = 0,
 ) -> list[int]:
     """Estimate final score distribution for a move via rollout playouts.
 
     strong=True drives the asking player with the full heuristic (realistic
     competent play, ~mid-60s) while opponents stay on the cheap medium policy;
-    the default keeps the light policy used by the heuristic-forecast path."""
+    the default keeps the light policy used by the heuristic-forecast path.
+
+    determinize=True (default) draws a fresh plausible hidden state per rollout
+    via sample_hidden_state: it shuffles the unseen deck and materialises each
+    opponent's unknown hand/bonus cards into concrete identities. Without it the
+    opponents would roll out with empty hands (they can't play birds), so their
+    board never grows and the hero's projected score is biased -- the percentiles
+    reflect a hidden-info-blind game. The shuffle also makes the hero's own future
+    draws vary across rollouts, so the score band honestly reflects deck luck."""
     hero = player_name if strong else None
     hero_policy = "strong" if strong else None
     opp_policy = "fast" if strong else "medium"  # opponents cheap; hero carries the score
+    rng = random.Random(seed)
     scores: list[int] = []
     for _ in range(max(1, simulations)):
-        sim = deep_copy_game(game)
+        sim = sample_hidden_state(game, rng) if determinize else deep_copy_game(game)
         sim_player = sim.get_player(player_name)
         if not sim_player:
             continue
