@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Tests
 ```bash
-pytest                                        # all 492 tests
+pytest                                        # full suite (~1,100 tests)
 pytest backend/tests/test_engine.py -v       # single file
 pytest -k "test_powers"                      # filter by name
 pytest backend/tests/test_alphazero.py -x -q # fast fail, quiet

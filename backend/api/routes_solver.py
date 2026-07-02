@@ -1312,6 +1312,10 @@ class AdvisorRequest(BaseModel):
     main_sims: int = Field(default=24, ge=12, le=120)
     upside_shortlist: int = Field(default=4, ge=0, le=20)
     upside_sims: int = Field(default=4, ge=3, le=20)
+    # Search-budget preset for the engine move pick (backend/ml/two_player.py
+    # BUDGET_PRESETS): default k10/r12 (~93 mean), strong k16/r24 (~96, ~2x
+    # latency), max k20/r36 (measured equal to strong).
+    strength: str = Field(default="default", pattern="^(default|strong|max)$")
 
 
 class AdvisorMainLine(BaseModel):
@@ -1395,13 +1399,18 @@ async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> Advi
     if policy_model is not None and state_encoder is not None:
         # The literal ~91-benchmarked rollout-search agent, determinized for
         # companion-mode hidden info, inside a turn-friendly wall-clock budget.
+        # The named strength preset scales the measured budget ladder
+        # (default ~93 mean, strong ~96 at ~2x latency).
         from backend.solver.strong_move import strong_engine_best_move
+        from backend.ml.two_player import BUDGET_PRESETS
+        preset = BUDGET_PRESETS.get(req.strength, BUDGET_PRESETS["default"])
+        budget_scale = preset["rollouts"] / BUDGET_PRESETS["default"]["rollouts"]
         best, _dets = strong_engine_best_move(
             game, player_idx, policy_model, state_encoder,
-            top_k=6 if is_pytest else 10,
-            rollouts=2 if is_pytest else 12,
-            temperature=0.3,
-            time_budget_s=10.0 if is_pytest else 80.0,
+            top_k=6 if is_pytest else preset["top_k"],
+            rollouts=2 if is_pytest else preset["rollouts"],
+            temperature=preset["temperature"],
+            time_budget_s=10.0 if is_pytest else 80.0 * budget_scale,
             max_determinizations=1 if is_pytest else 3,
             seed=0,
         )

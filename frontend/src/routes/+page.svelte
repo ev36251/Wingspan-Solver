@@ -25,6 +25,14 @@
 	let turnStatusText = '';
 	let applyNotice: string[] = [];
 
+	// Dev-only panels (ML run diagnostics): shown in `npm run dev`, or when
+	// `?dev=1` is in the URL / localStorage wingspan_dev = '1'.
+	const showDevPanels =
+		import.meta.env.DEV ||
+		(typeof window !== 'undefined' &&
+			(new URLSearchParams(window.location.search).has('dev') ||
+				localStorage.getItem('wingspan_dev') === '1'));
+
 	// New game form
 	let playerNames = ['Player 1', 'Player 2'];
 	let boardType: 'base' | 'oceania' = 'oceania';
@@ -844,11 +852,14 @@
 					playerName={state.players[activePlayerIdx]?.name || ''}
 					bind:this={solverPanel}
 					bind:busy={solverBusy}
+						beforeSolve={saveState}
 						on:apply={(e) => applyRecommendation(e.detail)}
 					/>
 
-					<!-- ML run diagnostics -->
-					<MLRunsPanel />
+					<!-- ML run diagnostics (dev tooling; hidden in the product build) -->
+					{#if showDevPanels}
+						<MLRunsPanel />
+					{/if}
 
 					<!-- Birdfeeder -->
 					<div class="sidebar-panel card">

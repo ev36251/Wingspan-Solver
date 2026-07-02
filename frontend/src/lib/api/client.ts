@@ -187,7 +187,8 @@ export async function solveHeuristic(gameId: string, playerIdx?: number) {
 export async function solveAdvisor(
 	gameId: string,
 	playerIdx?: number,
-	activeSets?: string[]
+	activeSets?: string[],
+	strength: 'default' | 'strong' | 'max' = 'default'
 ) {
 	return request<import('./types').AdvisorResponse>(
 		`/games/${gameId}/solve/advisor`,
@@ -195,7 +196,8 @@ export async function solveAdvisor(
 			method: 'POST',
 			body: JSON.stringify({
 				player_idx: playerIdx,
-				active_sets: activeSets && activeSets.length ? activeSets : null
+				active_sets: activeSets && activeSets.length ? activeSets : null,
+				strength
 			})
 		}
 	);
