@@ -46,6 +46,31 @@ _PLAY_DESC_RE = re.compile(
 )
 
 
+def _egg_distribution_to_details(egg_distribution) -> dict[str, dict[str, int]]:
+    """Serialize {(habitat, slot_idx): count} merging slots that share a habitat."""
+    dist: dict[str, dict[str, int]] = {}
+    for (hab, slot_idx), count in egg_distribution.items():
+        dist.setdefault(hab.value, {})[str(slot_idx)] = count
+    return dist
+
+
+def _play_variant_details(move) -> dict:
+    """Expose the play-bird placement variant so a move can be replayed exactly
+    through the action API (sideways, play-on-top, Imperial Eagle tuck payment)."""
+    out: dict = {}
+    if move.target_slot is not None:
+        out["target_slot"] = move.target_slot
+    if move.play_on_top:
+        out["play_on_top"] = True
+    if move.play_on_top_discard:
+        out["play_on_top_discard"] = True
+    if move.hand_tuck_payment:
+        out["hand_tuck_payment"] = move.hand_tuck_payment
+    if move.prefer_nectar:
+        out["prefer_nectar"] = True
+    return out
+
+
 def _sanitize_plan_for_hidden_draws(
     best_sequence: list[str],
     plan_details: list[dict],
@@ -512,15 +537,13 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
         if la.move.food_choices:
             details["food_choices"] = [ft.value for ft in la.move.food_choices]
         if la.move.egg_distribution:
-            details["egg_distribution"] = {
-                hab.value: {str(slot_idx): count}
-                for (hab, slot_idx), count in la.move.egg_distribution.items()
-            }
+            details["egg_distribution"] = _egg_distribution_to_details(la.move.egg_distribution)
         if la.move.tray_indices:
             details["tray_indices"] = la.move.tray_indices
         details["deck_draws"] = la.move.deck_draws
         details["bonus_count"] = la.move.bonus_count
         details["reset_bonus"] = la.move.reset_bonus
+        details.update(_play_variant_details(la.move))
         details["search_mode"] = search_mode
         if search_mode == "exact_endgame":
             details["score_mode"] = "exact_endgame"
@@ -776,14 +799,14 @@ async def solve_engine(
         if s.move.food_choices:
             details["food_choices"] = [ft.value for ft in s.move.food_choices]
         if s.move.egg_distribution:
-            details["egg_distribution"] = {
-                hab.value: {str(slot_idx): count}
-                for (hab, slot_idx), count in s.move.egg_distribution.items()
-            }
+            details["egg_distribution"] = _egg_distribution_to_details(s.move.egg_distribution)
         if s.move.tray_indices:
             details["tray_indices"] = s.move.tray_indices
         if s.move.deck_draws:
             details["deck_draws"] = s.move.deck_draws
+        details["bonus_count"] = s.move.bonus_count
+        details["reset_bonus"] = s.move.reset_bonus
+        details.update(_play_variant_details(s.move))
 
         top_k.append(
             EngineMoveRec(
@@ -894,14 +917,14 @@ async def solve_hybrid(
         if s.move.food_choices:
             details["food_choices"] = [ft.value for ft in s.move.food_choices]
         if s.move.egg_distribution:
-            details["egg_distribution"] = {
-                hab.value: {str(slot_idx): count}
-                for (hab, slot_idx), count in s.move.egg_distribution.items()
-            }
+            details["egg_distribution"] = _egg_distribution_to_details(s.move.egg_distribution)
         if s.move.tray_indices:
             details["tray_indices"] = s.move.tray_indices
         if s.move.deck_draws:
             details["deck_draws"] = s.move.deck_draws
+        details["bonus_count"] = s.move.bonus_count
+        details["reset_bonus"] = s.move.reset_bonus
+        details.update(_play_variant_details(s.move))
 
         sig = action_signature(s.move)
         la = shortlist_by_sig.get(sig)

@@ -33,7 +33,8 @@ jobs:
             backend/tests/test_bonus_scoring.py \
             backend/tests/test_round_goal_coverage.py \
             backend/tests/test_score_breakdown_parity.py \
-            backend/tests/test_advisor.py
+            backend/tests/test_advisor.py \
+            backend/tests/test_api_companion_apply.py
 
   frontend:
     name: Frontend check + build

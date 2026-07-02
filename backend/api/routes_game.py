@@ -104,6 +104,64 @@ def _refill_tray(game: GameState) -> None:
         game.card_tray.add_card(card)
 
 
+def _companion_known_cards(game: GameState) -> tuple[set[str], set[str]]:
+    """Snapshot the card identities visible before an action.
+
+    Companion mode mirrors a physical game: any card the engine 'draws' from
+    its internal deck model is an invented identity the real table never saw.
+    Cards already visible (hands, boards, tray) may legitimately move between
+    zones during an action, so they stay known.
+    """
+    known_birds: set[str] = set()
+    known_bonus: set[str] = set()
+    for p in game.players:
+        known_birds.update(b.name for b in p.hand)
+        for row in p.board.all_rows():
+            for slot in row.slots:
+                if slot.bird:
+                    known_birds.add(slot.bird.name)
+        known_bonus.update(bc.name for bc in p.bonus_cards)
+    known_birds.update(b.name for b in game.card_tray.face_up)
+    return known_birds, known_bonus
+
+
+def _sanitize_companion_hidden_draws(
+    game: GameState, known_birds: set[str], known_bonus: set[str]
+) -> None:
+    """Strip invented card identities after an engine-applied action.
+
+    Deck/bonus-deck draws become face-down counts (unknown_hand_count /
+    unknown_bonus_count) and invented tray refills are removed so the user can
+    enter the cards actually revealed at the table. The next full-state save
+    rebuilds the internal deck model from visible zones, so no attempt is made
+    to push removed identities back into it here.
+    """
+    for p in game.players:
+        invented = [b for b in p.hand if b.name not in known_birds]
+        if invented:
+            p.hand = [b for b in p.hand if b.name in known_birds]
+            p.unknown_hand_count += len(invented)
+        invented_bonus = [bc for bc in p.bonus_cards if bc.name not in known_bonus]
+        if invented_bonus:
+            p.bonus_cards = [bc for bc in p.bonus_cards if bc.name in known_bonus]
+            p.unknown_bonus_count += len(invented_bonus)
+    game.card_tray.face_up = [
+        b for b in game.card_tray.face_up if b.name in known_birds
+    ]
+
+
+def _finish_action(game: GameState, companion: bool,
+                   known_birds: set[str] | None = None,
+                   known_bonus: set[str] | None = None) -> None:
+    """Post-action bookkeeping: advance the turn, then either refill the tray
+    (simulated game) or strip invented hidden draws (companion mode)."""
+    game.advance_turn()
+    if companion:
+        _sanitize_companion_hidden_draws(game, known_birds or set(), known_bonus or set())
+    else:
+        _refill_tray(game)
+
+
 def _record_move(game: GameState, action_type: str, description: str) -> None:
     """Record a move in the game history with heuristic solver ranking."""
     from backend.solver.heuristics import rank_moves
@@ -477,13 +535,21 @@ async def play_bird(game_id: str, req: PlayBirdRequest) -> ActionResultSchema:
     if req.egg_payment_slots:
         egg_slots = [(Habitat(s[0]), s[1]) for s in req.egg_payment_slots]
 
-    result = execute_play_bird(game, player, bird, habitat, food_payment, egg_slots)
+    known_birds, known_bonus = _companion_known_cards(game)
+    result = execute_play_bird(
+        game, player, bird, habitat, food_payment, egg_slots,
+        target_slot=req.target_slot,
+        play_on_top=req.play_on_top,
+        play_on_top_discard=req.play_on_top_discard,
+        hand_tuck_payment=req.hand_tuck_payment,
+    )
+    resp = action_result_to_schema(result)
     if result.success:
         _record_move(game, ActionType.PLAY_BIRD.value,
                      f"Play {bird.name} in {habitat.value}")
-        game.advance_turn()
-        _refill_tray(game)
-    return action_result_to_schema(result)
+        _finish_action(game, req.companion, known_birds, known_bonus)
+        resp.state = game_state_to_schema(game)
+    return resp
 
 
 @router.post("/{game_id}/gain-food", response_model=ActionResultSchema)
@@ -491,12 +557,15 @@ async def gain_food(game_id: str, req: GainFoodRequest) -> ActionResultSchema:
     game = _get_game(game_id)
     player = game.current_player
     food_choices = [FoodType(f) for f in req.food_choices]
-    result = execute_gain_food(game, player, food_choices, req.bonus_count, req.reset_bonus)
+    known_birds, known_bonus = _companion_known_cards(game)
+    result = execute_gain_food(game, player, food_choices, req.bonus_count, req.reset_bonus,
+                               prefer_nectar=req.prefer_nectar)
+    resp = action_result_to_schema(result)
     if result.success:
         _record_move(game, ActionType.GAIN_FOOD.value, "Gain food from birdfeeder")
-        game.advance_turn()
-        _refill_tray(game)
-    return action_result_to_schema(result)
+        _finish_action(game, req.companion, known_birds, known_bonus)
+        resp.state = game_state_to_schema(game)
+    return resp
 
 
 @router.post("/{game_id}/lay-eggs", response_model=ActionResultSchema)
@@ -504,24 +573,31 @@ async def lay_eggs(game_id: str, req: LayEggsRequest) -> ActionResultSchema:
     game = _get_game(game_id)
     player = game.current_player
     distribution = schema_to_egg_distribution(req.egg_distribution)
-    result = execute_lay_eggs(game, player, distribution, req.bonus_count)
+    known_birds, known_bonus = _companion_known_cards(game)
+    result = execute_lay_eggs(game, player, distribution, req.bonus_count,
+                              prefer_nectar=req.prefer_nectar)
+    resp = action_result_to_schema(result)
     if result.success:
         _record_move(game, ActionType.LAY_EGGS.value, "Lay eggs")
-        game.advance_turn()
-        _refill_tray(game)
-    return action_result_to_schema(result)
+        _finish_action(game, req.companion, known_birds, known_bonus)
+        resp.state = game_state_to_schema(game)
+    return resp
 
 
 @router.post("/{game_id}/draw-cards", response_model=ActionResultSchema)
 async def draw_cards(game_id: str, req: DrawCardsRequest) -> ActionResultSchema:
     game = _get_game(game_id)
     player = game.current_player
-    result = execute_draw_cards(game, player, req.from_tray_indices, req.from_deck_count, req.bonus_count, req.reset_bonus)
+    known_birds, known_bonus = _companion_known_cards(game)
+    result = execute_draw_cards(game, player, req.from_tray_indices, req.from_deck_count,
+                                req.bonus_count, req.reset_bonus,
+                                prefer_nectar=req.prefer_nectar)
+    resp = action_result_to_schema(result)
     if result.success:
         _record_move(game, ActionType.DRAW_CARDS.value, "Draw cards")
-        game.advance_turn()
-        _refill_tray(game)
-    return action_result_to_schema(result)
+        _finish_action(game, req.companion, known_birds, known_bonus)
+        resp.state = game_state_to_schema(game)
+    return resp
 
 
 @router.get("/{game_id}/score", response_model=AllScoresResponse)

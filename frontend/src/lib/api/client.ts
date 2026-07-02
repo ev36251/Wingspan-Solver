@@ -77,37 +77,72 @@ export async function getScores(gameId: string) {
 }
 
 // --- Action endpoints ---
+// All action requests support companion mode (companion: true): the engine
+// applies the full move (powers, turn advancement) but never invents hidden
+// card identities — deck draws become face-down counts and the tray is left
+// short for the user to enter the real revealed cards.
 
-export async function playBird(
-	gameId: string,
-	birdName: string,
-	habitat: string,
-	foodPayment: Record<string, number>
-) {
+export interface PlayBirdParams {
+	bird_name: string;
+	habitat: string;
+	food_payment?: Record<string, number>;
+	egg_payment_slots?: [string, number][] | null;
+	target_slot?: number | null;
+	play_on_top?: boolean;
+	play_on_top_discard?: boolean;
+	hand_tuck_payment?: number;
+	companion?: boolean;
+}
+
+export async function playBird(gameId: string, params: PlayBirdParams) {
 	return request<import('./types').ActionResult>(`/games/${gameId}/play-bird`, {
 		method: 'POST',
-		body: JSON.stringify({ bird_name: birdName, habitat, food_payment: foodPayment })
+		body: JSON.stringify(params)
 	});
 }
 
-export async function gainFood(gameId: string, foodChoices: string[]) {
+export interface GainFoodParams {
+	food_choices: string[];
+	bonus_count?: number;
+	reset_bonus?: boolean;
+	prefer_nectar?: boolean;
+	companion?: boolean;
+}
+
+export async function gainFood(gameId: string, params: GainFoodParams) {
 	return request<import('./types').ActionResult>(`/games/${gameId}/gain-food`, {
 		method: 'POST',
-		body: JSON.stringify({ food_choices: foodChoices })
+		body: JSON.stringify(params)
 	});
 }
 
-export async function layEggs(gameId: string, distribution: Record<string, number>) {
+export interface LayEggsParams {
+	egg_distribution: Record<string, number>; // "habitat:slot_idx" -> count
+	bonus_count?: number;
+	prefer_nectar?: boolean;
+	companion?: boolean;
+}
+
+export async function layEggs(gameId: string, params: LayEggsParams) {
 	return request<import('./types').ActionResult>(`/games/${gameId}/lay-eggs`, {
 		method: 'POST',
-		body: JSON.stringify({ egg_distribution: distribution })
+		body: JSON.stringify(params)
 	});
 }
 
-export async function drawCards(gameId: string, trayIndices: number[], deckCount: number) {
+export interface DrawCardsParams {
+	from_tray_indices?: number[];
+	from_deck_count?: number;
+	bonus_count?: number;
+	reset_bonus?: boolean;
+	prefer_nectar?: boolean;
+	companion?: boolean;
+}
+
+export async function drawCards(gameId: string, params: DrawCardsParams) {
 	return request<import('./types').ActionResult>(`/games/${gameId}/draw-cards`, {
 		method: 'POST',
-		body: JSON.stringify({ from_tray_indices: trayIndices, from_deck_count: deckCount })
+		body: JSON.stringify(params)
 	});
 }
 

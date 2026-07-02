@@ -162,6 +162,24 @@ def score_breakdown_to_schema(sb: ScoreBreakdown) -> ScoreBreakdownSchema:
     )
 
 
+def _power_event_text(pa) -> str:
+    r = pa.result
+    if r.description:
+        return f"{pa.bird_name}: {r.description}"
+    parts = []
+    if r.food_gained:
+        parts.append("gained " + ", ".join(f"{c} {ft.value}" for ft, c in r.food_gained.items()))
+    if r.food_cached:
+        parts.append("cached " + ", ".join(f"{c} {ft.value}" for ft, c in r.food_cached.items()))
+    if r.eggs_laid:
+        parts.append(f"laid {r.eggs_laid} egg{'s' if r.eggs_laid != 1 else ''}")
+    if r.cards_drawn:
+        parts.append(f"drew {r.cards_drawn} card{'s' if r.cards_drawn != 1 else ''}")
+    if r.cards_tucked:
+        parts.append(f"tucked {r.cards_tucked} card{'s' if r.cards_tucked != 1 else ''}")
+    return f"{pa.bird_name}: {'; '.join(parts) if parts else 'power activated'}"
+
+
 def action_result_to_schema(ar: ActionResult) -> ActionResultSchema:
     return ActionResultSchema(
         success=ar.success,
@@ -171,6 +189,7 @@ def action_result_to_schema(ar: ActionResult) -> ActionResultSchema:
         eggs_laid=ar.eggs_laid,
         cards_drawn=ar.cards_drawn,
         bird_played=ar.bird_played,
+        power_events=[_power_event_text(pa) for pa in ar.power_activations],
     )
 
 
