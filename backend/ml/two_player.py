@@ -92,7 +92,7 @@ def play_multi(game, choosers, max_turns: int = 600):
 
 def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff",
                         rollouts=1, temperature=0.0, determinize=False, opp_weight=1.0,
-                        depth=1, branch=3):
+                        depth=1, branch=3, rollout_model=None, rollout_encoder=None):
     """1-ply rollout search for seat `my_idx`.
 
     Objective value of a rollout = my_score - lambda * best_opponent_score, where
@@ -115,9 +115,13 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
     """
     lam = 0.0 if objective == "selfish" else float(opp_weight)
     stochastic = temperature > 0
-    roll_me = (make_net_sampling_chooser(model, encoder, temperature, seed=my_idx * 7919 + 1)
-               if stochastic else make_net_chooser(model, encoder))
-    roll_opp = (make_net_sampling_chooser(model, encoder, temperature, seed=my_idx * 7919 + 2)
+    # Rollout policy: optionally a cheaper distilled student (rollout_model);
+    # the full `model` always keeps the root candidate ranking.
+    r_model = rollout_model if rollout_model is not None else model
+    r_enc = rollout_encoder if rollout_encoder is not None else encoder
+    roll_me = (make_net_sampling_chooser(r_model, r_enc, temperature, seed=my_idx * 7919 + 1)
+               if stochastic else make_net_chooser(r_model, r_enc))
+    roll_opp = (make_net_sampling_chooser(r_model, r_enc, temperature, seed=my_idx * 7919 + 2)
                 if stochastic else opp_chooser)
     n_roll = rollouts if (stochastic or determinize) else 1
     det_rng = random.Random(my_idx * 104729 + 13)
@@ -169,7 +173,9 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
             return _rollout_value(sim)
         st = np.asarray(encoder.encode(sim, sim.current_player_idx), dtype=np.float32)
         lg, _ = model.forward(st)
-        cand = sorted(moves, key=lambda m: -model.score_move(st, m, p, logits=lg))[:branch]
+        sc = model.score_moves(st, moves, p, logits=lg)
+        order = sorted(range(len(moves)), key=lambda i: -sc[i])
+        cand = [moves[i] for i in order[:branch]]
         best = -1e18
         for m in cand:
             s2 = fast_clone_game(sim)
@@ -187,7 +193,9 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
             return moves[0]
         state = np.asarray(encoder.encode(game, game.current_player_idx), dtype=np.float32)
         logits, _ = model.forward(state)
-        ranked = sorted(moves, key=lambda m: -model.score_move(state, m, player, logits=logits))[:top_k]
+        sc = model.score_moves(state, moves, player, logits=logits)
+        order = sorted(range(len(moves)), key=lambda i: -sc[i])
+        ranked = [moves[i] for i in order[:top_k]]
         best_m, best_v = ranked[0], -1e18
         for m in ranked:
             total = 0.0

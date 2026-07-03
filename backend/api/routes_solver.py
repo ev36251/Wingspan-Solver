@@ -221,6 +221,32 @@ def _get_policy_components():
     return None, None
 
 
+_ROLLOUT_STUDENT = None
+_ROLLOUT_STUDENT_TRIED = False
+
+
+def _get_rollout_student():
+    """Lazy-load the distilled fast rollout policy (model, encoder) or (None, None).
+
+    Used only INSIDE search rollouts; the full policy net keeps the root move
+    ranking. Set WINGSPAN_ROLLOUT_STUDENT to a path to override, or to "off"
+    to disable."""
+    global _ROLLOUT_STUDENT, _ROLLOUT_STUDENT_TRIED
+    if _ROLLOUT_STUDENT_TRIED:
+        return _ROLLOUT_STUDENT if _ROLLOUT_STUDENT else (None, None)
+    _ROLLOUT_STUDENT_TRIED = True
+    _ROLLOUT_STUDENT = None
+    env = os.getenv("WINGSPAN_ROLLOUT_STUDENT", "")
+    if env.lower() in {"off", "0", "none"}:
+        return None, None
+    try:
+        from backend.ml.rollout_student import load_rollout_student, DEFAULT_STUDENT_PATH
+        _ROLLOUT_STUDENT = load_rollout_student(env or DEFAULT_STUDENT_PATH)
+    except Exception:
+        _ROLLOUT_STUDENT = None
+    return _ROLLOUT_STUDENT if _ROLLOUT_STUDENT else (None, None)
+
+
 def _nn_blended_leaf_value(game, player, weights):
     """Blend heuristic and policy value head for lookahead leaf evaluation."""
     model, encoder = _get_policy_components()
@@ -1405,6 +1431,7 @@ async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> Advi
         from backend.ml.two_player import BUDGET_PRESETS
         preset = BUDGET_PRESETS.get(req.strength, BUDGET_PRESETS["default"])
         budget_scale = preset["rollouts"] / BUDGET_PRESETS["default"]["rollouts"]
+        student_model, student_encoder = _get_rollout_student()
         best, _dets = strong_engine_best_move(
             game, player_idx, policy_model, state_encoder,
             top_k=6 if is_pytest else preset["top_k"],
@@ -1413,6 +1440,8 @@ async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> Advi
             time_budget_s=10.0 if is_pytest else 80.0 * budget_scale,
             max_determinizations=1 if is_pytest else 3,
             seed=0,
+            rollout_model=student_model,
+            rollout_encoder=student_encoder,
         )
         if best is not None:
             top = best
