@@ -1004,3 +1004,41 @@ Modal compute -- with no expectation it beats search-dominated play. Not worth i
 unless the goal is a stronger STANDALONE (search-free) policy for faster draft
 advice. Failed nets (`solo_net_strong.npz`, `solo_net_combined.npz`) are
 gitignored and not promoted.
+
+## Distilled fast rollout policy (the "student") — a real 2.4x SPEED lever, not a strength lever
+Motivation: after the budget ladder showed rollout COUNT is the only scaling
+lever, the remaining question was rollouts-per-second. Profiling the per-ply
+policy cost (backend/ml/rollout_student.py): ~76% of a full playout is policy,
+and of the ~2.2 ms/ply, the Python FEATURE ENCODING is 1.38 ms and per-move
+scoring 0.66 ms — the numpy forward is only 0.15 ms. So a smaller net is
+pointless; a cheaper ENCODER is the lever. (Also fixed en route: score_moves()
+batch scorer — the move-value head was re-dotting the 1693-dim state per move;
+computing it once per decision is numerically identical and ~10% of playout.)
+
+BUILD: 43 cheap counter features (0.04 ms vs 1.38 ms, 34x) -> tiny MLP
+(43->128->64->factorized heads, no value/move-value heads) distilled from
+solo_net_spread by per-head soft-target CE on 41.5k states sampled from
+big-net-policy playouts (the exact rollout distribution). Teacher-argmax
+agreement: action_type 0.84, lay_eggs 0.92, draw 0.94, habitat 0.52.
+Playout speed 172 -> 63 ms (2.74x); realized on full search games 2.43x.
+Wired as make_search_chooser(rollout_model=...) — student plays ONLY the
+rollouts; the big net keeps the root candidate ranking.
+
+GATE (n=40 paired, seeds 0-39, r8/k10/t0.3/det vs heuristic, 4 local shards):
+  baseline (big rollouts)   mean 92.83  floor 69  wins 37/40  197.5 s/game
+  student SAME r8           mean 86.28  floor 55  wins 34/40   81.4 s/game
+                            paired -6.55 (sd 16.4, t=-2.53)  <- real cost
+  student MATCHED r22       mean 94.03  floor 70  wins 38/40  220.9 s/game
+                            paired +1.20 (sd 16.4, t=0.46)   <- tie (noise)
+READ: cheaper-but-weaker rollouts trade quality for quantity almost exactly
+evenly here — the 6th confirmation that nothing beats full-quality rollouts
+for STRENGTH. But unlike the value-bootstrap (8x faster / -8 pts), the student
+FULLY RECOVERS baseline strength at matched wall-clock (and directionally
+leads on mean/floor/wins), so it is deployable as a latency/throughput win:
+  - same latency, ~2.4x the rollouts (deployed: advisor scales preset rollouts
+    by MATCHED_ROLLOUT_SCALE=2.4 when rollout_student.npz is present), or
+  - a fast mode at -6.5 pts and 2.4x speed if ever wanted (not deployed).
+Artifacts: rollout_student.npz (force-added), gate JSON
+(rollout_student_gate.json), dataset regenerable via
+`python -m backend.ml.rollout_student gen`. Env kill-switch:
+WINGSPAN_ROLLOUT_STUDENT=off.

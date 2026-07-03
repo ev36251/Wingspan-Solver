@@ -1432,10 +1432,17 @@ async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> Advi
         preset = BUDGET_PRESETS.get(req.strength, BUDGET_PRESETS["default"])
         budget_scale = preset["rollouts"] / BUDGET_PRESETS["default"]["rollouts"]
         student_model, student_encoder = _get_rollout_student()
+        preset_rollouts = preset["rollouts"]
+        if student_model is not None:
+            # Student rollouts are ~2.4x cheaper; keep wall-clock constant by
+            # scaling the count (equal-rollouts student play measured -6.55,
+            # matched-time +1.20 vs big-net rollouts — see rollout_student.py).
+            from backend.ml.rollout_student import MATCHED_ROLLOUT_SCALE
+            preset_rollouts = int(round(preset_rollouts * MATCHED_ROLLOUT_SCALE))
         best, _dets = strong_engine_best_move(
             game, player_idx, policy_model, state_encoder,
             top_k=6 if is_pytest else preset["top_k"],
-            rollouts=2 if is_pytest else preset["rollouts"],
+            rollouts=2 if is_pytest else preset_rollouts,
             temperature=preset["temperature"],
             time_budget_s=10.0 if is_pytest else 80.0 * budget_scale,
             max_determinizations=1 if is_pytest else 3,

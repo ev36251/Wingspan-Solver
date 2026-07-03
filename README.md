@@ -191,6 +191,7 @@ believable:
 | Determinization (no deck-peeking) | ✅ ~free — honest play matches peeking |
 | Network retraining (×6 attempts) | ❌ null — at heavy search the *search dominates the prior* |
 | Learned value function as rollout replacement | ❌ greedy-V 74 / bootstrap 90 / PUCT-MCTS 74, vs full rollouts 93 |
+| Distilled fast rollout policy (43-dim student) | ⚡ **2.4× faster rollouts**; ties baseline at matched wall-clock (+1.2, noise), −6.5 if you pocket the speed — a real speed lever, not a strength lever |
 | Denial / "beat the opponent" objective | ❌ hurts (40% vs 60%) — selfish play wins in a low-interaction game |
 | Depth-2 lookahead (2-player) | ❌ hurts at equal budget — the rollout already looks to game end |
 
@@ -199,6 +200,16 @@ The value-net finding deserves one line: the net *predicts* state value well
 way of *using* it inside search loses to real playouts — under argmax pressure
 the search exploits the net's residual errors (the optimizer's curse). Its real
 use is speed: a ~85-point agent at 1/8 the compute.
+
+The distilled rollout policy is the successful version of that speed idea:
+profiling showed ~76% of a playout is the *Python feature encoding*, not the
+network, so a tiny student net over 43 cheap features (distilled from the big
+net's choices) plays the rollouts **2.4× faster** — and unlike the value net,
+it *fully recovers* baseline strength when the saved time is reinvested in
+more rollouts (n=40 paired gate: +1.2, within noise, with better floor and win
+rate). The big net keeps the root move ranking; the student only plays out the
+imagined games. Deployed: the advisor gets ~2.4× the rollouts at unchanged
+latency.
 
 **Where the project started (and why it changed).** The original approach was an
 AlphaZero-style self-play loop: MCTS self-play → behavioral cloning of a

@@ -1,0 +1,995 @@
+{
+  "config": {},
+  "summary": {
+    "baseline": {
+      "n": 40,
+      "mean": 92.83,
+      "floor": 69,
+      "median": 92.5,
+      "wins": 37,
+      "mean_secs_per_game": 197.5
+    },
+    "student_matched": {
+      "n": 40,
+      "mean": 94.03,
+      "floor": 70,
+      "median": 94.0,
+      "wins": 38,
+      "mean_secs_per_game": 220.9,
+      "paired_mean_diff_vs_baseline": 1.2,
+      "paired_up_down": "18up/22dn/0tie"
+    },
+    "student_same_r": {
+      "n": 40,
+      "mean": 86.28,
+      "floor": 55,
+      "median": 85.5,
+      "wins": 34,
+      "mean_secs_per_game": 81.4,
+      "paired_mean_diff_vs_baseline": -6.55,
+      "paired_up_down": "15up/25dn/0tie"
+    }
+  },
+  "games": [
+    {
+      "seed": 0,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 77,
+      "opp": 63,
+      "secs": 376.5
+    },
+    {
+      "seed": 1,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 78,
+      "opp": 84,
+      "secs": 136.9
+    },
+    {
+      "seed": 2,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 100,
+      "opp": 53,
+      "secs": 263.3
+    },
+    {
+      "seed": 4,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 77,
+      "opp": 72,
+      "secs": 161.3
+    },
+    {
+      "seed": 5,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 76,
+      "opp": 66,
+      "secs": 67.3
+    },
+    {
+      "seed": 6,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 99,
+      "opp": 70,
+      "secs": 164.1
+    },
+    {
+      "seed": 8,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 98,
+      "opp": 69,
+      "secs": 190.8
+    },
+    {
+      "seed": 9,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 83,
+      "opp": 67,
+      "secs": 72.9
+    },
+    {
+      "seed": 10,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 83,
+      "opp": 50,
+      "secs": 220.5
+    },
+    {
+      "seed": 12,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 91,
+      "opp": 78,
+      "secs": 178.1
+    },
+    {
+      "seed": 13,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 112,
+      "opp": 74,
+      "secs": 79.7
+    },
+    {
+      "seed": 14,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 103,
+      "opp": 62,
+      "secs": 229.0
+    },
+    {
+      "seed": 16,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 95,
+      "opp": 58,
+      "secs": 184.1
+    },
+    {
+      "seed": 17,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 100,
+      "opp": 71,
+      "secs": 64.0
+    },
+    {
+      "seed": 18,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 102,
+      "opp": 76,
+      "secs": 222.3
+    },
+    {
+      "seed": 20,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 90,
+      "opp": 66,
+      "secs": 186.2
+    },
+    {
+      "seed": 21,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 98,
+      "opp": 67,
+      "secs": 63.7
+    },
+    {
+      "seed": 22,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 110,
+      "opp": 90,
+      "secs": 197.1
+    },
+    {
+      "seed": 24,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 94,
+      "opp": 79,
+      "secs": 181.6
+    },
+    {
+      "seed": 25,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 96,
+      "opp": 84,
+      "secs": 85.9
+    },
+    {
+      "seed": 26,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 100,
+      "opp": 33,
+      "secs": 245.6
+    },
+    {
+      "seed": 28,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 89,
+      "opp": 50,
+      "secs": 176.9
+    },
+    {
+      "seed": 29,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 103,
+      "opp": 74,
+      "secs": 75.2
+    },
+    {
+      "seed": 30,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 88,
+      "opp": 59,
+      "secs": 177.3
+    },
+    {
+      "seed": 32,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 127,
+      "opp": 55,
+      "secs": 239.3
+    },
+    {
+      "seed": 33,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 94,
+      "opp": 69,
+      "secs": 69.8
+    },
+    {
+      "seed": 34,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 87,
+      "opp": 47,
+      "secs": 190.6
+    },
+    {
+      "seed": 36,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 107,
+      "opp": 64,
+      "secs": 185.1
+    },
+    {
+      "seed": 37,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 73,
+      "opp": 56,
+      "secs": 76.0
+    },
+    {
+      "seed": 38,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 91,
+      "opp": 75,
+      "secs": 234.0
+    },
+    {
+      "seed": 0,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 91,
+      "opp": 66,
+      "secs": 151.2
+    },
+    {
+      "seed": 1,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 92,
+      "opp": 60,
+      "secs": 370.7
+    },
+    {
+      "seed": 3,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 100,
+      "opp": 93,
+      "secs": 197.6
+    },
+    {
+      "seed": 4,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 55,
+      "opp": 71,
+      "secs": 72.1
+    },
+    {
+      "seed": 5,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 77,
+      "opp": 67,
+      "secs": 204.8
+    },
+    {
+      "seed": 7,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 85,
+      "opp": 74,
+      "secs": 189.5
+    },
+    {
+      "seed": 8,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 96,
+      "opp": 70,
+      "secs": 68.5
+    },
+    {
+      "seed": 9,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 104,
+      "opp": 81,
+      "secs": 205.7
+    },
+    {
+      "seed": 11,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 100,
+      "opp": 74,
+      "secs": 185.6
+    },
+    {
+      "seed": 12,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 92,
+      "opp": 52,
+      "secs": 83.7
+    },
+    {
+      "seed": 13,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 103,
+      "opp": 77,
+      "secs": 200.5
+    },
+    {
+      "seed": 15,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 100,
+      "opp": 53,
+      "secs": 182.3
+    },
+    {
+      "seed": 16,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 76,
+      "opp": 72,
+      "secs": 88.9
+    },
+    {
+      "seed": 17,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 101,
+      "opp": 66,
+      "secs": 188.4
+    },
+    {
+      "seed": 19,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 97,
+      "opp": 40,
+      "secs": 181.3
+    },
+    {
+      "seed": 20,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 86,
+      "opp": 63,
+      "secs": 68.7
+    },
+    {
+      "seed": 21,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 117,
+      "opp": 47,
+      "secs": 177.0
+    },
+    {
+      "seed": 23,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 107,
+      "opp": 70,
+      "secs": 184.1
+    },
+    {
+      "seed": 24,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 82,
+      "opp": 66,
+      "secs": 72.8
+    },
+    {
+      "seed": 25,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 105,
+      "opp": 45,
+      "secs": 258.8
+    },
+    {
+      "seed": 27,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 74,
+      "opp": 71,
+      "secs": 193.8
+    },
+    {
+      "seed": 28,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 67,
+      "opp": 48,
+      "secs": 73.0
+    },
+    {
+      "seed": 29,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 104,
+      "opp": 61,
+      "secs": 211.7
+    },
+    {
+      "seed": 31,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 82,
+      "opp": 76,
+      "secs": 176.6
+    },
+    {
+      "seed": 32,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 91,
+      "opp": 71,
+      "secs": 81.8
+    },
+    {
+      "seed": 33,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 79,
+      "opp": 47,
+      "secs": 191.7
+    },
+    {
+      "seed": 35,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 96,
+      "opp": 55,
+      "secs": 164.9
+    },
+    {
+      "seed": 36,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 84,
+      "opp": 72,
+      "secs": 86.4
+    },
+    {
+      "seed": 37,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 96,
+      "opp": 57,
+      "secs": 198.9
+    },
+    {
+      "seed": 39,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 92,
+      "opp": 48,
+      "secs": 189.9
+    },
+    {
+      "seed": 0,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 76,
+      "opp": 61,
+      "secs": 446.7
+    },
+    {
+      "seed": 2,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 112,
+      "opp": 75,
+      "secs": 256.5
+    },
+    {
+      "seed": 3,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 86,
+      "opp": 83,
+      "secs": 69.7
+    },
+    {
+      "seed": 4,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 76,
+      "opp": 65,
+      "secs": 210.7
+    },
+    {
+      "seed": 6,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 91,
+      "opp": 68,
+      "secs": 183.1
+    },
+    {
+      "seed": 7,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 59,
+      "opp": 87,
+      "secs": 66.5
+    },
+    {
+      "seed": 8,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 90,
+      "opp": 63,
+      "secs": 184.3
+    },
+    {
+      "seed": 10,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 105,
+      "opp": 74,
+      "secs": 201.9
+    },
+    {
+      "seed": 11,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 119,
+      "opp": 68,
+      "secs": 78.2
+    },
+    {
+      "seed": 12,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 79,
+      "opp": 71,
+      "secs": 217.3
+    },
+    {
+      "seed": 14,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 85,
+      "opp": 83,
+      "secs": 182.5
+    },
+    {
+      "seed": 15,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 76,
+      "opp": 57,
+      "secs": 64.7
+    },
+    {
+      "seed": 16,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 92,
+      "opp": 35,
+      "secs": 237.5
+    },
+    {
+      "seed": 18,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 93,
+      "opp": 58,
+      "secs": 184.9
+    },
+    {
+      "seed": 19,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 116,
+      "opp": 59,
+      "secs": 69.9
+    },
+    {
+      "seed": 20,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 88,
+      "opp": 55,
+      "secs": 187.3
+    },
+    {
+      "seed": 22,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 95,
+      "opp": 76,
+      "secs": 174.4
+    },
+    {
+      "seed": 23,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 66,
+      "opp": 61,
+      "secs": 67.1
+    },
+    {
+      "seed": 24,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 98,
+      "opp": 63,
+      "secs": 193.1
+    },
+    {
+      "seed": 26,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 70,
+      "opp": 91,
+      "secs": 196.0
+    },
+    {
+      "seed": 27,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 76,
+      "opp": 94,
+      "secs": 70.7
+    },
+    {
+      "seed": 28,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 96,
+      "opp": 57,
+      "secs": 192.4
+    },
+    {
+      "seed": 30,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 82,
+      "opp": 88,
+      "secs": 173.1
+    },
+    {
+      "seed": 31,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 65,
+      "opp": 74,
+      "secs": 67.4
+    },
+    {
+      "seed": 32,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 84,
+      "opp": 56,
+      "secs": 242.3
+    },
+    {
+      "seed": 34,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 98,
+      "opp": 59,
+      "secs": 179.7
+    },
+    {
+      "seed": 35,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 99,
+      "opp": 81,
+      "secs": 71.1
+    },
+    {
+      "seed": 36,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 97,
+      "opp": 63,
+      "secs": 225.5
+    },
+    {
+      "seed": 38,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 106,
+      "opp": 77,
+      "secs": 180.9
+    },
+    {
+      "seed": 39,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 77,
+      "opp": 71,
+      "secs": 72.0
+    },
+    {
+      "seed": 1,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 80,
+      "opp": 68,
+      "secs": 345.6
+    },
+    {
+      "seed": 2,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 99,
+      "opp": 76,
+      "secs": 164.5
+    },
+    {
+      "seed": 3,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 88,
+      "opp": 75,
+      "secs": 238.0
+    },
+    {
+      "seed": 5,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 86,
+      "opp": 78,
+      "secs": 171.2
+    },
+    {
+      "seed": 6,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 81,
+      "opp": 65,
+      "secs": 75.0
+    },
+    {
+      "seed": 7,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 80,
+      "opp": 65,
+      "secs": 223.4
+    },
+    {
+      "seed": 9,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 82,
+      "opp": 78,
+      "secs": 190.4
+    },
+    {
+      "seed": 10,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 80,
+      "opp": 78,
+      "secs": 98.7
+    },
+    {
+      "seed": 11,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 128,
+      "opp": 89,
+      "secs": 215.8
+    },
+    {
+      "seed": 13,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 107,
+      "opp": 86,
+      "secs": 178.9
+    },
+    {
+      "seed": 14,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 92,
+      "opp": 73,
+      "secs": 80.0
+    },
+    {
+      "seed": 15,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 97,
+      "opp": 51,
+      "secs": 213.4
+    },
+    {
+      "seed": 17,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 92,
+      "opp": 79,
+      "secs": 193.2
+    },
+    {
+      "seed": 18,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 85,
+      "opp": 72,
+      "secs": 86.3
+    },
+    {
+      "seed": 19,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 108,
+      "opp": 50,
+      "secs": 230.7
+    },
+    {
+      "seed": 21,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 106,
+      "opp": 57,
+      "secs": 202.8
+    },
+    {
+      "seed": 22,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 91,
+      "opp": 72,
+      "secs": 79.4
+    },
+    {
+      "seed": 23,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 74,
+      "opp": 76,
+      "secs": 208.2
+    },
+    {
+      "seed": 25,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 108,
+      "opp": 52,
+      "secs": 190.6
+    },
+    {
+      "seed": 26,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 101,
+      "opp": 72,
+      "secs": 90.7
+    },
+    {
+      "seed": 27,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 82,
+      "opp": 96,
+      "secs": 203.3
+    },
+    {
+      "seed": 29,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 84,
+      "opp": 84,
+      "secs": 200.0
+    },
+    {
+      "seed": 30,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 95,
+      "opp": 83,
+      "secs": 74.6
+    },
+    {
+      "seed": 31,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 70,
+      "opp": 63,
+      "secs": 209.3
+    },
+    {
+      "seed": 33,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 84,
+      "opp": 62,
+      "secs": 201.5
+    },
+    {
+      "seed": 34,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 70,
+      "opp": 61,
+      "secs": 78.0
+    },
+    {
+      "seed": 35,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 131,
+      "opp": 65,
+      "secs": 213.5
+    },
+    {
+      "seed": 37,
+      "arm": "baseline",
+      "rollouts": 8,
+      "agent": 69,
+      "opp": 60,
+      "secs": 208.2
+    },
+    {
+      "seed": 38,
+      "arm": "student_same_r",
+      "rollouts": 8,
+      "agent": 85,
+      "opp": 89,
+      "secs": 92.5
+    },
+    {
+      "seed": 39,
+      "arm": "student_matched",
+      "rollouts": 22,
+      "agent": 86,
+      "opp": 60,
+      "secs": 192.6
+    }
+  ]
+}
