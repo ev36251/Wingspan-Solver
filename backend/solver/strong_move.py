@@ -58,6 +58,10 @@ def strong_engine_best_move(
 
     votes: Counter[str] = Counter()
     start = time.time()
+    # Hard wall-clock cap enforced INSIDE the search (per candidate/rollout),
+    # not just between determinizations — a single turn-1 determinization at a
+    # heavy preset could otherwise run for many minutes with no way to stop.
+    deadline = start + time_budget_s
     used = 0
     for d in range(max(1, max_determinizations)):
         if d > 0 and (time.time() - start) >= time_budget_s:
@@ -73,6 +77,7 @@ def strong_engine_best_move(
             objective="selfish", rollouts=rollouts, temperature=temperature,
             determinize=True,
             rollout_model=rollout_model, rollout_encoder=rollout_encoder,
+            deadline=deadline,
         )
         best = chooser(det, dp, dmoves)
         votes[action_signature(best)] += 1

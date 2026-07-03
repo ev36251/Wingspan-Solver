@@ -412,7 +412,7 @@ def _project_final_scores(
 
 
 @router.post("/{game_id}/solve/heuristic", response_model=HeuristicResponse)
-async def solve_heuristic(game_id: str, player_idx: int | None = None) -> HeuristicResponse:
+def solve_heuristic(game_id: str, player_idx: int | None = None) -> HeuristicResponse:
     """Quick move ranking using static evaluation.
 
     Pass player_idx to evaluate for a specific player (0-based).
@@ -667,7 +667,7 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
 
 
 @router.post("/{game_id}/solve/monte-carlo", response_model=MonteCarloResponse)
-async def solve_monte_carlo(
+def solve_monte_carlo(
     game_id: str,
     req: MonteCarloRequest | None = None,
 ) -> MonteCarloResponse:
@@ -722,7 +722,7 @@ async def solve_monte_carlo(
 
 
 @router.post("/{game_id}/solve/lookahead", response_model=LookaheadResponse)
-async def solve_lookahead(
+def solve_lookahead(
     game_id: str,
     req: LookaheadRequest | None = None,
 ) -> LookaheadResponse:
@@ -780,7 +780,7 @@ async def solve_lookahead(
 
 
 @router.post("/{game_id}/solve/engine", response_model=EngineResponse)
-async def solve_engine(
+def solve_engine(
     game_id: str,
     req: EngineRequest | None = None,
 ) -> EngineResponse:
@@ -881,7 +881,7 @@ async def solve_engine(
 
 
 @router.post("/{game_id}/solve/hybrid", response_model=EngineResponse)
-async def solve_hybrid(
+def solve_hybrid(
     game_id: str,
     req: HybridRequest | None = None,
 ) -> EngineResponse:
@@ -1012,7 +1012,7 @@ async def solve_hybrid(
 
 
 @router.post("/{game_id}/solve/max-score", response_model=MaxScoreResponse)
-async def solve_max_score(game_id: str, player_name: str | None = None) -> MaxScoreResponse:
+def solve_max_score(game_id: str, player_name: str | None = None) -> MaxScoreResponse:
     """Calculate theoretical maximum score from current state."""
     game = _get_game(game_id)
 
@@ -1066,7 +1066,7 @@ class AfterResetResponse(BaseModel):
 
 
 @router.post("/{game_id}/solve/after-reset", response_model=AfterResetResponse)
-async def solve_after_reset(game_id: str, req: AfterResetRequest) -> AfterResetResponse:
+def solve_after_reset(game_id: str, req: AfterResetRequest) -> AfterResetResponse:
     """Follow-up recommendation after feeder/tray reset.
 
     When the solver recommends "reset feeder" or "reset tray", the user
@@ -1385,7 +1385,7 @@ class AdvisorResponse(BaseModel):
 
 
 @router.post("/{game_id}/solve/advisor", response_model=AdvisorResponse)
-async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorResponse:
+def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorResponse:
     """Percentage-play advice: a likely-outcome 'main line' and low-probability
     'upside lines', framed as sentences with no raw point estimate."""
     from backend.models.enums import GameSet
@@ -1434,11 +1434,14 @@ async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> Advi
         student_model, student_encoder = _get_rollout_student()
         preset_rollouts = preset["rollouts"]
         if student_model is not None:
-            # Student rollouts are ~2.4x cheaper; keep wall-clock constant by
+            # Student rollouts are ~3x cheaper; keep wall-clock constant by
             # scaling the count (equal-rollouts student play measured -6.55,
-            # matched-time +1.20 vs big-net rollouts — see rollout_student.py).
+            # matched-time +2.62 — see rollout_student.py). Capped at the
+            # measured budget plateau (r24-36 == r36+): beyond it extra
+            # rollouts only burn the time budget on the first few candidates.
             from backend.ml.rollout_student import MATCHED_ROLLOUT_SCALE
-            preset_rollouts = int(round(preset_rollouts * MATCHED_ROLLOUT_SCALE))
+            preset_rollouts = min(
+                int(round(preset_rollouts * MATCHED_ROLLOUT_SCALE)), 36)
         best, _dets = strong_engine_best_move(
             game, player_idx, policy_model, state_encoder,
             top_k=6 if is_pytest else preset["top_k"],
@@ -1561,7 +1564,7 @@ async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> Advi
 
 
 @router.post("/{game_id}/analyze", response_model=AnalysisResponse)
-async def analyze_game_endpoint(game_id: str, player_name: str | None = None) -> AnalysisResponse:
+def analyze_game_endpoint(game_id: str, player_name: str | None = None) -> AnalysisResponse:
     """Post-game deviation analysis."""
     game = _get_game(game_id)
 

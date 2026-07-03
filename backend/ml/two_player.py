@@ -92,7 +92,8 @@ def play_multi(game, choosers, max_turns: int = 600):
 
 def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff",
                         rollouts=1, temperature=0.0, determinize=False, opp_weight=1.0,
-                        depth=1, branch=3, rollout_model=None, rollout_encoder=None):
+                        depth=1, branch=3, rollout_model=None, rollout_encoder=None,
+                        deadline=None):
     """1-ply rollout search for seat `my_idx`.
 
     Objective value of a rollout = my_score - lambda * best_opponent_score, where
@@ -188,6 +189,8 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
             best = max(best, _value_at_my_turn(s2, remaining - 1))
         return best if best > -1e17 else _rollout_value(sim)
 
+    import time as _time
+
     def choose(game, player, moves):
         if len(moves) <= 1:
             return moves[0]
@@ -197,10 +200,22 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
         order = sorted(range(len(moves)), key=lambda i: -sc[i])
         ranked = [moves[i] for i in order[:top_k]]
         best_m, best_v = ranked[0], -1e18
+        # Wall-clock budgeting: identical behavior when deadline is None; with
+        # a deadline, stop starting new candidates once past it (returning the
+        # best so far) and cut a candidate's remaining rollouts. Without this,
+        # one decision at a high preset could run for many minutes (turn-1
+        # playouts are the longest) with no way to stop it.
+        candidates_done = 0
         for m in ranked:
+            if (deadline is not None and candidates_done > 0
+                    and _time.time() >= deadline):
+                break
             total = 0.0
             n_ok = 0
             for _ in range(n_roll):
+                if (deadline is not None and n_ok > 0
+                        and _time.time() >= deadline):
+                    break
                 sim = fast_clone_game(game)
                 if determinize:
                     deck = getattr(sim, "_deck_cards", None)
@@ -218,6 +233,7 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
                 else:
                     total += _rollout_value(sim)
                 n_ok += 1
+            candidates_done += 1
             if n_ok == 0:
                 continue
             val = total / n_ok
