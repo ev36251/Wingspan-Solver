@@ -371,13 +371,13 @@ def load_rollout_student(path: str | Path):
 
 DEFAULT_STUDENT_PATH = "reports/ml/solo_seed/rollout_student.npz"
 
-# Measured realized speedup on full search games (gate, n=40: 197.5 -> 81.4
-# s/game at equal rollouts). When the student plays the rollouts, scale the
-# rollout count by this factor to keep wall-clock constant — the n=40 paired
-# gate showed equal-rollouts student play costs -6.55 (t=-2.53) while the
-# wall-clock-matched config ties baseline (+1.20, t=0.46; better mean/floor/
-# wins). See reports/ml/solo_seed/rollout_student_gate.json.
-MATCHED_ROLLOUT_SCALE = 2.4
+# Rollout-count scale when the student plays the rollouts, keeping wall-clock
+# roughly constant. Measured for the DEPLOYED v2 identity-aware student
+# (n=40 paired gate): at 3x rollouts (r8 -> r24) games ran 174 s vs the
+# baseline's 197.5 s and scored best-of-all-arms (95.45 vs 92.83, +2.62,
+# t=0.99; 38/40 wins). Equal-rollouts student play costs -6.55 (t=-2.53), so
+# never deploy unscaled. See reports/ml/solo_seed/rollout_student_gate.json.
+MATCHED_ROLLOUT_SCALE = 3.0
 
 
 # ── Quality gate (paired A/B on the real search agent) ──────────────────────

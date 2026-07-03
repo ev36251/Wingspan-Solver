@@ -191,7 +191,7 @@ believable:
 | Determinization (no deck-peeking) | ✅ ~free — honest play matches peeking |
 | Network retraining (×6 attempts) | ❌ null — at heavy search the *search dominates the prior* |
 | Learned value function as rollout replacement | ❌ greedy-V 74 / bootstrap 90 / PUCT-MCTS 74, vs full rollouts 93 |
-| Distilled fast rollout policy (43-dim student) | ⚡ **2.4× faster rollouts**; ties baseline at matched wall-clock (+1.2, noise), −6.5 if you pocket the speed — a real speed lever, not a strength lever |
+| Distilled fast rollout policy (student) | ⚡ **~3× faster rollouts**; the identity-aware v2 posts the best mean of any tested config (95.5 vs 92.8) at 12% *less* wall-clock — a real speed lever; −6.5 if you pocket the speed unscaled |
 | Denial / "beat the opponent" objective | ❌ hurts (40% vs 60%) — selfish play wins in a low-interaction game |
 | Depth-2 lookahead (2-player) | ❌ hurts at equal budget — the rollout already looks to game end |
 
@@ -203,13 +203,16 @@ use is speed: a ~85-point agent at 1/8 the compute.
 
 The distilled rollout policy is the successful version of that speed idea:
 profiling showed ~76% of a playout is the *Python feature encoding*, not the
-network, so a tiny student net over 43 cheap features (distilled from the big
-net's choices) plays the rollouts **2.4× faster** — and unlike the value net,
-it *fully recovers* baseline strength when the saved time is reinvested in
-more rollouts (n=40 paired gate: +1.2, within noise, with better floor and win
-rate). The big net keeps the root move ranking; the student only plays out the
-imagined games. Deployed: the advisor gets ~2.4× the rollouts at unchanged
-latency.
+network, so a tiny student net over ~75 cheap features (counters plus a hashed
+bag of the player's own bird identities, distilled from the big net's choices)
+plays the rollouts **~3× faster**. Unlike the value net, reinvesting the saved
+time in more rollouts doesn't just recover baseline strength — the
+identity-aware student posted the best mean of any tested configuration
+(95.5 vs 92.8 baseline, n=40 paired, within noise) while running 12% faster.
+The big net keeps the root move ranking; the student only plays out the
+imagined games. Deployed: the advisor now runs ~3× the rollouts at unchanged
+latency. (A pure-engineering variant — caching the encoder's per-bird blocks,
+bit-identical output — also ships, speeding every read ~1.35×.)
 
 **Where the project started (and why it changed).** The original approach was an
 AlphaZero-style self-play loop: MCTS self-play → behavioral cloning of a
