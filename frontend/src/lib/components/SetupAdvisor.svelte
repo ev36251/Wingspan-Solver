@@ -95,7 +95,9 @@
 		if (selectedBonusCards.find(b => b.name === bc.name)) return;
 		selectedBonusCards = [...selectedBonusCards, bc];
 		bonusSearchQuery = '';
-		showBonusDropdown = false;
+		// Keep the dropdown open for the second pick — focus stays in the
+		// input after a mousedown-select, so the on:focus reopen never fires.
+		showBonusDropdown = selectedBonusCards.length < 2;
 		hasAnalyzed = false;
 	}
 
@@ -275,6 +277,7 @@
 				type="text"
 				bind:value={bonusSearchQuery}
 				on:focus={() => showBonusDropdown = true}
+				on:input={() => showBonusDropdown = true}
 				on:blur={() => setTimeout(() => showBonusDropdown = false, 200)}
 				placeholder="Search bonus cards..."
 				disabled={selectedBonusCards.length >= 2}

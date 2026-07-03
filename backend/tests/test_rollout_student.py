@@ -83,6 +83,38 @@ def test_fast_rollout_encoder_shape_and_bounds():
         assert all(-0.001 <= x <= 1.001 for x in v)
 
 
+@pytest.mark.skipif(not BIG_NET.exists(), reason="deployed net not present")
+def test_strong_move_respects_time_budget_on_turn_one():
+    """Turn-1 decisions have the longest playouts; a heavy preset used to run
+    a single determinization for many minutes past its budget (frozen app)."""
+    import time
+    from backend.ml.factorized_inference import FactorizedPolicyModel
+    from backend.ml.state_encoder import StateEncoder
+    from backend.ml.rollout_student import load_rollout_student
+    from backend.ml.two_player import build_2p_game
+    from backend.solver.strong_move import strong_engine_best_move
+
+    model = FactorizedPolicyModel(BIG_NET)
+    enc = StateEncoder.resolve_for_model(model.meta)
+    pair = load_rollout_student(STUDENT) if STUDENT.exists() else None
+    r_model, r_enc = pair if pair else (None, None)
+    game = build_2p_game(11, BoardType.OCEANIA)  # fresh game = worst case
+
+    budget = 6.0
+    t0 = time.time()
+    best, _ = strong_engine_best_move(
+        game, 0, model, enc,
+        top_k=20, rollouts=36,  # the old runaway config
+        temperature=0.3, time_budget_s=budget, max_determinizations=3, seed=0,
+        rollout_model=r_model, rollout_encoder=r_enc,
+    )
+    elapsed = time.time() - t0
+    assert best is not None
+    # Allow generous overshoot for one in-flight playout + slow CI machines,
+    # but nothing like the unbounded minutes-long runaway.
+    assert elapsed < budget * 5, f"deadline not enforced: {elapsed:.1f}s"
+
+
 @pytest.mark.skipif(not STUDENT.exists(), reason="student not trained yet")
 def test_student_loads_and_scores_moves():
     from backend.ml.rollout_student import load_rollout_student
