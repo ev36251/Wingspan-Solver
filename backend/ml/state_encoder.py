@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import re as _re
 from dataclasses import dataclass
+from typing import ClassVar
 
 import numpy as np
 
@@ -28,12 +29,38 @@ class BirdFeatureEncoder:
 
     DIM = 33
 
+    # Bird attributes never change during a game, so the vector is a pure
+    # function of the bird — cache by name (471 birds). Callers must treat
+    # returned arrays/lists as read-only.
+    _CACHE: dict[str, np.ndarray] = {}
+    _LIST_CACHE: dict[str, list[float]] = {}
+    _ZERO_LIST: list[float] = [0.0] * 33
+
     @staticmethod
     def encode(bird: Bird | None) -> np.ndarray:
+        if bird is None:
+            return np.zeros(BirdFeatureEncoder.DIM, dtype=np.float32)
+        cached = BirdFeatureEncoder._CACHE.get(bird.name)
+        if cached is None:
+            cached = BirdFeatureEncoder._build(bird)
+            BirdFeatureEncoder._CACHE[bird.name] = cached
+        return cached
+
+    @staticmethod
+    def encode_list(bird: Bird | None) -> list[float]:
+        """Cached list view of encode() (avoids a .tolist() per call site)."""
+        if bird is None:
+            return BirdFeatureEncoder._ZERO_LIST
+        cached = BirdFeatureEncoder._LIST_CACHE.get(bird.name)
+        if cached is None:
+            cached = BirdFeatureEncoder.encode(bird).tolist()
+            BirdFeatureEncoder._LIST_CACHE[bird.name] = cached
+        return cached
+
+    @staticmethod
+    def _build(bird: Bird) -> np.ndarray:
         """Return a 33-float array representing the bird's attributes."""
         vec = np.zeros(BirdFeatureEncoder.DIM, dtype=np.float32)
-        if bird is None:
-            return vec
 
         # f[0] VP
         vec[0] = _clamp01(bird.victory_points / 9.0)
@@ -137,11 +164,23 @@ class PowerFeatureEncoder:
         "per_bird", "conditional", "compound", "repeat_or_copy",
     ]
 
+    # The power vector is a pure function of the bird's power text (regex-heavy,
+    # so worth caching). Callers must treat returned lists as read-only.
+    _CACHE: dict[str, list[float]] = {}
+    _ZERO: list[float] = [0.0] * 14
+
     @staticmethod
     def encode(bird: "Bird | None") -> list[float]:
         if bird is None:
-            return [0.0] * PowerFeatureEncoder.DIM
+            return PowerFeatureEncoder._ZERO
+        cached = PowerFeatureEncoder._CACHE.get(bird.name)
+        if cached is None:
+            cached = PowerFeatureEncoder._build(bird)
+            PowerFeatureEncoder._CACHE[bird.name] = cached
+        return cached
 
+    @staticmethod
+    def _build(bird: "Bird") -> list[float]:
         text = (bird.power_text or "").lower()
 
         if not text:
@@ -386,9 +425,18 @@ class StateEncoder:
                 names.append(f"hand.{i}.{attr}")
         return names
 
+    # token -> bucket is a pure function; memoize across instances (few
+    # thousand distinct zone:bird tokens per game set + hash dim).
+    _BUCKET_CACHE: ClassVar[dict[tuple[str, int], int]] = {}
+
     def _identity_bucket(self, token: str, dim: int) -> int:
-        h = hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest()
-        return int.from_bytes(h, byteorder="little", signed=False) % dim
+        key = (token, dim)
+        b = StateEncoder._BUCKET_CACHE.get(key)
+        if b is None:
+            h = hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest()
+            b = int.from_bytes(h, byteorder="little", signed=False) % dim
+            StateEncoder._BUCKET_CACHE[key] = b
+        return b
 
     def _encode_identity_features(self, game: GameState, player_index: int) -> list[float]:
         dim = max(1, int(self.identity_hash_dim))
@@ -440,8 +488,7 @@ class StateEncoder:
             row = p.board.get_row(hab)
             for col, slot in enumerate(row.slots):
                 # 33 bird features
-                bird_vec = BirdFeatureEncoder.encode(slot.bird)
-                result.extend(bird_vec.tolist())
+                result.extend(BirdFeatureEncoder.encode_list(slot.bird))
                 # 11 slot context features
                 bird_egg_limit = slot.bird.egg_limit if slot.bird is not None else 1
                 eggs_norm = _clamp01(slot.eggs / max(1, bird_egg_limit))
@@ -459,7 +506,7 @@ class StateEncoder:
         hand_sorted = sorted(p.hand, key=lambda b: b.victory_points, reverse=True)
         for i in range(n):
             bird = hand_sorted[i] if i < len(hand_sorted) else None
-            result.extend(BirdFeatureEncoder.encode(bird).tolist())
+            result.extend(BirdFeatureEncoder.encode_list(bird))
 
         return result
 
@@ -476,7 +523,29 @@ class StateEncoder:
             ])
         return names
 
-    def _encode_hand_habitat_features(self, game: GameState, player_index: int) -> list[float]:
+    @staticmethod
+    def _make_afford_checker(player):
+        """Memoized can_pay_food_cost for one encode pass.
+
+        The player's supply/board are fixed during a single encode, so
+        affordability is a pure function of the bird's food-cost signature —
+        and many birds share identical costs. ~45% of encode time was
+        re-running can_pay_food_cost before this."""
+        memo: dict[tuple, bool] = {}
+
+        def afford(bird) -> bool:
+            cost = bird.food_cost
+            key = (tuple(ft.value for ft in cost.items), cost.is_or)
+            v = memo.get(key)
+            if v is None:
+                v = can_pay_food_cost(player, cost)[0]
+                memo[key] = v
+            return v
+
+        return afford
+
+    def _encode_hand_habitat_features(self, game: GameState, player_index: int,
+                                      afford=None) -> list[float]:
         """Encode 15 hand-board synergy features (5 per habitat).
 
         For each habitat:
@@ -491,6 +560,8 @@ class StateEncoder:
         during warm-start (new weights zero-initialised).
         """
         p = game.players[player_index]
+        if afford is None:
+            afford = self._make_afford_checker(p)
         result: list[float] = []
 
         for hab in (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND):
@@ -505,9 +576,7 @@ class StateEncoder:
             # Hand birds compatible with this habitat
             hab_hand = [b for b in p.hand if hab in b.habitats]
             hand_count = len(hab_hand)
-            hand_affordable = sum(
-                1 for b in hab_hand if can_pay_food_cost(p, b.food_cost)[0]
-            )
+            hand_affordable = sum(1 for b in hab_hand if afford(b))
             hand_brown = sum(1 for b in hab_hand if b.color == PowerColor.BROWN)
             hand_best_vp = float(max((b.victory_points for b in hab_hand), default=0))
 
@@ -563,7 +632,8 @@ class StateEncoder:
                 names.append(f"{prefix}.power.{pf}")
         return names
 
-    def _encode_tray_per_slot(self, game: GameState, player_index: int) -> list[float]:
+    def _encode_tray_per_slot(self, game: GameState, player_index: int,
+                              afford=None) -> list[float]:
         """Encode up to 3 tray cards: 52 features each = 156 total.
 
         Per tray slot:
@@ -572,6 +642,8 @@ class StateEncoder:
           [38-51] PowerFeatureEncoder — what the power does, who benefits
         """
         p = game.players[player_index]
+        if afford is None:
+            afford = self._make_afford_checker(p)
         tray_birds = sorted(
             game.card_tray.face_up,
             key=lambda b: b.victory_points,
@@ -585,12 +657,12 @@ class StateEncoder:
         result: list[float] = []
         for i in range(3):
             bird = tray_birds[i] if i < len(tray_birds) else None
-            result.extend(BirdFeatureEncoder.encode(bird).tolist())
+            result.extend(BirdFeatureEncoder.encode_list(bird))
             if bird is None:
                 result.extend([0.0] * 5)
                 result.extend([0.0] * PowerFeatureEncoder.DIM)
             else:
-                affordable, _ = can_pay_food_cost(p, bird.food_cost)
+                affordable = afford(bird)
                 egg_gaps = []
                 for hab in bird.habitats:
                     row = p.board.get_row(hab)
@@ -654,7 +726,7 @@ class StateEncoder:
         for hab in (Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND):
             row = leading_opp.board.get_row(hab)
             for slot in row.slots:
-                result.extend(BirdFeatureEncoder.encode(slot.bird).tolist())
+                result.extend(BirdFeatureEncoder.encode_list(slot.bird))
                 if slot.bird is not None:
                     eggs_norm = _clamp01(slot.eggs / max(1, slot.bird.egg_limit))
                 else:
@@ -1219,10 +1291,12 @@ class StateEncoder:
             vec.extend(self._encode_identity_features(game, player_index))
         if self.use_per_slot_encoding:
             vec.extend(self._encode_per_slot(game, player_index))
+        # One shared affordability memo per encode pass (supply is fixed here).
+        afford = self._make_afford_checker(p)
         if self.use_hand_habitat_features:
-            vec.extend(self._encode_hand_habitat_features(game, player_index))
+            vec.extend(self._encode_hand_habitat_features(game, player_index, afford))
         if self.use_tray_per_slot_encoding:
-            vec.extend(self._encode_tray_per_slot(game, player_index))
+            vec.extend(self._encode_tray_per_slot(game, player_index, afford))
         if self.use_opponent_board_encoding:
             vec.extend(self._encode_opponent_board(game, player_index))
         if self.use_power_features:

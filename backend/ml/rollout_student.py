@@ -44,8 +44,18 @@ _HABITATS = [Habitat.FOREST, Habitat.GRASSLAND, Habitat.WETLAND]
 
 class FastRolloutEncoder:
     """Cheap counter features for the rollout policy. Same .encode(game, idx)
-    interface as StateEncoder, ~25x faster (no bird identities, no per-slot
-    blocks — the student's job is plausible rollout moves, not deep reads)."""
+    interface as StateEncoder, ~25x faster (no per-slot blocks — the student's
+    job is plausible rollout moves, not deep reads).
+
+    identity_hash_dim > 0 appends a hashed bag of the player's OWN board+hand
+    bird identities (same bucket scheme as the big encoder, hashes cached), so
+    the student can tell a cache-engine board from a tuck-engine board at
+    near-zero encode cost."""
+
+    _BUCKET_CACHE: dict = {}
+
+    def __init__(self, identity_hash_dim: int = 0):
+        self.identity_hash_dim = int(identity_hash_dim)
 
     def feature_names(self) -> list[str]:
         names = ["round", "turn", "my_cubes", "opp_cubes", "board_type_oceania"]
@@ -59,7 +69,18 @@ class FastRolloutEncoder:
                   "opp_cached_plus_tucked"]
         names += [f"feeder_{ft.value}" for ft in _FOOD_TYPES]
         names += ["feeder_dice", "tray_cards", "deck_remaining"]
+        names += [f"identity_hash_{i:02d}" for i in range(self.identity_hash_dim)]
         return names
+
+    def _bucket(self, token: str) -> int:
+        key = (token, self.identity_hash_dim)
+        b = FastRolloutEncoder._BUCKET_CACHE.get(key)
+        if b is None:
+            import hashlib
+            h = hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest()
+            b = int.from_bytes(h, byteorder="little", signed=False) % self.identity_hash_dim
+            FastRolloutEncoder._BUCKET_CACHE[key] = b
+        return b
 
     def encode(self, game, player_idx: int) -> list[float]:
         me = game.players[player_idx]
@@ -121,6 +142,16 @@ class FastRolloutEncoder:
         f += [len(game.birdfeeder.dice) / 5.0,
               len(game.card_tray.face_up) / 3.0,
               min(game.deck_remaining, 250) / 250.0]
+
+        if self.identity_hash_dim > 0:
+            ident = [0.0] * self.identity_hash_dim
+            for b in me.hand:
+                ident[self._bucket(f"self_hand:{b.name}")] += 1.0
+            for _, _, s in me.board.all_slots():
+                if s.bird is not None:
+                    ident[self._bucket(f"self_board:{s.bird.name}")] += 1.5
+            mx = max(1.0, max(ident))
+            f += [v / mx for v in ident]
         return f
 
 
@@ -135,7 +166,8 @@ def _teacher_head_probs(logits: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
 
 
 def generate_distill_dataset(games: int, out_path: str, temp: float = 0.3,
-                             seed0: int = 5000, board: BoardType = BoardType.OCEANIA):
+                             seed0: int = 5000, board: BoardType = BoardType.OCEANIA,
+                             identity_dim: int = 0):
     """Play big-net-policy games (the rollout distribution) and log
     (fast_features, teacher per-head softmax) at every decision of both seats."""
     import math
@@ -148,7 +180,7 @@ def generate_distill_dataset(games: int, out_path: str, temp: float = 0.3,
 
     teacher = FactorizedPolicyModel("reports/ml/solo_seed/solo_net_spread.npz")
     big_enc = StateEncoder.resolve_for_model(teacher.meta)
-    fast_enc = FastRolloutEncoder()
+    fast_enc = FastRolloutEncoder(identity_hash_dim=identity_dim)
     head_names = sorted(teacher.head_dims)
     rng = _random.Random(1234)
 
@@ -208,6 +240,7 @@ def generate_distill_dataset(games: int, out_path: str, temp: float = 0.3,
         arrs[f"probs_{hn}"] = np.stack(probs[hn])
     arrs["metadata_json"] = np.array([json.dumps({
         "encoder": STUDENT_ENCODER_TAG,
+        "identity_hash_dim": identity_dim,
         "feature_names": fast_enc.feature_names(),
         "head_dims": {hn: int(teacher.head_dims[hn]) for hn in head_names},
         "teacher": "solo_net_spread.npz",
@@ -301,7 +334,8 @@ def train_student(data_path: str, out_path: str, hidden1: int = 128, hidden2: in
         arrs[f"b_{hn}"] = sd[f"heads.{hn}.bias"].numpy().astype(np.float32)
     arrs["metadata_json"] = np.array([json.dumps({
         "head_dims": head_dims,
-        "state_encoder": {"custom": STUDENT_ENCODER_TAG},
+        "state_encoder": {"custom": STUDENT_ENCODER_TAG,
+                          "identity_hash_dim": int(meta.get("identity_hash_dim", 0))},
         "feature_names": meta["feature_names"],
         "distilled_from": meta.get("teacher", "solo_net_spread.npz"),
         "val_loss": vl,
@@ -330,7 +364,9 @@ def load_rollout_student(path: str | Path):
     model = FactorizedPolicyModel(p)
     if not is_student_model(model):
         return None
-    return model, FastRolloutEncoder()
+    enc_meta = (model.meta or {}).get("state_encoder", {})
+    return model, FastRolloutEncoder(
+        identity_hash_dim=int(enc_meta.get("identity_hash_dim", 0)))
 
 
 DEFAULT_STUDENT_PATH = "reports/ml/solo_seed/rollout_student.npz"
@@ -368,7 +404,7 @@ def _gate_play_one(job):
     seed, arm, rollouts, top_k, temp = job
     big, big_enc = _GATE["big"], _GATE["big_enc"]
     stu = _GATE["student"]
-    r_model, r_enc = (stu if arm.startswith("student") and stu else (None, None))
+    r_model, r_enc = (stu if ("student" in arm) and stu else (None, None))
     a_idx = seed % 2
     a_ch = make_search_chooser(big, big_enc, top_k, a_idx, heuristic_chooser,
                                objective="selfish", rollouts=rollouts,
@@ -398,13 +434,21 @@ def _gate_jobs(seeds, rollouts, top_k, temp, matched_rollouts):
 def run_gate_shard(seeds: list[int], student_path: str, shard: int, num_shards: int,
                    rollouts: int = 8, top_k: int = 10, temp: float = 0.3,
                    matched_rollouts: int | None = None,
-                   out_path: str = "reports/ml/solo_seed/gate_shard.json"):
+                   out_path: str = "reports/ml/solo_seed/gate_shard.json",
+                   single_arm: str | None = None):
     """Run every num_shards-th gate job sequentially in THIS process and dump
     rows to JSON. Sharding at the OS-process level (one shard per `nohup`d
     python) sidesteps multiprocessing entirely — Pool spawn deadlocked against
-    the BLAS thread pools in this environment."""
+    the BLAS thread pools in this environment.
+
+    single_arm: run only this arm label at `rollouts` (labels containing
+    "student" use the student rollout policy; anything else uses the big net).
+    Useful for adding one new arm paired against previously stored games."""
     _gate_worker_init(student_path)
-    jobs = _gate_jobs(seeds, rollouts, top_k, temp, matched_rollouts)
+    if single_arm:
+        jobs = [(s, single_arm, rollouts, top_k, temp) for s in seeds]
+    else:
+        jobs = _gate_jobs(seeds, rollouts, top_k, temp, matched_rollouts)
     mine = [j for i, j in enumerate(jobs) if i % num_shards == shard]
     rows = []
     t0 = time.time()
@@ -470,6 +514,8 @@ def main():
     g.add_argument("--out", default="reports/ml/solo_seed/distill_states.npz")
     g.add_argument("--temp", type=float, default=0.3)
     g.add_argument("--seed0", type=int, default=5000)
+    g.add_argument("--identity-dim", type=int, default=0,
+                   help="append hashed own board/hand bird identities (0 = off)")
     t = sub.add_parser("train")
     t.add_argument("--data", default="reports/ml/solo_seed/distill_states.npz")
     t.add_argument("--out", default=DEFAULT_STUDENT_PATH)
@@ -489,13 +535,17 @@ def main():
     q.add_argument("--shard", type=int, required=True)
     q.add_argument("--num-shards", type=int, required=True)
     q.add_argument("--out", required=True)
+    q.add_argument("--single-arm", default=None,
+                   help="run only this arm label at --rollouts ('student' in the "
+                        "label selects the student rollout policy)")
     gm = sub.add_parser("gate-merge")
     gm.add_argument("--shards", nargs="+", required=True)
     gm.add_argument("--out", default="reports/ml/solo_seed/rollout_student_gate.json")
     args = ap.parse_args()
 
     if args.cmd == "gen":
-        generate_distill_dataset(args.games, args.out, temp=args.temp, seed0=args.seed0)
+        generate_distill_dataset(args.games, args.out, temp=args.temp, seed0=args.seed0,
+                                 identity_dim=args.identity_dim)
     elif args.cmd == "train":
         train_student(args.data, args.out, hidden1=args.hidden1, hidden2=args.hidden2,
                       epochs=args.epochs)
@@ -534,7 +584,7 @@ def main():
         run_gate_shard(seeds, args.student, args.shard, args.num_shards,
                        rollouts=args.rollouts, top_k=args.top_k,
                        matched_rollouts=args.matched_rollouts or None,
-                       out_path=args.out)
+                       out_path=args.out, single_arm=args.single_arm)
     elif args.cmd == "gate-merge":
         rows = []
         for p in args.shards:
