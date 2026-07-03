@@ -222,6 +222,27 @@ class TestDrawCardsApply:
         assert len(result["state"]["card_tray"]["face_up"]) == 3
 
 
+class TestSolveDispatchRound1:
+    def test_round1_full_cubes_uses_lookahead_not_endgame(self, client):
+        """Round 1 with all cubes (8+8=16) must NOT dispatch the exhaustive
+        endgame minimax — the old trigger summed cubes on the table, so every
+        fresh 2-player game took the 'endgame' path and searched for minutes."""
+        game_id, state = _fresh_game(client)
+        state["players"][0]["hand"] = ["Hooded Warbler", "Blue-Winged Warbler"]
+        state["players"][0]["food_supply"]["invertebrate"] = 4
+        state["current_player_idx"] = 0
+        _put_state(client, game_id, state)
+
+        resp = client.post(f"/api/games/{game_id}/solve/heuristic?player_idx=0")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["recommendations"]
+        # The endgame path reports search_mode via details; round 1 must be
+        # the iterative lookahead.
+        modes = {r["details"].get("search_mode") for r in data["recommendations"]}
+        assert "exact_endgame" not in modes
+
+
 class TestSolverDetailSerialization:
     def test_egg_distribution_merges_slots_in_same_habitat(self):
         from backend.api.routes_solver import _egg_distribution_to_details
