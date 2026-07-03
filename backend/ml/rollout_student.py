@@ -377,32 +377,39 @@ def _gate_play_one(job):
             "secs": round(time.time() - t0, 1)}
 
 
-def run_gate(seeds: list[int], student_path: str, rollouts: int = 8, top_k: int = 10,
-             temp: float = 0.3, procs: int = 4, matched_rollouts: int | None = None,
-             out_path: str = "reports/ml/solo_seed/rollout_student_gate.json"):
-    """Paired 3-arm gate on the same seeds:
-      baseline        — big-net rollouts at r
-      student_same_r  — student rollouts at the same r  (quality-cost check)
-      student_matched — student rollouts at wall-clock-matched higher r (strength)
-    """
-    from multiprocessing import get_context
-
+def _gate_jobs(seeds, rollouts, top_k, temp, matched_rollouts):
     jobs = []
     for s in seeds:
         jobs.append((s, "baseline", rollouts, top_k, temp))
         jobs.append((s, "student_same_r", rollouts, top_k, temp))
         if matched_rollouts and matched_rollouts > rollouts:
             jobs.append((s, "student_matched", matched_rollouts, top_k, temp))
+    return jobs
 
-    ctx = get_context("spawn")
-    results = []
+
+def run_gate_shard(seeds: list[int], student_path: str, shard: int, num_shards: int,
+                   rollouts: int = 8, top_k: int = 10, temp: float = 0.3,
+                   matched_rollouts: int | None = None,
+                   out_path: str = "reports/ml/solo_seed/gate_shard.json"):
+    """Run every num_shards-th gate job sequentially in THIS process and dump
+    rows to JSON. Sharding at the OS-process level (one shard per `nohup`d
+    python) sidesteps multiprocessing entirely — Pool spawn deadlocked against
+    the BLAS thread pools in this environment."""
+    _gate_worker_init(student_path)
+    jobs = _gate_jobs(seeds, rollouts, top_k, temp, matched_rollouts)
+    mine = [j for i, j in enumerate(jobs) if i % num_shards == shard]
+    rows = []
     t0 = time.time()
-    with ctx.Pool(procs, initializer=_gate_worker_init, initargs=(student_path,)) as pool:
-        for i, row in enumerate(pool.imap_unordered(_gate_play_one, jobs), 1):
-            results.append(row)
-            if i % 10 == 0:
-                print(f"  {i}/{len(jobs)} games, {time.time()-t0:.0f}s", flush=True)
+    for i, job in enumerate(mine, 1):
+        rows.append(_gate_play_one(job))
+        print(f"  shard {shard}: {i}/{len(mine)} games, {time.time()-t0:.0f}s", flush=True)
+        Path(out_path).write_text(json.dumps(rows))  # checkpoint after every game
+    print(f"shard {shard} done -> {out_path}", flush=True)
 
+
+def summarize_gate(results: list[dict],
+                   out_path: str = "reports/ml/solo_seed/rollout_student_gate.json",
+                   config: dict | None = None):
     by_arm: dict[str, dict[int, dict]] = {}
     for r in results:
         by_arm.setdefault(r["arm"], {})[r["seed"]] = r
@@ -433,10 +440,7 @@ def run_gate(seeds: list[int], student_path: str, rollouts: int = 8, top_k: int 
               + (f"  paired diff {entry.get('paired_mean_diff_vs_baseline')}"
                  f" ({entry.get('paired_up_down')})" if arm != "baseline" else ""))
 
-    payload = {"config": {"seeds": seeds, "rollouts": rollouts, "top_k": top_k,
-                          "temp": temp, "matched_rollouts": matched_rollouts,
-                          "student": student_path},
-               "summary": summary, "games": results}
+    payload = {"config": config or {}, "summary": summary, "games": results}
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     Path(out_path).write_text(json.dumps(payload, indent=2))
     print(f"gate results -> {out_path}")
@@ -467,14 +471,19 @@ def main():
     b = sub.add_parser("bench")
     b.add_argument("--model", default=DEFAULT_STUDENT_PATH)
     b.add_argument("--playouts", type=int, default=8)
-    q = sub.add_parser("gate")
+    q = sub.add_parser("gate-shard")
     q.add_argument("--seeds", default="0-39")
     q.add_argument("--student", default=DEFAULT_STUDENT_PATH)
     q.add_argument("--rollouts", type=int, default=8)
     q.add_argument("--top-k", type=int, default=10)
     q.add_argument("--matched-rollouts", type=int, default=0,
                    help="student arm at this higher r (wall-clock matched); 0 = skip")
-    q.add_argument("--procs", type=int, default=4)
+    q.add_argument("--shard", type=int, required=True)
+    q.add_argument("--num-shards", type=int, required=True)
+    q.add_argument("--out", required=True)
+    gm = sub.add_parser("gate-merge")
+    gm.add_argument("--shards", nargs="+", required=True)
+    gm.add_argument("--out", default="reports/ml/solo_seed/rollout_student_gate.json")
     args = ap.parse_args()
 
     if args.cmd == "gen":
@@ -511,11 +520,18 @@ def main():
         tb = bench(big, big_enc, "teacher playout")
         ts = bench(stu, stu_enc, "student playout")
         print(f"speedup: {tb/ts:.2f}x")
-    elif args.cmd == "gate":
+    elif args.cmd == "gate-shard":
         lo, hi = args.seeds.split("-")
         seeds = list(range(int(lo), int(hi) + 1))
-        run_gate(seeds, args.student, rollouts=args.rollouts, top_k=args.top_k,
-                 matched_rollouts=args.matched_rollouts or None, procs=args.procs)
+        run_gate_shard(seeds, args.student, args.shard, args.num_shards,
+                       rollouts=args.rollouts, top_k=args.top_k,
+                       matched_rollouts=args.matched_rollouts or None,
+                       out_path=args.out)
+    elif args.cmd == "gate-merge":
+        rows = []
+        for p in args.shards:
+            rows.extend(json.loads(Path(p).read_text()))
+        summarize_gate(rows, out_path=args.out)
 
 
 if __name__ == "__main__":
