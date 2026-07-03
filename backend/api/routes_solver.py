@@ -377,6 +377,8 @@ def _project_final_scores(
     strong: bool = False,
     determinize: bool = True,
     seed: int = 0,
+    deadline: float | None = None,
+    min_sims: int = 6,
 ) -> list[int]:
     """Estimate final score distribution for a move via rollout playouts.
 
@@ -397,6 +399,10 @@ def _project_final_scores(
     rng = random.Random(seed)
     scores: list[int] = []
     for _ in range(max(1, simulations)):
+        # Full playouts are longest early in the game; respect the caller's
+        # wall-clock budget once a minimum sample is in hand.
+        if deadline is not None and len(scores) >= min_sims and time.time() >= deadline:
+            break
         sim = sample_hidden_state(game, rng) if determinize else deep_copy_game(game)
         sim_player = sim.get_player(player_name)
         if not sim_player:
@@ -433,7 +439,11 @@ def solve_heuristic(game_id: str, player_idx: int | None = None) -> HeuristicRes
 
     start = time.perf_counter()
 
-    total_actions_remaining = sum(max(0, p.action_cubes_remaining) for p in game.players)
+    # Whole-game actions left (current cubes + all future rounds). Summing only
+    # the cubes on the table made EVERY round-1 two-player game (8+8=16 <= 18)
+    # dispatch to the exhaustive endgame minimax — minutes of search on the
+    # widest positions of the game.
+    total_actions_remaining = game.total_actions_remaining
     endgame_threshold = 18
     is_pytest = bool(os.getenv("PYTEST_CURRENT_TEST"))
     if total_actions_remaining <= endgame_threshold:
@@ -476,13 +486,18 @@ def solve_heuristic(game_id: str, player_idx: int | None = None) -> HeuristicRes
     if la_results and search_mode != "exact_endgame":
         eval_count = min(4 if is_pytest else 12, len(la_results))
         projected = []
+        # Hard cap on total projection time: early-game playouts are the
+        # longest, and the old "at least 3 full candidates" carve-out could
+        # run for minutes on turn 1.
+        proj_deadline = time.time() + 2.5 * target_compute_seconds
         for idx, la in enumerate(la_results[:eval_count]):
             if time.perf_counter() - start > target_compute_seconds and idx >= 3:
                 # Ensure we project at least a few top moves, then respect budget.
                 projected.append((la.score, la))
                 continue
             rollout_scores = _project_final_scores(
-                game, player.name, la.move, simulations=sims_per_move
+                game, player.name, la.move, simulations=sims_per_move,
+                deadline=proj_deadline, min_sims=6,
             )
             if rollout_scores:
                 avg = sum(rollout_scores) / len(rollout_scores)
@@ -1420,6 +1435,13 @@ def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorRes
     is_pytest = bool(os.getenv("PYTEST_CURRENT_TEST"))
     player_idx = next((i for i, p in enumerate(game.players) if p.name == player.name), 0)
     policy_model, state_encoder = _get_policy_components()
+    # End-to-end wall-clock budget for the WHOLE endpoint. The engine pick gets
+    # ~60%; projections / longshots / alternatives split the rest and each cut
+    # off at their slice. Without this the post-pick phases (up to ~70 strong
+    # full playouts) ran unbounded — worst on turn 1, where playouts are
+    # longest ("Estimating outcomes..." frozen for minutes).
+    t0 = time.time()
+    overall = 15.0 if is_pytest else 80.0
     top = None
     used_engine = False
     if policy_model is not None and state_encoder is not None:
@@ -1431,6 +1453,8 @@ def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorRes
         from backend.ml.two_player import BUDGET_PRESETS
         preset = BUDGET_PRESETS.get(req.strength, BUDGET_PRESETS["default"])
         budget_scale = preset["rollouts"] / BUDGET_PRESETS["default"]["rollouts"]
+        if not is_pytest:
+            overall = 80.0 * budget_scale  # default 80s / strong 160s / max 240s
         student_model, student_encoder = _get_rollout_student()
         preset_rollouts = preset["rollouts"]
         if student_model is not None:
@@ -1447,7 +1471,7 @@ def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorRes
             top_k=6 if is_pytest else preset["top_k"],
             rollouts=2 if is_pytest else preset_rollouts,
             temperature=preset["temperature"],
-            time_budget_s=10.0 if is_pytest else 80.0 * budget_scale,
+            time_budget_s=10.0 if is_pytest else 0.6 * overall,
             max_determinizations=1 if is_pytest else 3,
             seed=0,
             rollout_model=student_model,
@@ -1473,7 +1497,8 @@ def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorRes
     #    the percentiles are stable), and build the main line.
     main_sims = 12 if is_pytest else req.main_sims
     rollout_scores = _project_final_scores(game, player.name, move,
-                                           simulations=main_sims, strong=True)
+                                           simulations=main_sims, strong=True,
+                                           deadline=t0 + 0.8 * overall, min_sims=8)
     if not rollout_scores:
         raise HTTPException(500, "Could not project outcomes for the recommended move")
 
@@ -1494,13 +1519,14 @@ def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorRes
     upside_models: list[AdvisorUpsideLine] = []
     pool_size = 0
     expected_draws = 0.0
-    if req.upside_shortlist > 0:
+    if req.upside_shortlist > 0 and time.time() < t0 + 0.9 * overall:
         pool_size = len(adv.unseen_pool(game, active_sets))
         expected_draws = adv.estimate_future_draws(game, player)
         upside = adv.find_upside_lines(
             game, player, ml.typical, active_sets,
             shortlist=req.upside_shortlist,
             sims_per_bird=(6 if is_pytest else req.upside_sims),
+            deadline=t0 + 0.95 * overall,
         )
         for u in upside:
             upside_models.append(AdvisorUpsideLine(
@@ -1538,7 +1564,10 @@ def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorRes
         best_typ = ml.typical
         cand = [(move, best_typ, True)]
         for m in alt_moves:
-            sc = _project_final_scores(game, player.name, m, simulations=alt_sims, strong=True)
+            if time.time() >= t0 + overall:
+                break
+            sc = _project_final_scores(game, player.name, m, simulations=alt_sims,
+                                       strong=True, deadline=t0 + overall, min_sims=4)
             if sc:
                 cand.append((m, int(round(adv.quantile(sorted(float(x) for x in sc), 0.5))), False))
         cand.sort(key=lambda c: -c[1])

@@ -229,8 +229,12 @@ def _conditional_scores(game, player_name: str, bird: Bird, sims: int,
 
 def find_upside_lines(game, player, main_typical: int, active_sets: set[GameSet] | None,
                       shortlist: int = 8, sims_per_bird: int = 10,
-                      max_lines: int = 3) -> list[UpsideLine]:
-    """Find low-probability, high-ceiling birds the player does NOT hold."""
+                      max_lines: int = 3, deadline: float | None = None) -> list[UpsideLine]:
+    """Find low-probability, high-ceiling birds the player does NOT hold.
+
+    deadline (time.time() epoch) stops evaluating further shortlist birds once
+    past it — each bird costs sims_per_bird full playouts, which are longest
+    early in the game."""
     pool = unseen_pool(game, active_sets)
     if not pool:
         return []
@@ -247,8 +251,11 @@ def find_upside_lines(game, player, main_typical: int, active_sets: set[GameSet]
         key=lambda t: -t[1],
     )[:shortlist]  # tuples of (reason, leverage, bird)
 
+    import time as _time
     lines: list[UpsideLine] = []
-    for reason, _lev, bird in scored:
+    for i, (reason, _lev, bird) in enumerate(scored):
+        if deadline is not None and i > 0 and _time.time() >= deadline:
+            break
         cond = _conditional_scores(game, player.name, bird, sims_per_bird)
         if not cond:
             continue
