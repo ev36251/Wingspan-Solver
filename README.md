@@ -1,27 +1,37 @@
 # Wingspan Solver
 
-A full rules engine, solver, and **play-assistant web app** for **Wingspan**, covering
-the five released sets — **Core, Oceania, Asia, European, and Promo-UK (471 birds total)**.
-The engine implements every bird power, the full food/nectar economy, and
-end-of-round/game scoring, served via a FastAPI backend with a Svelte frontend.
+A complete rules engine, search-based AI, and **play-assistant web app** for the
+board game **Wingspan**, covering all five released sets — **Core, Oceania, Asia,
+European, and Promo-UK (471 birds)**. The engine implements every bird power, the
+full food/nectar economy, and end-of-round/game scoring; a FastAPI backend serves
+a Svelte web app that recommends (and now *applies*) moves in a real game.
 
-Three things live in this repo:
+## Highlights
 
-1. **The play assistant (the product).** A web companion: enter your real game,
-   tap "Recommend," and it returns the strongest move — chosen by a rollout-search
-   agent that scores in the low-to-mid **90s** — plus plain-English odds
-   ("~70% of the time this finishes 70+ points") and longshot lines ("~3% chance
-   you draw this bird → big jump"). See **"In plain English"** above.
-2. **Solo single-seed optimization (the dataset/analytics engine).** For a fixed,
-   fully deterministic game, the solver searches the opening draft and every move
-   to maximize the final score, replaying the same seed many times. Across many
-   seeds (parallelized on Modal.com) this produces a high-quality dataset of
-   best-scoring lines plus empirical bird/bonus/draft analytics. See
-   `memory/SOLO_SEED_FINDINGS.md`.
-3. **AlphaZero-style self-play (legacy, superseded).** Two MCTS agents play each
-   other and a factorized policy/value network learns by behavioral cloning. This
-   produced weak champions and is kept for reference only — see
-   **"Legacy / superseded code"** near the bottom.
+- **Complete rules engine.** All 471 bird powers have explicit, tested
+  implementations, plus nectar, timed (pink/teal/yellow) powers, goal scoring,
+  and solo-mode rules. Verified by **golden replays of real recorded games
+  (0 divergences)** and a **~1,100-test** pytest suite.
+- **A strong, honest AI.** A rollout-search agent that never peeks at hidden
+  information (it re-shuffles the unseen deck before every imagined playout)
+  scores a **~92 mean vs. the rule-based baseline (~90% win rate)**, rising to
+  **~96 at the heavy search preset**. Solo play went **77 → 87** by searching
+  the opening draft and deepening mid-game search.
+- **Measured, not guessed.** Every candidate improvement was evaluated at
+  n = 100 paired games on Modal.com with significance tests. The write-ups keep
+  the **negative results**: six independent attempts to beat the search with
+  neural networks (retrains, value-net leaves, PUCT-MCTS, self-play soft
+  targets) all failed — so the agent's ceiling is *understood*, not assumed.
+  Full lab notebook: `memory/SOLO_SEED_FINDINGS.md`.
+- **A real product on top.** The web companion recommends the engine's move
+  with plain-English odds ("~70% of the time this finishes 70+ points"),
+  longshot lines, a draft advisor driven by the same engine, and one-click
+  apply that replays the move **through the engine** — brown-power chains,
+  pink triggers, nectar bookkeeping and round transitions all happen for you,
+  without ever inventing cards the table hasn't revealed.
+- **Distributed experimentation.** All data generation and evaluation fans out
+  across Modal.com containers (one per seed/config); the local machine only
+  dispatches and aggregates.
 
 ---
 
@@ -29,7 +39,7 @@ Three things live in this repo:
 
 **What this is.** A Wingspan helper. You type your current game into a web app,
 hit "Recommend," and it tells you the strongest move to make — plus your odds of
-different final scores.
+different final scores — and can apply that move to your tracked game for you.
 
 **How the engine actually "thinks": rollouts.** It doesn't use a formula to
 guess whether a move is good. Instead, for each move it's weighing, it *finishes
@@ -81,253 +91,199 @@ opponent, ~96 is about the best score reachable**, and the only lever that
 reliably helps (more rollouts) has diminishing returns. Past R24 you pay double
 the time for noise.
 
-**Bottom line on the engine.** It plays a genuinely strong, *honest* game — it
-doesn't cheat by peeking at the deck (it reshuffles the unseen cards before each
-imagined game), it beats the rule-based opponent ~90–95% of the time, and it
-hits 100+ points in about a third of games. It's about as strong as rollout
-search gets here. Use **default** for speed, **heavy (K16/R24)** for the last few
-points.
+**One place was still under-searched: the opening.** The move-by-move search had
+plateaued, but the *draft* (which birds and food to keep before turn one) turned
+out to be a second, independent dial. Searching **multiple opening keeps** and
+playing each out lifted the solo mean by **+7.4 points across the whole
+distribution** — good hands and bad hands alike — and searching deeper in the
+mid-game added another ~+2, stacking to **+10 (77 → 87)**. Lesson: when one
+search axis saturates, look for the axis nobody is searching.
 
-**The app you actually use.** On top of the engine is a web companion: type in
-your game, tap "Recommend," and it gives you the strongest move (chosen by that
-~92 engine) plus plain-English odds — e.g. *"~70% of the time this finishes 70+
-points"* and longshots like *"~3% chance you draw this bird → big jump."* One
-honest tradeoff: the *move* comes from the strong engine, but the *score numbers*
-come from a faster, rougher stand-in, because a true ~96-level score *distribution*
-would take ~an hour per question — useless mid-turn.
+**Bottom line on the engine.** It plays a genuinely strong, *honest* game — it
+doesn't cheat by peeking at the deck, it beats the rule-based opponent ~90% of
+the time, and it breaks 100 points in roughly a third of games. Use **default**
+for speed, **heavy (K16/R24)** for the last few points.
 
 ---
 
-## Results: from ~60 to the 90s
+## The play assistant (the product)
 
-The agent's score has climbed dramatically over the life of the project. Early
-greedy-network and rule-based play scored in the **50s–60s**. The current agent
-plays full *honest* games — no peeking at the deck order — and scores a **~92
-mean (worst-case floor ~64)** against the rule-based heuristic, which it beats
-roughly **90% of the time** (re-measured at n=100 on the latest corrected
-engine; best config r12 / top-k 10 / temp 0.3 / determinize).
+A Svelte web app backed by the engine, built for *companion play* — you play a
+physical game and the app tracks it, advises, and does the bookkeeping:
 
-### Score progression
+- **Recommend.** One tap runs two solvers: a fast lookahead (clickable ranked
+  move cards) and the strong rollout-search engine. The engine's pick is
+  promoted to the **#1 card with an "engine pick" badge**, alongside
+  plain-English "percentage play" sentences ("~70% of the time this finishes
+  70+") built from determinized rollouts — the projections re-sample unknown
+  opponent hands and deck order per rollout, so the odds are honest.
+- **Apply through the engine.** Clicking a recommendation replays it through
+  the real rules engine: brown-power chains fire bird by bird, pink powers
+  trigger, nectar spend is recorded in the right habitat, the action cube is
+  spent, and round transitions (teal powers, goal scoring, nectar discard, cube
+  refresh) happen automatically. **Companion mode never invents hidden
+  information**: deck draws become face-down card counts and the tray is left
+  short for you to enter the card actually revealed at your table.
+- **Longshots.** High-ceiling birds still in the deck, with draw odds and a
+  conditional score *if you draw them in time to use them* — late-game
+  longshots are correctly rare.
+- **Draft advisor.** The opening keep-decision is made by the same strong
+  engine (not a heuristic): it plays the top openings out and ranks them —
+  the +7.4 draft lever, in the product.
+- **After-reset flow, score sheet, max-score bar, multi-player tracking.**
+
+---
+
+## Results: from ~60 to the mid-90s
+
+Early greedy-network and rule-based play scored in the **50s–60s**. The current
+agent plays full *honest* games and scores **~92 mean (floor ~64) vs. the
+rule-based heuristic, winning ~90%** (n = 100, corrected engine, `K10/R12`,
+temp 0.3, determinized), and **~96 at `K16/R24`**.
+
 | stage | typical score |
 |-------|---------------|
 | rule-based heuristic / early greedy network | ~50–60 |
 | net-guided rollout search (solo, held-out seeds) | 72 → 91 |
-| **2-player honest rollout search (current)** | **~92 mean, floor ~64** |
+| 2-player honest rollout search (default budget) | ~92 mean, floor ~64 |
+| **+ heavy search preset (`K16/R24`)** | **~96 mean** |
+| solo agent + draft search + deeper mid-game | 77 → **87** |
 
-### What moved the needle (all measured at n=100 on Modal.com)
+### What moved the needle (all measured at n = 100 on Modal)
 
-- **Rollout search to game-end** is the heart of the agent: judging each move by
+- **Rollout search to game-end** — the heart of the agent: judging each move by
   *playing the game to the finish* instead of a one-step score estimate is worth
   ~**+40 points** over greedy play, and it discovers real engines (food loops,
   round-end caches, card tucking) that a shallow evaluator misses.
+- **Draft search (+7.4, the biggest late-project win).** Searching 4–6 opening
+  keeps instead of committing to one lifts the *whole* score distribution
+  (155/200 deals improved), and it **stacks** with deeper mid-game search to
+  +10.3 in solo. The opening was the single most under-exploited decision.
+- **Search budget (+3).** The one dial that scales: `R6 → R12 → R24` = 87.5 →
+  93.2 → 96.2, plateauing at R24 (R36 adds nothing).
 - **Averaged stochastic rollouts** — scoring a move by the *average* of several
-  varied playouts rather than one noisy game — is a real, statistically
-  significant gain (63% win rate vs the single-rollout baseline, p = 0.004).
+  varied playouts rather than one noisy game — a statistically significant gain
+  (63% win rate vs the single-rollout baseline, p = 0.004).
 - **Honest play via determinization** — reshuffling the unseen deck before each
-  rollout so the agent plans over *plausible* futures instead of peeking at the
-  real card order — costs almost nothing (~1 point). The agent wins by building
-  *robust* engines, not by knowing the next card.
-- **Engine-correctness pass (the floor-raiser).** Auditing the simulator against
-  the real Oceania player mat surfaced and fixed several rules bugs: the
-  tray/feeder reset now deals **fresh** cards (it used to clear them and never
-  refill, so resetting was strictly bad); resets are payable with **nectar**, and
-  that nectar **scores** in its habitat; and end-of-round goals no longer award
-  points to a player with **zero** of the goal. These fixes raised the bad-deal
-  **floor from 52 → 68** — the worst hands now recover, exactly as a strong human
-  would by flipping the tray and spending surplus nectar. The real-game replay
-  goldens still reproduce perfectly (0 divergences), so the engine is strictly
-  *more* faithful after the changes.
+  rollout so the agent plans over *plausible* futures instead of peeking —
+  costs ~1 point. The agent wins by building robust engines, not by knowing the
+  next card.
+- **Engine correctness (the floor-raiser).** Auditing the simulator against the
+  real Oceania board fixed several rules bugs: the tray/feeder reset now deals
+  **fresh** cards (it used to clear and never refill, so resetting was strictly
+  bad); resets are payable with **nectar**, which then **scores** in its
+  habitat; round-end goals no longer reward a player with **zero** of the goal.
+  These raised the bad-deal **floor from 52 → 68** — the worst hands now
+  recover exactly as a strong human would, by flipping the tray and spending
+  surplus nectar. The real-game replay goldens still reproduce perfectly.
 
-### What didn't work (measured and ruled out)
+### What *didn't* work (measured and ruled out)
 
-- **Denial / "beat the opponent" objective.** Optimizing *my score − opponent
-  score* **loses** to pure score-maximization (40% vs 60%, n = 100). In Wingspan
-  player interaction is limited, so a strong selfish engine beats clumsy
-  sabotage; even with an opponent-board-aware network, denial only reaches
-  break-even. Natural denial (taking strong birds you actually want) is already
-  captured by playing well for yourself.
-- **Network retraining.** Three separate retrains — a behavioral-cloned
-  opponent-aware net, and a fresh solo-flywheel net trained on the corrected
-  engine — all failed to beat the existing `solo_net_spread`. At heavy search
-  budget the **search dominates the policy prior**, so a new prior barely changes
-  the searched output. The lever to push the mean higher is **more search**
-  (depth / drafts / rollouts), not a new network.
+This project kept its negative results — they're what make the positive numbers
+believable:
 
-Full experiment-by-experiment detail (with sample sizes and p-values) lives in
-`memory/SOLO_SEED_FINDINGS.md`.
+| lever | verdict |
+|-------|---------|
+| Rollout search to game-end | the core engine: ~+40 over greedy |
+| Averaged stochastic rollouts | ✅ real win (+5, p = 0.004) |
+| Draft search + mid-game depth (solo) | ✅ +10.3, they stack |
+| More rollout budget | ✅ +3, plateaus at `K16/R24` |
+| Determinization (no deck-peeking) | ✅ ~free — honest play matches peeking |
+| Network retraining (×6 attempts) | ❌ null — at heavy search the *search dominates the prior* |
+| Learned value function as rollout replacement | ❌ greedy-V 74 / bootstrap 90 / PUCT-MCTS 74, vs full rollouts 93 |
+| Distilled fast rollout policy (student) | ⚡ **~3× faster rollouts**; the identity-aware v2 posts the best mean of any tested config (95.5 vs 92.8) at 12% *less* wall-clock — a real speed lever; −6.5 if you pocket the speed unscaled |
+| Denial / "beat the opponent" objective | ❌ hurts (40% vs 60%) — selfish play wins in a low-interaction game |
+| Depth-2 lookahead (2-player) | ❌ hurts at equal budget — the rollout already looks to game end |
+
+The value-net finding deserves one line: the net *predicts* state value well
+(R² ≈ 0.95, one eval worth ~4 playouts of accuracy at 1/300 the cost) but every
+way of *using* it inside search loses to real playouts — under argmax pressure
+the search exploits the net's residual errors (the optimizer's curse). Its real
+use is speed: a ~85-point agent at 1/8 the compute.
+
+The distilled rollout policy is the successful version of that speed idea:
+profiling showed ~76% of a playout is the *Python feature encoding*, not the
+network, so a tiny student net over ~75 cheap features (counters plus a hashed
+bag of the player's own bird identities, distilled from the big net's choices)
+plays the rollouts **~3× faster**. Unlike the value net, reinvesting the saved
+time in more rollouts doesn't just recover baseline strength — the
+identity-aware student posted the best mean of any tested configuration
+(95.5 vs 92.8 baseline, n=40 paired, within noise) while running 12% faster.
+The big net keeps the root move ranking; the student only plays out the
+imagined games. Deployed: the advisor now runs ~3× the rollouts at unchanged
+latency. (A pure-engineering variant — caching the encoder's per-bird blocks,
+bit-identical output — also ships, speeding every read ~1.35×.)
+
+**Where the project started (and why it changed).** The original approach was an
+AlphaZero-style self-play loop: MCTS self-play → behavioral cloning of a
+factorized policy/value net → promotion gates. It trained, promoted models, and
+plateaued at a degenerate egg-spam policy ~10 points *below* the rule-based
+heuristic. It was replaced by the searched-line approach above, and later —
+with much better data and infrastructure — five separate attempts to reintroduce
+learned components each failed the pre-registered gate. Every experiment, sample
+size, and p-value is in `memory/SOLO_SEED_FINDINGS.md`.
+
+### Bird-strategy findings (from ~4,000 optimized games)
+
+- Optimal drafts keep **~2.6 of 5 birds** — food over marginal cards.
+- The best birds are round-end cache engines (**Eurasian Nutcracker**,
+  **Sri Lanka Blue-Magpie**) — the search rediscovers known strong cards.
+- High-scoring lines fill all three habitats and lean on brown ("when
+  activated") engines; egg-spam is what *weak* policies converge to.
+- Opponent-reactive (pink) birds rank dead-last in solo but jump to the top in
+  2-player (Eurasian Skylark: 75 → 109 avg) — the data cleanly separates
+  format-dependent card strength.
 
 ---
 
 ## Architecture
 
 ```
-wingspan-20260128.xlsx
-    └─ backend/data/loader.py + registries.py   Bird/bonus/goal data, loaded once at startup
+wingspan-20260128.xlsx                           All bird/bonus/goal data (5 sets, 471 birds)
+    └─ backend/data/loader.py + registries.py    Loaded once at startup into singleton registries
     └─ backend/models/                           Pure dataclasses: GameState, Player, Board, enums
     └─ backend/engine/                           Game rules
-         rules.py      Legality checks (can_play_bird, food costs, egg limits)
-         actions.py    execute_action() + activate_row() (brown power loop)
-         scoring.py    calculate_score() → ScoreBreakdown
-         timed_powers.py  Pink powers (triggered by opponent actions, end-of-round)
+         rules.py          Legality checks (can_play_bird, food costs, egg limits)
+         actions.py        execute_* actions + activate_row() (brown-power loop)
+         scoring.py        calculate_score() → ScoreBreakdown (incl. solo fixed-target goals)
+         timed_powers.py   Pink (between-turn), teal (round-end), yellow (game-end) powers
     └─ backend/powers/                           471 bird powers
-         registry.py     Bird → PowerEffect lookup (explicit_mappings.json)
-         templates/      Implementations: gain_food, lay_eggs, draw_cards,
-                         tuck_cards, predator, cache_food, play_bird, unique, special
+         registry.py       Bird → PowerEffect lookup (explicit_mappings.json)
+         choices.py        Queued explicit power decisions (companion fidelity)
+         templates/        gain_food, lay_eggs, draw_cards, tuck_cards, predator,
+                           cache_food, flocking, unique, special, ...
     └─ backend/solver/                           Decision-making
-         move_generator.py   All legal moves for a given state
-         simulation.py       Fast rollout engine (deepcopy-based)
-         monte_carlo.py      MCTS with UCB-PUCT
+         move_generator.py Every legal move for a state
+         simulation.py     Fast rollout engine (fast_clone_game: 8.5× cheaper clones)
+         setup_advisor.py  Draft advisor (engine-in-draft, multi-opening search)
+    └─ backend/engine_search/                    The strong agent's search internals
+         belief.py         Determinization: sample unseen deck + opponent hands
     └─ backend/ml/                               Strategy pipeline
-         solo_seed_optimizer.py   Deterministic solo single-seed score search (current)
-         modal_solo.py            Modal.com dispatch — one container per seed shard
-         alphazero_self_play.py   Self-play data generation (MCTS both sides, legacy)
-         train_factorized_bc.py   PyTorch training: factorized policy + value heads
-         evaluate_factorized_bc.py  NN vs rule-based heuristic evaluation
-         auto_improve_alphazero.py  Outer loop: self-play → train → eval → gate
-         modal_selfplay.py          Modal.com cloud dispatch (32 parallel workers)
-    └─ backend/api/                              FastAPI routers
-    └─ frontend/src/                             React + Vite frontend
+         solo_seed_optimizer.py  Deterministic per-seed best-line search
+         two_player.py           The deployed rollout-search agent + strength presets
+         solo_search.py          Solo net-guided search (draft + k-schedule depth)
+         modal_solo.py           Modal.com dispatch — one container per seed shard
+         train_factorized_bc.py  Policy-net training (PyTorch; numpy at serve time)
+    └─ backend/api/                              FastAPI routers (game, solver, setup, data)
+    └─ frontend/src/                             Svelte + TypeScript play-assistant app
 ```
 
-### Policy network: factorized multi-head design
+**The policy network's actual job.** A behavior-cloned, factorized policy net
+(trained on searched best-lines) serves as the **move prior and rollout policy**
+inside the search — it proposes and plays out candidate moves; the *decision* is
+made by rollout returns. Inference is pure numpy (torch is optional at serve
+time). Retraining it better was measured to not matter — see the scorecard.
 
-Rather than outputting a single probability over a flat action space (which would require one logit per legal move and varies hugely in size), the policy is split into **7 factorized heads**:
+## Solo single-seed optimization (the dataset engine)
 
-| Head | Classes | Meaning |
-|------|---------|---------|
-| `action_type` | 4 | Play bird, gain food, lay eggs, draw cards |
-| `play_habitat` | 4 | Forest / Grassland / Wetland / None |
-| `play_cost_bin` | 7 | Food cost 0–6+ |
-| `play_power_color` | 7 | Brown / White / Pink / Teal / Yellow / None |
-| `gain_food_primary` | 6 | Invertebrate / Seed / Fish / Fruit / Rodent / Nectar |
-| `draw_mode` | 4 | Deck-only / tray-only / mixed / none |
-| `lay_eggs_bin` | 11 | Eggs placed 0–10+ |
-
-Only the heads relevant to the chosen action type are trained for any given move. At inference, head outputs are combined to score and rank candidate moves from the legal move generator.
-
-### Value heads
-
-The network has three value outputs:
-
-- **Score value head**: Predicts the acting player's final absolute score (normalized by ÷80). Used as the leaf evaluation in MCTS instead of random rollouts.
-- **Win value head**: Binary sigmoid — did this player win? Used as a secondary signal.
-- **Move value head**: Trained on pairs of (good move, bad move) via a ranking loss. Conditionally enabled at inference only when validation pair accuracy ≥ 0.52 and rank margin ≥ 0.01; blended into policy scores at α=0.35 when reliable.
-
-### State encoder (~2827 dimensions, full feature set)
-
-- Per-slot bird encoding for own board (bird identity, habitat, food cost, egg count, power color)
-- Identity hashing for hand cards and tray
-- Hand × board synergy features
-- Opponent board encoding
-- Power-effect features for board and hand
-
-### MCTS
-
-Standard UCB-PUCT with the neural network as both prior (policy heads) and leaf evaluator (score value head). Used during self-play data generation and optionally at eval time. Greedy NN (no MCTS) scores ~25–35 pts lower than MCTS NN, which shows the tree search is doing meaningful work beyond what the network alone can express.
-
-### Self-play loop
-
-```
-for each iteration:
-    1. Self-play      MCTS vs MCTS, both using current best model
-                      Modal.com: 32 parallel containers × N games
-    2. Train          Behavioral cloning on accumulated self-play data
-                      Factorized cross-entropy (policy) + MSE (value)
-    3. Eval           Greedy NN vs rule-based heuristic, 40 games
-    4. Promotion gate Candidate vs champion, promote if win rate ≥ 50%
-                      best_model.npz updated on promotion
-```
-
----
-
-## Solo single-seed optimization (current direction)
-
-For one fixed seed, the entire game is made **deterministic**: a pre-shuffled deck stack (the Nth draw is always the same card), fixed starting hand / bonus cards / round goals, and a seeded birdfeeder reroll stream. The optimizer then replays that exact game many times, searching both the opening **draft** (which birds vs. food to keep — the real Oceania rule: keep 5 total, ≤1 of each food type) and every in-game **move**, on a simulated-annealing temperature schedule, keeping the highest-scoring line. Because each replay is scored to the end of the game, the search "sees" engines pay off — something a one-step greedy evaluator cannot.
-
-Each seed is independent, so seeds are fanned out across Modal.com containers (one per seed). Only the single best line from each seed is kept, so per-seed search effort never overfits a model — the number of *distinct* seeds controls generalization.
-
-**Findings over 1000 seeds** (Oceania, 150 games/seed; full detail in `memory/SOLO_SEED_FINDINGS.md`):
-
-- Mean best score ~90 (range 66–140), built from a balanced engine — bird VP, round-end caching, and card tucking — not egg-spam.
-- Drafts robustly keep **~2.6 of 5 birds**, taking more food (matches expert intuition).
-- The top birds by appearance-and-average-score are the round-end cache engines **Eurasian Nutcracker** and **Sri Lanka Blue-Magpie** — the search rediscovers known strong cards on its own.
-- High-scoring lines fill all three habitats evenly and lean on brown ("when activated") and teal ("round end") engines.
-
-This dataset of best-scoring lines is the foundation for the next step: training a policy/value network on *strong* play (rather than the weak self-play data below) and, later, competitive fine-tuning against an opponent.
-
----
-
-## What it learned / how it improved (legacy AlphaZero self-play)
-
-> The following describes the earlier 2-player self-play runs (v4–v20). These produced weak champions (see Known Limitations) and have been superseded by the solo approach above; the old `reports/ml/alphazero_v*` artifacts were deleted.
-
-A few genuine learning dynamics observed across those runs:
-
-**Early iterations (iter 1–5):** The network starts near-random. Greedy NN scores 33–44 pts. It quickly learns basic action-type selection — that playing high-point birds and laying eggs beats randomly drawing cards every turn.
-
-**Mid-run (iter 6–15):** Scores climb to 55–62 pts. The network begins to learn habitat synergies — that a forest full of brown-power birds compounds on `GAIN_FOOD` actions in ways a flat heuristic misses. The move value head becomes trainable at this stage (pair accuracy crosses 0.52).
-
-**Late iterations (16–20):** Greedy NN stabilizes around 60 pts vs the heuristic's 69 pts. Gate win rate reaches 62.5% (threshold 50%), so the model is promoted. The remaining gap is explained in the Known Limitations section.
-
-**Key architectural inflection:** Early runs used pure AlphaZero (both players use MCTS during self-play, policy learned via policy gradient). This was slow and noisy. Switching to **behavioral cloning on MCTS-generated move choices** (the AlphaZero "distillation" approach) stabilized training significantly and allowed the factorized head design to be introduced cleanly.
-
----
-
-## What we've learned & what's next
-
-This phase moved the agent from ~60 to a robust, honest **~92–95 mean** by
-*measuring* every lever rather than guessing. The findings (full detail with
-sample sizes and p-values in `memory/SOLO_SEED_FINDINGS.md`):
-
-**Search-lever scorecard** (all measured at n=100 on Modal):
-
-| lever | verdict |
-|-------|---------|
-| Rollout search to game-end | the core engine: ~**+40** over greedy play |
-| Averaged stochastic rollouts | ✅ real win (+5, p = 0.004) |
-| Determinization (no deck-peeking) | ✅ ~free (~1 pt) — honest play matches peeking |
-| Differential / "denial" objective | ❌ hurts (40% vs 60%) — selfish play wins |
-| Network retraining (×3 attempts) | ❌ null — at heavy search the *search dominates the prior* |
-| Depth-2 lookahead | ❌ hurts at equal budget — the rollout already looks to game end |
-
-**Best config:** depth-1, rollouts 12, top-k 10, temp 0.3, determinize. This is
-the practical ceiling for the rollout-search approach.
-
-**Re-tuned on the corrected engine (n=100, honest, same 100 seeds).** Every config
-above was originally tuned on an older engine, so a 6-cell sweep was re-run on the
-latest corrected engine (rollouts ∈ {8,12} × top-k ∈ {8,10} × temp ∈ {0.3,0.5}).
-The optimum did **not** move: r12 / k10 / t0.3 is again the best cell
-(mean 91.7, floor 64, 28% ≥100, 91/100 wins). Rollouts is the only directionally
-consistent lever (r12 ≥ r8 on every metric at no floor cost), but the r12-vs-r8
-lift is **sub-noise** (+2.35 mean, paired sign-test p = 0.47) — all six cells
-cluster in 89–92, so the search is saturated across this grid. The corrected-engine
-re-measure thus *confirms* the existing best config rather than replacing it.
-
-**Engine correctness is where the real points hid.** Auditing the simulator
-against the real Oceania board surfaced and fixed several rules bugs — tray/feeder
-reset now deals fresh cards, resets are payable with nectar (which scores), and
-round-end goals no longer reward a player with zero of the goal. These raised the
-**bad-deal floor from 52 → 68**, and the video-replay goldens still reproduce the
-real recorded games perfectly (0 divergences), so the engine is strictly more
-faithful.
-
-**Bird coverage:** all **471** birds (Core, European, Oceania, Asia, **+ the 25
-Promo UK pack**) have explicit, tested power implementations. A solo + 2-player
-tier analysis ranks them; notably, opponent-reactive (pink) birds rank dead-last
-solo but jump to the top in 2-player (e.g. Eurasian Skylark 75 → 109 avg).
-
-### Next steps
-
-- **A learned, search-quality value evaluator.** The one path that could raise
-  the ceiling rather than nudge it: AlphaZero-style iteration with
-  *search-derived* value targets (plain Monte-Carlo targets label every state
-  with the one final score and aren't move-discriminative). This is a real
-  project, not a knob.
-- **Finish the remaining approximate "unique" powers** and audit rare
-  interaction chains (Repeat → Copy → Repeat). Low-risk, steady correctness gains
-  — the kind that already paid off in the floor result.
-- **Multiplayer (3–4 player)** opponent modeling — the pipeline supports it, but
-  play is calibrated for 1v1.
+For one fixed seed the entire game is deterministic: a pre-shuffled deck stack,
+fixed hand/bonus/goals, and a seeded birdfeeder stream. The optimizer replays
+that exact game hundreds of times on a cooling temperature schedule — searching
+the opening draft *and* every move — and keeps the best line. Seeds are
+embarrassingly parallel (one Modal container each), and only the best line per
+seed is kept, so per-seed effort never overfits. The resulting dataset
+(`reports/ml/solo_seed/`) trains the policy prior and powers the bird-strategy
+analytics above.
 
 ---
 
@@ -336,73 +292,44 @@ solo but jump to the top in 2-player (e.g. Eurasian Skylark 75 → 109 avg).
 ### Prerequisites
 
 ```bash
-pip install -e ".[dev]"          # Python deps (pytest, uvicorn, torch, etc.)
-cd frontend && npm install        # Frontend deps
+pip install -e ".[dev]"          # Python deps (pytest, uvicorn, numpy; torch only for training)
+cd frontend && npm install       # Frontend deps
 ```
 
-All bird data loads from `wingspan-20260128.xlsx` at startup. This file must be present.
+All bird data loads from `wingspan-20260128.xlsx` at startup.
 
-### Backend (game engine + API)
-
-```bash
-uvicorn backend.main:app --reload
-# http://localhost:8000
-```
-
-### Frontend
+### Backend + frontend
 
 ```bash
-cd frontend && npm run dev
-# http://localhost:5173  (proxies /api → :8000)
+uvicorn backend.main:app --reload    # http://localhost:8000
+cd frontend && npm run dev           # http://localhost:5173 (proxies /api → :8000)
 ```
 
 ### Tests
 
 ```bash
-pytest                                          # full pytest suite
-pytest backend/tests/test_engine.py -v         # single file
-pytest -k "test_powers"                        # filter by name
-pytest backend/tests/test_alphazero.py -x -q   # fast fail, quiet
+pytest                                   # full suite (~1,100 tests)
+pytest backend/tests/test_engine.py -v   # single file
+pytest -k "test_powers"                  # filter by name
 ```
 
-### Solo single-seed optimization (current direction)
+### The 2-player agent (evaluation harness)
 
 ```bash
-# Optimize one fixed seed locally (draft + play searched; prints best line)
+# Agent vs rule-based heuristic, honest play, n=100 on Modal
+python -m backend.ml.two_player --mode heuristic --seeds 0-99 --strength strong --use-modal
+# --strength: default (K10/R12, ~93) | strong (K16/R24, ~96) | max (K20/R36)
+```
+
+### Solo best-line dataset generation
+
+```bash
+# One fixed seed locally (draft + play searched; prints the best line)
 python -m backend.ml.solo_seed_optimizer single --seed 42 --games 150 --show-trajectory
 
-# Fan many seeds across Modal containers -> best-line dataset + analytics
+# Fan seeds across Modal containers → best-line dataset + analytics
 python -m backend.ml.solo_seed_optimizer multi --seeds 0-999 --games-per-seed 150 \
   --use-modal --seeds-per-shard 1 --out reports/ml/solo_seed/best_lines.jsonl
-```
-
-### ML training — legacy AlphaZero loop (smoke test, ~5 min)
-
-```bash
-python -m backend.ml.auto_improve_alphazero \
-  --out-dir reports/ml/alphazero_smoke \
-  --iterations 1 --games-per-iter 5 --mcts-sims 20 \
-  --train-epochs 2 --eval-games 5 --promotion-games 10 \
-  --dataset-workers 1
-```
-
-### Resume a training run
-
-```bash
-python -m backend.ml.auto_improve_alphazero \
-  --out-dir reports/ml/alphazero_vN \
-  --no-clean --start-iter N [... same flags as original launch ...]
-```
-
-### Cloud compute (Modal.com)
-
-```bash
-# Solo seed optimization: one container per seed (see command above)
-python -m backend.ml.solo_seed_optimizer multi --use-modal [flags]
-
-# Legacy self-play: dispatch across 32 Modal containers
-python -m backend.ml.modal_selfplay [flags]
-# Local backend/ is mounted fresh — code fixes apply immediately.
 ```
 
 ---
@@ -411,37 +338,22 @@ python -m backend.ml.modal_selfplay [flags]
 
 ```
 backend/
-  data/          Bird/bonus/goal loading and registries
-  engine/        Rules, actions, scoring, timed powers
-  models/        Dataclasses (GameState, Player, Board, BirdSlot, ...)
-  powers/        471 bird power implementations
-  solver/        Move generation, MCTS, heuristics, simulation, setup advisor
-  ml/            Solo single-seed optimizer + Modal dispatch, legacy AlphaZero pipeline
-  api/           FastAPI routes and Pydantic schemas
+  data/           Bird/bonus/goal loading and registries
+  engine/         Rules, actions, scoring, timed powers
+  engine_search/  Determinization / hidden-state sampling
+  models/         Dataclasses (GameState, Player, Board, BirdSlot, ...)
+  powers/         471 bird power implementations + choice queues
+  solver/         Move generation, heuristics, simulation, setup advisor
+  ml/             Agent, solo optimizer, Modal dispatch, training (+ legacy loop)
+  api/            FastAPI routes and Pydantic schemas
+  tests/          ~1,100 tests (engine, powers, solver, API, golden replays)
 frontend/
-  src/           Svelte + TypeScript UI (the play-assistant app)
-reports/
-  ml/            Strategy outputs (solo_seed/ best-line datasets, analytics)
-memory/          Findings & proposals (SOLO_SEED_FINDINGS.md, ...)
-backend/tests/   pytest suite (engine correctness, solver, advisor)
+  src/            Svelte + TypeScript UI (the play-assistant app)
+reports/ml/       Strategy outputs (solo_seed/ best-line datasets, value-gate data)
+memory/           The lab notebook: SOLO_SEED_FINDINGS.md (every experiment + p-values)
 ```
 
----
-
-## Legacy / superseded code
-
-The AlphaZero-style self-play training loop (v4–v20) produced weak champions and
-is **superseded** by the rollout-search agent + solo optimizer. It is kept for
-reference only and is **not** part of the play assistant. These modules are the
-dead loop drivers — safe to ignore:
-
-- `backend/ml/auto_improve_alphazero.py` — the self-play training-loop driver
-- `backend/ml/auto_improve.py`, `backend/ml/auto_improve_factorized.py` — older loop drivers
-- `backend/ml/self_play_dataset.py` — legacy dataset generator
-- `backend/ml/modal_selfplay.py` — Modal dispatch for the legacy loop
-
-> **Note:** a few utilities first written for the loop are still used by current
-> code and are *not* legacy — e.g. `alphazero_self_play._encode_policy_visit_targets`
-> (reused by the soft-target generator `selfplay_soft.py`) and `mcts.py`. That
-> shared usage is why these files stay in place rather than being moved into a
-> `legacy/` folder (moving them would break live imports for no real benefit).
+A few `backend/ml/` modules are the retired AlphaZero loop drivers
+(`auto_improve*.py`, `self_play_dataset.py`, `modal_selfplay.py`); they're kept
+because shared utilities (`mcts.py`, parts of `alphazero_self_play.py`) are
+still imported by current code.

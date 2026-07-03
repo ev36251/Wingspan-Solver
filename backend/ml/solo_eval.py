@@ -42,7 +42,8 @@ def make_net_chooser(model: FactorizedPolicyModel, encoder: StateEncoder):
     def choose(game, player, moves):
         state = np.asarray(encoder.encode(game, game.current_player_idx), dtype=np.float32)
         logits, _ = model.forward(state)
-        return max(moves, key=lambda m: model.score_move(state, m, player, logits=logits))
+        scores = model.score_moves(state, moves, player, logits=logits)
+        return moves[max(range(len(moves)), key=scores.__getitem__)]
     return choose
 
 
@@ -59,7 +60,7 @@ def make_net_sampling_chooser(model: FactorizedPolicyModel, encoder: StateEncode
             return moves[0]
         state = np.asarray(encoder.encode(game, game.current_player_idx), dtype=np.float32)
         logits, _ = model.forward(state)
-        scores = [model.score_move(state, m, player, logits=logits) for m in moves]
+        scores = model.score_moves(state, moves, player, logits=logits)
         mx = max(scores)
         weights = [math.exp((s - mx) / max(1e-6, temp)) for s in scores]
         tot = sum(weights)

@@ -210,6 +210,49 @@ class FactorizedPolicyModel:
             return float(base_score + (self.move_value_blend_alpha * move_value_score))
         return base_score
 
+    def score_moves(
+        self,
+        state: np.ndarray,
+        moves: list[Move],
+        player: Player,
+        logits: dict[str, np.ndarray] | None = None,
+    ) -> list[float]:
+        """Score all moves of one decision. Numerically equivalent to calling
+        score_move per move, but the state part of the move-value dot product
+        (feature_dim of the feature_dim+move_dim weights) is computed once per
+        decision instead of per move, and base factorized scores are memoized
+        by head-coordinate combo (typically only ~25% of moves are unique)."""
+        state_arr = np.asarray(state, dtype=np.float32)
+        if logits is None:
+            logits, _ = self.forward(state_arr)
+
+        use_mv = self.use_move_value_head and self.W_move_value is not None
+        if use_mv:
+            w_state = self.W_move_value[: self.feature_dim]
+            w_move = self.W_move_value[self.feature_dim:]
+            state_dot = float(state_arr @ w_state) + self.b_move_value
+
+        base_cache: dict[tuple, float] = {}
+        scores: list[float] = []
+        for m in moves:
+            t = encode_factorized_targets(m, player)
+            action_id = int(t["action_type"])
+            heads = RELEVANT_HEADS_BY_ACTION.get(action_id, [])
+            key = (action_id,) + tuple(int(t[hn]) for hn in heads)
+            base = base_cache.get(key)
+            if base is None:
+                base = float(logits["action_type"][action_id])
+                for hn in heads:
+                    base += float(logits[hn][int(t[hn])])
+                base_cache[key] = base
+            if use_mv:
+                move_f = np.asarray(encode_move_features(m, player), dtype=np.float32)
+                mv = state_dot + float(move_f @ w_move)
+                scores.append(float(base + self.move_value_blend_alpha * mv))
+            else:
+                scores.append(float(base))
+        return scores
+
 
 def score_move_with_factorized_model(
     logits: dict[str, np.ndarray],

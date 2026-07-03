@@ -161,18 +161,27 @@ class PlayBirdRequest(BaseModel):
     habitat: str  # forest, grassland, wetland
     food_payment: dict[str, int] = Field(default_factory=dict)  # {food_type: count}
     egg_payment_slots: list[list] | None = None  # [[habitat, slot_idx], ...]
+    target_slot: int | None = None  # Sideways pair start / play-on-top target
+    play_on_top: bool = False  # Play into an occupied slot (play-on-top birds)
+    play_on_top_discard: bool = False  # Cassowary: discard covered bird vs tuck
+    hand_tuck_payment: int = 0  # Imperial Eagle: hand cards tucked as food substitute
+    companion: bool = False  # Companion mode: never invent hidden card identities
 
 
 class GainFoodRequest(BaseModel):
     food_choices: list[str]  # FoodType values to take from feeder
     bonus_count: int = 0  # Number of "extra" bonus trades to activate
     reset_bonus: bool = False  # Whether to activate the reset_feeder bonus
+    prefer_nectar: bool = False  # Pay bonus cost(s) with nectar first
+    companion: bool = False  # Companion mode: never invent hidden card identities
 
 
 class LayEggsRequest(BaseModel):
     egg_distribution: dict[str, int] = Field(default_factory=dict)
     # Key format: "habitat:slot_idx", value = count
     bonus_count: int = 0  # Number of bonus trades to activate
+    prefer_nectar: bool = False  # Pay bonus cost(s) with nectar first
+    companion: bool = False  # Companion mode: never invent hidden card identities
 
 
 class DrawCardsRequest(BaseModel):
@@ -180,6 +189,8 @@ class DrawCardsRequest(BaseModel):
     from_deck_count: int = 0
     bonus_count: int = 0  # Number of "extra" bonus trades to activate
     reset_bonus: bool = False  # Whether to activate the reset_tray bonus
+    prefer_nectar: bool = False  # Pay bonus cost(s) with nectar first
+    companion: bool = False  # Companion mode: never invent hidden card identities
 
 
 # --- Score schemas ---
@@ -222,3 +233,5 @@ class ActionResultSchema(BaseModel):
     eggs_laid: int = 0
     cards_drawn: int = 0
     bird_played: str | None = None
+    power_events: list[str] = Field(default_factory=list)  # Human-readable power activations
+    state: GameStateSchema | None = None  # Post-action game state (on success)

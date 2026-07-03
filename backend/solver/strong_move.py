@@ -34,6 +34,8 @@ def strong_engine_best_move(
     time_budget_s: float = 90.0,
     max_determinizations: int = 5,
     seed: int = 0,
+    rollout_model=None,
+    rollout_encoder=None,
 ) -> tuple[Move | None, int]:
     """Return (best_move_on_`game`, determinizations_used).
 
@@ -70,6 +72,7 @@ def strong_engine_best_move(
             model, encoder, top_k, player_idx, heuristic_chooser,
             objective="selfish", rollouts=rollouts, temperature=temperature,
             determinize=True,
+            rollout_model=rollout_model, rollout_encoder=rollout_encoder,
         )
         best = chooser(det, dp, dmoves)
         votes[action_signature(best)] += 1

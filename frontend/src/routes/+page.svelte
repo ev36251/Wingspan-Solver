@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { GameState, Bird, Goal, SolverRecommendation } from '$lib/api/types';
+	import type { GameState, Bird, Goal, SolverRecommendation, ActionResult } from '$lib/api/types';
 	import { FOOD_ICONS } from '$lib/api/types';
-	import { createGame, getGame, updateGameState, getGoals } from '$lib/api/client';
+	import {
+		createGame, getGame, updateGameState, getGoals,
+		playBird, gainFood, layEggs, drawCards
+	} from '$lib/api/client';
 	import GameBoard from '$lib/components/GameBoard.svelte';
 	import SolverPanel from '$lib/components/SolverPanel.svelte';
 	import ScoreSheet from '$lib/components/ScoreSheet.svelte';
@@ -20,6 +23,15 @@
 	let saveCounter = 0;
 	let isGameOver = false;
 	let turnStatusText = '';
+	let applyNotice: string[] = [];
+
+	// Dev-only panels (ML run diagnostics): shown in `npm run dev`, or when
+	// `?dev=1` is in the URL / localStorage wingspan_dev = '1'.
+	const showDevPanels =
+		import.meta.env.DEV ||
+		(typeof window !== 'undefined' &&
+			(new URLSearchParams(window.location.search).has('dev') ||
+				localStorage.getItem('wingspan_dev') === '1'));
 
 	// New game form
 	let playerNames = ['Player 1', 'Player 2'];
@@ -509,8 +521,6 @@
 		state = state;
 	}
 
-	const HABITAT_INDICES: Record<string, number> = { forest: 0, grassland: 1, wetland: 2 };
-
 	// Tray drag-and-drop reordering
 	let trayDragIdx: number | null = null;
 	let trayDragOverIdx: number | null = null;
@@ -542,8 +552,13 @@
 		trayDragOverIdx = null;
 	}
 
+	// Apply a solver recommendation by replaying it through the backend engine,
+	// so brown-power loops, pink triggers, nectar bookkeeping, cube spend, and
+	// round transitions (teal powers, goal scoring) all take effect. Companion
+	// mode keeps hidden information honest: deck draws become face-down counts
+	// and the tray is left short for the user to enter the real revealed cards.
 	async function applyRecommendation(rec: SolverRecommendation) {
-		if (!state || isGameOver) return;
+		if (!state || isGameOver || saving) return;
 		if (state.current_player_idx !== activePlayerIdx) {
 			state.current_player_idx = activePlayerIdx;
 		}
@@ -554,127 +569,79 @@
 			return;
 		}
 
-		if (rec.action_type === 'gain_food') {
-			const foodChoices: string[] = details.food_choices || [];
-			for (const ft of foodChoices) {
-				const key = ft as keyof typeof player.food_supply;
-				if (key in player.food_supply) {
-					(player.food_supply as any)[key] += 1;
-				}
-				// Remove matching die from birdfeeder
-				const dieIdx = state.birdfeeder.dice.findIndex(d => {
-					if (Array.isArray(d)) return d.includes(ft);
-					return d === ft;
+		saving = true;
+		error = '';
+		applyNotice = [];
+		try {
+			// Sync any manual edits (feeder, tray, hands) to the server first.
+			state = await updateGameState(gameId, state);
+
+			let result: ActionResult;
+			if (rec.action_type === 'play_bird') {
+				result = await playBird(gameId, {
+					bird_name: details.bird_name,
+					habitat: details.habitat,
+					food_payment: details.food_payment || {},
+					target_slot: details.target_slot ?? null,
+					play_on_top: !!details.play_on_top,
+					play_on_top_discard: !!details.play_on_top_discard,
+					hand_tuck_payment: details.hand_tuck_payment || 0,
+					companion: true
 				});
-				if (dieIdx >= 0) {
-					state.birdfeeder.dice = state.birdfeeder.dice.filter((_, i) => i !== dieIdx);
+			} else if (rec.action_type === 'gain_food') {
+				result = await gainFood(gameId, {
+					food_choices: details.food_choices || [],
+					bonus_count: details.bonus_count || 0,
+					reset_bonus: !!details.reset_bonus,
+					prefer_nectar: !!details.prefer_nectar,
+					companion: true
+				});
+			} else if (rec.action_type === 'lay_eggs') {
+				const eggDist: Record<string, Record<string, number>> = details.egg_distribution || {};
+				const flat: Record<string, number> = {};
+				for (const [habitat, slots] of Object.entries(eggDist)) {
+					for (const [slotIdx, count] of Object.entries(slots)) {
+						flat[`${habitat}:${slotIdx}`] = count;
+					}
 				}
-			}
-			player.action_cubes_remaining = Math.max(0, player.action_cubes_remaining - 1);
-
-		} else if (rec.action_type === 'play_bird') {
-			const birdName: string = details.bird_name;
-			const habitat: string = details.habitat;
-			const foodPayment: Record<string, number> = details.food_payment || {};
-			const eggCost: number = details.egg_cost || 0;
-
-			// Remove bird from hand
-			const handIdx = player.hand.indexOf(birdName);
-			if (handIdx >= 0) {
-				player.hand = player.hand.filter((_, i) => i !== handIdx);
+				result = await layEggs(gameId, {
+					egg_distribution: flat,
+					bonus_count: details.bonus_count || 0,
+					prefer_nectar: !!details.prefer_nectar,
+					companion: true
+				});
+			} else if (rec.action_type === 'draw_cards') {
+				result = await drawCards(gameId, {
+					from_tray_indices: details.tray_indices || [],
+					from_deck_count: details.deck_draws || 0,
+					bonus_count: details.bonus_count || 0,
+					reset_bonus: !!details.reset_bonus,
+					prefer_nectar: !!details.prefer_nectar,
+					companion: true
+				});
 			} else {
-				error = `Bird '${birdName}' not in hand.`;
+				error = `Cannot apply action type: ${rec.action_type}`;
 				return;
 			}
 
-			// Place bird in first empty slot of the habitat row
-			const habIdx = HABITAT_INDICES[habitat];
-			if (habIdx !== undefined) {
-				const row = player.board[habIdx];
-				const emptySlot = row.slots.find(s => !s.bird_name);
-				if (emptySlot) {
-					emptySlot.bird_name = birdName;
-					emptySlot.victory_points = details.bird_vp ?? 0;
-					emptySlot.nest_type = details.bird_nest_type ?? null;
-					emptySlot.egg_limit = details.bird_egg_limit ?? 0;
-					emptySlot.eggs = 0;
-					emptySlot.cached_food = {};
-					emptySlot.tucked_cards = 0;
-				} else {
-					error = `No empty slot in ${habitat}.`;
-					return;
-				}
-			} else {
-				error = `Unknown habitat: ${habitat}`;
+			if (!result.success) {
+				error = result.message || 'The engine rejected this move.';
 				return;
 			}
 
-			// Deduct food payment
-			for (const [ft, count] of Object.entries(foodPayment)) {
-				const key = ft as keyof typeof player.food_supply;
-				if (key in player.food_supply) {
-					(player.food_supply as any)[key] = Math.max(0, (player.food_supply as any)[key] - (count as number));
-				}
-			}
-
-			// Deduct egg cost from birds that have eggs
-			let eggsToRemove = eggCost;
-			if (eggsToRemove > 0) {
-				for (const row of player.board) {
-					for (const slot of row.slots) {
-						if (eggsToRemove <= 0) break;
-						if (slot.bird_name && slot.eggs > 0) {
-							const take = Math.min(slot.eggs, eggsToRemove);
-							slot.eggs -= take;
-							eggsToRemove -= take;
-						}
-					}
-				}
-			}
-
-			player.action_cubes_remaining = Math.max(0, player.action_cubes_remaining - 1);
-
-		} else if (rec.action_type === 'lay_eggs') {
-			const eggDist: Record<string, Record<string, number>> = details.egg_distribution || {};
-			for (const [habitat, slots] of Object.entries(eggDist)) {
-				const habIdx = HABITAT_INDICES[habitat];
-				if (habIdx === undefined) continue;
-				const row = player.board[habIdx];
-				for (const [slotIdxStr, count] of Object.entries(slots)) {
-					const slotIdx = parseInt(slotIdxStr);
-					if (row.slots[slotIdx]) {
-						row.slots[slotIdx].eggs += count;
-					}
-				}
-			}
-			player.action_cubes_remaining = Math.max(0, player.action_cubes_remaining - 1);
-
-		} else if (rec.action_type === 'draw_cards') {
-			const trayIndices: number[] = details.tray_indices || [];
-			const deckDraws: number = details.deck_draws || 0;
-
-			// Take tray cards (remove in reverse order to preserve indices)
-			const sortedIndices = [...trayIndices].sort((a, b) => b - a);
-			for (const idx of sortedIndices) {
-				if (idx < state.card_tray.face_up.length) {
-					const birdName = state.card_tray.face_up[idx];
-					player.hand.push(birdName);
-					state.card_tray.face_up = state.card_tray.face_up.filter((_, i) => i !== idx);
-				}
-			}
-
-			// Deck draws go to unknown hand count
-			if (deckDraws > 0) {
-				player.unknown_hand_count += deckDraws;
-			}
-
-			player.action_cubes_remaining = Math.max(0, player.action_cubes_remaining - 1);
+			state = result.state ?? await getGame(gameId);
+			activePlayerIdx = state.current_player_idx;
+			applyNotice = [result.message, ...result.power_events].filter(Boolean);
+			syncGoalSelections();
+			scoreSheet?.refresh();
+			saveSuccess = true;
+			saveCounter += 1;
+			setTimeout(() => saveSuccess = false, 2000);
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to apply move';
+		} finally {
+			saving = false;
 		}
-
-		state = state;
-		await saveState();
-		advanceTurn();
-		await saveState();
 	}
 </script>
 
@@ -772,6 +739,24 @@
 
 		<div class="turn-banner">{turnStatusText}</div>
 
+		{#if error}
+			<div class="error game-error">
+				{error}
+				<button class="banner-dismiss" on:click={() => error = ''}>x</button>
+			</div>
+		{/if}
+
+		{#if applyNotice.length > 0}
+			<div class="apply-notice">
+				<div class="apply-notice-lines">
+					{#each applyNotice as line}
+						<div>{line}</div>
+					{/each}
+				</div>
+				<button class="banner-dismiss" on:click={() => applyNotice = []}>x</button>
+			</div>
+		{/if}
+
 		{#if isGameOver}
 			<div class="game-over-banner">
 				<strong>Game Over!</strong> Final scores are ready below.
@@ -867,11 +852,14 @@
 					playerName={state.players[activePlayerIdx]?.name || ''}
 					bind:this={solverPanel}
 					bind:busy={solverBusy}
+						beforeSolve={saveState}
 						on:apply={(e) => applyRecommendation(e.detail)}
 					/>
 
-					<!-- ML run diagnostics -->
-					<MLRunsPanel />
+					<!-- ML run diagnostics (dev tooling; hidden in the product build) -->
+					{#if showDevPanels}
+						<MLRunsPanel />
+					{/if}
 
 					<!-- Birdfeeder -->
 					<div class="sidebar-panel card">
@@ -1171,6 +1159,43 @@
 		font-size: 0.9rem;
 		font-weight: 600;
 		color: var(--text);
+	}
+
+	.game-error {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+	}
+
+	.apply-notice {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 8px;
+		margin-bottom: 12px;
+		padding: 8px 12px;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: var(--accent-soft);
+		font-size: 0.85rem;
+		color: var(--text);
+	}
+
+	.apply-notice-lines {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.banner-dismiss {
+		background: transparent;
+		border: none;
+		color: inherit;
+		cursor: pointer;
+		font-size: 0.85rem;
+		padding: 0 4px;
+		line-height: 1.2;
 	}
 
 	.game-over-banner {

@@ -172,6 +172,8 @@ export interface ActionResult {
 	eggs_laid: number;
 	cards_drawn: number;
 	bird_played: string | null;
+	power_events: string[];
+	state: GameState | null;
 }
 
 export interface SetupRecommendation {

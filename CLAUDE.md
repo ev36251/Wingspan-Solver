@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Tests
 ```bash
-pytest                                        # all 492 tests
+pytest                                        # full suite (~1,100 tests)
 pytest backend/tests/test_engine.py -v       # single file
 pytest -k "test_powers"                      # filter by name
 pytest backend/tests/test_alphazero.py -x -q # fast fail, quiet
@@ -189,4 +189,5 @@ The AlphaZero loop in `auto_improve_alphazero.py` runs four steps per iteration:
 - `GameState` is a mutable dataclass; `simulation.py` uses `copy.deepcopy()` for rollouts.
 - Combined training JSONLs are ≈2.75 GB and are auto-deleted after training. Disk abort at <5 GB free.
 - Current direction is **solo single-seed optimization** (`backend/ml/solo_seed_optimizer.py`); dataset in `reports/ml/solo_seed/best_lines_*.jsonl`, findings in `memory/SOLO_SEED_FINDINGS.md`. The old AlphaZero `alphazero_v*` runs were deleted.
+- Search rollouts use the **distilled student policy** (`backend/ml/rollout_student.py`, `reports/ml/solo_seed/rollout_student.npz`) when present: 2.4× cheaper playouts, rollout count scaled by `MATCHED_ROLLOUT_SCALE` to keep wall-clock constant (equal-rollouts use costs −6.5 pts — see the gate entry in `memory/SOLO_SEED_FINDINGS.md`). Kill-switch: `WINGSPAN_ROLLOUT_STUDENT=off`. The big net always keeps the root move ranking.
 - `reports/ml/**/*.jsonl` and `*.npz` are gitignored; the solo dataset is force-added so it survives container recycling.

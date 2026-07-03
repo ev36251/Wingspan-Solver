@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "wingspan-solver"
 version = "0.1.0"
@@ -15,6 +19,14 @@ dev = [
     "pytest>=8.0.0",
     "httpx>=0.27.0",
 ]
+
+# The repo has several top-level dirs (backend, models, frontend, ...); only
+# `backend` is an importable Python package. Scope discovery to it so the
+# editable install (pip install -e .) doesn't error on "multiple top-level
+# packages". Tests import via pythonpath=["."], not the installed dist.
+[tool.setuptools.packages.find]
+include = ["backend*"]
+namespaces = false
 
 [tool.pytest.ini_options]
 testpaths = ["backend/tests"]

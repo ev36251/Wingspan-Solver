@@ -3,6 +3,7 @@
 import copy
 import json
 import os
+import random
 import re
 import time
 from pathlib import Path
@@ -26,6 +27,7 @@ from backend.solver.lookahead import endgame_search
 from backend.solver.move_generator import Move
 from backend.solver.simulation import deep_copy_game, execute_move_on_sim, simulate_playout
 from backend.engine_search import EngineConfig, search_best_move
+from backend.engine_search.belief import sample_hidden_state
 
 router = APIRouter()
 
@@ -42,6 +44,31 @@ _PLAY_DESC_RE = re.compile(
     r"^Play (?P<bird>.+?) in (?P<habitat>forest|grassland|wetland)$",
     re.IGNORECASE,
 )
+
+
+def _egg_distribution_to_details(egg_distribution) -> dict[str, dict[str, int]]:
+    """Serialize {(habitat, slot_idx): count} merging slots that share a habitat."""
+    dist: dict[str, dict[str, int]] = {}
+    for (hab, slot_idx), count in egg_distribution.items():
+        dist.setdefault(hab.value, {})[str(slot_idx)] = count
+    return dist
+
+
+def _play_variant_details(move) -> dict:
+    """Expose the play-bird placement variant so a move can be replayed exactly
+    through the action API (sideways, play-on-top, Imperial Eagle tuck payment)."""
+    out: dict = {}
+    if move.target_slot is not None:
+        out["target_slot"] = move.target_slot
+    if move.play_on_top:
+        out["play_on_top"] = True
+    if move.play_on_top_discard:
+        out["play_on_top_discard"] = True
+    if move.hand_tuck_payment:
+        out["hand_tuck_payment"] = move.hand_tuck_payment
+    if move.prefer_nectar:
+        out["prefer_nectar"] = True
+    return out
 
 
 def _sanitize_plan_for_hidden_draws(
@@ -194,6 +221,32 @@ def _get_policy_components():
     return None, None
 
 
+_ROLLOUT_STUDENT = None
+_ROLLOUT_STUDENT_TRIED = False
+
+
+def _get_rollout_student():
+    """Lazy-load the distilled fast rollout policy (model, encoder) or (None, None).
+
+    Used only INSIDE search rollouts; the full policy net keeps the root move
+    ranking. Set WINGSPAN_ROLLOUT_STUDENT to a path to override, or to "off"
+    to disable."""
+    global _ROLLOUT_STUDENT, _ROLLOUT_STUDENT_TRIED
+    if _ROLLOUT_STUDENT_TRIED:
+        return _ROLLOUT_STUDENT if _ROLLOUT_STUDENT else (None, None)
+    _ROLLOUT_STUDENT_TRIED = True
+    _ROLLOUT_STUDENT = None
+    env = os.getenv("WINGSPAN_ROLLOUT_STUDENT", "")
+    if env.lower() in {"off", "0", "none"}:
+        return None, None
+    try:
+        from backend.ml.rollout_student import load_rollout_student, DEFAULT_STUDENT_PATH
+        _ROLLOUT_STUDENT = load_rollout_student(env or DEFAULT_STUDENT_PATH)
+    except Exception:
+        _ROLLOUT_STUDENT = None
+    return _ROLLOUT_STUDENT if _ROLLOUT_STUDENT else (None, None)
+
+
 def _nn_blended_leaf_value(game, player, weights):
     """Blend heuristic and policy value head for lookahead leaf evaluation."""
     model, encoder = _get_policy_components()
@@ -322,18 +375,29 @@ def _project_final_scores(
     move: Move,
     simulations: int,
     strong: bool = False,
+    determinize: bool = True,
+    seed: int = 0,
 ) -> list[int]:
     """Estimate final score distribution for a move via rollout playouts.
 
     strong=True drives the asking player with the full heuristic (realistic
     competent play, ~mid-60s) while opponents stay on the cheap medium policy;
-    the default keeps the light policy used by the heuristic-forecast path."""
+    the default keeps the light policy used by the heuristic-forecast path.
+
+    determinize=True (default) draws a fresh plausible hidden state per rollout
+    via sample_hidden_state: it shuffles the unseen deck and materialises each
+    opponent's unknown hand/bonus cards into concrete identities. Without it the
+    opponents would roll out with empty hands (they can't play birds), so their
+    board never grows and the hero's projected score is biased -- the percentiles
+    reflect a hidden-info-blind game. The shuffle also makes the hero's own future
+    draws vary across rollouts, so the score band honestly reflects deck luck."""
     hero = player_name if strong else None
     hero_policy = "strong" if strong else None
     opp_policy = "fast" if strong else "medium"  # opponents cheap; hero carries the score
+    rng = random.Random(seed)
     scores: list[int] = []
     for _ in range(max(1, simulations)):
-        sim = deep_copy_game(game)
+        sim = sample_hidden_state(game, rng) if determinize else deep_copy_game(game)
         sim_player = sim.get_player(player_name)
         if not sim_player:
             continue
@@ -499,15 +563,13 @@ async def solve_heuristic(game_id: str, player_idx: int | None = None) -> Heuris
         if la.move.food_choices:
             details["food_choices"] = [ft.value for ft in la.move.food_choices]
         if la.move.egg_distribution:
-            details["egg_distribution"] = {
-                hab.value: {str(slot_idx): count}
-                for (hab, slot_idx), count in la.move.egg_distribution.items()
-            }
+            details["egg_distribution"] = _egg_distribution_to_details(la.move.egg_distribution)
         if la.move.tray_indices:
             details["tray_indices"] = la.move.tray_indices
         details["deck_draws"] = la.move.deck_draws
         details["bonus_count"] = la.move.bonus_count
         details["reset_bonus"] = la.move.reset_bonus
+        details.update(_play_variant_details(la.move))
         details["search_mode"] = search_mode
         if search_mode == "exact_endgame":
             details["score_mode"] = "exact_endgame"
@@ -763,14 +825,14 @@ async def solve_engine(
         if s.move.food_choices:
             details["food_choices"] = [ft.value for ft in s.move.food_choices]
         if s.move.egg_distribution:
-            details["egg_distribution"] = {
-                hab.value: {str(slot_idx): count}
-                for (hab, slot_idx), count in s.move.egg_distribution.items()
-            }
+            details["egg_distribution"] = _egg_distribution_to_details(s.move.egg_distribution)
         if s.move.tray_indices:
             details["tray_indices"] = s.move.tray_indices
         if s.move.deck_draws:
             details["deck_draws"] = s.move.deck_draws
+        details["bonus_count"] = s.move.bonus_count
+        details["reset_bonus"] = s.move.reset_bonus
+        details.update(_play_variant_details(s.move))
 
         top_k.append(
             EngineMoveRec(
@@ -881,14 +943,14 @@ async def solve_hybrid(
         if s.move.food_choices:
             details["food_choices"] = [ft.value for ft in s.move.food_choices]
         if s.move.egg_distribution:
-            details["egg_distribution"] = {
-                hab.value: {str(slot_idx): count}
-                for (hab, slot_idx), count in s.move.egg_distribution.items()
-            }
+            details["egg_distribution"] = _egg_distribution_to_details(s.move.egg_distribution)
         if s.move.tray_indices:
             details["tray_indices"] = s.move.tray_indices
         if s.move.deck_draws:
             details["deck_draws"] = s.move.deck_draws
+        details["bonus_count"] = s.move.bonus_count
+        details["reset_bonus"] = s.move.reset_bonus
+        details.update(_play_variant_details(s.move))
 
         sig = action_signature(s.move)
         la = shortlist_by_sig.get(sig)
@@ -1276,6 +1338,10 @@ class AdvisorRequest(BaseModel):
     main_sims: int = Field(default=24, ge=12, le=120)
     upside_shortlist: int = Field(default=4, ge=0, le=20)
     upside_sims: int = Field(default=4, ge=3, le=20)
+    # Search-budget preset for the engine move pick (backend/ml/two_player.py
+    # BUDGET_PRESETS): default k10/r12 (~93 mean), strong k16/r24 (~96, ~2x
+    # latency), max k20/r36 (measured equal to strong).
+    strength: str = Field(default="default", pattern="^(default|strong|max)$")
 
 
 class AdvisorMainLine(BaseModel):
@@ -1359,15 +1425,30 @@ async def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> Advi
     if policy_model is not None and state_encoder is not None:
         # The literal ~91-benchmarked rollout-search agent, determinized for
         # companion-mode hidden info, inside a turn-friendly wall-clock budget.
+        # The named strength preset scales the measured budget ladder
+        # (default ~93 mean, strong ~96 at ~2x latency).
         from backend.solver.strong_move import strong_engine_best_move
+        from backend.ml.two_player import BUDGET_PRESETS
+        preset = BUDGET_PRESETS.get(req.strength, BUDGET_PRESETS["default"])
+        budget_scale = preset["rollouts"] / BUDGET_PRESETS["default"]["rollouts"]
+        student_model, student_encoder = _get_rollout_student()
+        preset_rollouts = preset["rollouts"]
+        if student_model is not None:
+            # Student rollouts are ~2.4x cheaper; keep wall-clock constant by
+            # scaling the count (equal-rollouts student play measured -6.55,
+            # matched-time +1.20 vs big-net rollouts — see rollout_student.py).
+            from backend.ml.rollout_student import MATCHED_ROLLOUT_SCALE
+            preset_rollouts = int(round(preset_rollouts * MATCHED_ROLLOUT_SCALE))
         best, _dets = strong_engine_best_move(
             game, player_idx, policy_model, state_encoder,
-            top_k=6 if is_pytest else 10,
-            rollouts=2 if is_pytest else 12,
-            temperature=0.3,
-            time_budget_s=10.0 if is_pytest else 80.0,
+            top_k=6 if is_pytest else preset["top_k"],
+            rollouts=2 if is_pytest else preset_rollouts,
+            temperature=preset["temperature"],
+            time_budget_s=10.0 if is_pytest else 80.0 * budget_scale,
             max_determinizations=1 if is_pytest else 3,
             seed=0,
+            rollout_model=student_model,
+            rollout_encoder=student_encoder,
         )
         if best is not None:
             top = best

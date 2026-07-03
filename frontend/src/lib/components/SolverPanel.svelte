@@ -16,10 +16,17 @@
 	export let playerName: string = '';
 	/** Bindable: true while a recommendation is being computed (drives the header button). */
 	export let busy = false;
+	/** Called before solving so the page can push unsaved board edits to the server. */
+	export let beforeSolve: (() => Promise<void>) | null = null;
+
+	// Engine search budget (measured presets: default ~93 mean, strong ~96 at ~2x latency).
+	let strength: 'default' | 'strong' | 'max' = 'default';
 
 	let appliedRank: number | null = null;
 
 	let recommendations: SolverRecommendation[] = [];
+	// Description of the move the strong engine picked (badged + sorted to #1).
+	let enginePickDesc = '';
 	let evaluationTime = 0;
 	let loading = false;
 	let error = '';
@@ -75,17 +82,40 @@
 		clearInterval(elapsedTimer);
 		elapsedTimer = setInterval(() => (elapsed = Math.round((Date.now() - t0) / 1000)), 250);
 		try {
+			// Push any unsaved board edits first so the solvers see the real state.
+			if (beforeSolve) await beforeSolve();
 			// The advisor (percentage lines) is the headline; the ranked move list
 			// is still fetched for the click-to-apply mechanics.
 			const [recs, adv] = await Promise.all([
 				solveHeuristic(gameId, playerIdx),
-				solveAdvisor(gameId, playerIdx, activeSets).catch(() => null)
+				solveAdvisor(gameId, playerIdx, activeSets, strength).catch(() => null)
 			]);
 			recommendations = recs.recommendations;
 			evaluationTime = recs.evaluation_time_ms;
 			feederRerollAvailable = recs.feeder_reroll_available || false;
 			solvedForPlayer = recs.player_name || playerName;
 			advisor = adv;
+
+			// The clickable list comes from the fast heuristic, but the actual move
+			// pick should be the strong engine's. Promote the engine's chosen move to
+			// the top of the clickable list (and renumber) so the card you apply IS
+			// the engine pick, not the heuristic's top-ranked card. The engine pick is
+			// reliably present in the list (same root moves); we only reorder.
+			enginePickDesc =
+				adv?.main_line?.details?.picked_by === 'engine'
+					? adv.main_line.move_description ?? ''
+					: '';
+			if (enginePickDesc) {
+				const i = recommendations.findIndex((r) => r.description === enginePickDesc);
+				if (i > 0) {
+					const reordered = [
+						recommendations[i],
+						...recommendations.slice(0, i),
+						...recommendations.slice(i + 1)
+					];
+					recommendations = reordered.map((r, idx) => ({ ...r, rank: idx + 1 }));
+				}
+			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to get recommendations';
 			recommendations = [];
@@ -110,6 +140,7 @@
 	// Clear recommendations when player tab changes
 	$: if (playerName !== solvedForPlayer && recommendations.length > 0) {
 		recommendations = [];
+		enginePickDesc = '';
 		solvedForPlayer = '';
 		showResetInput = false;
 		afterResetRecs = [];
@@ -404,6 +435,15 @@
 		{/each}
 	</div>
 
+	<label class="strength-row" title="How hard the engine searches. Strong is worth ~+3 points at roughly double the wait.">
+		Engine effort:
+		<select bind:value={strength} {disabled}>
+			<option value="default">Default (~90s)</option>
+			<option value="strong">Strong (~3 min, +3 pts)</option>
+			<option value="max">Max (~4 min)</option>
+		</select>
+	</label>
+
 	{#if error}
 		<div class="error">{error}</div>
 	{/if}
@@ -414,7 +454,11 @@
 			<div class="solving-text">
 				<span class="solving-phase">{loadingPhase}</span>
 				<span class="solving-sub">
-					{elapsed}s · the trained engine can take up to ~90s
+					{elapsed}s · {strength === 'default'
+						? 'the trained engine can take up to ~90s'
+						: strength === 'strong'
+							? 'strong search can take ~3 min'
+							: 'max search can take ~4 min'}
 				</span>
 			</div>
 			<div class="solving-bar"><span class="solving-bar-fill"></span></div>
@@ -486,6 +530,9 @@
 						<span class="rank">#{rec.rank}</span>
 						<span class="action-icon">{ACTION_ICONS[rec.action_type] || '?'}</span>
 						<span class="action-type">{ACTION_LABELS[rec.action_type] || rec.action_type}</span>
+						{#if enginePickDesc && rec.description === enginePickDesc}
+							<span class="engine-badge" title="Chosen by the trained engine (the strongest move)">engine pick</span>
+						{/if}
 						{#if appliedRank === rec.rank}
 							<span class="applied-badge">Applied!</span>
 						{/if}
@@ -974,6 +1021,22 @@
 		flex-wrap: wrap;
 		gap: 6px;
 		margin: 6px 0 10px;
+	}
+	.strength-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 0.75rem;
+		color: var(--text-dim, var(--text));
+		margin: 0 0 10px;
+	}
+	.strength-row select {
+		font-size: 0.75rem;
+		padding: 2px 6px;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+		background: var(--bg, transparent);
+		color: var(--text);
 	}
 	.set-toggles button {
 		font-size: 0.7rem;
