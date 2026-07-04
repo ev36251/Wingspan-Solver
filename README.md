@@ -134,10 +134,12 @@ physical game and the app tracks it, advises, and does the bookkeeping:
   of companion play, so the app can read it for you: upload screenshots of the
   game (digital app or photos of the table) and a Claude vision call extracts
   the boards, eggs, cached food, hands, bonus cards, feeder dice, tray, round,
-  and nectar into a proposed state. Every card name is fuzzy-matched against
-  the 471-bird registry; anything that didn't match cleanly comes back as a
-  warning for you to review before applying. Needs `pip install anthropic` and
-  an `ANTHROPIC_API_KEY` on the backend (see [How to run](#how-to-run)).
+  and nectar into a proposed state. The opening draft screen imports too —
+  screenshot the "choose 5 to keep" screen and the dealt birds/bonus cards
+  flow straight into the draft advisor. Every card name is fuzzy-matched
+  against the 471-bird registry; anything that didn't match cleanly comes back
+  as a warning for you to review before applying. Needs `pip install anthropic`
+  and an `ANTHROPIC_API_KEY` on the backend (see [How to run](#how-to-run)).
 - **After-reset flow, score sheet, max-score bar, multi-player tracking.**
 
 ---

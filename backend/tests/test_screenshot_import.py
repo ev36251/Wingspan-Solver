@@ -13,12 +13,14 @@ from backend.config import EXCEL_FILE
 from backend.data.registries import load_all
 from backend.main import app
 from backend.vision.screenshot_import import (
+    ExtractedDraft,
     ExtractedGameState,
     ScreenshotImportError,
     XBoardBird,
     XFoodSupply,
     XHabitatRow,
     XPlayer,
+    build_draft_proposal,
     build_proposed_state,
     decode_and_check_image,
 )
@@ -168,6 +170,45 @@ class TestBuildProposedStateMerge:
         assert any("more players" in w.lower() for w in warnings)
 
 
+class TestBuildDraftProposal:
+    def test_matches_dedupes_and_caps(self):
+        extracted = ExtractedDraft(
+            dealt_birds=[
+                "Garden Warbler",
+                "Pheasant Coucal",
+                "Rose-breasted Grosbeak",  # case differs from registry
+                "Eleonora's Falcon",
+                "Pesquet's Parrot",
+                "Garden Warbler",  # duplicate reading
+            ],
+            bonus_cards=["Rodentologist", "Not A Real Bonus Card At All"],
+        )
+        draft, warnings = build_draft_proposal(extracted)
+        assert draft.dealt_birds == [
+            "Garden Warbler",
+            "Pheasant Coucal",
+            "Rose-Breasted Grosbeak",
+            "Eleonora's Falcon",
+            "Pesquet's Parrot",
+        ]
+        assert draft.bonus_cards == ["Rodentologist"]
+        assert any("Not A Real Bonus Card" in w for w in warnings)
+        # Goals default to No Goal when the tiles weren't read.
+        assert draft.round_goals == ["No Goal"] * 4
+
+    def test_goal_substring_fallback(self):
+        from backend.data.registries import get_goal_registry
+
+        # Take a real goal and feed a truncated icon-tile style reading.
+        goal = get_goal_registry().all_goals[0]
+        partial = goal.description[: max(6, len(goal.description) // 2)]
+        extracted = ExtractedDraft(round_goals=[partial])
+        draft, _ = build_draft_proposal(extracted)
+        # Either matched to the full description or left as No Goal —
+        # never passed through as unvalidated text.
+        assert draft.round_goals[0] == goal.description or draft.round_goals[0] == "No Goal"
+
+
 class TestImageValidation:
     def test_rejects_bad_media_type(self):
         with pytest.raises(ScreenshotImportError, match="Unsupported image type"):
@@ -245,6 +286,27 @@ class TestImportRoute:
         wetland = saved["players"][0]["board"][2]
         assert wetland["slots"][0]["bird_name"] == "Great Crested Grebe"
         assert saved["players"][0]["food_supply"]["fish"] == 2
+
+    def test_draft_mode_returns_draft_proposal(self, client, monkeypatch):
+        def fake_extract_draft(images, notes=None):
+            return ExtractedDraft(
+                dealt_birds=["Garden Warbler", "Pesquet's Parrot"],
+                bonus_cards=["Rodentologist"],
+                uncertainties=["Bonus card thumbnails too small to read fully"],
+            )
+
+        monkeypatch.setattr(
+            "backend.api.routes_import.extract_draft_from_images", fake_extract_draft
+        )
+        resp = client.post(
+            "/api/import/screenshot", json=self._payload(mode="draft")
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["proposed"] is None
+        assert data["draft"]["dealt_birds"] == ["Garden Warbler", "Pesquet's Parrot"]
+        assert data["draft"]["bonus_cards"] == ["Rodentologist"]
+        assert data["uncertainties"] == ["Bonus card thumbnails too small to read fully"]
 
     def test_route_maps_import_error_to_400(self, client, monkeypatch):
         def fake_extract(images, notes=None, current=None):

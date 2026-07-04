@@ -3,6 +3,7 @@
 	import type { GameState } from '$lib/api/types';
 	import { importScreenshot } from '$lib/api/client';
 	import type { ScreenshotImportResult } from '$lib/api/client';
+	import { fileToImagePayload } from '$lib/imageUpload';
 
 	export let state: GameState;
 	export let activePlayerIdx = 0;
@@ -18,9 +19,6 @@
 	let reading = false;
 	let error = '';
 	let result: ScreenshotImportResult | null = null;
-
-	// Claude vision works best (and cheapest) at <=1568px on the long edge.
-	const MAX_DIM = 1568;
 
 	function onFilesChosen(e: Event) {
 		const input = e.target as HTMLInputElement;
@@ -40,37 +38,13 @@
 		previews = previews.filter((_, j) => j !== i);
 	}
 
-	async function fileToPayload(file: File): Promise<{ media_type: string; data: string }> {
-		try {
-			const bitmap = await createImageBitmap(file);
-			const scale = Math.min(1, MAX_DIM / Math.max(bitmap.width, bitmap.height));
-			if (scale < 1 || file.size > 1_500_000) {
-				const canvas = document.createElement('canvas');
-				canvas.width = Math.round(bitmap.width * scale);
-				canvas.height = Math.round(bitmap.height * scale);
-				canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-				const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-				return { media_type: 'image/jpeg', data: dataUrl.split(',')[1] };
-			}
-		} catch {
-			// createImageBitmap unsupported for this file — send it as-is below.
-		}
-		const b64 = await new Promise<string>((resolve, reject) => {
-			const reader = new FileReader();
-			reader.onload = () => resolve((reader.result as string).split(',')[1]);
-			reader.onerror = () => reject(reader.error);
-			reader.readAsDataURL(file);
-		});
-		return { media_type: file.type || 'image/png', data: b64 };
-	}
-
 	async function read() {
 		if (!files.length || reading) return;
 		reading = true;
 		error = '';
 		result = null;
 		try {
-			const images = await Promise.all(files.map(fileToPayload));
+			const images = await Promise.all(files.map(fileToImagePayload));
 			result = await importScreenshot({
 				images,
 				notes: notes.trim() || null,
@@ -85,7 +59,7 @@
 	}
 
 	function apply() {
-		if (!result) return;
+		if (!result?.proposed) return;
 		dispatch('apply', result.proposed);
 		clear();
 		expanded = false;

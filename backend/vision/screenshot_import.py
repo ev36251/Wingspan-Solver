@@ -118,12 +118,33 @@ class ExtractedGameState(BaseModel):
     )
 
 
+class ExtractedDraft(BaseModel):
+    """The start-of-game draft screen: dealt cards to feed the setup advisor."""
+
+    dealt_birds: list[str] = Field(default_factory=list)
+    bonus_cards: list[str] = Field(default_factory=list)
+    round_goals: list[str] | None = None
+    tray_birds: list[str] | None = None
+    uncertainties: list[str] = Field(
+        default_factory=list,
+        description="Anything hard to read or ambiguous in the screenshots",
+    )
+
+
 # --- Prompt construction ---
 
-def build_system_prompt() -> str:
+def _card_name_lists() -> str:
     bird_names = ", ".join(b.name for b in get_bird_registry().all_birds)
     bonus_names = ", ".join(c.name for c in get_bonus_registry().all_cards)
     goal_descs = "; ".join(g.description for g in get_goal_registry().all_goals)
+    return (
+        f"VALID BIRD NAMES: {bird_names}\n\n"
+        f"VALID BONUS CARDS: {bonus_names}\n\n"
+        f"VALID ROUND GOALS: {goal_descs}"
+    )
+
+
+def build_system_prompt() -> str:
     return f"""You are reading screenshots of a Wingspan board game (the digital app or a photo of a physical table) to populate a game-state tracker.
 
 Report ONLY what is clearly visible in the images. Anything not visible must be omitted (null). Never invent hidden information: face-down cards, the opponent's hand, or deck contents. If a specific reading is doubtful, still give your best reading and add a short note to `uncertainties`.
@@ -138,13 +159,25 @@ Extract, when visible:
 - The round goals if the goal board is visible.
 - Nectar spent per habitat row (Oceania boards track spent nectar beside each row).
 
+Cards in a fanned hand often overlap: usually only each card's title bar is visible, and the title is all you need — never skip a card just because its body is hidden, and never guess a fully hidden card.
+
 Use the exact official card names from the lists below whenever you can identify a card. If a name is partly obscured, give your best reading of the visible text — it will be fuzzy-matched.
 
-VALID BIRD NAMES: {bird_names}
+{_card_name_lists()}"""
 
-VALID BONUS CARDS: {bonus_names}
 
-VALID ROUND GOALS: {goal_descs}"""
+def build_draft_system_prompt() -> str:
+    return f"""You are reading screenshots of the START-OF-GAME DRAFT screen in Wingspan (the "choose things to keep" step: dealt bird cards + bonus cards) to feed a draft advisor.
+
+Report ONLY what is clearly visible. Extract:
+- dealt_birds: the dealt bird cards (usually 5), left to right. Cards may overlap — the title bar is enough to identify a card.
+- bonus_cards: the dealt bonus cards (usually 2). In the digital app these can appear as small thumbnails near the top of the screen; only report ones whose name you can actually read, and add a note to `uncertainties` if they are too small to read.
+- round_goals: the four round-goal tiles if visible (often small icon tiles in a corner, in round order 1→4). Give each goal's text, or your best short description of the icon (e.g. "birds in the forest", "eggs in cup nests").
+- tray_birds: the face-up card tray birds, if shown.
+
+Use the exact official names from the lists below whenever you can identify a card. If a name is partly obscured, give your best reading — it will be fuzzy-matched.
+
+{_card_name_lists()}"""
 
 
 def _user_text(notes: str | None, current: GameStateSchema | None) -> str:
@@ -180,12 +213,13 @@ def decode_and_check_image(media_type: str, data_b64: str) -> None:
         )
 
 
-def extract_from_images(
+def _call_vision(
     images: list[tuple[str, str]],
-    notes: str | None = None,
-    current: GameStateSchema | None = None,
-) -> ExtractedGameState:
-    """Send (media_type, base64_data) screenshots to Claude and parse the reading."""
+    system_text: str,
+    user_text: str,
+    output_model: type[BaseModel],
+):
+    """Shared plumbing: validate images, call Claude, return the parsed model."""
     try:
         import anthropic
     except ImportError:
@@ -214,7 +248,7 @@ def extract_from_images(
         }
         for media_type, data_b64 in images
     ]
-    content.append({"type": "text", "text": _user_text(notes, current)})
+    content.append({"type": "text", "text": user_text})
 
     client = anthropic.Anthropic()
     try:
@@ -225,13 +259,13 @@ def extract_from_images(
             system=[
                 {
                     "type": "text",
-                    "text": build_system_prompt(),
+                    "text": system_text,
                     # The card-name lists are identical across imports: cache them.
                     "cache_control": {"type": "ephemeral"},
                 }
             ],
             messages=[{"role": "user", "content": content}],
-            output_format=ExtractedGameState,
+            output_format=output_model,
         )
     except anthropic.AuthenticationError:
         raise ScreenshotImportError(
@@ -254,6 +288,30 @@ def extract_from_images(
     return parsed
 
 
+def extract_from_images(
+    images: list[tuple[str, str]],
+    notes: str | None = None,
+    current: GameStateSchema | None = None,
+) -> ExtractedGameState:
+    """Send (media_type, base64_data) screenshots to Claude and parse the reading."""
+    return _call_vision(
+        images, build_system_prompt(), _user_text(notes, current), ExtractedGameState
+    )
+
+
+def extract_draft_from_images(
+    images: list[tuple[str, str]],
+    notes: str | None = None,
+) -> ExtractedDraft:
+    """Read the start-of-game draft screen (dealt birds + bonus cards)."""
+    parts = ["Extract the dealt draft cards from these screenshots."]
+    if notes:
+        parts.append(f"User notes: {notes}")
+    return _call_vision(
+        images, build_draft_system_prompt(), "\n".join(parts), ExtractedDraft
+    )
+
+
 # --- Step 2: fuzzy matching + merge (pure, offline-testable) ---
 
 def _norm(text: str) -> str:
@@ -266,12 +324,18 @@ def _norm(text: str) -> str:
 
 
 class _NameMatcher:
-    """Fuzzy matcher over a fixed list of canonical names."""
+    """Fuzzy matcher over a fixed list of canonical names.
 
-    def __init__(self, kind: str, names: list[str]):
+    `allow_substring` adds a containment fallback (used for round goals, which
+    the screen shows as terse icon tiles like "eggs in [forest]"): a reading
+    that is contained in exactly one canonical name — or vice versa — matches.
+    """
+
+    def __init__(self, kind: str, names: list[str], allow_substring: bool = False):
         self.kind = kind
         self.canonical = {_norm(n): n for n in names}
         self.keys = list(self.canonical.keys())
+        self.allow_substring = allow_substring
 
     def match(self, raw: str, warnings: list[str]) -> str | None:
         key = _norm(raw)
@@ -283,6 +347,12 @@ class _NameMatcher:
             if _norm(matched) != key:
                 warnings.append(f"Read {self.kind} '{raw}' as '{matched}'.")
             return matched
+        if self.allow_substring and len(key) >= 5:
+            contained = [k for k in self.keys if key in k or k in key]
+            if len(contained) == 1:
+                matched = self.canonical[contained[0]]
+                warnings.append(f"Read {self.kind} '{raw}' as '{matched}'.")
+                return matched
         warnings.append(f"Could not match {self.kind} '{raw}' — add it manually if real.")
         return None
 
@@ -426,7 +496,11 @@ def build_proposed_state(
     warnings: list[str] = []
     birds = _NameMatcher("bird", [b.name for b in get_bird_registry().all_birds])
     bonuses = _NameMatcher("bonus card", [c.name for c in get_bonus_registry().all_cards])
-    goals = _NameMatcher("round goal", [g.description for g in get_goal_registry().all_goals])
+    goals = _NameMatcher(
+        "round goal",
+        [g.description for g in get_goal_registry().all_goals],
+        allow_substring=True,
+    )
 
     if current is not None:
         proposed = current.model_copy(deep=True)
@@ -489,3 +563,60 @@ def build_proposed_state(
         proposed.round_goals = matched_goals
 
     return proposed, warnings
+
+
+class DraftProposal(BaseModel):
+    """Matched draft-screen reading, ready for the setup advisor."""
+
+    dealt_birds: list[str] = Field(default_factory=list)
+    bonus_cards: list[str] = Field(default_factory=list)
+    round_goals: list[str] = Field(default_factory=lambda: ["No Goal"] * 4)
+    tray_birds: list[str] = Field(default_factory=list)
+
+
+def build_draft_proposal(extracted: ExtractedDraft) -> tuple[DraftProposal, list[str]]:
+    """Fuzzy-match a draft-screen reading against the registries (pure)."""
+    warnings: list[str] = []
+    birds = _NameMatcher("bird", [b.name for b in get_bird_registry().all_birds])
+    bonuses = _NameMatcher("bonus card", [c.name for c in get_bonus_registry().all_cards])
+    goals = _NameMatcher(
+        "round goal",
+        [g.description for g in get_goal_registry().all_goals],
+        allow_substring=True,
+    )
+
+    def _dedupe(names: list[str]) -> list[str]:
+        seen: set[str] = set()
+        return [n for n in names if not (n in seen or seen.add(n))]
+
+    dealt = _dedupe(
+        [m for raw in extracted.dealt_birds if (m := birds.match(raw, warnings))]
+    )
+    if len(dealt) > 5:
+        warnings.append(f"Read {len(dealt)} dealt birds — keeping the first 5.")
+        dealt = dealt[:5]
+
+    bonus = _dedupe(
+        [m for raw in extracted.bonus_cards if (m := bonuses.match(raw, warnings))]
+    )[:2]
+
+    round_goals = ["No Goal"] * 4
+    if extracted.round_goals:
+        for i, raw in enumerate(extracted.round_goals[:4]):
+            m = goals.match(raw, warnings)
+            if m:
+                round_goals[i] = m
+
+    tray = _dedupe(
+        [m for raw in (extracted.tray_birds or []) if (m := birds.match(raw, warnings))]
+    )[:3]
+
+    return (
+        DraftProposal(
+            dealt_birds=dealt,
+            bonus_cards=bonus,
+            round_goals=round_goals,
+            tray_birds=tray,
+        ),
+        warnings,
+    )

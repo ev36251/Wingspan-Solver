@@ -150,13 +150,22 @@ export async function drawCards(gameId: string, params: DrawCardsParams) {
 
 export interface ScreenshotImportPayload {
 	images: { media_type: string; data: string }[];
+	mode?: 'game' | 'draft';
 	notes?: string | null;
 	current_state?: import('./types').GameState | null;
 	target_player_idx?: number | null;
 }
 
+export interface DraftProposal {
+	dealt_birds: string[];
+	bonus_cards: string[];
+	round_goals: string[];
+	tray_birds: string[];
+}
+
 export interface ScreenshotImportResult {
-	proposed: import('./types').GameState;
+	proposed: import('./types').GameState | null;
+	draft: DraftProposal | null;
 	warnings: string[];
 	uncertainties: string[];
 	model_used: string;
