@@ -95,8 +95,12 @@ wingspan-20260128.xlsx
          monte_carlo.py      MC evaluation
     └─ backend/api/                  FastAPI routers
          routes_game.py, routes_solver.py, routes_data.py,
-         routes_setup.py, routes_ml.py
+         routes_setup.py, routes_ml.py, routes_import.py
          schemas.py, serializers.py  Pydantic models + JSON serialization
+    └─ backend/vision/               Screenshot → game state (Claude vision)
+         screenshot_import.py  extract_from_images() (needs anthropic +
+                               ANTHROPIC_API_KEY) + build_proposed_state()
+                               (pure fuzzy-match/merge, offline-testable)
     └─ frontend/src/lib/api/
          client.ts      Typed fetch wrappers
          types.ts       TypeScript mirrors of backend schemas

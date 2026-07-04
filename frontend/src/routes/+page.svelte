@@ -13,6 +13,7 @@
 	import MaxScoreBar from '$lib/components/MaxScoreBar.svelte';
 	import BirdSearch from '$lib/components/BirdSearch.svelte';
 	import MLRunsPanel from '$lib/components/MLRunsPanel.svelte';
+	import ScreenshotImport from '$lib/components/ScreenshotImport.svelte';
 
 	let gameId = '';
 	let state: GameState | null = null;
@@ -557,6 +558,12 @@
 	// round transitions (teal powers, goal scoring) all take effect. Companion
 	// mode keeps hidden information honest: deck draws become face-down counts
 	// and the tray is left short for the user to enter the real revealed cards.
+	function applyImportedState(proposed: GameState) {
+		state = proposed;
+		syncGoalSelections();
+		applyNotice = ['Screenshot import applied — review the board, then press Save State.'];
+	}
+
 	async function applyRecommendation(rec: SolverRecommendation) {
 		if (!state || isGameOver || saving) return;
 		if (state.current_player_idx !== activePlayerIdx) {
@@ -854,6 +861,14 @@
 					bind:busy={solverBusy}
 						beforeSolve={saveState}
 						on:apply={(e) => applyRecommendation(e.detail)}
+					/>
+
+					<!-- Screenshot import: read the table state from photos/screenshots -->
+					<ScreenshotImport
+						{state}
+						{activePlayerIdx}
+						disabled={saving}
+						on:apply={(e) => applyImportedState(e.detail)}
 					/>
 
 					<!-- ML run diagnostics (dev tooling; hidden in the product build) -->

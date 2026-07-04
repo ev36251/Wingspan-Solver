@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { searchBirds, getBonusCards, getGoals, analyzeSetup } from '$lib/api/client';
+	import { searchBirds, getBird, getBonusCards, getGoals, analyzeSetup, importScreenshot } from '$lib/api/client';
 	import { FOOD_ICONS } from '$lib/api/types';
 	import type { Bird, BonusCard, Goal, SetupRecommendation } from '$lib/api/types';
 	import BirdSearch from './BirdSearch.svelte';
 	import { createEventDispatcher } from 'svelte';
+	import { fileToImagePayload } from '$lib/imageUpload';
 
 	const dispatch = createEventDispatcher();
 
@@ -34,6 +35,63 @@
 	// Search state for bonus cards
 	let bonusSearchQuery = '';
 	let showBonusDropdown = false;
+
+	// Screenshot import of the draft screen
+	let draftFiles: File[] = [];
+	let draftReading = false;
+	let draftImportMsgs: string[] = [];
+
+	function onDraftFiles(e: Event) {
+		const input = e.target as HTMLInputElement;
+		if (input.files) draftFiles = Array.from(input.files).slice(0, 8);
+		input.value = '';
+	}
+
+	async function readDraftScreenshots() {
+		if (!draftFiles.length || draftReading) return;
+		draftReading = true;
+		error = '';
+		draftImportMsgs = [];
+		try {
+			const images = await Promise.all(draftFiles.map(fileToImagePayload));
+			const res = await importScreenshot({ images, mode: 'draft' });
+			const d = res.draft;
+			if (!d) throw new Error('No draft reading returned');
+
+			if (d.dealt_birds.length) {
+				const birds = await Promise.all(
+					d.dealt_birds.map((n) => getBird(n).catch(() => null))
+				);
+				selectedBirds = birds.filter((b): b is Bird => b !== null).slice(0, 5);
+			}
+			if (d.bonus_cards.length) {
+				selectedBonusCards = d.bonus_cards
+					.map((n) => bonusCards.find((bc) => bc.name === n))
+					.filter((bc): bc is BonusCard => bc !== undefined)
+					.slice(0, 2);
+			}
+			goalSelections = d.round_goals.map((g) =>
+				allGoals.find((x) => x.description === g) ? g : 'No Goal'
+			);
+			if (d.tray_birds.length) {
+				const tray = await Promise.all(
+					d.tray_birds.map((n) => getBird(n).catch(() => null))
+				);
+				trayBirds = tray.filter((b): b is Bird => b !== null).slice(0, 3);
+			}
+
+			draftImportMsgs = [...res.warnings, ...res.uncertainties];
+			if (!draftImportMsgs.length) {
+				draftImportMsgs = ['Read cleanly — check the cards below, then Analyze.'];
+			}
+			hasAnalyzed = false;
+			draftFiles = [];
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Screenshot import failed';
+		} finally {
+			draftReading = false;
+		}
+	}
 
 	// Load bonus cards and goals on mount
 	async function loadData() {
@@ -227,6 +285,33 @@
 	{#if error}
 		<div class="error">{error}</div>
 	{/if}
+
+	<!-- Screenshot import of the draft screen -->
+	<div class="section">
+		<h3>Import from Screenshot</h3>
+		<div class="draft-import-row">
+			<label class="file-pick">
+				<input type="file" accept="image/*" multiple on:change={onDraftFiles} disabled={draftReading} />
+				{draftFiles.length ? `${draftFiles.length} screenshot${draftFiles.length > 1 ? 's' : ''} selected` : 'Choose screenshot(s) of the draft screen…'}
+			</label>
+			<button
+				class="primary"
+				on:click={readDraftScreenshots}
+				disabled={!draftFiles.length || draftReading}
+			>
+				{draftReading ? 'Reading… (~30 s)' : 'Read'}
+			</button>
+		</div>
+		<p class="import-hint">
+			Screenshot the "choose 5 things to keep" screen — the dealt birds, bonus
+			cards, goals, and tray fill in below for review.
+		</p>
+		{#if draftImportMsgs.length}
+			<ul class="import-msgs">
+				{#each draftImportMsgs as m}<li>{m}</li>{/each}
+			</ul>
+		{/if}
+	</div>
 
 	<!-- Player Count (from names) -->
 	<div class="section">
@@ -485,6 +570,50 @@
 
 	.section {
 		margin-bottom: 16px;
+	}
+
+	.draft-import-row {
+		display: flex;
+		gap: 8px;
+		align-items: stretch;
+	}
+
+	.file-pick {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 1.5px dashed var(--border-strong);
+		border-radius: 6px;
+		padding: 8px 12px;
+		font-size: 0.85rem;
+		color: var(--text-muted);
+		cursor: pointer;
+		text-align: center;
+	}
+
+	.file-pick:hover {
+		border-color: var(--accent);
+		color: var(--accent-strong);
+	}
+
+	.file-pick input {
+		display: none;
+	}
+
+	.import-hint {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		margin-top: 6px;
+	}
+
+	.import-msgs {
+		margin: 8px 0 0;
+		padding: 8px 8px 8px 24px;
+		background: #fff8e1;
+		color: #7a5c00;
+		border-radius: 6px;
+		font-size: 0.78rem;
 	}
 
 	h3 {

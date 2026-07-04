@@ -146,6 +146,38 @@ export async function drawCards(gameId: string, params: DrawCardsParams) {
 	});
 }
 
+// --- Screenshot import ---
+
+export interface ScreenshotImportPayload {
+	images: { media_type: string; data: string }[];
+	mode?: 'game' | 'draft';
+	notes?: string | null;
+	current_state?: import('./types').GameState | null;
+	target_player_idx?: number | null;
+}
+
+export interface DraftProposal {
+	dealt_birds: string[];
+	bonus_cards: string[];
+	round_goals: string[];
+	tray_birds: string[];
+}
+
+export interface ScreenshotImportResult {
+	proposed: import('./types').GameState | null;
+	draft: DraftProposal | null;
+	warnings: string[];
+	uncertainties: string[];
+	model_used: string;
+}
+
+export async function importScreenshot(payload: ScreenshotImportPayload) {
+	return request<ScreenshotImportResult>('/import/screenshot', {
+		method: 'POST',
+		body: JSON.stringify(payload)
+	});
+}
+
 // --- Setup endpoints ---
 
 export async function analyzeSetup(

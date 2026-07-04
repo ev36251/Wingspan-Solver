@@ -35,7 +35,8 @@ jobs:
             backend/tests/test_score_breakdown_parity.py \
             backend/tests/test_advisor.py \
             backend/tests/test_api_companion_apply.py \
-            backend/tests/test_rollout_student.py
+            backend/tests/test_rollout_student.py \
+            backend/tests/test_screenshot_import.py
 
   frontend:
     name: Frontend check + build
