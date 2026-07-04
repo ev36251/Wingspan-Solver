@@ -141,6 +141,7 @@
 	$: if (playerName !== solvedForPlayer && recommendations.length > 0) {
 		recommendations = [];
 		enginePickDesc = '';
+		expandedDetailRanks = new Set();
 		solvedForPlayer = '';
 		showResetInput = false;
 		afterResetRecs = [];
@@ -282,6 +283,23 @@
 
 	type BreakdownLine = { label: string; value: number; isNegative: boolean; tooltip?: string };
 	let expandedBreakdownRanks = new Set<number>();
+	let expandedDetailRanks = new Set<number>();
+
+	function toggleDetails(rank: number) {
+		const next = new Set(expandedDetailRanks);
+		if (next.has(rank)) next.delete(rank);
+		else next.add(rank);
+		expandedDetailRanks = next;
+	}
+
+	// Ordering hints (e.g. "FIRST reset the feeder, then gain food") stay
+	// visible even with details collapsed — they change how you physically
+	// perform the move.
+	function firstHint(rec: SolverRecommendation): string {
+		if (!rec.reasoning) return '';
+		const part = rec.reasoning.split('; ').find((p) => p.startsWith('FIRST '));
+		return part || '';
+	}
 
 	function formatBreakdown(
 		bd: Record<string, number> | undefined,
@@ -467,12 +485,12 @@
 
 	{#if advisor && advisor.main_line && !loading}
 		<div class="advisor">
-			<div class="advisor-head">Engine read</div>
+			<div class="advisor-head">Recommended move</div>
 			<div class="line main-line">
 				<span class="line-move">
 					{advisor.main_line.move_description}
 					{#if advisor.main_line.details?.picked_by === 'engine'}
-						<span class="engine-badge" title="Move chosen by the trained engine">engine pick</span>
+						<span class="engine-badge" title="Chosen by the strong engine — it is the #1 clickable card below">engine pick</span>
 					{/if}
 				</span>
 				<span class="line-text">{advisor.main_line.sentence}</span>
@@ -487,25 +505,27 @@
 				{/each}
 			{/if}
 			{#if advisor.alternatives && advisor.alternatives.length > 1}
-				<div class="upside-head">Why this move (alternatives the engine weighed)</div>
-				<div class="alt-list">
-					{#each advisor.alternatives as alt}
-						<div class="alt" class:alt-best={alt.is_recommended}>
-							<span class="alt-val">{alt.typical}</span>
-							<span class="alt-desc">{alt.description}</span>
-							{#if !alt.is_recommended}
-								<span class="alt-delta">{alt.delta_vs_best}</span>
-							{:else}
-								<span class="alt-delta best">pick</span>
-							{/if}
-						</div>
-					{/each}
-				</div>
+				<details class="alt-details">
+					<summary>Other moves it weighed ({advisor.alternatives.length - 1})</summary>
+					<div class="alt-list">
+						{#each advisor.alternatives as alt}
+							<div class="alt" class:alt-best={alt.is_recommended}>
+								<span class="alt-val">{alt.typical}</span>
+								<span class="alt-desc">{alt.description}</span>
+								{#if !alt.is_recommended}
+									<span class="alt-delta">{alt.delta_vs_best}</span>
+								{:else}
+									<span class="alt-delta best">pick</span>
+								{/if}
+							</div>
+						{/each}
+					</div>
+					<div class="advisor-foot">
+						typical final scores · deck pool ≈ {advisor.pool_size} unseen birds ·
+						~{advisor.expected_draws} more draws expected
+					</div>
+				</details>
 			{/if}
-			<div class="advisor-foot">
-				deck pool ≈ {advisor.pool_size} unseen birds · ~{advisor.expected_draws} more
-				draws expected
-			</div>
 		</div>
 	{/if}
 
@@ -538,99 +558,99 @@
 						{/if}
 					</div>
 					<div class="rec-desc">{rec.description}</div>
-					{#if rec.reasoning}
-						<div class="rec-reasoning">
-							{#each rec.reasoning.split('; ') as part, pi}
-								{#if pi > 0}<span class="reason-sep"> · </span>{/if}
-								{#if part.startsWith('SKIP ') || part.startsWith('WARNING')}
-									<span class="skip-warning">{part}</span>
-								{:else if part.startsWith('REROLL ')}
-									<span class="reroll-hint">{part}</span>
-								{:else if part.startsWith('FIRST ')}
-									<span class="reset-order-hint">{part}</span>
-								{:else if part.toLowerCase().startsWith('activate ')}
-									<span class="activate-hint">{part}</span>
-								{:else}
-									<span>{part}</span>
-								{/if}
-							{/each}
-						</div>
-					{/if}
-					{#if hasWhy(rec)}
-						<div class="rec-why">
-							<span class="label">Why:</span>
-							{#each getWhy(rec) || [] as line, li}
-								{#if li > 0}<span class="reason-sep"> · </span>{/if}
-								<span>{line}</span>
-							{/each}
-						</div>
-					{/if}
-					{#if getBreakdown(rec)}
-						<div class="rec-breakdown">
-							<span class="label">Breakdown:</span>
-							{#each formatBreakdown(getBreakdown(rec), expandedBreakdownRanks.has(rec.rank)) as line, li}
-								{#if li > 0}<span class="reason-sep"> · </span>{/if}
-							<span class:negative={line.isNegative} title={line.tooltip || ''}>
-								{line.label}: {line.value.toFixed(1)}
-							</span>
-							{/each}
-							<button
-								class="toggle-breakdown"
-								type="button"
-								on:click|stopPropagation={() => toggleBreakdown(rec.rank)}
-							>
-								{expandedBreakdownRanks.has(rec.rank) ? 'Show less' : 'Show full'}
-							</button>
-						</div>
-					{/if}
-					{#if hasPlan(rec)}
+					{#if hasPlan(rec) && (getPlan(rec) || []).length > 1}
+						<!-- The clean default: just what it's thinking next. -->
 						<div class="rec-plan">
-							<span class="label">Plan:</span>
+							<span class="label">Then:</span>
 							<span class="plan-steps">
-								{#each getPlan(rec) || [] as step, si}
+								{#each (getPlan(rec) || []).slice(1, 3) as step, si}
 									{#if si > 0}<span class="reason-sep"> → </span>{/if}
 									<span>{step}</span>
 								{/each}
 							</span>
 						</div>
 					{/if}
-					{#if getPlanNote(rec)}
-						<div class="rec-plan-note">{getPlanNote(rec)}</div>
+					{#if firstHint(rec)}
+						<div class="rec-reasoning"><span class="reset-order-hint">{firstHint(rec)}</span></div>
 					{/if}
-					{#if hasPlanDetails(rec)}
-						<div class="rec-plan-details">
-							{#each getPlanDetails(rec) || [] as step, si}
-								<div class="plan-detail">
-									<span class="step-index">{si + 1}.</span>
-									<span class="step-desc">{step.description}</span>
-									{#if step.delta && formatDelta(step.delta)}
-										<span class="step-delta">({formatDelta(step.delta)})</span>
+					<button
+						class="toggle-details"
+						type="button"
+						on:click|stopPropagation={() => toggleDetails(rec.rank)}
+					>
+						{expandedDetailRanks.has(rec.rank) ? 'Hide details' : 'Details'}
+					</button>
+					{#if expandedDetailRanks.has(rec.rank)}
+						{#if rec.reasoning}
+							<div class="rec-reasoning">
+								{#each rec.reasoning.split('; ') as part, pi}
+									{#if pi > 0}<span class="reason-sep"> · </span>{/if}
+									{#if part.startsWith('SKIP ') || part.startsWith('WARNING')}
+										<span class="skip-warning">{part}</span>
+									{:else if part.startsWith('REROLL ')}
+										<span class="reroll-hint">{part}</span>
+									{:else if part.startsWith('FIRST ')}
+										<span class="reset-order-hint">{part}</span>
+									{:else if part.toLowerCase().startsWith('activate ')}
+										<span class="activate-hint">{part}</span>
+									{:else}
+										<span>{part}</span>
 									{/if}
-									{#if step.goal}
-										<span class="step-goal">
-											Goal gap {step.goal.gap_before} → {step.goal.gap_after}
-										</span>
-									{/if}
-									{#if Array.isArray(step.power)}
-										<div class="step-power">
-											{#each step.power as p, pi}
-												{#if pi > 0}<span class="reason-sep"> · </span>{/if}
-												<span>{p}</span>
-											{/each}
-										</div>
-									{/if}
-								</div>
-							{/each}
-						</div>
-					{/if}
-					{#if hasActivationAdvice(rec)}
-						<div class="rec-activation">
-							<span class="label">Activation:</span>
-							{#each getActivationAdvice(rec) || [] as line, li}
-								{#if li > 0}<span class="reason-sep"> · </span>{/if}
-								<span>{line}</span>
-							{/each}
-						</div>
+								{/each}
+							</div>
+						{/if}
+						{#if hasWhy(rec)}
+							<div class="rec-why">
+								<span class="label">Why:</span>
+								{#each getWhy(rec) || [] as line, li}
+									{#if li > 0}<span class="reason-sep"> · </span>{/if}
+									<span>{line}</span>
+								{/each}
+							</div>
+						{/if}
+						{#if getBreakdown(rec)}
+							<div class="rec-breakdown">
+								<span class="label">Breakdown:</span>
+								{#each formatBreakdown(getBreakdown(rec), expandedBreakdownRanks.has(rec.rank)) as line, li}
+									{#if li > 0}<span class="reason-sep"> · </span>{/if}
+								<span class:negative={line.isNegative} title={line.tooltip || ''}>
+									{line.label}: {line.value.toFixed(1)}
+								</span>
+								{/each}
+								<button
+									class="toggle-breakdown"
+									type="button"
+									on:click|stopPropagation={() => toggleBreakdown(rec.rank)}
+								>
+									{expandedBreakdownRanks.has(rec.rank) ? 'Show less' : 'Show full'}
+								</button>
+							</div>
+						{/if}
+						{#if getPlanNote(rec)}
+							<div class="rec-plan-note">{getPlanNote(rec)}</div>
+						{/if}
+						{#if hasPlanDetails(rec)}
+							<div class="rec-plan-details">
+								{#each getPlanDetails(rec) || [] as step, si}
+									<div class="plan-detail">
+										<span class="step-index">{si + 1}.</span>
+										<span class="step-desc">{step.description}</span>
+										{#if step.delta && formatDelta(step.delta)}
+											<span class="step-delta">({formatDelta(step.delta)})</span>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						{/if}
+						{#if hasActivationAdvice(rec)}
+							<div class="rec-activation">
+								<span class="label">Activation:</span>
+								{#each getActivationAdvice(rec) || [] as line, li}
+									{#if li > 0}<span class="reason-sep"> · </span>{/if}
+									<span>{line}</span>
+								{/each}
+							</div>
+						{/if}
 					{/if}
 					{#if hasResetOption(rec)}
 						<button
@@ -1117,6 +1137,28 @@
 		padding: 0;
 	}
 
+	.toggle-details {
+		display: block;
+		margin-top: 4px;
+		font-size: 0.7rem;
+		background: transparent;
+		border: none;
+		color: var(--text-dim, var(--accent));
+		opacity: 0.75;
+		cursor: pointer;
+		padding: 0;
+	}
+
+	.alt-details {
+		margin-top: 8px;
+	}
+	.alt-details summary {
+		font-size: 0.72rem;
+		color: var(--text-dim, var(--accent));
+		opacity: 0.8;
+		cursor: pointer;
+	}
+
 	.rec-plan-details {
 		font-size: 0.7rem;
 		color: var(--text-muted);
@@ -1145,14 +1187,7 @@
 	}
 
 	.step-delta,
-	.step-goal {
-		color: var(--text-muted);
-	}
 
-	.step-power {
-		font-style: italic;
-		color: var(--accent);
-	}
 
 	.rec-plan .label,
 	.rec-activation .label {

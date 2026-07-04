@@ -644,12 +644,34 @@ def generate_draw_cards_moves(game: GameState, player: Player) -> list[Move]:
     def _make_draw_moves(count: int, bonus: int = 0,
                          use_reset: bool = False) -> list[Move]:
         moves = []
-        parts = []
-        if bonus:
-            parts.append("+1 card")
+        suffix = " (+1 card)" if bonus else ""
+
         if use_reset:
-            parts.append("reset tray")
-        suffix = f" ({', '.join(parts)})" if parts else ""
+            # The reset happens BEFORE drawing, so the current tray cards are
+            # discarded and the fresh tray is unknown — naming today's cards
+            # ("Take X, Y from tray (reset tray)") described an impossible
+            # move. Emit count-based variants over the fresh tray instead.
+            if game.deck_remaining >= count:
+                moves.append(Move(
+                    action_type=ActionType.DRAW_CARDS,
+                    description=f"Reset the tray, then draw {count} from deck{suffix}",
+                    tray_indices=[], deck_draws=count,
+                    bonus_count=bonus, reset_bonus=True, habitat=Habitat.WETLAND,
+                ))
+            for num_tray in range(1, min(count, 3) + 1):
+                deck_needed = count - num_tray
+                if game.deck_remaining < deck_needed:
+                    continue
+                desc = f"Reset the tray, then take {num_tray} fresh card{'s' if num_tray > 1 else ''}"
+                if deck_needed:
+                    desc += f" + {deck_needed} from deck"
+                moves.append(Move(
+                    action_type=ActionType.DRAW_CARDS,
+                    description=desc + suffix,
+                    tray_indices=list(range(num_tray)), deck_draws=deck_needed,
+                    bonus_count=bonus, reset_bonus=True, habitat=Habitat.WETLAND,
+                ))
+            return moves
 
         # Option 1: draw all from deck
         if game.deck_remaining >= count:
