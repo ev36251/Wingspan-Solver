@@ -130,6 +130,14 @@ physical game and the app tracks it, advises, and does the bookkeeping:
 - **Draft advisor.** The opening keep-decision is made by the same strong
   engine (not a heuristic): it plays the top openings out and ranks them —
   the +7.4 draft lever, in the product.
+- **Screenshot import (Claude vision).** Manual state entry is the slowest part
+  of companion play, so the app can read it for you: upload screenshots of the
+  game (digital app or photos of the table) and a Claude vision call extracts
+  the boards, eggs, cached food, hands, bonus cards, feeder dice, tray, round,
+  and nectar into a proposed state. Every card name is fuzzy-matched against
+  the 471-bird registry; anything that didn't match cleanly comes back as a
+  warning for you to review before applying. Needs `pip install anthropic` and
+  an `ANTHROPIC_API_KEY` on the backend (see [How to run](#how-to-run)).
 - **After-reset flow, score sheet, max-score bar, multi-player tracking.**
 
 ---
@@ -303,6 +311,13 @@ All bird data loads from `wingspan-20260128.xlsx` at startup.
 ```bash
 uvicorn backend.main:app --reload    # http://localhost:8000
 cd frontend && npm run dev           # http://localhost:5173 (proxies /api → :8000)
+```
+
+To enable screenshot import (optional — everything else works without it):
+
+```bash
+pip install -e ".[vision]"                                # adds the anthropic SDK
+ANTHROPIC_API_KEY=sk-ant-... uvicorn backend.main:app --reload
 ```
 
 ### Tests

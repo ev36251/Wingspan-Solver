@@ -35,11 +35,13 @@ from backend.api.routes_data import router as data_router
 from backend.api.routes_game import router as game_router
 from backend.api.routes_solver import router as solver_router
 from backend.api.routes_setup import router as setup_router
+from backend.api.routes_import import router as import_router
 
 app.include_router(data_router, prefix="/api", tags=["data"])
 app.include_router(game_router, prefix="/api/games", tags=["games"])
 app.include_router(solver_router, prefix="/api/games", tags=["solver"])
 app.include_router(setup_router, prefix="/api", tags=["setup"])
+app.include_router(import_router, prefix="/api/import", tags=["import"])
 
 try:
     from backend.api.routes_ml import router as ml_router

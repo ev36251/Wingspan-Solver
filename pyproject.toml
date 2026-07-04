@@ -19,6 +19,11 @@ dev = [
     "pytest>=8.0.0",
     "httpx>=0.27.0",
 ]
+# Screenshot import (backend/vision): reads game states from screenshots via
+# the Claude API. Needs ANTHROPIC_API_KEY at runtime.
+vision = [
+    "anthropic>=0.100.0",
+]
 
 # The repo has several top-level dirs (backend, models, frontend, ...); only
 # `backend` is an importable Python package. Scope discovery to it so the
