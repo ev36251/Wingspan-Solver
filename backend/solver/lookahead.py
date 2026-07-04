@@ -308,6 +308,10 @@ def _best_bonus_play(
             if not payment_opts and power.food_discount > 0:
                 # Try generating options with virtual flexible food, then apply discount
                 temp = type("Tmp", (), {})()
+                # find_food_payment_options also reads player.board (spendable
+                # cached food) — without this the shim crashes when a hand bird
+                # needs the discount path.
+                temp.board = player.board
                 temp.food_supply = type("FS", (), {"get": player.food_supply.get,
                                                    "has": player.food_supply.has,
                                                    "total": player.food_supply.total,

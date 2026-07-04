@@ -40,8 +40,12 @@ _STATE_ENCODER = None
 _POLICY_MODEL_PATH: str | None = None
 _POLICY_MODEL_LOAD_TRIED = False
 
+# Prefix match (no $): play descriptions carry suffixes like "(pay 1 seed)" or
+# "normally (...)" — anchoring at the habitat let simulator-invented birds leak
+# into displayed plans ("Play Peaceful Dove in forest (pay 1 seed)" when no
+# such card was ever seen).
 _PLAY_DESC_RE = re.compile(
-    r"^Play (?P<bird>.+?) in (?P<habitat>forest|grassland|wetland)$",
+    r"^Play (?P<bird>.+?) (?:sideways in|on top of .+? in|in) (?P<habitat>forest|grassland|wetland)\b",
     re.IGNORECASE,
 )
 
