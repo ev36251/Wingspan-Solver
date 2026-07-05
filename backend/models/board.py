@@ -91,11 +91,14 @@ class PlayerBoard:
     wetland: HabitatRow = field(default_factory=lambda: HabitatRow(Habitat.WETLAND))
 
     def get_row(self, habitat: Habitat) -> HabitatRow:
-        return {
-            Habitat.FOREST: self.forest,
-            Habitat.GRASSLAND: self.grassland,
-            Habitat.WETLAND: self.wetland,
-        }[habitat]
+        # Hot path: branch instead of building a 3-entry dict per call.
+        if habitat is Habitat.FOREST:
+            return self.forest
+        if habitat is Habitat.GRASSLAND:
+            return self.grassland
+        if habitat is Habitat.WETLAND:
+            return self.wetland
+        raise KeyError(habitat)
 
     def all_rows(self) -> list[HabitatRow]:
         return [self.forest, self.grassland, self.wetland]

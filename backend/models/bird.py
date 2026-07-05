@@ -30,7 +30,7 @@ class Bird:
     nest_type: NestType
     egg_limit: int
     wingspan_cm: int | None  # None for flightless birds
-    habitats: frozenset[Habitat]
+    habitats: tuple[Habitat, ...]  # canonical forest→grassland→wetland order
     food_cost: FoodCost
     beak_direction: BeakDirection
     is_predator: bool

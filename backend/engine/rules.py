@@ -45,13 +45,46 @@ def can_play_bird(player: Player, bird: Bird, habitat: Habitat,
 
 
 def _get_cached_food_pool(player: Player) -> dict[FoodType, int]:
-    """Aggregate spendable cached food across the player's bird slots."""
+    """Aggregate spendable cached food across the player's bird slots.
+
+    Called constantly by the solver; iterate rows/slots directly rather than
+    materializing an all_slots() list, and skip the common empty-cache case.
+    """
     pool: dict[FoodType, int] = {}
-    for _, _, slot in player.board.all_slots():
-        for ft, count in slot.spendable_cached_food.items():
-            if count > 0:
-                pool[ft] = pool.get(ft, 0) + count
+    board = player.board
+    for row in (board.forest, board.grassland, board.wetland):
+        for slot in row.slots:
+            cached = slot.spendable_cached_food
+            if not cached:
+                continue
+            for ft, count in cached.items():
+                if count > 0:
+                    pool[ft] = pool.get(ft, 0) + count
     return pool
+
+
+def _effective_supply(player: Player) -> tuple[int, int, int, int, int, int]:
+    """Supply + spendable cached food, in _ALL_PAYABLE_TYPES order."""
+    fs = player.food_supply
+    cached = _get_cached_food_pool(player)
+    if not cached:
+        return (fs.invertebrate, fs.seed, fs.fish, fs.fruit, fs.rodent, fs.nectar)
+    return (
+        fs.invertebrate + cached.get(FoodType.INVERTEBRATE, 0),
+        fs.seed + cached.get(FoodType.SEED, 0),
+        fs.fish + cached.get(FoodType.FISH, 0),
+        fs.fruit + cached.get(FoodType.FRUIT, 0),
+        fs.rodent + cached.get(FoodType.RODENT, 0),
+        fs.nectar + cached.get(FoodType.NECTAR, 0),
+    )
+
+
+# Payment answers depend only on (cost signature, effective supply) — a tiny
+# key space the solver hits millions of times per search, so both checks below
+# are memoized process-wide. Bounded by clearing when oversized.
+_PAY_CACHE_MAX = 200_000
+_can_pay_cache: dict = {}
+_pay_options_cache: dict = {}
 
 
 def can_pay_food_cost(player: Player, cost: FoodCost) -> tuple[bool, str]:
@@ -66,12 +99,22 @@ def can_pay_food_cost(player: Player, cost: FoodCost) -> tuple[bool, str]:
     """
     if cost.total == 0:
         return True, ""
+    supply = _effective_supply(player)
+    key = (tuple(cost.items), cost.is_or, supply)
+    hit = _can_pay_cache.get(key)
+    if hit is None:
+        if len(_can_pay_cache) >= _PAY_CACHE_MAX:
+            _can_pay_cache.clear()
+        hit = _can_pay_cache[key] = _can_pay_food_cost_impl(supply, cost)
+    return hit
 
-    cached = _get_cached_food_pool(player)
+
+def _can_pay_food_cost_impl(supply: tuple[int, ...], cost: FoodCost) -> tuple[bool, str]:
+    eff_map = dict(zip(_ALL_PAYABLE_TYPES, supply))
 
     def eff(ft: FoodType) -> int:
         """Effective food available = supply + cached on bird slots."""
-        return player.food_supply.get(ft) + cached.get(ft, 0)
+        return eff_map.get(ft, 0)
 
     if cost.is_or:
         # OR cost: need any ONE of the distinct types
@@ -150,12 +193,25 @@ def find_food_payment_options(player: Player, cost: FoodCost) -> list[dict[FoodT
     """
     if cost.total == 0:
         return [{}]
+    supply = _effective_supply(player)
+    key = (tuple(cost.items), cost.is_or, supply)
+    hit = _pay_options_cache.get(key)
+    if hit is None:
+        if len(_pay_options_cache) >= _PAY_CACHE_MAX:
+            _pay_options_cache.clear()
+        hit = _pay_options_cache[key] = _find_food_payment_options_impl(supply, cost)
+    # Fresh dicts per call — callers attach these to moves and may mutate them.
+    return [dict(p) for p in hit]
 
-    cached = _get_cached_food_pool(player)
+
+def _find_food_payment_options_impl(
+    supply: tuple[int, ...], cost: FoodCost
+) -> list[dict[FoodType, int]]:
+    eff_map = dict(zip(_ALL_PAYABLE_TYPES, supply))
 
     def eff(ft: FoodType) -> int:
         """Effective supply = player supply + cached food on bird slots."""
-        return player.food_supply.get(ft) + cached.get(ft, 0)
+        return eff_map.get(ft, 0)
 
     if cost.is_or:
         options = []
