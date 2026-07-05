@@ -43,8 +43,16 @@
 
 	function onDraftFiles(e: Event) {
 		const input = e.target as HTMLInputElement;
-		if (input.files) draftFiles = Array.from(input.files).slice(0, 8);
+		if (input.files) {
+			// Append (don't replace) so you can add screenshots one at a time —
+			// e.g. the dealt birds on one screen, the bonus cards on another.
+			draftFiles = [...draftFiles, ...Array.from(input.files)].slice(0, 8);
+		}
 		input.value = '';
+	}
+
+	function removeDraftFile(i: number) {
+		draftFiles = draftFiles.filter((_, j) => j !== i);
 	}
 
 	async function readDraftScreenshots() {
@@ -58,36 +66,46 @@
 			const d = res.draft;
 			if (!d) throw new Error('No draft reading returned');
 
+			let nBirds = 0, nBonus = 0, nGoals = 0, nTray = 0;
 			if (d.dealt_birds.length) {
 				const birds = await Promise.all(
 					d.dealt_birds.map((n) => getBird(n).catch(() => null))
 				);
-				selectedBirds = birds.filter((b): b is Bird => b !== null).slice(0, 5);
+				const matched = birds.filter((b): b is Bird => b !== null).slice(0, 5);
+				if (matched.length) { selectedBirds = matched; nBirds = matched.length; }
 			}
 			if (d.bonus_cards.length) {
-				selectedBonusCards = d.bonus_cards
+				const matched = d.bonus_cards
 					.map((n) => bonusCards.find((bc) => bc.name === n))
 					.filter((bc): bc is BonusCard => bc !== undefined)
 					.slice(0, 2);
+				if (matched.length) { selectedBonusCards = matched; nBonus = matched.length; }
 			}
-			goalSelections = d.round_goals.map((g) =>
+			const goals = d.round_goals.map((g) =>
 				allGoals.find((x) => x.description === g) ? g : 'No Goal'
 			);
+			nGoals = goals.filter((g) => g !== 'No Goal').length;
+			if (nGoals > 0) goalSelections = goals;
 			if (d.tray_birds.length) {
 				const tray = await Promise.all(
 					d.tray_birds.map((n) => getBird(n).catch(() => null))
 				);
-				trayBirds = tray.filter((b): b is Bird => b !== null).slice(0, 3);
+				const matched = tray.filter((b): b is Bird => b !== null).slice(0, 3);
+				if (matched.length) { trayBirds = matched; nTray = matched.length; }
 			}
 
-			draftImportMsgs = [...res.warnings, ...res.uncertainties];
-			if (!draftImportMsgs.length) {
-				draftImportMsgs = ['Read cleanly — check the cards below, then Analyze.'];
-			}
+			// Always give an explicit, visible outcome so "read but nothing
+			// happened" can't be a silent state.
+			const summary =
+				nBirds + nBonus + nGoals + nTray === 0
+					? '⚠ Read the image but matched no cards — try a clearer or tighter screenshot of the draft screen.'
+					: `Imported ${nBirds} bird${nBirds !== 1 ? 's' : ''}, ${nBonus} bonus card${nBonus !== 1 ? 's' : ''}, ${nGoals} goal${nGoals !== 1 ? 's' : ''}${nTray ? `, ${nTray} tray` : ''}. Review below, then Analyze.`;
+			draftImportMsgs = [summary, ...res.warnings, ...res.uncertainties];
 			hasAnalyzed = false;
 			draftFiles = [];
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Screenshot import failed';
+			draftImportMsgs = [`⚠ ${error}`];
 		} finally {
 			draftReading = false;
 		}
@@ -292,19 +310,30 @@
 		<div class="draft-import-row">
 			<label class="file-pick">
 				<input type="file" accept="image/*" multiple on:change={onDraftFiles} disabled={draftReading} />
-				{draftFiles.length ? `${draftFiles.length} screenshot${draftFiles.length > 1 ? 's' : ''} selected` : 'Choose screenshot(s) of the draft screen…'}
+				{draftFiles.length ? `${draftFiles.length} added — add more?` : 'Choose screenshot(s) of the draft screen…'}
 			</label>
 			<button
 				class="primary"
 				on:click={readDraftScreenshots}
 				disabled={!draftFiles.length || draftReading}
 			>
-				{draftReading ? 'Reading… (~30 s)' : 'Read'}
+				{draftReading ? 'Reading… (~30 s)' : `Read ${draftFiles.length || ''}`}
 			</button>
 		</div>
+		{#if draftFiles.length}
+			<div class="draft-thumbs">
+				{#each draftFiles as f, i}
+					<span class="draft-chip">
+						{f.name.length > 18 ? f.name.slice(0, 16) + '…' : f.name}
+						<button class="chip-x" on:click={() => removeDraftFile(i)} disabled={draftReading} title="Remove">×</button>
+					</span>
+				{/each}
+			</div>
+		{/if}
 		<p class="import-hint">
 			Screenshot the "choose 5 things to keep" screen — the dealt birds, bonus
-			cards, goals, and tray fill in below for review.
+			cards, goals, and tray fill in below for review. You can add more than one
+			(e.g. a second shot of the bonus cards) before pressing Read.
 		</p>
 		{#if draftImportMsgs.length}
 			<ul class="import-msgs">
@@ -605,6 +634,39 @@
 		font-size: 0.75rem;
 		color: var(--text-muted);
 		margin-top: 6px;
+	}
+
+	.draft-thumbs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-top: 8px;
+	}
+
+	.draft-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		background: var(--surface-sunken);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		padding: 2px 6px 2px 10px;
+		font-size: 0.75rem;
+		color: var(--text-muted);
+	}
+
+	.chip-x {
+		border: none;
+		background: none;
+		cursor: pointer;
+		font-size: 0.9rem;
+		line-height: 1;
+		color: var(--text-muted);
+		padding: 0 2px;
+	}
+
+	.chip-x:hover {
+		color: var(--error-text);
 	}
 
 	.import-msgs {
