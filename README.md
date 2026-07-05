@@ -6,6 +6,14 @@ European, and Promo-UK (471 birds)**. The engine implements every bird power, th
 full food/nectar economy, and end-of-round/game scoring; a FastAPI backend serves
 a Svelte web app that recommends (and now *applies*) moves in a real game.
 
+![Demo: screenshot import → engine recommendation → apply](docs/demo.gif)
+
+*30-second tour: a screenshot of the game is read into the tracker (Claude
+vision), the search engine analyzes the position (timelapsed) and recommends a
+move with plain-English win odds, and one click replays it through the real
+rules engine — powers, cube spend, turn advance. The board state, recommendations,
+and score projections are all live; only the vision reply is pre-recorded here.*
+
 ## Highlights
 
 - **Complete rules engine.** All 471 bird powers have explicit, tested
