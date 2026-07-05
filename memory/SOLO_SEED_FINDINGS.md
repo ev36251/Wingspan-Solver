@@ -1124,3 +1124,36 @@ since the golden wasn't in the CI subset). Re-baselined to the true 91 and
 ADDED to CI now that canonical habitat order makes it hashseed-stable. New
 `test_payment_cache.py` pins the memoization invariants (cached == uncached
 over a supply grid; fresh-copy mutation safety).
+
+---
+
+## Rollout scoring — lean factorized key (2026-07-05, follow-up)
+
+After the enum/payment speedup, re-profiled a PURE student rollout (cloning via
+fast_clone_game outside the timed loop, so no harness deepcopy contamination).
+New #1 cost: the student scoring EVERY generated move —
+`score_moves` -> `encode_factorized_targets`, ~25% of rollout time, ~35
+moves/ply. The student has no move-value head, so that target encoding is the
+only per-move cost. Only 19% of moves have a unique factorized key.
+
+Key insight: `score_moves` only reads the heads in RELEVANT_HEADS_BY_ACTION for
+each action (play_bird -> habitat/cost/color; gain_food -> food; lay_eggs ->
+eggs; draw -> draw_mode), but `encode_factorized_targets` computed ALL 7 bins
+per move — including the bird power-color lookup and two dict-sums — then
+allocated a 7-entry dict. For the 3 non-play action types (the bulk of rollout
+moves) almost all of that was wasted.
+
+Fix: `encode_factorized_score_key(move, player)` computes ONLY the relevant
+heads and returns the tuple key directly (no dict). score_moves uses it.
+Bit-identical: verified 0/7320 key mismatches and 0.0 max score diff vs the
+old full-targets key; a regression test pins the two together.
+
+Clean apples-to-apples (fast_clone harness, best-of-3, 30 games):
+  pre-speedup (before PR #11)          44.1 ms/game
+  + enum/payment/canonical (PR #11)    32.7 ms/game  (1.35x)
+  + lean factorized key (this)         28.5 ms/game  (1.15x; 1.55x cumulative)
+All bit-identical, stacking on the distilled student. Ceiling unchanged; this
+is pure throughput (snappier advisor, or more rollouts at fixed latency).
+NOTE: the "70 -> 53 ms" figures in the PR #11 note were measured with a slower
+deepcopy-in-loop harness — same 1.3x ratio, just a slower absolute baseline;
+44 -> 28.5 are the clean fast-clone numbers.

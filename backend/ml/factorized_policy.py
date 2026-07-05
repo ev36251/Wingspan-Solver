@@ -120,3 +120,61 @@ def encode_factorized_targets(move: Move, player: Player) -> dict[str, int]:
         "play_cost_bin": t_cost,
         "play_power_color": t_color,
     }
+
+
+# Per-head bin computers — each returns exactly the value the matching key in
+# encode_factorized_targets() would hold. Kept in lockstep with that function.
+def _head_play_habitat(move: "Move", player: "Player") -> int:
+    habitat = move.habitat if move.habitat is not None else None
+    return HABITAT_TO_ID.get(habitat, HABITAT_TO_ID[None])
+
+
+def _head_gain_food_primary(move: "Move", player: "Player") -> int:
+    return FOOD_TO_ID.get(_primary_food(move), FOOD_TO_ID[None])
+
+
+def _head_draw_mode(move: "Move", player: "Player") -> int:
+    return DRAW_MODE_TO_ID[_draw_mode(move)]
+
+
+def _head_lay_eggs_bin(move: "Move", player: "Player") -> int:
+    return min(10, sum(max(0, int(v)) for v in move.egg_distribution.values()))
+
+
+def _head_play_cost_bin(move: "Move", player: "Player") -> int:
+    return min(6, sum(max(0, int(v)) for v in move.food_payment.values()))
+
+
+def _head_play_power_color(move: "Move", player: "Player") -> int:
+    return POWER_COLOR_TO_ID.get(_play_power_color(move, player), POWER_COLOR_TO_ID[None])
+
+
+_HEAD_COMPUTERS = {
+    "play_habitat": _head_play_habitat,
+    "gain_food_primary": _head_gain_food_primary,
+    "draw_mode": _head_draw_mode,
+    "lay_eggs_bin": _head_lay_eggs_bin,
+    "play_cost_bin": _head_play_cost_bin,
+    "play_power_color": _head_play_power_color,
+}
+
+
+def encode_factorized_score_key(move: Move, player: Player) -> tuple[int, ...]:
+    """(action_id, *relevant_head_bins) — the exact key score_moves() uses.
+
+    Equivalent to building the key from encode_factorized_targets(), but only
+    the heads that the action's score actually reads are computed (per
+    RELEVANT_HEADS_BY_ACTION). Non-play actions skip the bird power-color
+    lookup and the egg/cost dict sums entirely, and no 7-entry dict is
+    allocated. The scored value is unchanged because irrelevant heads never
+    contribute to the base score.
+    """
+    action_id = ACTION_TYPE_TO_ID[move.action_type]
+    heads = _RELEVANT_HEADS_BY_ACTION_ID.get(action_id, ())
+    return (action_id, *(_HEAD_COMPUTERS[h](move, player) for h in heads))
+
+
+# Filled in below once RELEVANT_HEADS_BY_ACTION is known (defined above).
+_RELEVANT_HEADS_BY_ACTION_ID = {
+    aid: tuple(heads) for aid, heads in RELEVANT_HEADS_BY_ACTION.items()
+}

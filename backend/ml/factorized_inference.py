@@ -18,7 +18,11 @@ except ImportError:
 
 from backend.models.player import Player
 from backend.solver.move_generator import Move
-from backend.ml.factorized_policy import encode_factorized_targets, RELEVANT_HEADS_BY_ACTION
+from backend.ml.factorized_policy import (
+    encode_factorized_targets,
+    encode_factorized_score_key,
+    RELEVANT_HEADS_BY_ACTION,
+)
 from backend.ml.move_features import encode_move_features
 
 
@@ -235,15 +239,16 @@ class FactorizedPolicyModel:
         base_cache: dict[tuple, float] = {}
         scores: list[float] = []
         for m in moves:
-            t = encode_factorized_targets(m, player)
-            action_id = int(t["action_type"])
-            heads = RELEVANT_HEADS_BY_ACTION.get(action_id, [])
-            key = (action_id,) + tuple(int(t[hn]) for hn in heads)
+            # Lean key: only the heads this action's score reads (skips the
+            # bird power-color lookup / egg-cost sums for non-play moves).
+            key = encode_factorized_score_key(m, player)
+            action_id = key[0]
             base = base_cache.get(key)
             if base is None:
+                heads = RELEVANT_HEADS_BY_ACTION.get(action_id, [])
                 base = float(logits["action_type"][action_id])
-                for hn in heads:
-                    base += float(logits[hn][int(t[hn])])
+                for hn, hv in zip(heads, key[1:]):
+                    base += float(logits[hn][hv])
                 base_cache[key] = base
             if use_mv:
                 move_f = np.asarray(encode_move_features(m, player), dtype=np.float32)
