@@ -208,7 +208,8 @@ temp 0.3, determinized), and **~96 at `K16/R24`**.
 ### What *didn't* work (measured and ruled out)
 
 This project kept its negative results — they're what make the positive numbers
-believable:
+believable. The full story is in
+**[WRITEUP.md — Six failed attempts to beat search with a neural network](WRITEUP.md)**:
 
 | lever | verdict |
 |-------|---------|
