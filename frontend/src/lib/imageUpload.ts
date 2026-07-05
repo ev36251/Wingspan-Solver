@@ -8,20 +8,24 @@ export interface ImagePayload {
 	data: string;
 }
 
+const SUPPORTED = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+
 export async function fileToImagePayload(file: File): Promise<ImagePayload> {
+	// Always re-encode through a canvas to JPEG when the browser can decode the
+	// file. This downscales large images AND normalizes formats the backend
+	// doesn't accept (e.g. iPhone HEIC photos, which Safari can decode) into a
+	// guaranteed-supported media type.
 	try {
 		const bitmap = await createImageBitmap(file);
 		const scale = Math.min(1, MAX_DIM / Math.max(bitmap.width, bitmap.height));
-		if (scale < 1 || file.size > 1_500_000) {
-			const canvas = document.createElement('canvas');
-			canvas.width = Math.round(bitmap.width * scale);
-			canvas.height = Math.round(bitmap.height * scale);
-			canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-			const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-			return { media_type: 'image/jpeg', data: dataUrl.split(',')[1] };
-		}
+		const canvas = document.createElement('canvas');
+		canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+		canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+		canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+		const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+		return { media_type: 'image/jpeg', data: dataUrl.split(',')[1] };
 	} catch {
-		// createImageBitmap unsupported for this file — send it as-is below.
+		// createImageBitmap couldn't decode it — fall back to raw bytes.
 	}
 	const b64 = await new Promise<string>((resolve, reject) => {
 		const reader = new FileReader();
@@ -29,5 +33,6 @@ export async function fileToImagePayload(file: File): Promise<ImagePayload> {
 		reader.onerror = () => reject(reader.error);
 		reader.readAsDataURL(file);
 	});
-	return { media_type: file.type || 'image/png', data: b64 };
+	const media_type = SUPPORTED.includes(file.type) ? file.type : 'image/png';
+	return { media_type, data: b64 };
 }
