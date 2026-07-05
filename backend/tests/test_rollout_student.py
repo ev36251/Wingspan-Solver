@@ -72,6 +72,31 @@ def test_score_moves_matches_score_move():
     assert checked >= 10
 
 
+def test_lean_score_key_matches_full_targets():
+    """The lean per-head key must equal the key built from the full
+    encode_factorized_targets() dict for every generated move — otherwise
+    score_moves() would silently diverge from the training-time encoding."""
+    from backend.ml.factorized_policy import (
+        encode_factorized_targets,
+        encode_factorized_score_key,
+        RELEVANT_HEADS_BY_ACTION,
+        ACTION_TYPE_TO_ID,
+    )
+    from backend.solver.move_generator import generate_all_moves
+
+    checked = 0
+    for game, idx in _play_states(n_decisions=25):
+        p = game.players[idx]
+        for m in generate_all_moves(game, p):
+            t = encode_factorized_targets(m, p)
+            aid = ACTION_TYPE_TO_ID[m.action_type]
+            heads = RELEVANT_HEADS_BY_ACTION.get(aid, [])
+            full_key = (aid,) + tuple(int(t[h]) for h in heads)
+            assert encode_factorized_score_key(m, p) == full_key
+            checked += 1
+    assert checked >= 50
+
+
 def test_fast_rollout_encoder_shape_and_bounds():
     from backend.ml.rollout_student import FastRolloutEncoder
 
