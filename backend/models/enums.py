@@ -1,5 +1,12 @@
 from enum import Enum
 
+# Enum.__hash__ hashes the member *name string* on every call. These enums key
+# hot dicts throughout the engine (food supplies, payments, cached food), where
+# that shows up as millions of string hashes per solver call. Members are
+# process-wide singletons (copy/deepcopy/pickle all resolve back to the same
+# object) and Enum equality is identity, so the id-based object.__hash__ is
+# consistent and much cheaper.
+
 
 class FoodType(Enum):
     INVERTEBRATE = "invertebrate"
@@ -10,11 +17,15 @@ class FoodType(Enum):
     NECTAR = "nectar"
     WILD = "wild"
 
+    __hash__ = object.__hash__
+
 
 class Habitat(Enum):
     FOREST = "forest"
     GRASSLAND = "grassland"
     WETLAND = "wetland"
+
+    __hash__ = object.__hash__
 
 
 class NestType(Enum):
@@ -24,6 +35,8 @@ class NestType(Enum):
     PLATFORM = "platform"
     WILD = "wild"  # Star nest — counts as any type
 
+    __hash__ = object.__hash__
+
 
 class PowerColor(Enum):
     WHITE = "white"
@@ -32,6 +45,8 @@ class PowerColor(Enum):
     TEAL = "teal"
     YELLOW = "yellow"
     NONE = "none"
+
+    __hash__ = object.__hash__
 
 
 class BeakDirection(Enum):
@@ -67,6 +82,8 @@ class ActionType(Enum):
     GAIN_FOOD = "gain_food"
     LAY_EGGS = "lay_eggs"
     DRAW_CARDS = "draw_cards"
+
+    __hash__ = object.__hash__
 
 
 class BoardType(Enum):

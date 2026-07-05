@@ -79,16 +79,20 @@ def _parse_food_cost(row: tuple) -> FoodCost:
     return FoodCost(items=tuple(items), is_or=is_or, total=total)
 
 
-def _parse_habitats(row: tuple) -> frozenset[Habitat]:
-    """Parse which habitats a bird can live in."""
-    habitats = set()
+def _parse_habitats(row: tuple) -> tuple[Habitat, ...]:
+    """Parse which habitats a bird can live in.
+
+    Canonical forest→grassland→wetland order: iteration order feeds move
+    generation, so it must not depend on set/hash ordering.
+    """
+    habitats = []
     if row[BirdCol.FOREST] and str(row[BirdCol.FOREST]).strip():
-        habitats.add(Habitat.FOREST)
+        habitats.append(Habitat.FOREST)
     if row[BirdCol.GRASSLAND] and str(row[BirdCol.GRASSLAND]).strip():
-        habitats.add(Habitat.GRASSLAND)
+        habitats.append(Habitat.GRASSLAND)
     if row[BirdCol.WETLAND] and str(row[BirdCol.WETLAND]).strip():
-        habitats.add(Habitat.WETLAND)
-    return frozenset(habitats)
+        habitats.append(Habitat.WETLAND)
+    return tuple(habitats)
 
 
 def _parse_nest_type(value) -> NestType:

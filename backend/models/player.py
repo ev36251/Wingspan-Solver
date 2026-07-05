@@ -18,14 +18,21 @@ class FoodSupply:
     nectar: int = 0
 
     def get(self, food_type: FoodType) -> int:
-        return {
-            FoodType.INVERTEBRATE: self.invertebrate,
-            FoodType.SEED: self.seed,
-            FoodType.FISH: self.fish,
-            FoodType.FRUIT: self.fruit,
-            FoodType.RODENT: self.rodent,
-            FoodType.NECTAR: self.nectar,
-        }.get(food_type, 0)
+        # Hot path (millions of calls per solver run): branch chain instead of
+        # constructing a 6-entry dict per call.
+        if food_type is FoodType.INVERTEBRATE:
+            return self.invertebrate
+        if food_type is FoodType.SEED:
+            return self.seed
+        if food_type is FoodType.FISH:
+            return self.fish
+        if food_type is FoodType.FRUIT:
+            return self.fruit
+        if food_type is FoodType.RODENT:
+            return self.rodent
+        if food_type is FoodType.NECTAR:
+            return self.nectar
+        return 0
 
     def add(self, food_type: FoodType, count: int = 1) -> None:
         if food_type == FoodType.INVERTEBRATE:

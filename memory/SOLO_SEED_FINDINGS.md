@@ -1079,3 +1079,48 @@ DEPLOYED: rollout_student.npz = v2 (identity-aware); MATCHED_ROLLOUT_SCALE=3.0
 Honest headline: the app's engine pick now searches ~3x the playouts per
 second at full parity-or-better quality; the strength ceiling itself is
 unchanged (~92-96 band).
+
+---
+
+## Engine hot-path speedup — enum hashing, payment memoization, canonical order (2026-07-05)
+
+Goal: make the analyzer faster with ZERO behavior change (the ceiling is
+budget-bound, so cheaper playouts convert directly into more search at fixed
+latency). Profiled one k10/r12+student root choice (cProfile): the top
+self-time sink was `enum.Enum.__hash__` — 8.2M calls hashing member *name
+strings*, because FoodType/Habitat/etc. key hot dicts everywhere. Move
+generation (repeated per rollout ply) and `can_pay_food_cost` /
+`find_food_payment_options` dominated the rest.
+
+Changes (all bit-identical output — verified as an identical move *multiset*
+over 174 real mid-game states, and identical golden-replay scores):
+1. `__hash__ = object.__hash__` on the value-keyed enums (FoodType, Habitat,
+   NestType, PowerColor, ActionType). Members are process-wide singletons and
+   Enum equality is identity, so id-hash is consistent and ~free vs hashing the
+   name string every call.
+2. Memoize `can_pay_food_cost` and `find_food_payment_options` by
+   (cost signature, effective supply) — a tiny key space hit millions of times
+   per search. `find_food_payment_options` returns fresh dict copies per call
+   (callers mutate them onto Move objects). Bounded caches (clear at 200k).
+3. `FoodSupply.get` / `PlayerBoard.get_row`: branch chains instead of building
+   a fresh dict every call. `_get_cached_food_pool`: iterate rows/slots
+   directly (no all_slots() list alloc) and skip empty caches.
+4. Bird.habitats: `frozenset` -> canonical `tuple` (forest,grassland,wetland).
+   Move-generation iterates habitats, so this ALSO makes move order (and thus
+   the heuristic opponent's argmax tie-break) deterministic and
+   PYTHONHASHSEED-independent — previously it silently depended on hash order.
+
+Result (honest, no profiler): full student rollout **70 -> 53 ms/game
+(1.32x)**; single k10/r12+student root choice **5.2 -> 4.0 s**. Stacks
+multiplicatively with the distilled student (so vs the pre-speedup big-net
+baseline the effective playout throughput is ~4.5x). Ceiling unchanged — this
+is throughput, spent as either a snappier advisor or more rollouts at fixed
+latency.
+
+Side effect: the `test_golden_replay_127.py` seed-20260211 golden was already
+STALE on main (expected opp total 92; actual 91 with divergence still 0 — a
+heuristic-opponent drift from an earlier merged power fix that CI never caught,
+since the golden wasn't in the CI subset). Re-baselined to the true 91 and
+ADDED to CI now that canonical habitat order makes it hashseed-stable. New
+`test_payment_cache.py` pins the memoization invariants (cached == uncached
+over a supply grid; fresh-copy mutation safety).

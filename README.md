@@ -186,6 +186,16 @@ temp 0.3, determinized), and **~96 at `K16/R24`**.
   These raised the bad-deal **floor from 52 → 68** — the worst hands now
   recover exactly as a strong human would, by flipping the tray and spending
   surplus nectar. The real-game replay goldens still reproduce perfectly.
+- **Hot-path engineering (~1.3× throughput, zero behavior change).** Profiling
+  the search showed the cost was in Python plumbing, not the model: millions of
+  `Enum.__hash__` calls (hashing member name strings) and repeated food-payment
+  legality checks. Switching value-keyed enums to identity hashing, memoizing
+  the payment solver by `(cost, supply)`, and making bird habitats a canonical
+  tuple cut full-game rollouts **70 → 53 ms** — verified bit-identical as an
+  identical move *multiset* over 174 real states and identical golden-replay
+  scores. Stacks with the distilled student for ~4.5× effective playout
+  throughput over the pre-optimization baseline. (It also surfaced a stale
+  golden and made move order `PYTHONHASHSEED`-independent.)
 
 ### What *didn't* work (measured and ruled out)
 
