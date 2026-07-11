@@ -36,6 +36,7 @@ def strong_engine_best_move(
     seed: int = 0,
     rollout_model=None,
     rollout_encoder=None,
+    pool=None,
 ) -> tuple[Move | None, int]:
     """Return (best_move_on_`game`, determinizations_used).
 
@@ -78,6 +79,7 @@ def strong_engine_best_move(
             determinize=True,
             rollout_model=rollout_model, rollout_encoder=rollout_encoder,
             deadline=deadline,
+            pool=pool, pool_seed=seed * 1009 + d,
         )
         best = chooser(det, dp, dmoves)
         votes[action_signature(best)] += 1

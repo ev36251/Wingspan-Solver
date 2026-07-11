@@ -93,7 +93,7 @@ def play_multi(game, choosers, max_turns: int = 600):
 def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="diff",
                         rollouts=1, temperature=0.0, determinize=False, opp_weight=1.0,
                         depth=1, branch=3, rollout_model=None, rollout_encoder=None,
-                        deadline=None):
+                        deadline=None, pool=None, pool_seed=0):
     """1-ply rollout search for seat `my_idx`.
 
     Objective value of a rollout = my_score - lambda * best_opponent_score, where
@@ -191,6 +191,12 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
 
     import time as _time
 
+    # Parallel candidate evaluation is only wired for the plain depth-1
+    # stochastic search with a distilled student (the advisor's config); the
+    # sequential path below stays byte-identical when pool is None.
+    use_pool = (pool is not None and depth == 1 and stochastic
+                and rollout_model is not None)
+
     def choose(game, player, moves):
         if len(moves) <= 1:
             return moves[0]
@@ -200,6 +206,22 @@ def make_search_chooser(model, encoder, top_k, my_idx, opp_chooser, objective="d
         order = sorted(range(len(moves)), key=lambda i: -sc[i])
         ranked = [moves[i] for i in order[:top_k]]
         best_m, best_v = ranked[0], -1e18
+
+        if use_pool:
+            from backend.ml.parallel_rollouts import eval_candidates_parallel
+            results = eval_candidates_parallel(
+                pool, game, ranked,
+                my_idx=my_idx, lam=lam, n_roll=n_roll,
+                temperature=temperature, determinize=determinize,
+                deadline=deadline, pool_seed=pool_seed,
+            )
+            for m, (total, n_ok) in zip(ranked, results):
+                if n_ok == 0:
+                    continue
+                val = total / n_ok
+                if val > best_v:
+                    best_m, best_v = m, val
+            return best_m
         # Wall-clock budgeting: identical behavior when deadline is None; with
         # a deadline, stop starting new candidates once past it (returning the
         # best so far) and cut a candidate's remaining rollouts. Without this,

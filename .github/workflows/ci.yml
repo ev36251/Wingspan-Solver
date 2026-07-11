@@ -38,7 +38,8 @@ jobs:
             backend/tests/test_rollout_student.py \
             backend/tests/test_screenshot_import.py \
             backend/tests/test_payment_cache.py \
-            backend/tests/test_golden_replay_127.py
+            backend/tests/test_golden_replay_127.py \
+            backend/tests/test_parallel_rollouts.py
 
   frontend:
     name: Frontend check + build
