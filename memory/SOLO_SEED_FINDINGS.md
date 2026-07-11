@@ -1157,3 +1157,28 @@ is pure throughput (snappier advisor, or more rollouts at fixed latency).
 NOTE: the "70 -> 53 ms" figures in the PR #11 note were measured with a slower
 deepcopy-in-loop harness — same 1.3x ratio, just a slower absolute baseline;
 44 -> 28.5 are the clean fast-clone numbers.
+
+---
+
+## Process-parallel candidate rollouts (2026-07-06)
+
+The advisor evaluated every candidate move's playouts sequentially on one
+core. Candidates are independent, so they fan out across a spawn-context
+worker pool (each worker loads registries + the distilled student once;
+BLAS pinned to 1 thread to avoid oversubscription). Per-candidate seeds make
+parallel results deterministic and scheduling-independent. The sequential
+path is byte-identical when no pool is passed, so every gate/test keeps its
+historical behavior; only the advisor route opts in (WINGSPAN_PARALLEL=off
+kills it, WINGSPAN_PARALLEL_WORKERS overrides sizing).
+
+Measured (fresh-game engine pick, k10/r36 student config, 3 determinizations,
+4-core container, 3 workers): sequential 41.7s -> parallel 16.4s = 2.54x
+(85% parallel efficiency), same move picked. Expect ~4x+ on an 8-core Mac
+(6 workers). Distribution-equivalent by construction: same samplers, same
+temperature; only the PRNG stream assignment changes (independent per-
+candidate streams instead of one shared sequential stream).
+
+This is the cores->budget converter: by the budget ladder, the freed
+wall-clock IS score when spent on the heavier preset (strong at old-default
+latency). First advisor call pays a one-time pool warm-up (~8s/worker,
+overlapped).

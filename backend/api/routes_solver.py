@@ -227,6 +227,7 @@ def _get_policy_components():
 
 _ROLLOUT_STUDENT = None
 _ROLLOUT_STUDENT_TRIED = False
+_ROLLOUT_STUDENT_PATH = None
 
 
 def _get_rollout_student():
@@ -245,7 +246,9 @@ def _get_rollout_student():
         return None, None
     try:
         from backend.ml.rollout_student import load_rollout_student, DEFAULT_STUDENT_PATH
-        _ROLLOUT_STUDENT = load_rollout_student(env or DEFAULT_STUDENT_PATH)
+        global _ROLLOUT_STUDENT_PATH
+        _ROLLOUT_STUDENT_PATH = env or str(DEFAULT_STUDENT_PATH)
+        _ROLLOUT_STUDENT = load_rollout_student(_ROLLOUT_STUDENT_PATH)
     except Exception:
         _ROLLOUT_STUDENT = None
     return _ROLLOUT_STUDENT if _ROLLOUT_STUDENT else (None, None)
@@ -1470,6 +1473,12 @@ def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorRes
             from backend.ml.rollout_student import MATCHED_ROLLOUT_SCALE
             preset_rollouts = min(
                 int(round(preset_rollouts * MATCHED_ROLLOUT_SCALE)), 36)
+        # Candidate playouts fan out across CPU cores when a worker pool is
+        # available (WINGSPAN_PARALLEL=off disables); pytest stays sequential.
+        pool = None
+        if not is_pytest and student_model is not None and _ROLLOUT_STUDENT_PATH:
+            from backend.ml.parallel_rollouts import get_rollout_pool
+            pool = get_rollout_pool(_ROLLOUT_STUDENT_PATH)
         best, _dets = strong_engine_best_move(
             game, player_idx, policy_model, state_encoder,
             top_k=6 if is_pytest else preset["top_k"],
@@ -1480,6 +1489,7 @@ def solve_advisor(game_id: str, req: AdvisorRequest | None = None) -> AdvisorRes
             seed=0,
             rollout_model=student_model,
             rollout_encoder=student_encoder,
+            pool=pool,
         )
         if best is not None:
             top = best
