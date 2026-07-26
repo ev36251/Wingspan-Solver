@@ -90,11 +90,21 @@ def test_sequential_path_unchanged_without_pool():
     assert chooser(game, player, moves) in moves
 
 
-def test_default_workers_respects_kill_switch(monkeypatch):
+def test_default_workers_is_opt_in(monkeypatch):
     from backend.ml import parallel_rollouts as pr
 
+    # Unset -> sequential (the safe default; the pool can hang on some setups).
+    monkeypatch.delenv("WINGSPAN_PARALLEL", raising=False)
+    monkeypatch.delenv("WINGSPAN_PARALLEL_WORKERS", raising=False)
+    assert pr.default_workers() == 0
+
+    # Explicit off stays off.
     monkeypatch.setenv("WINGSPAN_PARALLEL", "off")
     assert pr.default_workers() == 0
+
+    # Opt in with a flag (auto-sizes) or an explicit count.
+    monkeypatch.setenv("WINGSPAN_PARALLEL", "on")
+    assert pr.default_workers() >= 0  # 0 on <=2-core machines, else cores-1
     monkeypatch.delenv("WINGSPAN_PARALLEL")
     monkeypatch.setenv("WINGSPAN_PARALLEL_WORKERS", "3")
     assert pr.default_workers() == 3

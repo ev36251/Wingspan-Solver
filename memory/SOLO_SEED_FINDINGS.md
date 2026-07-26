@@ -1182,3 +1182,16 @@ This is the cores->budget converter: by the budget ladder, the freed
 wall-clock IS score when spent on the heavier preset (strong at old-default
 latency). First advisor call pays a one-time pool warm-up (~8s/worker,
 overlapped).
+
+---
+
+## Parallel rollouts made OPT-IN (2026-07-26)
+
+The process pool (PR #17) was on by default when >2 cores. A spawned
+ProcessPoolExecutor can hang under macOS spawn + `uvicorn --reload`, and a
+hung pool blocks the advisor's engine pick -> "Suggest a Move" never returns.
+That's a core-feature regression traded for a speed optimization, so the
+default is now SEQUENTIAL (the proven path). Enable the 2.5x speedup with
+WINGSPAN_PARALLEL=on (auto-sizes) or WINGSPAN_PARALLEL_WORKERS=N. Kept because
+it's a real, measured win on environments where spawn is healthy (Linux, or a
+non-reload prod server); just no longer forced on.
