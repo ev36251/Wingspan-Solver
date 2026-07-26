@@ -42,8 +42,14 @@ class SetupAnalyzeResponse(BaseModel):
 
 
 @router.post("/setup/analyze", response_model=SetupAnalyzeResponse)
-async def analyze_draft(req: SetupAnalyzeRequest) -> SetupAnalyzeResponse:
-    """Analyze starting draft options and recommend the best combination."""
+def analyze_draft(req: SetupAnalyzeRequest) -> SetupAnalyzeResponse:
+    """Analyze starting draft options and recommend the best combination.
+
+    Plain `def` (not `async`): this runs many full-game engine playouts (CPU
+    bound, tens of seconds). An `async` handler would run it on the event loop
+    and freeze every other request until it finished; `def` runs it in the
+    threadpool so the rest of the app stays responsive.
+    """
     bird_reg = get_bird_registry()
     bonus_reg = get_bonus_registry()
     goal_reg = get_goal_registry()
@@ -86,15 +92,17 @@ async def analyze_draft(req: SetupAnalyzeRequest) -> SetupAnalyzeResponse:
 
     # Optionally load the deployed engine so it plays each opening out itself.
     model = encoder = None
+    student_model = student_encoder = None
     sims = req.rollout_simulations
     top_k = req.rollout_top_k
     if req.use_engine:
-        from backend.api.routes_solver import _get_policy_components
+        from backend.api.routes_solver import _get_policy_components, _get_rollout_student
         model, encoder = _get_policy_components()
         if model is not None:
-            # Engine playouts are expensive (~15-18s each). Widening the number
-            # of openings the engine plays out raises the floor on bad hands at
-            # the cost of latency (~35s per opening x engine_sims).
+            # Engine playouts are expensive; the distilled student makes each
+            # rollout ~3x cheaper (same one the live "Recommend" advisor uses),
+            # so the draft analysis finishes in a fraction of the time.
+            student_model, student_encoder = _get_rollout_student()
             sims = req.engine_sims
             top_k = req.engine_openings
 
@@ -109,6 +117,8 @@ async def analyze_draft(req: SetupAnalyzeRequest) -> SetupAnalyzeResponse:
         model=model,
         encoder=encoder,
         eng_rollouts=req.engine_rollouts,
+        rollout_model=student_model,
+        rollout_encoder=student_encoder,
     )
 
     # Calculate total combinations

@@ -771,6 +771,8 @@ def rollout_draft_evaluation(
     encoder=None,
     eng_top_k: int = 6,
     eng_rollouts: int = 1,
+    rollout_model=None,
+    rollout_encoder=None,
 ) -> list[tuple[float, list[Bird], tuple[FoodType, ...], BonusCard]]:
     """Rerank top setup options by average simulated final score.
 
@@ -826,7 +828,9 @@ def rollout_draft_evaluation(
                     make_search_chooser(model, encoder, eng_top_k, hero_idx,
                                         heuristic_chooser, objective="selfish",
                                         rollouts=eng_rollouts, temperature=0.3,
-                                        determinize=True)
+                                        determinize=True,
+                                        rollout_model=rollout_model,
+                                        rollout_encoder=rollout_encoder)
                     if i == hero_idx else heuristic_chooser
                     for i in range(game.num_players)
                 ]
@@ -870,6 +874,8 @@ def analyze_setup(
     encoder=None,
     eng_top_k: int = 6,
     eng_rollouts: int = 1,
+    rollout_model=None,
+    rollout_encoder=None,
 ) -> list[SetupRecommendation]:
     """Evaluate all starting draft combinations and return the best options.
 
@@ -914,6 +920,8 @@ def analyze_setup(
             encoder=encoder,
             eng_top_k=eng_top_k,
             eng_rollouts=eng_rollouts,
+            rollout_model=rollout_model,
+            rollout_encoder=rollout_encoder,
         )
 
     # Build recommendations
