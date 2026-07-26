@@ -108,15 +108,27 @@ _POOL_STUDENT_PATH: str | None = None
 
 
 def default_workers() -> int:
-    if os.getenv("WINGSPAN_PARALLEL", "").lower() in {"off", "0", "none"}:
+    """Worker count for the parallel pool. OPT-IN: 0 (sequential) unless
+    explicitly enabled.
+
+    The process pool is a speed optimization, but a spawned ProcessPoolExecutor
+    can hang under some local setups (notably macOS spawn + `uvicorn --reload`),
+    and a hung pool would break the core "give me a move" feature. So the safe
+    default is the proven single-core path; enable the speedup with
+    WINGSPAN_PARALLEL=on (auto-sizes to cores-1, capped at 6) or pin an exact
+    count with WINGSPAN_PARALLEL_WORKERS=N.
+    """
+    flag = os.getenv("WINGSPAN_PARALLEL", "").lower()
+    workers_env = os.getenv("WINGSPAN_PARALLEL_WORKERS", "")
+
+    if flag in {"off", "0", "none", "false", "no"}:
         return 0
-    env = os.getenv("WINGSPAN_PARALLEL_WORKERS", "")
-    if env.isdigit():
-        return int(env)
-    cpus = os.cpu_count() or 1
-    if cpus <= 2:
-        return 0  # not worth the worker startup on tiny machines
-    return min(cpus - 1, 6)
+    if workers_env.isdigit():  # an explicit count always wins
+        return int(workers_env)
+    if flag in {"on", "1", "true", "yes"}:
+        cpus = os.cpu_count() or 1
+        return min(cpus - 1, 6) if cpus > 2 else 0
+    return 0  # unset -> sequential (safe default)
 
 
 def get_rollout_pool(student_path: str) -> ProcessPoolExecutor | None:
